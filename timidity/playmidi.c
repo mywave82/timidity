@@ -285,6 +285,7 @@ static void update_legato_controls(int ch);
 static void set_master_tuning(int);
 static void set_single_note_tuning(int, int, int, int);
 static void set_user_temper_entry(int, int, int);
+static void set_cuepoint(int, int, int);
 void recompute_bank_parameter(int, int);
 
 static void init_voice_filter(int);
@@ -382,6 +383,7 @@ static char *event_name(int type)
 	EVENT_NAME(ME_MASTER_VOLUME);
 	EVENT_NAME(ME_RESET);
 	EVENT_NAME(ME_NOTE_STEP);
+	EVENT_NAME(ME_CUEPOINT);
 	EVENT_NAME(ME_TIMESIG);
 	EVENT_NAME(ME_KEYSIG);
 	EVENT_NAME(ME_TEMPER_KEYSIG);
@@ -6374,6 +6376,7 @@ static int apply_controls(void)
 	    continue;
 
 	  case RC_JUMP:
+	    val = val * midi_time_ratio + 0.5;
 	    if(play_pause_flag)
 	    {
 		midi_restart_time = val;
@@ -6381,7 +6384,7 @@ static int apply_controls(void)
 		continue;
 	    }
 	    aq_flush(1);
-	    if (val >= sample_count)
+	    if (val >= sample_count * midi_time_ratio + 0.5)
 		return RC_TUNE_END;
 	    skip_to(val);
 	    ctl_updatetime(val);
@@ -6390,9 +6393,9 @@ static int apply_controls(void)
 	  case RC_FORWARD:	/* >> */
 	    if(play_pause_flag)
 	    {
-		midi_restart_time += val;
-		if(midi_restart_time > sample_count)
-		    midi_restart_time = sample_count;
+		midi_restart_time += val * midi_time_ratio + 0.5;
+		if(midi_restart_time > sample_count * midi_time_ratio + 0.5)
+		    midi_restart_time = sample_count * midi_time_ratio + 0.5;
 		ctl_pause_event(1, midi_restart_time);
 		continue;
 	    }
@@ -6400,7 +6403,10 @@ static int apply_controls(void)
 	    aq_flush(1);
 	    if(cur == -1)
 		cur = current_sample;
-	    if(val + cur >= sample_count)
+	    if (val == 0x7fffffff)
+		return RC_TUNE_END;
+	    val = val * midi_time_ratio + 0.5;
+	    if(val + cur >= sample_count * midi_time_ratio + 0.5)
 		return RC_TUNE_END;
 	    skip_to(val + cur);
 	    ctl_updatetime(val + cur);
@@ -6409,7 +6415,7 @@ static int apply_controls(void)
 	  case RC_BACK:		/* << */
 	    if(play_pause_flag)
 	    {
-		midi_restart_time -= val;
+		midi_restart_time -= val * midi_time_ratio + 0.5;
 		if(midi_restart_time < 0)
 		    midi_restart_time = 0;
 		ctl_pause_event(1, midi_restart_time);
@@ -6419,6 +6425,7 @@ static int apply_controls(void)
 	    aq_flush(1);
 	    if(cur == -1)
 		cur = current_sample;
+	    val = val * midi_time_ratio + 0.5;
 	    if(cur > val)
 	    {
 		skip_to(cur - val);
@@ -8098,6 +8105,10 @@ int play_event(MidiEvent *ev)
 			wrdt->update_events();
 		break;
 
+	case ME_CUEPOINT:
+		set_cuepoint(ch, current_event->a, current_event->b);
+		break;
+
       case ME_EOT:
 	return midi_play_end();
     }
@@ -8241,6 +8252,17 @@ static void set_user_temper_entry(int part, int a, int b)
 			}
 		break;
 	}
+}
+
+static void set_cuepoint(int part, int a, int b)
+{
+	static int a0 = 0, b0 = 0;
+	
+	if (part == 0) {
+		a0 = a, b0 = b;
+		return;
+	}
+	ctl_mode_event(CTLE_CUEPOINT, 1, a0 << 24 | b0 << 16 | a << 8 | b, 0);
 }
 
 static int play_midi(MidiEvent *eventlist, int32 samples)

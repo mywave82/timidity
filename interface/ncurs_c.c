@@ -1,6 +1,6 @@
 /*
     TiMidity++ -- MIDI to WAVE converter and player
-    Copyright (C) 1999-2014 Masanao Izumo <iz@onicos.co.jp>
+    Copyright (C) 1999-2018 Masanao Izumo <iz@onicos.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
 
     This program is free software; you can redistribute it and/or modify
@@ -268,6 +268,9 @@ ControlMode ctl=
     ctl_event
 };
 
+static uint32 cuepoint = 0;
+static int cuepoint_pending = 0;
+
 
 /***********************************************************************/
 /* foreground/background checks disabled since switching to curses */
@@ -456,7 +459,7 @@ static void N_ctl_scrinit(void)
     	waddch(dftwin, 'v');
     waddstr(dftwin, timidity_version);
     wmove(dftwin, VERSION_LINE,COLS-51);
-    waddstr(dftwin, "(C) 1995,1999-2014 Tuukka Toivonen, Masanao Izumo");
+    waddstr(dftwin, "(C) 1995,1999-2018 Tuukka Toivonen, Masanao Izumo");
     wmove(dftwin, FILE_LINE,0);
     waddstr(dftwin, "File:");
 #ifdef MIDI_TITLE
@@ -1063,6 +1066,10 @@ static void ctl_event(CtlEvent *e)
 	break;
       case CTLE_PLAY_END:
 	break;
+	case CTLE_CUEPOINT:
+		cuepoint = e->v1;
+		cuepoint_pending = 1;
+		break;
       case CTLE_CURRENT_TIME:
 	ctl_current_time((int)e->v1, (int)e->v2);
 	display_aq_ratio();
@@ -2437,6 +2444,12 @@ static int ctl_read(int32 *valp)
 {
   int c, i;
   static int u_prefix = 1, u_flag = 1;
+
+	if (cuepoint_pending) {
+		*valp = cuepoint;
+		cuepoint_pending = 0;
+		return RC_FORWARD;
+	}
 
   if(ctl_cmdmode)
       mini_buff_refresh(command_buffer);
