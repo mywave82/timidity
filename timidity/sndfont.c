@@ -293,7 +293,7 @@ void remove_soundfont(char *sf_file)
 void free_soundfonts()
 {
 	SFInsts *sf, *next;
-	
+
 	for (sf = sfrecs; sf != NULL; sf = next) {
 		if ((sf->tf != NULL) && (sf->tf->url != NULL))
 			free(sf->tf->url);
@@ -522,7 +522,7 @@ static FLOAT_T calc_volume(LayerTable *tbl)
     if(!tbl->set[SF_initAtten] || (int)tbl->val[SF_initAtten] == 0)
 	return (FLOAT_T)1.0;
 
-	v = (int)tbl->val[SF_initAtten];
+    v = (int)tbl->val[SF_initAtten];
     if(v < 0) {v = 0;}
     else if(v > 960) {v = 960;}
 	return cb_to_amp_table[v];
@@ -625,8 +625,8 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip)
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 			  "[%d] Rate=%d LV=%d HV=%d "
 			  "Low=%d Hi=%d Root=%d Pan=%d",
-			  sp->start, sp->v.sample_rate, 
-			  sp->v.low_vel, sp->v.high_vel, 
+			  sp->start, sp->v.sample_rate,
+			  sp->v.low_vel, sp->v.high_vel,
 			  sp->v.low_freq, sp->v.high_freq, sp->v.root_freq,
 			  sp->v.panning);
 		memcpy(sample, &sp->v, sizeof(Sample));
@@ -701,7 +701,7 @@ static Instrument *load_from_file(SFInsts *rec, InstList *ip)
 		{
 		    sample->chord = -1;
 		    sample->root_freq_detected =
-		    	freq_fourier(sample, &(sample->chord));
+			freq_fourier(sample, &(sample->chord));
 		    sample->transpose_detected =
 			assign_pitch_to_freq(sample->root_freq_detected) -
 			assign_pitch_to_freq(sample->root_freq / 1024.0);
@@ -809,7 +809,7 @@ static int load_font(SFInfo *sf, int pridx)
 		if (globalp)
 			set_to_table(sf, &tbl, globalp, P_GLOBAL);
 		set_to_table(sf, &tbl, layp, P_LAYER);
-		
+
 		/* parse the instrument */
 		rc = parse_layer(sf, pridx, &tbl, 0);
 		if(rc == AWE_RET_ERR || rc == AWE_RET_NOMEM)
@@ -1083,51 +1083,51 @@ static int make_patch(SFInfo *sf, int pridx, LayerTable *tbl)
     } else
 	keynote_from = keynote_to = -1;
 
-	done = 0;
-	for(keynote=keynote_from;keynote<=keynote_to;keynote++){
-
-    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
-	      "SF make inst pridx=%d bank=%d preset=%d keynote=%d",
-	      pridx, bank, preset, keynote);
-
-    if(is_excluded(current_sfrec, bank, preset, keynote))
+    done = 0;
+    for(keynote=keynote_from;keynote<=keynote_to;keynote++)
     {
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY, " * Excluded");
-	continue;
-    } else
-	done++;
+	ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		  "SF make inst pridx=%d bank=%d preset=%d keynote=%d",
+		  pridx, bank, preset, keynote);
 
-    order = is_ordered(current_sfrec, bank, preset, keynote);
-    if(order < 0)
-	order = current_sfrec->def_order;
+	if(is_excluded(current_sfrec, bank, preset, keynote))
+	{
+	    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY, " * Excluded");
+	    continue;
+	} else
+	    done++;
 
-    addr = INSTHASH(bank, preset, keynote);
+	order = is_ordered(current_sfrec, bank, preset, keynote);
+	if(order < 0)
+	    order = current_sfrec->def_order;
 
-    for(ip = current_sfrec->instlist[addr]; ip; ip = ip->next)
-    {
-	if(ip->pat.bank == bank && ip->pat.preset == preset &&
-	   (keynote < 0 || keynote == ip->pat.keynote))
+	addr = INSTHASH(bank, preset, keynote);
+
+	for(ip = current_sfrec->instlist[addr]; ip; ip = ip->next)
+	{
+	    if(ip->pat.bank == bank && ip->pat.preset == preset &&
+		(keynote < 0 || keynote == ip->pat.keynote))
 	    break;
-    }
+	}
 
-    if(ip == NULL)
-    {
-	ip = (InstList*)SFMalloc(current_sfrec, sizeof(InstList));
-	memset(ip, 0, sizeof(InstList));
-	ip->pr_idx = pridx;
-	ip->pat.bank = bank;
-	ip->pat.preset = preset;
-	ip->pat.keynote = keynote;
-	ip->order = order;
-	ip->samples = 0;
-	ip->slist = NULL;
-	ip->next = current_sfrec->instlist[addr];
-	current_sfrec->instlist[addr] = ip;
-    }
+	if(ip == NULL)
+	{
+	    ip = (InstList*)SFMalloc(current_sfrec, sizeof(InstList));
+	    memset(ip, 0, sizeof(InstList));
+	    ip->pr_idx = pridx;
+	    ip->pat.bank = bank;
+	    ip->pat.preset = preset;
+	    ip->pat.keynote = keynote;
+	    ip->order = order;
+	    ip->samples = 0;
+	    ip->slist = NULL;
+	    ip->next = current_sfrec->instlist[addr];
+	    current_sfrec->instlist[addr] = ip;
+	}
 
-    /* new sample */
-    sp = (SampleList *)SFMalloc(current_sfrec, sizeof(SampleList));
-    memset(sp, 0, sizeof(SampleList));
+	/* new sample */
+	sp = (SampleList *)SFMalloc(current_sfrec, sizeof(SampleList));
+	memset(sp, 0, sizeof(SampleList));
 
 	sp->bank = bank;
 	sp->keynote = keynote;
@@ -1137,44 +1137,44 @@ static int make_patch(SFInfo *sf, int pridx, LayerTable *tbl)
 	} else if(bank == 128) {
 		sp->v.note_to_use = keynote;
 	}
-    make_info(sf, sp, tbl);
+	make_info(sf, sp, tbl);
 
-    /* add a sample */
-    if(ip->slist == NULL)
-	ip->slist = sp;
-    else
-    {
-	SampleList *cur, *prev;
-	int32 start;
-
-	/* Insert sample */
-	start = sp->start;
-	cur = ip->slist;
-	prev = NULL;
-	while(cur && cur->start <= start)
-	{
-	    prev = cur;
-	    cur = cur->next;
-	}
-	if(prev == NULL)
-	{
-	    sp->next = ip->slist;
+	/* add a sample */
+	if(ip->slist == NULL)
 	    ip->slist = sp;
-	}
 	else
 	{
-	    prev->next = sp;
-	    sp->next = cur;
+	    SampleList *cur, *prev;
+	    int32 start;
+
+	    /* Insert sample */
+	    start = sp->start;
+	    cur = ip->slist;
+	    prev = NULL;
+	    while(cur && cur->start <= start)
+	    {
+		prev = cur;
+		cur = cur->next;
+	    }
+	    if(prev == NULL)
+	    {
+		sp->next = ip->slist;
+		ip->slist = sp;
+	    }
+	    else
+	    {
+		prev->next = sp;
+		sp->next = cur;
+	    }
 	}
-    }
-    ip->samples++;
+	ip->samples++;
 
-	} /* for(;;) */
+    } /* for(;;) */
 
 
-	if(done==0)
+    if(done==0)
 	return AWE_RET_SKIP;
-	else
+    else
 	return AWE_RET_OK;
 }
 
@@ -1510,7 +1510,7 @@ static void set_rootkey(SFInfo *sf, SampleList *vp, LayerTable *tbl)
 {
 	SFSampleInfo *sp = &sf->sample[tbl->val[SF_sampleId]];
 	int temp;
-	
+
 	/* scale factor */
 	vp->v.scale_factor = 1024 * (double) tbl->val[SF_scaleTuning] / 100 + 0.5;
 	/* set initial root key & fine tune */
@@ -1553,7 +1553,7 @@ static void set_rootfreq(SampleList *vp)
 {
 	int root = vp->root;
 	int tune = 0.5 - 256 * (double) vp->tune / 100;
-	
+
 	/* 0 <= tune < 255 */
 	while (tune < 0)
 		root--, tune += 256;
@@ -1591,8 +1591,8 @@ static void convert_volume_envelope(SampleList *vp, LayerTable *tbl)
 	vp->release = calc_rate(65535, modify_release);
     else
 	vp->release = to_rate(65535, tbl->val[SF_releaseEnv2]);
-	vp->v.envelope_delay = play_mode->rate * 
-		to_msec(tbl->val[SF_delayEnv2]) * 0.001;
+    vp->v.envelope_delay = play_mode->rate *
+			   to_msec(tbl->val[SF_delayEnv2]) * 0.001;
 
 	/* convert modulation envelope */
     vp->modattack  = to_rate(65535, tbl->val[SF_attackEnv1]);
@@ -1603,8 +1603,8 @@ static void convert_volume_envelope(SampleList *vp, LayerTable *tbl)
 	vp->modrelease = calc_rate(65535, modify_release);
     else
 	vp->modrelease = to_rate(65535, tbl->val[SF_releaseEnv1]);
-	vp->v.modenv_delay = play_mode->rate * 
-		to_msec(tbl->val[SF_delayEnv1]) * 0.001;
+    vp->v.modenv_delay = play_mode->rate *
+			 to_msec(tbl->val[SF_delayEnv1]) * 0.001;
 
     vp->v.modes |= MODES_ENVELOPE;
 }
@@ -1638,7 +1638,7 @@ static void convert_tremolo(SampleList *vp, LayerTable *tbl)
 
     /* convert mHz to sine table increment; 1024<<rate_shift=1wave */
     vp->v.tremolo_phase_increment = ((play_mode->rate / 1000 * freq) >> RATE_SHIFT) / control_ratio;
-    vp->v.tremolo_delay = play_mode->rate * 
+    vp->v.tremolo_delay = play_mode->rate *
 		to_msec(tbl->val[SF_delayLfo1]) * 0.001;
 }
 #endif
@@ -1678,7 +1678,7 @@ static void convert_vibrato(SampleList *vp, LayerTable *tbl)
 			(freq * 2 * VIBRATO_SAMPLE_INCREMENTS);
     }
 
-    vp->v.vibrato_delay = play_mode->rate * 
+    vp->v.vibrato_delay = play_mode->rate *
 		to_msec(tbl->val[SF_delayLfo2]) * 0.001;
 }
 #endif
@@ -1887,7 +1887,7 @@ char *wrdt = NULL; /* :-P */
 #ifdef WIN32
 static int ctl_open(int using_stdin, int using_stdout) { return 0;}
 static void ctl_close(void) {}
-static int ctl_read(int32 *valp) { return 0; } 
+static int ctl_read(int32 *valp) { return 0; }
 #include <stdarg.h>
 static int cmsg(int type, int verbosity_level, char *fmt, ...)
 {
@@ -1995,7 +1995,7 @@ int32 get_note_freq(Sample *sp, int note)
 	int32 f;
 	int16 sf, sn;
 	double ratio;
-	
+
 	f = freq_table[note];
 	/* GUS/SF2 - Scale Tuning */
 	if ((sf = sp->scale_factor) != 1024) {
@@ -2048,7 +2048,7 @@ int main(int argc, char **argv)
 					const char *mask_string;
 					int8 mask[128];
 					int flag, start, end;
-					
+
 					flag = argv[0][1] == 'f';
 					memset(mask, 0, sizeof mask);
 					mask_string = argv[2];
@@ -2183,7 +2183,7 @@ int main(int argc, char **argv)
 						Instrument *inst;
 						float freq;
 						int chord, note;
-						
+
 						inst = try_load_soundfont(sf, -1, 128, x_preset, x_keynote);
 						if(inst != NULL) {
 							freq = freq_fourier(inst->sample, &chord);
