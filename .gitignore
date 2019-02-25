@@ -1,0 +1,9 @@
+configure.ac
+configure
+config.status
+config.log
+interface.h
+Makefile.ac
+Makefile.am
+*.o
+timidity/newton_table.c
