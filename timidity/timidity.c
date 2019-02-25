@@ -537,7 +537,9 @@ static inline int y_or_n_p(const char *);
 static inline int set_flag(int32 *, int32, const char *);
 static inline FILE *open_pager(void);
 static inline void close_pager(FILE *);
+#if !defined(ANOTHER_MAIN) || defined(__W32__)
 static void interesting_message(void);
+#endif
 
 extern StringTable wrd_read_opts;
 
@@ -1275,31 +1277,31 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	return allow_missing_file ? READ_CONFIG_FILE_NOT_FOUND :
 	                            READ_CONFIG_ERROR;
 
-	init_mblock(&varbuf);
-	if (!self)
-	{
-		basedir = strdup_mblock(&varbuf, current_filename);
-		if (is_url_prefix(basedir))
-			sep = strrchr(basedir, '/');
-		else
-			sep = pathsep_strrchr(basedir);
-	}
+    init_mblock(&varbuf);
+    if (!self)
+    {
+	basedir = strdup_mblock(&varbuf, current_filename);
+	if (is_url_prefix(basedir))
+	    sep = strrchr(basedir, '/');
 	else
-		sep = NULL;
-	if (sep == NULL)
-	{
-		#ifndef __MACOS__
-		basedir = ".";
-		#else
-		basedir = "";
-		#endif
-	}
-	else
-	{
-		if ((cp = strchr(sep, '#')) != NULL)
-			sep = cp + 1;	/* inclusive of '#' */
-		*sep = '\0';
-	}
+	    sep = pathsep_strrchr(basedir);
+    }
+    else
+	sep = NULL;
+    if (sep == NULL)
+    {
+	#ifndef __MACOS__
+	basedir = ".";
+	#else
+	basedir = "";
+	#endif
+    }
+    else
+    {
+	if ((cp = strchr(sep, '#')) != NULL)
+	    sep = cp + 1;	/* inclusive of '#' */
+	*sep = '\0';
+    }
 
     errno = 0;
     while(tf_gets(buf, sizeof(buf), tf))
@@ -1545,7 +1547,9 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	/* #extension HTTPproxy hostname:port */
 	else if(strcmp(w[0], "HTTPproxy") == 0)
 	{
+#ifdef SUPPORT_SOCKET
             char r_bracket, l_bracket;
+#endif
 
 	    if(words < 2)
 	    {
@@ -1596,8 +1600,10 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	/* #extension FTPproxy hostname:port */
 	else if(strcmp(w[0], "FTPproxy") == 0)
 	{
+#ifdef SUPPORT_SOCKET
             char l_bracket, r_bracket;
- 
+#endif
+
 	    if(words < 2)
 	    {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -4107,7 +4113,9 @@ static int parse_opt_h(const char *arg)
 	int i, j;
 	char *h;
 	ControlMode *cmp, **cmpp;
+#ifdef IA_DYNAMIC
 	char mark[128];
+#endif
 	PlayMode *pmp, **pmpp;
 	WRDTracer *wlp, **wlpp;
 	
@@ -5305,6 +5313,7 @@ static inline void close_pager(FILE *fp)
 #endif
 }
 
+#if !defined(ANOTHER_MAIN) || defined(__W32__)
 static void interesting_message(void)
 {
 	printf(
@@ -5333,6 +5342,7 @@ static void interesting_message(void)
 			NLS, (strcmp(timidity_version, "current")) ? "version " : "",
 			timidity_version);
 }
+#endif
 
 /* -------- functions for getopt_long ends here --------- */
 
