@@ -414,7 +414,7 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 			int32		diff;
 			
 			diff = freq_table[samplerc.dwMIDIUnityNote + 1] - root_freq;
-			root_freq += (float)samplerc.dwMIDIPitchFraction * diff / 0xFFFFFFFF;
+			root_freq += (float)samplerc.dwMIDIPitchFraction * diff / (float)UINT32_MAX;
 		}
 		if (samplerc.hasLoop)
 		{
