@@ -300,7 +300,6 @@ static void set_mod_delay(mod_delay *delay, int32 ndelay, int32 depth)
 	delay->size = size;
 	memset(delay->buf, 0, sizeof(int32) * delay->size);
 }
-#endif
 
 static inline void do_mod_delay(int32 *stream, int32 *buf, int32 size, int32 *rindex, int32 *windex,
 								int32 ndelay, int32 depth, int32 lfoval, int32 *hist)
@@ -316,6 +315,7 @@ static inline void do_mod_delay(int32 *stream, int32 *buf, int32 size, int32 *ri
 	buf[*windex] = *stream;
 	*stream = *hist;
 }
+#endif
 
 /*! modulated allpass filter with allpass interpolation (for Plate Reverberator,...) */
 static void free_mod_allpass(mod_allpass *delay)
@@ -469,6 +469,7 @@ void calc_filter_moog_dist(filter_moog_dist *svf)
 	}
 }
 
+#if 0
 static inline void do_filter_moog_dist(double *stream, double *high, double *band, double f, double p, double q, double d,
 								   double *b0, double *b1, double *b2, double *b3, double *b4)
 {
@@ -487,6 +488,7 @@ static inline void do_filter_moog_dist(double *stream, double *high, double *ban
 	*band = 3.0 * (tb3 - tb4);
 	*b0 = tb0, *b1 = tb1, *b2 = tb2, *b3 = tb3, *b4 = tb4;
 }
+#endif
 
 static inline void do_filter_moog_dist_band(double *stream, double f, double p, double q, double d,
 								   double *b0, double *b1, double *b2, double *b3, double *b4)
@@ -505,6 +507,7 @@ static inline void do_filter_moog_dist_band(double *stream, double f, double p, 
 	*b0 = tb0, *b1 = tb1, *b2 = tb2, *b3 = tb3, *b4 = tb4;
 }
 
+#if 0
 static void init_filter_lpf18(filter_lpf18 *p)
 {
 	p->ay1 = p->ay2 = p->aout = p->lastin = 0;
@@ -544,6 +547,7 @@ static inline void do_filter_lpf18(double *stream, double *ay1, double *ay2, dou
 	*aout = kp1h * (*ay2 + ay31) - kp * *aout;
 	*stream = tanh(*aout * value);
 }
+#endif
 
 #define WS_AMP_MAX	((int32) 0x0fffffff)
 #define WS_AMP_MIN	((int32)-0x0fffffff)
@@ -1565,7 +1569,7 @@ static void do_ch_freeverb(int32 *buf, int32 count, InfoFreeverb *rev)
 		return;
 	}
 
-	for (k = 0; k < count; k++)
+	for (k = 0; k < count; k+=2)
 	{
 		input = reverb_effect_buffer[k] + reverb_effect_buffer[k + 1];
 		outl = outr = reverb_effect_buffer[k] = reverb_effect_buffer[k + 1] = 0;
@@ -1582,9 +1586,8 @@ static void do_ch_freeverb(int32 *buf, int32 count, InfoFreeverb *rev)
 			do_freeverb_allpass(&outl, allpassL[i].buf, allpassL[i].size, &allpassL[i].index, allpassL[i].feedbacki);
 			do_freeverb_allpass(&outr, allpassR[i].buf, allpassR[i].size, &allpassR[i].index, allpassR[i].feedbacki);
 		}
-		buf[k] += imuldiv24(outl, rev->wet1i) + imuldiv24(outr, rev->wet2i);
+		buf[k + 0] += imuldiv24(outl, rev->wet1i) + imuldiv24(outr, rev->wet2i);
 		buf[k + 1] += imuldiv24(outr, rev->wet1i) + imuldiv24(outl, rev->wet2i);
-		++k;
 	}
 }
 
@@ -1784,7 +1787,7 @@ static void do_ch_plate_reverb(int32 *buf, int32 count, InfoPlateReverb *info)
 		return;
 	}
 
-	for (i = 0; i < count; i++)
+	for (i = 0; i < count; i+=2)
 	{
 		outr = outl = 0;
 		x = (reverb_effect_buffer[i] + reverb_effect_buffer[i + 1]) >> 1;
@@ -1857,8 +1860,6 @@ static void do_ch_plate_reverb(int32 *buf, int32 count, InfoPlateReverb *info)
 
 		buf[i] += outl;
 		buf[i + 1] += outr;
-
-		++i;
 	}
 	info->t1 = t1, info->t1d = t1d;
 }
@@ -2683,7 +2684,7 @@ void do_overdrive1(int32 *buf, int32 count, EffectList *ef)
 	} else if(count == MAGIC_FREE_EFFECT_INFO) {
 		return;
 	}
-	for(i = 0; i < count; i++) {
+	for(i = 0; i < count; i+=2) {
 		input = (buf[i] + buf[i + 1]) >> 1;
 		/* amp simulation */
 		do_amp_sim(&input, asdi);
@@ -2696,9 +2697,8 @@ void do_overdrive1(int32 *buf, int32 count, EffectList *ef)
 		do_filter_biquad(&high, lpf1->a1, lpf1->a2, lpf1->b1, lpf1->b02, &lpf1->x1l, &lpf1->x2l, &lpf1->y1l, &lpf1->y2l);
 		/* mixing */
 		input = imuldiv24(high + input, leveli);
-		buf[i] = do_left_panning(input, pan);
+		buf[i + 0] = do_left_panning(input, pan);
 		buf[i + 1] = do_right_panning(input, pan);
-		++i;
 	}
 }
 
@@ -2734,7 +2734,7 @@ void do_distortion1(int32 *buf, int32 count, EffectList *ef)
 	} else if(count == MAGIC_FREE_EFFECT_INFO) {
 		return;
 	}
-	for(i = 0; i < count; i++) {
+	for(i = 0; i < count; i+=2) {
 		input = (buf[i] + buf[i + 1]) >> 1;
 		/* amp simulation */
 		do_amp_sim(&input, asdi);
@@ -2747,9 +2747,8 @@ void do_distortion1(int32 *buf, int32 count, EffectList *ef)
 		do_filter_biquad(&high, lpf1->a1, lpf1->a2, lpf1->b1, lpf1->b02, &lpf1->x1l, &lpf1->x2l, &lpf1->y1l, &lpf1->y2l);
 		/* mixing */
 		input = imuldiv24(high + input, leveli);
-		buf[i] = do_left_panning(input, pan);
+		buf[i + 0] = do_left_panning(input, pan);
 		buf[i + 1] = do_right_panning(input, pan);
-		++i;
 	}
 }
 
@@ -2921,7 +2920,7 @@ void do_hexa_chorus(int32 *buf, int32 count, EffectList *ef)
 	spt5 = index - pdelay5 - (f5 >> 8);	/* integral part of delay */
 	if(spt5 < 0) {spt5 += size;}
 
-	for(i = 0; i < count; i++) {
+	for(i = 0; i < count; i+=2) {
 		v0 = ebuf[spt0], v1 = ebuf[spt1], v2 = ebuf[spt2],
 		v3 = ebuf[spt3], v4 = ebuf[spt4], v5 = ebuf[spt5];
 
@@ -2964,7 +2963,7 @@ void do_hexa_chorus(int32 *buf, int32 count, EffectList *ef)
 		ebuf[index] = imuldiv24(buf[i] + buf[i + 1], weti);
 
 		/* mixing */
-		buf[i] = do_left_panning(hist0, pan0) + do_left_panning(hist1, pan1)
+		buf[i + 0] = do_left_panning(hist0, pan0) + do_left_panning(hist1, pan1)
 			+ do_left_panning(hist2, pan2) + do_left_panning(hist3, pan3)
 			+ do_left_panning(hist4, pan4) + do_left_panning(hist5, pan5)
 			+ imuldiv24(buf[i], dryi);
@@ -2972,8 +2971,6 @@ void do_hexa_chorus(int32 *buf, int32 count, EffectList *ef)
 			+ do_right_panning(hist2, pan2) + do_right_panning(hist3, pan3)
 			+ do_right_panning(hist4, pan4) + do_right_panning(hist5, pan5)
 			+ imuldiv24(buf[i + 1], dryi);
-
-		++i;
 	}
 	buf0->size = size, buf0->index = index;
 	info->spt0 = spt0, info->spt1 = spt1, info->spt2 = spt2,
