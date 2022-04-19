@@ -850,25 +850,25 @@ static int fixed[2][16] = {
 };
 
 static void ready_made(UNLZHHandler decoder, int method)
-{
+{ // code and weight are not used in this pass
     int i, j;
-    unsigned int code, weight;
+    //unsigned int code, weight;
     int *tbl;
 
     tbl = fixed[method];
     j = *tbl++;
-    weight = 1 << (16 - j);
-    code = 0;
+    //weight = 1 << (16 - j);
+    //code = 0;
     for(i = 0; i < decoder->snp; i++)
     {
 	while(*tbl == i)
 	{
 	    j++;
 	    tbl++;
-	    weight >>= 1;
+	    //weight >>= 1;
 	}
 	decoder->pt_len[i] = j;
-	code += weight;
+	//code += weight;
     }
 }
 
