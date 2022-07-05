@@ -382,7 +382,7 @@ static void rcp_keysig_change(int32 at, int32 key)
 	MIDIEVENT(at, ME_KEYSIG, 0, sf, mi);
 }
 
-static char *rcp_cmd_name(int cmd)
+static char *rcp_cmd_name(unsigned int cmd)
 {
     if(cmd < 0x80)
     {
