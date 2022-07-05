@@ -327,7 +327,7 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 	Sample			*sample;
 	WAVFormatChunk	format = {0,};
 	WAVSamplerChunk	samplerc = {0,};
-	GeneralInstrumentInfo	instc;
+	GeneralInstrumentInfo	instc = {0,};
 	
 	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
@@ -612,7 +612,7 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 	int32			chunk_flags;
 	AIFFCommonChunk	common;
 	AIFFSoundDataChunk	sound;
-	GeneralInstrumentInfo	inst_info;
+	GeneralInstrumentInfo	inst_info = {0,};
 	AIFFLoopInfo	loop_info = {0,0,0};
 	AIFFMarkerData	*marker_data;
 	
