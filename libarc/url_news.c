@@ -81,7 +81,7 @@ enum
     ARTICLE_STATUS_4
 };
 
-static int name_news_check(char *url_string);
+static int name_news_check(const char *url_string);
 static long url_news_read(URL url, void *buff, long n);
 static int url_news_fgetc(URL url);
 static void url_news_close(URL url);
@@ -95,7 +95,7 @@ struct URL_module URL_module_news =
     NULL
 };
 
-static int name_news_check(char *s)
+static int name_news_check(const char *s)
 {
     if(strncmp(s, "news://", 7) == 0 && strchr(s, '@') != NULL)
 	return 1;
@@ -121,7 +121,7 @@ static void close_news_server(NewsConnection *news)
     news->status = -1;
 }
 
-static NewsConnection *open_news_server(char *host, unsigned short port)
+static NewsConnection *open_news_server(const char *host, unsigned short port)
 {
     NewsConnection *p;
     char buff[512];
@@ -250,7 +250,7 @@ int url_news_connection_cache(int flag)
     return oldflag;
 }
 
-URL url_news_open(char *name)
+URL url_news_open(const char *name)
 {
     URL_news *url;
     char *host, *p;

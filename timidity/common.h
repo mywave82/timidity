@@ -51,9 +51,9 @@ struct timidity_file
 extern void add_to_pathlist(char *s);
 extern void clean_up_pathlist(void);
 extern int is_url_prefix(const char *name);
-extern struct timidity_file *open_file(char *name, int decompress,
+extern struct timidity_file *open_file(const char *name, int decompress,
 		int noise_mode);
-extern struct timidity_file *open_file_r(char *name, int decompress,
+extern struct timidity_file *open_file_r(const char *name, int decompress,
 		int noise_mode);
 extern struct timidity_file *open_with_mem(char *mem, int32 memlen,
 		int noise_mode);
@@ -66,7 +66,7 @@ extern long tf_read(void *buff, int32 size, int32 nitems,
 extern long tf_seek(struct timidity_file *tf, long offset, int whence);
 extern long tf_tell(struct timidity_file *tf);
 extern int int_rand(int n);	/* random [0..n-1] */
-extern int check_file_extension(char *filename, char *ext, int decompress);
+extern int check_file_extension(const char *filename, char *ext, int decompress);
 
 extern void *safe_malloc(size_t count);
 extern void *safe_realloc(void *old_ptr, size_t new_size);
@@ -95,7 +95,7 @@ extern void code_convert(char *in, char *out, int outsiz,
 
 extern void safe_exit(int status);
 
-extern char *timidity_version;
+extern const char *timidity_version;
 extern MBlockList tmpbuffer;
 extern char *output_text_code;
 

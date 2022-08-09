@@ -243,7 +243,7 @@ typedef struct _URL_dir
     int endp;
 } URL_dir;
 
-static int name_dir_check(char *url_string);
+static int name_dir_check(const char *url_string);
 static long url_dir_read(URL url, void *buff, long n);
 static char *url_dir_gets(URL url, char *buff, int n);
 static long url_dir_tell(URL url);
@@ -258,7 +258,7 @@ struct URL_module URL_module_dir =
     NULL			/* must be NULL */
 };
 
-static int name_dir_check(char *url_string)
+static int name_dir_check(const char *url_string)
 {
     if(strncasecmp(url_string, "dir:", 4) == 0)
 	return 1;
@@ -267,11 +267,12 @@ static int name_dir_check(char *url_string)
 }
 
 #ifdef URL_DIR_CACHE_ENABLE
-URL url_dir_open(char *dname)
+URL url_dir_open(const char *dname)
 {
     struct dir_cache_t *d;
     URL_dir *url;
     int dlen;
+    char *tmp;
 
     if(dname == NULL)
 	dname = ".";
@@ -284,20 +285,20 @@ URL url_dir_open(char *dname)
 	else
 	    dname = url_expand_home_dir(dname);
     }
-    dname = safe_strdup(dname);
+    tmp = safe_strdup(dname);
 
     /* Remove tail of path sep. */
-    dlen = strlen(dname);
-    while(dlen > 0 && IS_PATH_SEP(dname[dlen - 1]))
+    dlen = strlen(tmp);
+    while(dlen > 0 && IS_PATH_SEP(tmp[dlen - 1]))
 	dlen--;
-    dname[dlen] = '\0';
+    tmp[dlen] = '\0';
     if(dlen == 0)
-	strcpy(dname, PATH_STRING); /* root */
+	strcpy(tmp, PATH_STRING); /* root */
 
-    d = read_cached_files(dname);
+    d = read_cached_files(tmp);
     if(d == NULL)
     {
-	free(dname);
+	free(tmp);
 	return NULL;
     }
 
@@ -305,7 +306,7 @@ URL url_dir_open(char *dname)
     if(url == NULL)
     {
 	url_errno = errno;
-	free(dname);
+	free(tmp);
 	errno = url_errno; /* restore errno */
 	return NULL;
     }
@@ -324,17 +325,18 @@ URL url_dir_open(char *dname)
     url->ptr = NULL;
     url->len = 0;
     url->total = 0;
-    url->dirname = dname;
+    url->dirname = tmp;
     url->endp = 0;
 
     return (URL)url;
 }
 #else
-URL url_dir_open(char *dname)
+URL url_dir_open(const char *dname)
 {
     URL_dir *url;
     DIR *dirp;
     int dlen;
+    char *tmp;
 
     if(dname == NULL)
 	dname = ".";
@@ -347,20 +349,20 @@ URL url_dir_open(char *dname)
 	else
 	    dname = url_expand_home_dir(dname);
     }
-    dname = safe_strdup(dname);
+    tmp = safe_strdup(dname);
 
     /* Remove tail of path sep. */
-    dlen = strlen(dname);
-    while(dlen > 0 && IS_PATH_SEP(dname[dlen - 1]))
+    dlen = strlen(tmp);
+    while(dlen > 0 && IS_PATH_SEP(tmp[dlen - 1]))
 	dlen--;
-    dname[dlen] = '\0';
+    tmp[dlen] = '\0';
     if(dlen == 0)
-	strcpy(dname, PATH_STRING); /* root */
+	strcpy(tmp, PATH_STRING); /* root */
 
-    if((dirp = opendir(dname)) == NULL)
+    if((dirp = opendir(tmp)) == NULL)
     {
 	url_errno = errno;
-	free(dname);
+	free(tmp);
 	errno = url_errno;
 	return NULL;
     }
@@ -370,7 +372,7 @@ URL url_dir_open(char *dname)
     {
 	url_errno = errno;
 	closedir(dirp);
-	free(dname);
+	free(tmp);
 	errno = url_errno;
 	return NULL;
     }
@@ -390,7 +392,7 @@ URL url_dir_open(char *dname)
     url->ptr = NULL;
     url->len = 0;
     url->total = 0;
-    url->dirname = dname;
+    url->dirname = tmp;
     url->endp = 0;
 
     return (URL)url;

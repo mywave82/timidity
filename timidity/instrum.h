@@ -201,14 +201,14 @@ extern int cutoff_allowed;
 
 /* sndfont.c */
 extern int opt_sf_close_each_file;
-extern void add_soundfont(char *sf_file, int sf_order,
+extern void add_soundfont(const char *sf_file, int sf_order,
 			  int cutoff_allowed, int resonance_allowed,
 			  int amp);
-extern void remove_soundfont(char *sf_file);
+extern void remove_soundfont(const char *sf_file);
 extern void init_load_soundfont(void);
 extern Instrument *load_soundfont_inst(int order, int bank, int preset,
 				       int keynote);
-extern Instrument *extract_soundfont(char *sf_file, int bank, int preset,
+extern Instrument *extract_soundfont(const char *sf_file, int bank, int preset,
 				     int keynote);
 extern int exclude_soundfont(int bank, int preset, int keynote);
 extern int order_soundfont(int bank, int preset, int keynote, int order);
@@ -220,7 +220,7 @@ extern void free_soundfonts(void);
 extern int load_missing_instruments(int *rc);
 extern void free_instruments(int reload_default_inst);
 extern void free_special_patch(int id);
-extern int set_default_instrument(char *name);
+extern int set_default_instrument(const char *name);
 extern void clear_magic_instruments(void);
 extern Instrument *load_instrument(int dr, int b, int prog);
 extern int find_instrument_map_bank(int dr, int map, int bk);

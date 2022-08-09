@@ -5241,11 +5241,11 @@ static int32 gs_cnv_vib_delay(int delay)
 static int last_rpn_addr(int ch)
 {
 	int lsb, msb, addr, i;
-	struct rpn_tag_map_t *addrmap;
+	const struct rpn_tag_map_t *addrmap;
 	struct rpn_tag_map_t {
 		int addr, mask, tag;
 	};
-	static struct rpn_tag_map_t nrpn_addr_map[] = {
+	static const struct rpn_tag_map_t nrpn_addr_map[] = {
 		{0x0108, 0xffff, NRPN_ADDR_0108},
 		{0x0109, 0xffff, NRPN_ADDR_0109},
 		{0x010a, 0xffff, NRPN_ADDR_010A},
@@ -5275,7 +5275,7 @@ static int last_rpn_addr(int ch)
 		{0x3500, 0xff00, NRPN_ADDR_3500},
 		{-1, -1, 0}
 	};
-	static struct rpn_tag_map_t rpn_addr_map[] = {
+	static const struct rpn_tag_map_t rpn_addr_map[] = {
 		{0x0000, 0xffff, RPN_ADDR_0000},
 		{0x0001, 0xffff, RPN_ADDR_0001},
 		{0x0002, 0xffff, RPN_ADDR_0002},
@@ -5286,7 +5286,7 @@ static int last_rpn_addr(int ch)
 		{0xffff, 0xffff, RPN_ADDR_FFFF},
 		{-1, -1}
 	};
-	
+
 	if (channel[ch].nrpn == -1)
 		return -1;
 	lsb = channel[ch].lastlrpn;

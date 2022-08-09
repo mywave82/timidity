@@ -145,12 +145,12 @@ extern char *readmidi_make_string_event(int type, char *string, MidiEvent *ev,
 extern void free_time_segments(void);
 extern MidiEvent *read_midi_file(struct timidity_file *mtf,
 				 int32 *count, int32 *sp, char *file_name);
-extern struct midi_file_info *get_midi_file_info(char *filename,int newp);
+extern struct midi_file_info *get_midi_file_info(const char *filename,int newp);
 extern struct midi_file_info *new_midi_file_info(const char *filename);
 extern void free_all_midi_file_info(void);
-extern int check_midi_file(char *filename);
-extern char *get_midi_title(char *filename);
-extern struct timidity_file *open_midi_file(char *name,
+extern int check_midi_file(const char *filename);
+extern char *get_midi_title(const char *filename);
+extern struct timidity_file *open_midi_file(const char *name,
 					    int decompress, int noise_mode);
 extern int midi_file_save_as(char *in_name, char *out_name);
 extern char *event2string(int id);

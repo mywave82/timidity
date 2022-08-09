@@ -4948,21 +4948,22 @@ void free_all_midi_file_info(void)
   current_file_info = NULL;
 }
 
-struct midi_file_info *get_midi_file_info(char *filename, int newp)
+struct midi_file_info *get_midi_file_info(const char *filename, int newp)
 {
     struct midi_file_info *p;
+    const char *tmp;
 
-    filename = url_expand_home_dir(filename);
+    tmp = url_expand_home_dir(filename);
     /* Linear search */
     for(p = midi_file_info; p; p = p->next)
-	if(!strcmp(filename, p->filename))
+	if(!strcmp(tmp, p->filename))
 	    return p;
     if(newp)
-	return new_midi_file_info(filename);
+	return new_midi_file_info(tmp);
     return NULL;
 }
 
-struct timidity_file *open_midi_file(char *fn,
+struct timidity_file *open_midi_file(const char *fn,
 				     int decompress, int noise_mode)
 {
     struct midi_file_info *infop;
@@ -5039,7 +5040,7 @@ static void url_make_file_data(URL url, struct midi_file_info *infop)
     delete_memb(&b);
 }
 
-static int check_need_cache(URL url, char *filename)
+static int check_need_cache(URL url, const char *filename)
 {
     int t1, t2;
     t1 = url_check_type(filename);
@@ -5053,13 +5054,13 @@ static void url_make_file_data(URL url, struct midi_file_info *infop)
 {
 }
 /*ARGSUSED*/
-static int check_need_cache(URL url, char *filename)
+static int check_need_cache(URL url, const char *filename)
 {
     return 0;
 }
 #endif /* NO_MIDI_CACHE */
 
-int check_midi_file(char *filename)
+int check_midi_file(const char *filename)
 {
     struct midi_file_info *p;
     struct timidity_file *tf;
@@ -5193,7 +5194,7 @@ static char *get_midi_title1(struct midi_file_info *p)
     return s;
 }
 
-char *get_midi_title(char *filename)
+char *get_midi_title(const char *filename)
 {
     struct midi_file_info *p;
     struct timidity_file *tf;

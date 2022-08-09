@@ -51,7 +51,7 @@
 #define INSTRUMENT_HASH_SIZE 128
 struct InstrumentCache
 {
-    char *name;
+    const char *name;
     int panning, amp, note_to_use, strip_loop, strip_envelope, strip_tail;
     Instrument *ip;
     struct InstrumentCache *next;
@@ -245,7 +245,7 @@ static void reverse_data(int16 *sp, int32 ls, int32 le)
   }
 }
 
-static int name_hash(char *name)
+static int name_hash(const char *name)
 {
     unsigned int addr = 0;
 
@@ -254,7 +254,7 @@ static int name_hash(char *name)
     return addr % INSTRUMENT_HASH_SIZE;
 }
 
-static Instrument *search_instrument_cache(char *name,
+static Instrument *search_instrument_cache(const char *name,
 				int panning, int amp, int note_to_use,
 				int strip_loop, int strip_envelope,
 				int strip_tail)
@@ -277,7 +277,7 @@ static Instrument *search_instrument_cache(char *name,
 }
 
 static void store_instrument_cache(Instrument *ip,
-				   char *name,
+				   const char *name,
 				   int panning, int amp, int note_to_use,
 				   int strip_loop, int strip_envelope,
 				   int strip_tail)
@@ -614,7 +614,7 @@ static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
  *
  * TODO: do reverse loops right
  */
-static Instrument *load_gus_instrument(char *name,
+static Instrument *load_gus_instrument(const char *name,
 		ToneBank *bank, int dr, int prog, char *infomsg)
 {
 	ToneBankElement *tone;
@@ -1590,11 +1590,11 @@ void free_special_patch(int id)
 	}
 }
 
-int set_default_instrument(char *name)
+int set_default_instrument(const char *name)
 {
     Instrument *ip;
     int i;
-    static char *last_name;
+    static const char *last_name;
 
     if(name == NULL)
     {

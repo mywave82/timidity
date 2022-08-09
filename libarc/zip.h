@@ -54,7 +54,7 @@ struct huft {
     } v;
 };
 
-int huft_build(unsigned *, unsigned, unsigned, ush *, ush *,
+int huft_build(unsigned *, unsigned, unsigned, const ush *, const ush *,
 	       struct huft **, int *, MBlockList *pool);
 
 #define STORED_BLOCK 0

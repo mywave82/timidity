@@ -78,7 +78,7 @@ static void null_wrdt_update_events(void) { }
 static void null_wrdt_end(void) { }
 static void null_wrdt_close(void) { }
 
-WRDTracer null_wrdt_mode =
+static const WRDTracer null_wrdt_mode =
 {
     "No WRD trace", '-',
     0,
@@ -107,7 +107,7 @@ extern WRDTracer w32g_wrdt_mode; /* wrdt_w32g.c */
 extern WRDTracer null_wrdt_mode;
 #endif /* __W32__ */
 
-WRDTracer *wrdt_list[] =
+const WRDTracer *wrdt_list[] =
 {
 #ifdef WRDT_X
     &x_wrdt_mode,
@@ -131,7 +131,7 @@ WRDTracer *wrdt_list[] =
     0
 };
 
-WRDTracer *wrdt = &null_wrdt_mode;
+const WRDTracer *wrdt = &null_wrdt_mode;
 
 
 static StringTable path_list;

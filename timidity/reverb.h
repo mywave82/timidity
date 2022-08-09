@@ -252,7 +252,7 @@ EXTERN struct effect_xg_t insertion_effect_xg[XG_INSERTION_EFFECT_NUM],
 typedef struct _EffectList {
 	int type;
 	void *info;
-	struct _EffectEngine *engine;
+	const struct _EffectEngine *engine;
 	struct _EffectList *next_ef;
 } EffectList;
 
@@ -265,7 +265,7 @@ struct _EffectEngine {
 	int info_size;
 };
 
-extern struct _EffectEngine effect_engine[];
+extern const struct _EffectEngine effect_engine[];
 
 struct effect_parameter_gs_t {
 	int8 type_msb, type_lsb;
@@ -274,7 +274,7 @@ struct effect_parameter_gs_t {
 	int8 control1, control2;
 };
 
-extern struct effect_parameter_gs_t effect_parameter_gs[];
+extern const struct effect_parameter_gs_t effect_parameter_gs[];
 
 struct effect_parameter_xg_t {
 	int8 type_msb, type_lsb;
@@ -283,7 +283,7 @@ struct effect_parameter_xg_t {
 	int8 control;
 };
 
-extern struct effect_parameter_xg_t effect_parameter_xg[];
+extern const struct effect_parameter_xg_t effect_parameter_xg[];
 
 extern EffectList *push_effect(EffectList *, int);
 extern void do_effect_list(int32 *, int32, EffectList *);

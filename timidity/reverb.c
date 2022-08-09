@@ -1373,8 +1373,8 @@ FLOAT_T freeverb_offsetroom = 0.7;
 #define initialwidth 0.5
 #define initialallpassfbk 0.65
 #define stereospread 23
-static int combtunings[numcombs] = {1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617};
-static int allpasstunings[numallpasses] = {225, 341, 441, 556};
+static const int combtunings[numcombs] = {1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617};
+static const int allpasstunings[numallpasses] = {225, 341, 441, 556};
 #define fixedgain 0.025
 #define combfbk 3.0
 
@@ -3201,7 +3201,7 @@ static void conv_xg_eq3(struct effect_xg_t *st, EffectList *ef)
 	info->high_freq = eq_freq_table_xg[clip_int(st->param_lsb[6], 28, 58)];
 }
 
-static float eq_q_table_gs[] =
+static const float eq_q_table_gs[] =
 {
 	0.5, 1.0, 2.0, 4.0, 9.0,
 };
@@ -4088,7 +4088,7 @@ struct early_reflection_param_t {
 	float weight_right[20];
 };
 
-static struct early_reflection_param_t early_reflection_param[] = {
+static const struct early_reflection_param_t early_reflection_param[] = {
 	{ ER_SMALL_ROOM,
 		{ 461, 487, 505, 530, 802, 818, 927, 941, 1047, 1058, 1068, 1070, 1076, 1096, 1192, 1203, 1236, 1261, 1321, 1344, },
 		{ 0.1594, 0.1328, 0.1197, 0.1025, 0.0285, 0.0267, 0.0182, 0.0173, 0.0098, 0.0121, 0.0092, 0.0116, 0.0090, 0.0085, 0.0084, 0.0081, 0.0059, 0.0055, 0.0048, 0.0045, },
@@ -4123,7 +4123,7 @@ static struct early_reflection_param_t early_reflection_param[] = {
 };
 #endif
 
-struct _EffectEngine effect_engine[] = {
+const struct _EffectEngine effect_engine[] = {
 {	EFFECT_NONE, "None", NULL, NULL, NULL, 0,},
 {	EFFECT_STEREO_EQ, "Stereo-EQ", do_stereo_eq, conv_gs_stereo_eq, NULL, sizeof(InfoStereoEQ),},
 {	EFFECT_EQ2, "2-Band EQ", do_eq2, conv_gs_eq2, conv_xg_eq2, sizeof(InfoEQ2),},
@@ -4155,7 +4155,7 @@ struct _EffectEngine effect_engine[] = {
 {	-1, "EOF", NULL, NULL, NULL, 0, },
 };
 
-struct effect_parameter_xg_t effect_parameter_xg[] = {
+const struct effect_parameter_xg_t effect_parameter_xg[] = {
 {	0, 0, "NO EFFECT",
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,}, 0, },
@@ -4266,7 +4266,7 @@ struct effect_parameter_xg_t effect_parameter_xg[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,}, 0,},
 };
 
-struct effect_parameter_gs_t effect_parameter_gs[] = {
+const struct effect_parameter_gs_t effect_parameter_gs[] = {
 {	0, 0, "None", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,}, 0, 0,},
 {	0x01, 0x00, "Stereo-EQ", { 1, 0x45, 1, 0x34, 0x48, 0, 0x48, 0x38, 0, 0x48,

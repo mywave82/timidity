@@ -69,7 +69,7 @@ typedef struct _URL
 #define url_eof(url) URLm((url), eof)
 
 /* open URL stream */
-extern URL url_open(char *url_string);
+extern URL url_open(const char *url_string);
 
 /* close URL stream */
 extern void url_close(URL url);
@@ -116,17 +116,17 @@ void *url_dump(URL url, long nbytes, long *real_read);
 void url_set_readlimit(URL url, long readlimit);
 
 /* url_errno to error message */
-extern char *url_strerror(int no);
+extern const char *url_strerror(int no);
 
 /* allocate URL structure */
 extern URL alloc_url(int size);
 
 /* Check URL type. */
-extern int url_check_type(char *url_string);
+extern int url_check_type(const char *url_string);
 
 /* replace `~' to user directory */
-extern char *url_expand_home_dir(char *filename);
-extern char *url_unexpand_home_dir(char *filename);
+extern const char *url_expand_home_dir(const char *filename);
+extern const char *url_unexpand_home_dir(const char *filename);
 
 extern int url_errno;
 enum url_errtypes
@@ -147,13 +147,13 @@ struct URL_module
     int type;
 
     /* URL checker */
-    int (* name_check)(char *url_string);
+    int (* name_check)(const char *url_string);
 
     /* Once call just before url_open(). */
     int (* url_init)(void);
 
     /* Open specified URL */
-    URL (* url_open)(char *url_string);
+    URL (* url_open)(const char *url_string);
 
     /* chain next modules */
     struct URL_module *chain;
@@ -162,13 +162,13 @@ struct URL_module
 extern void url_add_module(struct URL_module *m);
 extern void url_add_modules(struct URL_module *m, ...);
 
-extern URL url_file_open(char *filename);
-extern URL url_dir_open(char *directory_name);
-extern URL url_http_open(char *url_string);
-extern URL url_ftp_open(char *url_string);
-extern URL url_newsgroup_open(char *url_string);
-extern URL url_news_open(char *url_string);
-extern URL url_pipe_open(char *command);
+extern URL url_file_open(const char *filename);
+extern URL url_dir_open(const char *directory_name);
+extern URL url_http_open(const char *url_string);
+extern URL url_ftp_open(const char *url_string);
+extern URL url_newsgroup_open(const char *url_string);
+extern URL url_news_open(const char *url_string);
+extern URL url_pipe_open(const char *command);
 
 /* No URL_module */
 extern URL url_mem_open(char *memory, long memsiz, int autofree);
@@ -188,7 +188,7 @@ extern char *url_dir_name(URL url);
 extern char *url_newsgroup_name(URL url);
 extern int url_news_connection_cache(int flag);
 
-extern char *url_lib_version;
+extern const char * const url_lib_version;
 extern char *user_mailaddr;
 extern char *url_user_agent;
 extern char *url_http_proxy_host;

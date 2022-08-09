@@ -83,7 +83,7 @@ load_module_file (struct timidity_file *tf, int mod_type)
 
 
 int 
-get_module_type (char *fn)
+get_module_type (const char *fn)
 {
   if (check_file_extension (fn, ".mod", 1))	/* Most common first */
     return IS_MOD_FILE;

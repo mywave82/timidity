@@ -63,7 +63,7 @@ typedef struct _URL_ftp
     int abor;
 } URL_ftp;
 
-static int name_ftp_check(char *url_string);
+static int name_ftp_check(const char *url_string);
 static long url_ftp_read(URL url, void *buff, long size);
 static char *url_ftp_gets(URL url, char *buff, int n);
 static int url_ftp_fgetc(URL url);
@@ -79,7 +79,7 @@ struct URL_module URL_module_ftp =
     NULL
 };
 
-static int name_ftp_check(char *s)
+static int name_ftp_check(const char *s)
 {
     if(strncmp(s, "ftp://", 6) == 0)
 	return 1;
@@ -151,7 +151,7 @@ static int guess_errno(char *msg)
     return ENOENT;
 }
 
-URL url_ftp_open(char *name)
+URL url_ftp_open(const char *name)
 {
     URL_ftp *url;
     SOCKET fd;

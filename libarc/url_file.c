@@ -86,7 +86,7 @@ typedef struct _URL_file
     FILE *fp;			/* Non NULL if mmap is failure */
 } URL_file;
 
-static int name_file_check(char *url_string);
+static int name_file_check(const char *url_string);
 static long url_file_read(URL url, void *buff, long n);
 static char *url_file_gets(URL url, char *buff, int n);
 static int url_file_fgetc(URL url);
@@ -103,7 +103,7 @@ struct URL_module URL_module_file =
     NULL			/* must be NULL */
 };
 
-static int name_file_check(char *s)
+static int name_file_check(const char *s)
 {
     int i;
 
@@ -130,7 +130,7 @@ static int name_file_check(char *s)
 }
 
 #ifdef HAVE_MMAP
-static char *try_mmap(char *path, long *size)
+static char *try_mmap(const char *path, long *size)
 {
     int fd;
     char *p;
@@ -200,7 +200,7 @@ static void w32_munmap(void *ptr, long size, HANDLE hFile, HANDLE hMap)
 }
 #endif /* HAVE_MMAP */
 
-URL url_file_open(char *fname)
+URL url_file_open(const char *fname)
 {
     URL_file *url;
     char *mapptr;		/* Non NULL if mmap is success */

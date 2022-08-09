@@ -759,7 +759,7 @@ static void free_layer(SFHeader *hdr)
 }
 
 /* add blank loop for each data */
-int auto_add_blank = 0;
+const static int auto_add_blank = 0;
 void correct_samples(SFInfo *sf)
 {
 	int i;

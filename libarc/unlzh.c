@@ -160,7 +160,7 @@ static void init_getbits(UNLZHHandler decoder);
 
 #define NEXTBYTE (decoder->inbuf_cnt < decoder->inbuf_size ? (int)decoder->inbuf[decoder->inbuf_cnt++] : fill_inbuf(decoder))
 
-static struct
+static const struct
 {
     char *id;
     int dicbit;
@@ -844,7 +844,7 @@ static void decode_start_st0(UNLZHHandler decoder)
     decoder->blocksize = 0;
 }
 
-static int fixed[2][16] = {
+static const int fixed[2][16] = {
     {3, 0x01, 0x04, 0x0c, 0x18, 0x30, 0},		/* old compatible */
     {2, 0x01, 0x01, 0x03, 0x06, 0x0D, 0x1F, 0x4E, 0}	/* 8K buf */
 };
@@ -853,7 +853,7 @@ static void ready_made(UNLZHHandler decoder, int method)
 { // code and weight are not used in this pass
     int i, j;
     //unsigned int code, weight;
-    int *tbl;
+    const int *tbl;
 
     tbl = fixed[method];
     j = *tbl++;

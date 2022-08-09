@@ -1797,8 +1797,8 @@ static inline void update_tremolo(int v)
 int apply_envelope_to_amp(int v)
 {
 	Voice *vp = &voice[v];
-	FLOAT_T lamp = vp->left_amp, ramp,
-		*v_table = vp->sample->inst_type == INST_SF2 ? sb_vol_table : vol_table;
+	FLOAT_T lamp = vp->left_amp, ramp;
+	const FLOAT_T *v_table = vp->sample->inst_type == INST_SF2 ? sb_vol_table : vol_table;
 	int32 la, ra;
 	
 	if (vp->panned == PANNED_MYSTERY) {

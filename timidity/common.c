@@ -398,10 +398,10 @@ struct timidity_file *open_with_mem(char *mem, int32 memlen, int noise_mode)
  * This is meant to find and open files for reading, possibly piping
  * them through a decompressor.
  */
-struct timidity_file *open_file(char *name, int decompress, int noise_mode)
+struct timidity_file *open_file(const char *name, int decompress, int noise_mode)
 {
 	struct timidity_file *tf;
-	PathList *plp = pathlist;
+	const PathList *plp = pathlist;
 	int l;
 	
 	open_file_noise_mode = noise_mode;
@@ -473,11 +473,11 @@ struct timidity_file *open_file(char *name, int decompress, int noise_mode)
  * This is meant to find and open regular files for reading, possibly
  * piping them through a decompressor.
  */
-struct timidity_file *open_file_r(char *name, int decompress, int noise_mode)
+struct timidity_file *open_file_r(const char *name, int decompress, int noise_mode)
 {
 	struct stat st;
 	struct timidity_file *tf;
-	PathList *plp = pathlist;
+	const PathList *plp = pathlist;
 	int l;
 	
 	open_file_noise_mode = noise_mode;
@@ -857,7 +857,7 @@ int volatile_touch(void *dmy) {return 1;}
 #endif /* HAVE_VOLATILE */
 
 /* code converters */
-static unsigned char
+static const unsigned char
       w2k[] = {128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
                144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,
                160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
@@ -1238,7 +1238,7 @@ int int_rand(int n)
 }
 #endif /* RAND_MAX */
 
-int check_file_extension(char *filename, char *ext, int decompress)
+int check_file_extension(const char *filename, char *ext, int decompress)
 {
     int len, elen, i;
 #if defined(DECOMPRESSOR_LIST)

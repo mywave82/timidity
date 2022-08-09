@@ -672,7 +672,7 @@ static int copymap(int mapto, int mapfrom, int isdrum)
 {
 	ToneBank **tb = isdrum ? drumset : tonebank;
 	int i, bankfrom, bankto;
-	
+
 	for(i = 0; i < 128; i++)
 	{
 		bankfrom = find_instrument_map_bank(isdrum, mapfrom, i);
@@ -691,7 +691,7 @@ static float *config_parse_tune(const char *cp, int *num)
 	const char *p;
 	float *tune_list;
 	int i;
-	
+
 	/* count num */
 	*num = 1, p = cp;
 	while ((p = strchr(p, ',')) != NULL)
@@ -712,7 +712,7 @@ static int16 *config_parse_int16(const char *cp, int *num)
 	const char *p;
 	int16 *list;
 	int i;
-	
+
 	/* count num */
 	*num = 1, p = cp;
 	while ((p = strchr(p, ',')) != NULL)
@@ -733,7 +733,7 @@ static int **config_parse_envelope(const char *cp, int *num)
 	const char *p, *px;
 	int **env_list;
 	int i, j;
-	
+
 	/* count num */
 	*num = 1, p = cp;
 	while ((p = strchr(p, ',')) != NULL)
@@ -775,7 +775,7 @@ static Quantity **config_parse_modulation(const char *name, int line, const char
 		QUANTITY_UNIT_TYPE(TREMOLO_SWEEP), QUANTITY_UNIT_TYPE(TREMOLO_RATE), QUANTITY_UNIT_TYPE(DIRECT_INT),
 		QUANTITY_UNIT_TYPE(VIBRATO_SWEEP), QUANTITY_UNIT_TYPE(VIBRATO_RATE), QUANTITY_UNIT_TYPE(DIRECT_INT)
 	};
-	
+
 	/* count num */
 	*num = 1, p = cp;
 	while ((p = strchr(p, ',')) != NULL)
@@ -821,7 +821,7 @@ static int set_gus_patchconf_opts(char *name,
 {
 	char *cp;
 	int k;
-	
+
 	if (! (cp = strchr(opts, '='))) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: bad patch option %s", name, line, opts);
@@ -909,7 +909,7 @@ static int set_gus_patchconf_opts(char *name,
 		tone->scltune = config_parse_int16(cp, &tone->scltunenum);
 	else if (! strcmp(opts, "comm")) {
 		char *p;
-		
+
 		if (tone->comment)
 			free(tone->comment);
 		p = tone->comment = safe_strdup(cp);
@@ -1080,7 +1080,7 @@ static int set_gus_patchconf(char *name, int line,
 static int set_patchconf(char *name, int line, ToneBank *bank, char *w[], int dr, int mapid, int bankmapfrom, int bankno)
 {
     int i;
-    
+
     i = atoi(w[0]);
     if(!dr)
 	i -= progbase;
@@ -1143,7 +1143,7 @@ static int mapname2id(char *name, int *isdrum)
 		{"xgsfx64",     XG_SFX64_MAP, 0}
 	};
 	const MapNameEntry *found;
-	
+
 	found = (MapNameEntry *)bsearch(name, data, sizeof data / sizeof data[0], sizeof data[0], mapnamecompare);
 	if (found != NULL)
 	{
@@ -1171,7 +1171,7 @@ static char *expand_variables(char *string, MBlockList *varbuf, const char *base
 	char *p, *expstr;
 	const char *copystr;
 	int limlen, copylen, explen, varlen, braced;
-	
+
 	if ((p = strchr(string, '$')) == NULL)
 		return string;
 	varlen = strlen(basedir);
@@ -1594,7 +1594,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
                 }
                 url_http_proxy_host++;
                 url_http_proxy_host[strlen(url_http_proxy_host) - 1] = '\0';
-            } 
+            }
 #endif
 	}
 	/* #extension FTPproxy hostname:port */
@@ -1676,7 +1676,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	else if (strcmp(w[0], "opt") == 0) {
 		int c, longind, err;
 		char *p, *cmd, *arg;
-		
+
 		if (words != 2 && words != 3) {
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Syntax error", name, line);
@@ -2300,7 +2300,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	else if(!strcmp(w[0], "drumset"))
 	{
 	    int newmapid, isdrum, newbankno;
-	    
+
 	    if(words < 2)
 	    {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -2372,7 +2372,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	else if(!strcmp(w[0], "bank"))
 	{
 	    int newmapid, isdrum, newbankno;
-	    
+
 	    if(words < 2)
 	    {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -2597,7 +2597,7 @@ int opt_buffer_fragments = -1;
 MAIN_INTERFACE int set_tim_opt_short(int c, char *optarg)
 {
 	int err = 0;
-	
+
 	switch (c) {
 	case '4':
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -2731,7 +2731,7 @@ MAIN_INTERFACE int set_tim_opt_long(int c, char *optarg, int index)
 {
 	const struct option *the_option = &(longopts[index]);
 	char *arg;
-	
+
 	if (c == '?')	/* getopt_long failed parsing */
 		parse_opt_fail(optarg);
 	else if (c < TIM_OPT_FIRST)
@@ -2971,7 +2971,7 @@ MAIN_INTERFACE int set_tim_opt_long_cfg(int c, char *optarg, int index)
 {
 	const struct option *the_option = &(longopts[index]);
 	char *arg;
-	
+
 	if (c == '?')	/* getopt_long failed parsing */
 		parse_opt_fail(optarg);
 	else if (c < TIM_OPT_FIRST)
@@ -3019,7 +3019,7 @@ static inline int parse_opt_B(const char *arg)
 {
 	/* --buffer-fragments */
 	const char *p;
-	
+
 	/* num */
 	if (*arg != ',') {
 		if (set_value(&opt_buffer_fragments, atoi(arg), 0, 1000,
@@ -3079,7 +3079,7 @@ static inline int parse_opt_E(char *arg)
 {
 	/* undocumented option --ext */
 	int err = 0;
-	
+
 	while (*arg) {
 		switch (*arg) {
 		case 'w':
@@ -3260,7 +3260,7 @@ static inline int parse_opt_default_mid(char *arg)
 {
 	/* --default-mid */
 	int val = str2mID(arg);
-	
+
 	if (! val) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Manufacture ID: Illegal value");
 		return 1;
@@ -3273,7 +3273,7 @@ static inline int parse_opt_system_mid(char *arg)
 {
 	/* --system-mid */
 	int val = str2mID(arg);
-	
+
 	if (! val) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Manufacture ID: Illegal value");
 		return 1;
@@ -3304,7 +3304,7 @@ static inline int parse_opt_default_program(const char *arg)
 	/* --default-program */
 	int prog, i;
 	const char *p;
-	
+
 	if (set_value(&prog, atoi(arg), 0, 0x7f, "Program number"))
 		return 1;
 	if ((p = strchr(arg, '/')) != NULL) {
@@ -3322,7 +3322,7 @@ static inline int parse_opt_force_program(const char *arg)
 	/* --force-program */
 	const char *p;
 	int i;
-	
+
 	if (set_value(&def_prog, atoi(arg), 0, 0x7f, "Program number"))
 		return 1;
 	if (ctl->opened)
@@ -3341,7 +3341,7 @@ static inline int set_default_program(int prog)
 {
 	int bank;
 	Instrument *ip;
-	
+
 	bank = (special_tonebank >= 0) ? special_tonebank : default_tonebank;
 	if ((ip = play_midi_load_instrument(0, bank, prog)) == NULL)
 		return 1;
@@ -3353,7 +3353,7 @@ static inline int parse_opt_delay(const char *arg)
 {
 	/* --delay */
 	const char *p;
-	
+
 	switch (*arg) {
 	case '0':
 	case 'd':	/* disable */
@@ -3383,7 +3383,7 @@ static inline int parse_opt_chorus(const char *arg)
 {
 	/* --chorus */
 	const char *p;
-	
+
 	switch (*arg) {
 	case '0':
 	case 'd':	/* disable */
@@ -3414,7 +3414,7 @@ static inline int parse_opt_reverb(const char *arg)
 {
 	/* --reverb */
 	const char *p;
-	
+
 	/* option       action                  opt_reverb_control
 	 * reverb=0     no reverb                 0
 	 * reverb=1     old reverb                1
@@ -3425,11 +3425,11 @@ static inline int parse_opt_reverb(const char *arg)
 	 * reverb=3,n   set reverb level to n   (-1 to -127) - 256
 	 * reverb=4     "global" new reverb       4
 	 * reverb=4,n   set reverb level to n   (-1 to -127) - 384
-	 * 
+	 *
 	 * I think "global" was meant to apply a single global reverb,
 	 * without applying any reverb to the channels.  The do_effects()
 	 * function in effects.c looks like a good way to do this.
-	 * 
+	 *
 	 * This is NOT the "correct" way to implement global reverb, we should
 	 * really make a new variable just for that.  But if opt_reverb_control
 	 * is already used in a similar fashion, rather than creating a new
@@ -3438,7 +3438,7 @@ static inline int parse_opt_reverb(const char *arg)
 	 * variables for both global reverb and channel reverb level settings
 	 * in the future, but this will do for now.
 	 */
-	
+
 	switch (*arg) {
 	case '0':
 	case 'd':	/* disable */
@@ -3480,7 +3480,7 @@ static inline int parse_opt_reverb(const char *arg)
 static int parse_opt_reverb_freeverb(const char *arg, char type)
 {
 	const char *p;
-	
+
 	if ((p = strchr(arg, ',')) != NULL)
 		p++;
 	else
@@ -3629,7 +3629,7 @@ static inline int parse_opt_G(const char *arg)
 	TimeSegment *sp;
 	const char *p = arg;
 	int prev_end;
-	
+
 	if (strchr(arg, 'm'))
 		return parse_opt_G1(arg);
 	if (time_segments == NULL) {
@@ -3684,7 +3684,7 @@ static inline int parse_opt_G1(const char *arg)
 	TimeSegment *sp;
 	const char *p = arg;
 	int prev_end_meas, prev_end_beat;
-	
+
 	if (time_segments == NULL) {
 		time_segments = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
 		time_segments->type = 1;
@@ -3737,7 +3737,7 @@ static inline int parse_opt_G1(const char *arg)
 static int parse_segment(TimeSegment *seg, const char *p)
 {
 	const char *q;
-	
+
 	if (*p == '-')
 		seg->begin.s = 0;
 	else if (parse_time(&seg->begin.s, p))
@@ -3753,7 +3753,7 @@ static int parse_segment(TimeSegment *seg, const char *p)
 static int parse_segment2(TimeSegment *seg, const char *p)
 {
 	const char *q;
-	
+
 	if (*p == '-')
 		seg->begin.m.meas = seg->begin.m.beat = 1;
 	else if (parse_time2(&seg->begin.m, p))
@@ -3771,7 +3771,7 @@ static int parse_time(FLOAT_T *param, const char *p)
 	const char *p1, *p2, *p3;
 	int min;
 	FLOAT_T sec;
-	
+
 	p1 = ((p1 = strchr(p, ':')) == NULL) ? p + strlen(p) : p1;
 	p2 = ((p2 = strchr(p, '-')) == NULL) ? p + strlen(p) : p2;
 	p3 = ((p3 = strchr(p, ',')) == NULL) ? p + strlen(p) : p3;
@@ -3790,7 +3790,7 @@ static int parse_time(FLOAT_T *param, const char *p)
 static int parse_time2(Measure *param, const char *p)
 {
 	const char *p1, *p2, *p3;
-	
+
 	if (set_value(&param->meas, atoi(p), 0, 999, "Segment time (measure)"))
 		return 1;
 	p1 = ((p1 = strchr(p, '.')) == NULL) ? p + strlen(p) : p1;
@@ -3826,7 +3826,7 @@ static inline int parse_opt_H(const char *arg)
 {
 	/* force keysig (number of sharp/flat) */
 	int keysig;
-	
+
 	if (set_value(&keysig, atoi(arg), -7, 7,
 			"Force keysig (number of sHarp(+)/flat(-))"))
 		return 1;
@@ -4117,8 +4117,8 @@ static int parse_opt_h(const char *arg)
 	char mark[128];
 #endif
 	PlayMode *pmp, **pmpp;
-	WRDTracer *wlp, **wlpp;
-	
+	const WRDTracer *wlp, **wlpp;
+
 	fp = open_pager();
 	strcpy(version, (strcmp(timidity_version, "current")) ? "version " : "");
 	strcat(version, timidity_version);
@@ -4335,7 +4335,7 @@ static inline void list_dyna_interface(FILE *fp, char *path, char *mark)
 	url_close(dir);
 }
 
-ControlMode *dynamic_interface_module(int id_char)
+static ControlMode *dynamic_interface_module(int id_char)
 {
 	URL url;
 	char fname[BUFSIZ];
@@ -4377,7 +4377,7 @@ static inline int parse_opt_i(const char *arg)
 	/* interface mode */
 	ControlMode *cmp, **cmpp;
 	int found = 0;
-	
+
 	for (cmpp = ctl_list; (cmp = *cmpp) != NULL; cmpp++) {
 		if (cmp->id_character == *arg) {
 			found = 1;
@@ -4530,7 +4530,7 @@ static inline int parse_opt_rtsyn_latency(const char *arg)
 static inline int parse_opt_rtsyn_latency(const char *arg)
 {
 	double latency;
-	
+
 	if (sscanf(arg, "%lf", &latency) == EOF)
 		latency = RTSYN_LATENCY;
 	rtsyn_set_latency(latency);
@@ -4584,7 +4584,7 @@ static inline int parse_opt_m(const char *arg)
 static inline int parse_opt_N(const char *arg)
 {
 	int val;
-	
+
 	switch (get_current_resampler()) {
 	case RESAMPLE_CSPLINE:
 	case RESAMPLE_LAGRANGE:
@@ -4609,7 +4609,7 @@ static inline int parse_opt_O(const char *arg)
 	/* output mode */
 	PlayMode *pmp, **pmpp;
 	int found = 0;
-	
+
 	for (pmpp = play_mode_list; (pmp = *pmpp) != NULL; pmpp++)
 		if (pmp->id_character == *arg) {
 			found = 1;
@@ -4871,7 +4871,7 @@ static inline int parse_opt_p1(const char *arg)
 static inline int parse_opt_Q(const char *arg)
 {
 	const char *p = arg;
-	
+
 	if (strchr(arg, 't'))
 		/* backward compatibility */
 		return parse_opt_Q1(arg);
@@ -4888,7 +4888,7 @@ static inline int parse_opt_Q1(const char *arg)
 	/* --temper-mute */
 	int prog;
 	const char *p = arg;
-	
+
 	if (set_value(&prog, atoi(arg), 0, 7, "Temperament program number"))
 		return 1;
 	temper_type_mute |= 1 << prog;
@@ -4910,7 +4910,7 @@ static inline int parse_opt_q(const char *arg)
 {
 	char *max_buff = safe_strdup(arg);
 	char *fill_buff = strchr(max_buff, '/');
-	
+
 	if (fill_buff != max_buff) {
 		if (opt_aq_max_buff)
 			free(opt_aq_max_buff);
@@ -4947,7 +4947,7 @@ static inline int parse_opt_S(const char *arg)
 {
 	int suffix = arg[strlen(arg) - 1];
 	int32 figure;
-	
+
 	switch (suffix) {
 	case 'M':
 	case 'm':
@@ -4980,7 +4980,7 @@ static inline int parse_opt_T(const char *arg)
 {
 	/* tempo adjust */
 	int adjust;
-	
+
 	if (set_value(&adjust, atoi(arg), 10, 400, "Tempo adjust"))
 		return 1;
 	tempo_adjust = 100.0 / adjust;
@@ -5059,8 +5059,8 @@ static inline int parse_opt_v(const char *arg)
 
 static inline int parse_opt_W(char *arg)
 {
-	WRDTracer *wlp, **wlpp;
-	
+	const WRDTracer *wlp, **wlpp;
+
 	if (*arg == 'R') {	/* for WRD reader options */
 		put_string_table(&wrd_read_opts, arg + 1, strlen(arg + 1));
 		return 0;
@@ -5106,7 +5106,7 @@ static inline int parse_opt_w(const char *arg)
 static inline int parse_opt_x(char *arg)
 {
 	StringTableNode *st;
-	
+
 	if ((st = put_string_table(&opt_config_string,
 			arg, strlen(arg))) != NULL)
 		expand_escape_string(st->string);
@@ -5116,7 +5116,7 @@ static inline int parse_opt_x(char *arg)
 static inline void expand_escape_string(char *s)
 {
 	char *t = s;
-	
+
 	if (s == NULL)
 		return;
 	for (t = s; *s; s++)
@@ -5166,7 +5166,7 @@ static inline int parse_opt_Z1(const char *arg)
 {
 	/* --pure-intonation */
 	int keysig;
-	
+
 	opt_pure_intonation = 1;
 	if (*arg) {
 		if (set_value(&keysig, atoi(arg), -7, 7,
@@ -5199,7 +5199,7 @@ static inline int parse_opt_fail(const char *arg)
 static inline int set_value(int *param, int i, int low, int high, char *name)
 {
 	int32 val;
-	
+
 	if (set_val_i32(&val, i, low, high, name))
 		return 1;
 	*param = val;
@@ -5223,7 +5223,7 @@ static int parse_val_float_t(FLOAT_T *param,
 {
 	FLOAT_T value;
 	char *errp;
-	
+
 	value = strtod(arg, &errp);
 	if (arg == errp) {
 		/* only when nothing was parsed */
@@ -5297,7 +5297,7 @@ static inline FILE *open_pager(void)
 #if ! defined(__MACOS__) && defined(HAVE_POPEN) && defined(HAVE_ISATTY) \
 		&& ! defined(IA_W32GUI) && ! defined(IA_W32G_SYN)
 	char *pager;
-	
+
 	if (isatty(1) && (pager = getenv("PAGER")) != NULL)
 		return popen(pager, "w");
 #endif
@@ -5395,7 +5395,7 @@ static PlayMode null_play_mode = {
 MAIN_INTERFACE void timidity_start_initialize(void)
 {
     int i;
-    static int drums[] = DEFAULT_DRUMCHANNELS;
+    static const int drums[] = DEFAULT_DRUMCHANNELS;
     static int is_first = 1;
 #if defined(__FreeBSD__) && !defined(__alpha__)
     fp_except_t fpexp;
@@ -5989,7 +5989,7 @@ int main(int argc, char **argv)
 	extern int setpriority(int which, id_t who, int prio);
 	extern int setreuid(int ruid, int euid);
 #endif
-	
+
 	uid = getuid();
 	if (setpriority(PRIO_PROCESS, 0, DANGEROUS_RENICE) < 0) {
 		perror("setpriority");
@@ -6008,7 +6008,7 @@ int main(int argc, char **argv)
 #ifdef main
 {
 	static int maincnt = 0;
-	
+
 	if (maincnt++ > 0) {
 		do {
 			argc--, argv++;
@@ -6060,7 +6060,7 @@ int main(int argc, char **argv)
 	for (c = 1; c < argc; c++)
 		if (is_directory(argv[c])) {
 			char *p;
-			
+
 			p = (char *) safe_malloc(strlen(argv[c]) + 2);
 			strcpy(p, argv[c]);
 			directory_form(p);
@@ -6069,7 +6069,7 @@ int main(int argc, char **argv)
 #endif /* IA_W32GUI || IA_W32G_SYN */
 #if defined(IA_WINSYN) || defined(IA_PORTMIDISYN) || defined(IA_NPSYN) || defined(IA_W32G_SYN)
 	opt_sf_close_each_file = 0;
-#endif 
+#endif
 	optind = longind = 0;
 #if defined(__CYGWIN__)
 	optreset = 1;
@@ -6079,7 +6079,7 @@ int main(int argc, char **argv)
 		if ((err = set_tim_opt_long_cfg(c, optarg, longind)) != 0)
 			break;
 #endif
-	if (got_a_configuration != 1){	
+	if (got_a_configuration != 1){
 		if ((err = timidity_pre_load_configuration()) != 0)
 			return err;
 	}
@@ -6097,13 +6097,13 @@ int main(int argc, char **argv)
 		if (!got_a_configuration) {
 #ifdef __W32__
 			char config1[1024], config2[1024];
-			
+
 			memset(config1, 0, sizeof(config1));
 			memset(config2, 0, sizeof(config2));
 #if defined(IA_W32GUI) || defined(IA_W32G_SYN)
 {
 			extern char *ConfigFile;
-			
+
 			strncpy(config1, ConfigFile, sizeof(config1) - 1);
 }
 #else /* !IA_W32GUI && !IA_W32G_SYN */
@@ -6112,7 +6112,7 @@ int main(int argc, char **argv)
 #endif
 			if (GetModuleFileName(NULL, config2, 1023)) {
 				char *strp;
-				
+
 				config2[1023] = '\0';
 				if (strp = strrchr(config2, '\\')) {
 					*(++strp) = '\0';
@@ -6166,11 +6166,11 @@ int main(int argc, char **argv)
 #else
 #ifdef IA_NPSYN
 	timeBeginPeriod(1);
-#endif 
+#endif
 	main_ret = timidity_play_main(nfiles, files);
 #ifdef IA_NPSYN
 	timeEndPeriod(1);
-#endif 
+#endif
 #ifdef IA_W32G_SYN
 	if (CoInitializeOK)
 		CoUninitialize();

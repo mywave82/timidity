@@ -177,8 +177,8 @@ typedef struct _SFInsts {
 #endif /* TRUE */
 
 
-static SFInsts *find_soundfont(char *sf_file);
-static SFInsts *new_soundfont(char *sf_file);
+static SFInsts *find_soundfont(const char *sf_file);
+static SFInsts *new_soundfont(const char *sf_file);
 static void init_sf(SFInsts *rec);
 static void end_soundfont(SFInsts *rec);
 static Instrument *try_load_soundfont(SFInsts *rec, int order, int bank,
@@ -220,22 +220,24 @@ static SFInsts *sfrecs = NULL;
 static SFInsts *current_sfrec = NULL;
 #define def_drum_inst 0
 
-static SFInsts *find_soundfont(char *sf_file)
+static SFInsts *find_soundfont(const char *sf_file)
 {
     SFInsts *sf;
+    const char *tmp;
 
-    sf_file = FILENAME_NORMALIZE(sf_file);
+    tmp = FILENAME_NORMALIZE(sf_file);
     for(sf = sfrecs; sf != NULL; sf = sf->next)
-	if(sf->fname != NULL && strcmp(sf->fname, sf_file) == 0)
+	if(sf->fname != NULL && strcmp(sf->fname, tmp) == 0)
 	    return sf;
     return NULL;
 }
 
-static SFInsts *new_soundfont(char *sf_file)
+static SFInsts *new_soundfont(const char *sf_file)
 {
 	SFInsts *sf, *prev;
+        const char *tmp;
 
-	sf_file = FILENAME_NORMALIZE(sf_file);
+	tmp = FILENAME_NORMALIZE(sf_file);
 	for(sf = sfrecs, prev = NULL; sf != NULL; prev = sf, sf = sf->next)
 	{
 		if(sf->fname == NULL)
@@ -252,13 +254,13 @@ static SFInsts *new_soundfont(char *sf_file)
 		sf = (SFInsts *)safe_malloc(sizeof(SFInsts));
 	memset(sf, 0, sizeof(SFInsts));
 	init_mblock(&sf->pool);
-	sf->fname = SFStrdup(sf, FILENAME_NORMALIZE(sf_file));
+	sf->fname = SFStrdup(sf, FILENAME_NORMALIZE(tmp));
 	sf->def_order = DEFAULT_SOUNDFONT_ORDER;
 	sf->amptune = 1.0;
 	return sf;
 }
 
-void add_soundfont(char *sf_file,
+void add_soundfont(const char *sf_file,
 		   int sf_order, int sf_cutoff, int sf_resonance,
 		   int amp)
 {
@@ -282,7 +284,7 @@ void add_soundfont(char *sf_file,
     current_sfrec = sf;
 }
 
-void remove_soundfont(char *sf_file)
+void remove_soundfont(const char *sf_file)
 {
     SFInsts *sf;
 
@@ -418,7 +420,7 @@ static void end_soundfont(SFInsts *rec)
 	reuse_mblock(&rec->pool);
 }
 
-Instrument *extract_soundfont(char *sf_file, int bank, int preset,
+Instrument *extract_soundfont(const char *sf_file, int bank, int preset,
 			      int keynote)
 {
     SFInsts *sf;

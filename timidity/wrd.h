@@ -121,7 +121,8 @@ typedef struct _sry_datapacket
     uint8 *data;
 } sry_datapacket;
 
-extern WRDTracer *wrdt_list[], *wrdt;
+extern const WRDTracer *wrdt_list[];
+extern const WRDTracer *wrdt;
 extern int wrd_color_remap[/* 8 */];
 extern int wrd_plane_remap[/* 8 */];
 extern sry_datapacket *datapacket;

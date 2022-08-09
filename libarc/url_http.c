@@ -64,7 +64,7 @@ typedef struct _URL_http
     FILE *fp;
 } URL_http;
 
-static int name_http_check(char *url_string);
+static int name_http_check(const char *url_string);
 static long url_http_read(URL url, void *buff, long n);
 static char *url_http_gets(URL url, char *buff, int n);
 static int url_http_fgetc(URL url);
@@ -79,7 +79,7 @@ struct URL_module URL_module_http =
     NULL
 };
 
-static int name_http_check(char *s)
+static int name_http_check(const char *s)
 {
     if(strncmp(s, "http://", 7) == 0)
 	return 1;
@@ -118,7 +118,7 @@ static char *get_http_url_host_port(const char *url, char *buffer, int buffer_si
 	return buffer;
 }
 
-URL url_http_open(char *name)
+URL url_http_open(const char *name)
 {
     URL_http *url;
     SOCKET fd;

@@ -27,7 +27,7 @@
 /** Network Kanji Filter. (PDS Version)
 ************************************************************************
 ** Copyright (C) 1987, Fujitsu LTD. (Itaru ICHIKAWA)
-** 連絡先： （株）富士通研究所　ソフト３研　市川　至 
+** 連絡先： （株）富士通研究所　ソフト３研　市川　至
 ** （E-Mail Address: ichikawa@flab.fujitsu.co.jp）
 ** Copyright (C) 1996,1998
 ** 連絡先： 琉球大学情報工学科 河野 真治  mine/X0208 support
@@ -38,7 +38,7 @@
 **    その際には、誰が貢献したを示すこの部分を残すこと。
 **    再配布や雑誌の付録などの問い合わせも必要ありません。
 **    このプログラムについては特に何の保証もしない、悪しからず。
-**    Everyone is permitted to do anything on this program 
+**    Everyone is permitted to do anything on this program
 **    including copying, modifying, improving.
 **    as long as you don't try to pretend that you wrote it.
 **    i.e., the above copyright notice has to appear in all copies.
@@ -105,7 +105,7 @@ static char *Patchlevel =
 **
 **
 **
-** USAGE:       nkf [flags] [file] 
+** USAGE:       nkf [flags] [file]
 **
 ** Flags:
 ** b    Output is bufferred             (DEFAULT)
@@ -113,9 +113,9 @@ static char *Patchlevel =
 **
 ** t    no operation
 **
-** j    Outout code is JIS 7 bit        (DEFAULT SELECT) 
-** s    Output code is MS Kanji         (DEFAULT SELECT) 
-** e    Output code is AT&T JIS         (DEFAULT SELECT) 
+** j    Outout code is JIS 7 bit        (DEFAULT SELECT)
+** s    Output code is MS Kanji         (DEFAULT SELECT)
+** e    Output code is AT&T JIS         (DEFAULT SELECT)
 ** l    Output code is JIS 7bit and ISO8859-1 Latin-1
 **
 ** m    MIME conversion for ISO-2022-JP
@@ -137,9 +137,9 @@ static char *Patchlevel =
 ** B    try to fix broken JIS, missing Escape
 ** B[1-9]  broken level
 **
-** O   Output to 'nkf.out' file 
-** d   Delete \r in line feed 
-** c   Add \r in line feed 
+** O   Output to 'nkf.out' file
+** d   Delete \r in line feed
+** c   Add \r in line feed
 **/
 /******************************/
 /* デフォルトの出力コード選択 */
@@ -343,7 +343,7 @@ static int             hold_count;
 /* MIME preprocessor fifo */
 
 #define MIME_BUF_SIZE   (1024)    /* 2^n ring buffer */
-#define MIME_BUF_MASK   (MIME_BUF_SIZE-1)   
+#define MIME_BUF_MASK   (MIME_BUF_SIZE-1)
 #define Fifo(n)         mime_buf[(n)&MIME_BUF_MASK]
 static unsigned char           mime_buf[MIME_BUF_SIZE];
 static unsigned int            mime_top = 0;
@@ -364,7 +364,7 @@ static int             mime_f = TRUE;         /* convert MIME B base64 or Q */
 static int             mimebuf_f = FALSE;      /* MIME buffered input */
 static int             broken_f = FALSE;       /* convert ESC-less broken JIS */
 static int             iso8859_f = FALSE;      /* ISO8859 through */
-#if defined(MSDOS) || defined(__OS2__) 
+#if defined(MSDOS) || defined(__OS2__)
 static int             x0201_f = TRUE;         /* Assume JISX0201 kana */
 #else
 static int             x0201_f = NO_X0201;     /* Assume NO JISX0201 */
@@ -402,9 +402,9 @@ int line_fold();
 #   define  DEFAULT_CONV e_oconv
 #endif
 
-static int             (*iconv)(int c2,int c1);   
+static int             (*iconv)(int c2,int c1);
 					/* s_iconv or oconv */
-static int             (*oconv)(int c2,int c1) = DEFAULT_CONV; 
+static int             (*oconv)(int c2,int c1) = DEFAULT_CONV;
 					  /* [ejs]_oconv */
 
 /* Global states */
@@ -417,7 +417,7 @@ static int             mime_mode =   FALSE;    /* MIME mode B base64, Q hex */
 
 /* X0201 kana conversion table */
 /* 90-9F A0-DF */
-unsigned char cv[]= {
+static const unsigned char cv[]= {
 0x21,0x21,0x21,0x23,0x21,0x56,0x21,0x57,
 0x21,0x22,0x21,0x26,0x25,0x72,0x25,0x21,
 0x25,0x23,0x25,0x25,0x25,0x27,0x25,0x29,
@@ -439,7 +439,7 @@ unsigned char cv[]= {
 
 /* X0201 kana conversion table for daguten */
 /* 90-9F A0-DF */
-unsigned char dv[]= { 
+static const unsigned char dv[]= {
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -460,7 +460,7 @@ unsigned char dv[]= {
 
 /* X0201 kana conversion table for han-daguten */
 /* 90-9F A0-DF */
-unsigned char ev[]= { 
+static const unsigned char ev[]= {
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -482,7 +482,7 @@ unsigned char ev[]= {
 
 /* X0208 kigou conversion table */
 /* 0x8140 - 0x819e */
-unsigned char fv[] = {
+static const unsigned char fv[] = {
 
 0x00,0x00,0x00,0x00,0x2c,0x2e,0x00,0x3a,
 0x3b,0x3f,0x21,0x00,0x00,0x27,0x60,0x00,
@@ -625,7 +625,7 @@ nkf_convert(char *si, char *so, int maxsize, char *in_mode, char *out_mode)
   input_mode = ASCII;	/* input kanji mode */
   shift_mode = FALSE;	/* TRUE shift out, or X0201  */
   mime_mode = FALSE;	/* MIME mode B base64, Q hex */
-  
+
 #if	0
 /* No X0201->X0208 conversion 半角カナを有効に*/
   x0201_f = FALSE;
@@ -638,19 +638,19 @@ nkf_convert(char *si, char *so, int maxsize, char *in_mode, char *out_mode)
   oconv=e_oconv;
   if (strstr(out_mode,"EUCK")||strstr(out_mode,"euck")||strstr(out_mode,"ujisk")){
     /*Hankaku Enable (For WRD File )*/
-    oconv=e_oconv; 
+    oconv=e_oconv;
     /* No X0201->X0208 conversion 半角カナを有効に*/
     x0201_f = FALSE;
   }
   else if (strstr(out_mode,"SJISK")||strstr(out_mode,"sjisk")){
     /*Hankaku Enable (For WRD File )*/
-    oconv=s_oconv; 
+    oconv=s_oconv;
     /* No X0201->X0208 conversion 半角カナを有効に*/
     x0201_f = FALSE;
   }
   else if (strstr(out_mode,"JISK")||strstr(out_mode,"jisk")){
     /*Hankaku Enable (For WRD File )*/
-    oconv=j_oconv; 
+    oconv=j_oconv;
     /* No X0201->X0208 conversion 半角カナを有効に*/
     x0201_f = FALSE;
   }
@@ -890,7 +890,7 @@ main(argc, argv)
 
     if(binmode_f == TRUE)
 #ifdef __OS2__
-    if(freopen("","wb",stdout) == NULL) 
+    if(freopen("","wb",stdout) == NULL)
         return (-1);
 #else
     setbinmode(stdout);
@@ -920,7 +920,7 @@ main(argc, argv)
               return(-1);
           } else {
 /* reopen file for stdout */
-              if(file_out == TRUE){ 
+              if(file_out == TRUE){
                   if(argc == 1 ) {
                       if(freopen(*argv++, "w", stdout) == NULL) {
                           perror(*--argv);
@@ -935,7 +935,7 @@ main(argc, argv)
                   }
                   if(binmode_f == TRUE) {
 #ifdef __OS2__
-                      if(freopen("","wb",stdout) == NULL) 
+                      if(freopen("","wb",stdout) == NULL)
                            return (-1);
 #else
                       setbinmode(stdout);
@@ -944,11 +944,11 @@ main(argc, argv)
               }
               if(binmode_f == TRUE)
 #ifdef __OS2__
-                 if(freopen("","rb",fin) == NULL) 
+                 if(freopen("","rb",fin) == NULL)
                     return (-1);
 #else
                  setbinmode(fin);
-#endif 
+#endif
               setvbuffer(fin, stdibuf, IOBUF_SIZE);
               if(nop_f)
                   noconvert(fin);
@@ -959,21 +959,21 @@ main(argc, argv)
       }
     }
 #ifdef EASYWIN /*Easy Win */
-    if(file_out == FALSE) 
+    if(file_out == FALSE)
         scanf("%d",&end_check);
-    else 
+    else
         fclose(stdout);
 #else /* for Other OS */
-    if(file_out == TRUE) 
+    if(file_out == TRUE)
         fclose(stdout);
-#endif 
+#endif
     return (0);
 }
 #endif
 
 #if 0
 void
-arguments(char *cp) 
+arguments(char *cp)
 {
     while (*cp) {
 	switch (*cp++) {
@@ -1001,17 +1001,17 @@ arguments(char *cp)
 	    input_f = LATIN1_INPUT;
 	    continue;
 	case 'i':           /* Kanji IN ESC-$-@/B */
-	    if(*cp=='@'||*cp=='B') 
+	    if(*cp=='@'||*cp=='B')
 		kanji_intro = *cp++;
 	    continue;
 	case 'o':           /* ASCII IN ESC-(-J/B */
-	    if(*cp=='J'||*cp=='B'||*cp=='H') 
+	    if(*cp=='J'||*cp=='B'||*cp=='H')
 		ascii_intro = *cp++;
 	    continue;
 	case 'r':
 	    rot_f = TRUE;
 	    continue;
-#if defined(MSDOS) || defined(__OS2__) 
+#if defined(MSDOS) || defined(__OS2__)
 	case 'T':
 	    binmode_f = FALSE;
 	    continue;
@@ -1036,9 +1036,9 @@ arguments(char *cp)
 		bit:1   Convert Kankaku to one space
 		bit:2   Convert Kankaku to two spaces
 	    */
-	    if('9'>= *cp && *cp>='0') 
+	    if('9'>= *cp && *cp>='0')
 		alpha_f |= 1<<(*cp++ -'0');
-	    else 
+	    else
 		alpha_f |= TRUE;
 	    continue;
 	case 'x':   /* Convert X0201 kana to X0208 or X0201 Conversion */
@@ -1047,11 +1047,11 @@ arguments(char *cp)
 		    ESC-(-I     in JIS, EUC, MS Kanji
 		    SI/SO       in JIS, EUC, MS Kanji
 		    SSO         in EUC, JIS, not in MS Kanji
-		    MS Kanji (0xa0-0xdf) 
+		    MS Kanji (0xa0-0xdf)
 	       output  X0201
 		    ESC-(-I     in JIS (0x20-0x5f)
 		    SSO         in EUC (0xa0-0xdf)
-		    0xa0-0xd    in MS Kanji (0xa0-0xdf) 
+		    0xa0-0xd    in MS Kanji (0xa0-0xdf)
 	    */
 	    continue;
 	case 'X':   /* Assume X0201 kana */
@@ -1061,7 +1061,7 @@ arguments(char *cp)
 	case 'f':   /* folding -f60 or -f */
 	    fold_f = TRUE;
 	    fold_len = atoi(cp);
-	    if(!(0<fold_len && fold_len<BUFSIZ)) 
+	    if(!(0<fold_len && fold_len<BUFSIZ))
 		fold_len = DEFAULT_FOLD;
 	    while('0'<= *cp && *cp <='9') cp++;
 	    continue;
@@ -1082,9 +1082,9 @@ arguments(char *cp)
 		bit:1   allow any x on ESC-(-x or ESC-$-x
 		bit:2   reset to ascii on NL
 	    */
-	    if('9'>= *cp && *cp>='0') 
+	    if('9'>= *cp && *cp>='0')
 		broken_f |= 1<<(*cp++ -'0');
-	    else 
+	    else
 		broken_f |= TRUE;
 	    continue;
 #ifndef PERL_XS
@@ -1211,7 +1211,7 @@ kanji_convert(SFILE  *f)
                             iconv = oconv;
                             c2 = c1;
                             NEXT;
-                        } else 
+                        } else
                         if(x0201_f) {
                             if(dv[(c1-SSP)*2]||ev[(c1-SSP)*2]) {
                             /* look ahead for X0201/X0208conversion */
@@ -1220,14 +1220,14 @@ kanji_convert(SFILE  *f)
                                     LAST;
                                 } else if(c2==(0xde)) { /* 濁点 */
                                     (*oconv)(dv[(c1-SSP)*2],dv[(c1-SSP)*2+1]);
-                                    c2=0; 
+                                    c2=0;
                                     NEXT;
-                                } else if(c2==(0xdf)&&ev[(c1-SSP)*2]) { 
+                                } else if(c2==(0xdf)&&ev[(c1-SSP)*2]) {
                                     /* 半濁点 */
                                     (*oconv)(ev[(c1-SSP)*2],ev[(c1-SSP)*2+1]);
-                                    c2=0; 
+                                    c2=0;
                                     NEXT;
-                                } 
+                                }
                                 UNGETC(c2,f); c2 = 0;
                             }
                             (*oconv)(cv[(c1-SSP)*2],cv[(c1-SSP)*2+1]);
@@ -1238,8 +1238,8 @@ kanji_convert(SFILE  *f)
                         /* EUC X0201 Case */
                         /* This is too arrogant
                         if(x0201_f == NO_X0201) {
-                            estab_f = FALSE; 
-                            c2 = 0;  
+                            estab_f = FALSE;
+                            c2 = 0;
                             NEXT;
                         } */
                         c1 = GETC(f);  /* skip SSO */
@@ -1252,21 +1252,21 @@ kanji_convert(SFILE  *f)
                                 }
                                 /* forward lookup 濁点/半濁点 */
                                 if(c2 != SSO) {
-                                    UNGETC(c2,f); c2 = 0; 
+                                    UNGETC(c2,f); c2 = 0;
                                     (*oconv)(cv[(c1-SSP)*2],cv[(c1-SSP)*2+1]);
                                     NEXT;
                                 } else if((c2 = GETC(f)) == EOF) {
                                     (*oconv)(cv[(c1-SSP)*2],cv[(c1-SSP)*2+1]);
-                                    (*oconv)(0,SSO); 
+                                    (*oconv)(0,SSO);
                                     LAST;
                                 } else if(c2==(0xde)) { /* 濁点 */
                                     (*oconv)(dv[(c1-SSP)*2],dv[(c1-SSP)*2+1]);
-                                    c2=0; 
+                                    c2=0;
                                     NEXT;
-                                } else if(c2==(0xdf)&&ev[(c1-SSP)*2]) { 
+                                } else if(c2==(0xdf)&&ev[(c1-SSP)*2]) {
                                     /* 半濁点 */
                                     (*oconv)(ev[(c1-SSP)*2],ev[(c1-SSP)*2+1]);
-                                    c2=0; 
+                                    c2=0;
                                     NEXT;
                                 } else {
                                     (*oconv)(cv[(c1-SSP)*2],cv[(c1-SSP)*2+1]);
@@ -1278,7 +1278,7 @@ kanji_convert(SFILE  *f)
                             }
                             (*oconv)(cv[(c1-SSP)*2],cv[(c1-SSP)*2+1]);
                             NEXT;
-                        } else 
+                        } else
                             SEND;
                     } else if(c1 < SSP && iconv != s_iconv) {
                         /* strange code in EUC */
@@ -1293,10 +1293,10 @@ kanji_convert(SFILE  *f)
                 }
             } else if((c1 > SPACE) && (c1 != DEL)) {
                 /* in case of Roman characters */
-                if(shift_mode) { 
+                if(shift_mode) {
                     c1 |= 0x80;
                     /* output 1 shifted byte */
-                    if(x0201_f && (!iso8859_f||input_mode==X0201) && 
+                    if(x0201_f && (!iso8859_f||input_mode==X0201) &&
                             SSP<=c1 && c1<0xe0 ) {
                         if(dv[(c1-SSP)*2]||ev[(c1-SSP)*2]) {
                             if((c2 = GETC(f)) == EOF) {
@@ -1304,12 +1304,12 @@ kanji_convert(SFILE  *f)
                                 LAST;
                             } else if(c2==(0xde&0x7f)) { /* 濁点 */
                                 (*oconv)(dv[(c1-SSP)*2],dv[(c1-SSP)*2+1]);
-                                c2=0; 
+                                c2=0;
                                 NEXT;
-                            } else if(c2==(0xdf&0x7f)&&ev[(c1-SSP)*2]) {  
+                            } else if(c2==(0xdf&0x7f)&&ev[(c1-SSP)*2]) {
                                 /* 半濁点 */
                                 (*oconv)(ev[(c1-SSP)*2],ev[(c1-SSP)*2+1]);
-                                c2=0; 
+                                c2=0;
                                 NEXT;
                             }
                             UNGETC(c2,f); c2 = 0;
@@ -1374,10 +1374,10 @@ kanji_convert(SFILE  *f)
                 } else
                     SEND;
             } else if(c1 == SI) {
-                shift_mode = FALSE; 
+                shift_mode = FALSE;
                 NEXT;
             } else if(c1 == SO) {
-                shift_mode = TRUE; 
+                shift_mode = TRUE;
                 NEXT;
             } else if(c1 == ESC ) {
                 if((c1 = GETC(f)) == EOF) {
@@ -1451,13 +1451,13 @@ kanji_convert(SFILE  *f)
                     SEND;
                 }
             } else if(c1 == NL && broken_f&4) {
-                input_mode = ASCII; 
+                input_mode = ASCII;
                 SEND;
             } else
                 SEND;
         }
         /* send: */
-        if(input_mode == X0208) 
+        if(input_mode == X0208)
             (*oconv)(c2, c1);  /* this is JIS, not SJIS/EUC case */
         else
             (*iconv)(c2, c1);  /* can be EUC/SJIS */
@@ -1592,7 +1592,7 @@ e_oconv(int c2, int c1)
     c2 = pre_convert(c1,c2); c1 = c1_return;
     if(fold_f) {
         switch(line_fold(c2,c1)) {
-            case '\n': 
+            case '\n':
                 if(add_cr == TRUE) {
                     sputchar('\r');
                     c1 = '\n';
@@ -1600,11 +1600,11 @@ e_oconv(int c2, int c1)
                 sputchar('\n');
                 break;
             case 0:    return VOIDVOID;
-            case '\r': 
+            case '\r':
                 c1 = '\n'; c2 = 0;
                 break;
-            case '\t': 
-            case ' ': 
+            case '\t':
+            case ' ':
                 c1 = ' '; c2 = 0;
                 break;
         }
@@ -1618,11 +1618,11 @@ e_oconv(int c2, int c1)
     else if(c2 == 0 && (c1&0x80)) {
         sputchar(SSO); sputchar(c1);
     } else if(c2 == 0) {
-        if(c1 == '\n' && add_cr == TRUE) 
+        if(c1 == '\n' && add_cr == TRUE)
             sputchar('\r');
-        if(c1 != '\r') 
+        if(c1 != '\r')
             sputchar(c1);
-        else if(del_cr == FALSE) 
+        else if(del_cr == FALSE)
             sputchar(c1);
     } else {
         if((c1<0x20 || 0x7e<c1) ||
@@ -1644,19 +1644,19 @@ s_oconv(int c2, int c1)
     c2 = pre_convert(c1,c2); c1 = c1_return;
     if(fold_f) {
         switch(line_fold(c2,c1)) {
-            case '\n': 
+            case '\n':
                 if(add_cr == TRUE) {
                    sputchar('\r');
                    c1 = '\n';
                 }
                 sputchar('\n');
                 break;
-            case '\r': 
+            case '\r':
                 c1 = '\n'; c2 = 0;
                 break;
             case 0:    return VOIDVOID;
-            case '\t': 
-            case ' ': 
+            case '\t':
+            case ' ':
                 c1 = ' '; c2 = 0;
                 break;
         }
@@ -1668,11 +1668,11 @@ s_oconv(int c2, int c1)
     if(c2 == EOF)
         return VOIDVOID;
     else if(c2 == 0) {
-        if(c1 == '\n' && add_cr == TRUE) 
+        if(c1 == '\n' && add_cr == TRUE)
             sputchar('\r');
-        if(c1 != '\r') 
+        if(c1 != '\r')
             sputchar(c1);
-        else if(del_cr == FALSE) 
+        else if(del_cr == FALSE)
             sputchar(c1);
     } else {
         if((c1<0x20 || 0x7e<c1) ||
@@ -1692,7 +1692,7 @@ j_oconv(int c2, int c1)
     c2 = pre_convert(c1,c2); c1 = c1_return;
     if(fold_f) {
         switch(line_fold(c2,c1)) {
-            case '\n': 
+            case '\n':
                 if(output_mode) {
                     sputchar(ESC);
                     sputchar('(');
@@ -1705,11 +1705,11 @@ j_oconv(int c2, int c1)
                 sputchar('\n');
                 output_mode = ASCII;
                 break;
-            case '\r': 
+            case '\r':
                 c1 = '\n'; c2 = 0;
                 break;
-            case '\t': 
-            case ' ': 
+            case '\t':
+            case ' ':
                 c1 = ' '; c2 = 0;
                 break;
             case 0:    return VOIDVOID;
@@ -1732,7 +1732,7 @@ j_oconv(int c2, int c1)
             c1 &= 0x7f;
         } else {
             /* iso8859 introduction, or 8th bit on */
-            /* Can we convert in 7bit form using ESC-'-'-A ? 
+            /* Can we convert in 7bit form using ESC-'-'-A ?
                Is this popular? */
         }
         sputchar(c1);
@@ -1743,11 +1743,11 @@ j_oconv(int c2, int c1)
             sputchar(ascii_intro);
             output_mode = ASCII;
         }
-        if(c1 == '\n' && add_cr == TRUE) 
+        if(c1 == '\n' && add_cr == TRUE)
             sputchar('\r');
-        if(c1 != '\r') 
+        if(c1 != '\r')
             sputchar(c1);
-        else if(del_cr == FALSE) 
+        else if(del_cr == FALSE)
             sputchar(c1);
     } else if(c2 == DOUBLE_SPACE) {
         if(output_mode) {
@@ -1757,11 +1757,11 @@ j_oconv(int c2, int c1)
             output_mode = ASCII;
         }
         sputchar(' ');
-        if(c1 == '\n' && add_cr == TRUE) 
+        if(c1 == '\n' && add_cr == TRUE)
             sputchar('\r');
-        if(c1 != '\r') 
+        if(c1 != '\r')
             sputchar(c1);
-        else if(del_cr == FALSE) 
+        else if(del_cr == FALSE)
             sputchar(c1);
     } else {
         if(output_mode != X0208) {
@@ -1770,16 +1770,16 @@ j_oconv(int c2, int c1)
             sputchar(kanji_intro);
             output_mode = X0208;
         }
-        if(c1<0x20 || 0x7e<c1) 
+        if(c1<0x20 || 0x7e<c1)
             return VOIDVOID;
-        if(c2<0x20 || 0x7e<c2) 
+        if(c2<0x20 || 0x7e<c2)
             return VOIDVOID;
         sputchar(c2);
-        if(c1 == '\n' && add_cr == TRUE) 
+        if(c1 == '\n' && add_cr == TRUE)
             sputchar('\r');
-        if(c1 != '\r') 
+        if(c1 != '\r')
             sputchar(c1);
-        else if(del_cr == FALSE) 
+        else if(del_cr == FALSE)
             sputchar(c1);
     }
     return VOIDVOID;
@@ -1805,20 +1805,20 @@ j_oconv(int c2, int c1)
 )
 
 
-/* 
+/*
   Return value of line_fold()
 
        \n  add newline  and output char
        \r  add newline  and output nothing
        ' ' space
-       0   skip  
-       1   (or else) normal output 
+       0   skip
+       1   (or else) normal output
 
   fold state in prev (previous character)
 
       >0x80 Japanese (X0208/X0201)
       <0x80 ASCII
-      \n    new line 
+      \n    new line
       ' '   space
 
   This fold algorthm does not preserve heading space in a line.
@@ -1826,10 +1826,10 @@ j_oconv(int c2, int c1)
 */
 
 int
-line_fold(int c2, int c1) 
-{ 
+line_fold(int c2, int c1)
+{
     int prev0;
-    if(c1=='\r') 
+    if(c1=='\r')
         return 0;               /* ignore cr */
     if(c1== 8) {
         if(line>0) line--;
@@ -1855,7 +1855,7 @@ line_fold(int c2, int c1)
                 return 0;
             } else {
                 prev = c1;
-                if(++line<=fold_len) 
+                if(++line<=fold_len)
                     return ' ';
                 else {
                     line = 0;
@@ -1878,18 +1878,18 @@ line_fold(int c2, int c1)
         (c2=='!'&& c1=='!')) {
         if(prev == ' ') {
             return 0;           /* remove duplicate spaces */
-        } 
-        prev = ' ';    
-        if(++line<=fold_len) 
+        }
+        prev = ' ';
+        if(++line<=fold_len)
             return ' ';         /* output ASCII space only */
         else {
             prev = ' '; line = 0;
             return '\r';        /* fold and output nothing */
         }
-    } 
+    }
     prev0 = prev; /* we still need this one... , but almost done */
     prev = c1;
-    if(c2 || (SSP<=c1 && c1<=0xdf)) 
+    if(c2 || (SSP<=c1 && c1<=0xdf))
         prev |= 0x80;  /* this is Japanese */
     line += (c2==0)?1:2;
     if(line<=fold_len) {   /* normal case */
@@ -1959,15 +1959,15 @@ pre_convert(int c1, int c2)
                 c1 = rot47(c1);
                 c2 = rot47(c2);
             } else {
-                if(!(c1 & 0x80)) 
+                if(!(c1 & 0x80))
                     c1 = rot13(c1);
             }
             c1_return = c1;
         }
         /* JISX0208 Alphabet */
-        if(alpha_f && c2 == 0x23 ) return 0; 
+        if(alpha_f && c2 == 0x23 ) return 0;
         /* JISX0208 Kigou */
-        if(alpha_f && c2 == 0x21 ) { 
+        if(alpha_f && c2 == 0x21 ) {
            if(0x21==c1) {
                if(alpha_f&0x2) {
                    c1_return = ' ';
@@ -1981,7 +1981,7 @@ pre_convert(int c1, int c2)
            } else if(0x20<c1 && c1<0x7f && fv[c1-0x20]) {
                c1_return = fv[c1-0x20];
                return 0;
-           } 
+           }
         }
         return c2;
 }
@@ -2055,7 +2055,7 @@ mime_begin(SFILE *f)
         if(!unbuf_f) {
             /* do MIME integrity check */
             return mime_integrity(f,mime_pattern[j]);
-        } 
+        }
     }
     mimebuf_f = TRUE;
     return c1;
@@ -2118,7 +2118,7 @@ mime_begin(SFILE *f)
 
 #endif
 
-int 
+int
 mime_getc(SFILE *f)
 {
     int c1, c2, c3, c4, cc;
@@ -2135,7 +2135,7 @@ mime_getc(SFILE *f)
     if(mime_mode == 'Q') {
         if((c1 = mime_getc0(f)) == EOF) return (EOF);
         if(c1=='_') return ' ';
-        if(c1!='=' && c1!='?') 
+        if(c1!='=' && c1!='?')
             return c1;
         mime_mode = exit_mode; /* prepare for quit */
         if(c1<=' ') return c1;
@@ -2167,10 +2167,10 @@ mime_getc(SFILE *f)
 
 
     /* Base64 encoding */
-    /* 
-        MIME allows line break in the middle of 
+    /*
+        MIME allows line break in the middle of
         Base64, but we are very pessimistic in decoding
-        in unbuf mode because MIME encoded code may broken by 
+        in unbuf mode because MIME encoded code may broken by
         less or editor's control sequence (such as ESC-[-K in unbuffered
         mode. ignore incomplete MIME.
     */
@@ -2184,7 +2184,7 @@ mime_getc(SFILE *f)
     if((c2 = mime_getc0(f))<=' ') {
         if(c2==EOF)
             return (EOF);
-        if(mimebuf_f!=FIXED_MIME) input_mode = ASCII;  
+        if(mimebuf_f!=FIXED_MIME) input_mode = ASCII;
         return c2;
     }
     if((c1 == '?') && (c2 == '=')) {
@@ -2195,13 +2195,13 @@ mime_getc(SFILE *f)
     if((c3 = mime_getc0(f))<=' ') {
         if(c3==EOF)
             return (EOF);
-        if(mimebuf_f!=FIXED_MIME) input_mode = ASCII;  
+        if(mimebuf_f!=FIXED_MIME) input_mode = ASCII;
         return c3;
     }
     if((c4 = mime_getc0(f))<=' ') {
         if(c4==EOF)
             return (EOF);
-        if(mimebuf_f!=FIXED_MIME) input_mode = ASCII;  
+        if(mimebuf_f!=FIXED_MIME) input_mode = ASCII;
         return c4;
     }
 
@@ -2220,7 +2220,7 @@ mime_getc(SFILE *f)
         if(c3 != '=') {
             Fifo(mime_last++) = cc;
             cc = ((t3 << 6) & 0x0c0) | (t4 & 0x3f);
-            if(c4 != '=') 
+            if(c4 != '=')
                 Fifo(mime_last++) = cc;
         }
     } else {
@@ -2230,7 +2230,7 @@ mime_getc(SFILE *f)
 }
 
 int
-mime_ungetc(c) 
+mime_ungetc(c)
 unsigned int   c;
 {
     Fifo(mime_last++) = c;
@@ -2255,7 +2255,7 @@ mime_integrity(SFILE *f, unsigned char *p)
         if(c=='=' && d=='?') {
             /* checked. skip header, start decode */
             Fifo(mime_input++) = c;
-            mime_input = q; 
+            mime_input = q;
             return 1;
         }
         if(!( (c=='+'||c=='/'|| c=='=' || c=='?' ||
@@ -2291,26 +2291,26 @@ base64decode(int c)
     return (i);
 }
 
-void 
+void
 reinit()
 {
     unbuf_f = FALSE;
     estab_f = FALSE;
     nop_f = FALSE;
-    binmode_f = TRUE;       
-    rot_f = FALSE;         
-    input_f = FALSE;      
-    alpha_f = FALSE;     
-    mime_f = TRUE;      
-    mimebuf_f = FALSE; 
-    broken_f = FALSE;  
-    iso8859_f = FALSE; 
-    x0201_f = TRUE;    
-    x0201_f = NO_X0201; 
+    binmode_f = TRUE;
+    rot_f = FALSE;
+    input_f = FALSE;
+    alpha_f = FALSE;
+    mime_f = TRUE;
+    mimebuf_f = FALSE;
+    broken_f = FALSE;
+    iso8859_f = FALSE;
+    x0201_f = TRUE;
+    x0201_f = NO_X0201;
     fold_f  = FALSE;
     kanji_intro = DEFAULT_J;
     ascii_intro = DEFAULT_R;
-    oconv = DEFAULT_CONV; 
+    oconv = DEFAULT_CONV;
     output_mode = ASCII;
     input_mode =  ASCII;
     shift_mode =  FALSE;
@@ -2322,8 +2322,8 @@ reinit()
 
 #if 0
 #ifndef PERL_XS
-int 
-usage()   
+int
+usage()
 {
     fprintf(stderr,"USAGE:  nkf(nkf32,wnkf,nkf2) -[flags] [in file] .. [out file for -O flag]\n");
     fprintf(stderr,"Flags:\n");

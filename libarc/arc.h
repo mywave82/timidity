@@ -39,7 +39,7 @@
 extern char **expand_archive_names(int *nfiles_in_out, char **files);
 /* Regist all archive files in `files_in_out', and expand the archive */
 
-extern URL url_arc_open(char *name);
+extern URL url_arc_open(const char *name);
 /* Open input stream from archive.  `name' format must be "filename#entry".
  */
 
@@ -49,7 +49,7 @@ extern void free_archive_files(void);
 /* utilities */
 extern int skip_gzip_header(URL url);
 extern int parse_gzip_header_bytes(char *gz, long maxparse, int *hdrsiz);
-extern int get_archive_type(char *archive_name);
+extern int get_archive_type(const char *archive_name);
 extern void *arc_compress(void *buff, long bufsiz,
 			  int compress_level, long *compressed_size);
 extern void *arc_decompress(void *buff, long bufsiz, long *decompressed_size);
@@ -82,7 +82,7 @@ typedef struct _ArchiveHandler {
 
 extern ArchiveHandler arc_handler;
 extern ArchiveEntryNode *arc_parse_entry(URL url, int archive_type);
-extern ArchiveEntryNode *new_entry_node(char *name, int len);
+extern ArchiveEntryNode *new_entry_node(const char *name, int len);
 extern ArchiveEntryNode *next_tar_entry(void);
 extern ArchiveEntryNode *next_zip_entry(void);
 extern ArchiveEntryNode *next_lzh_entry(void);

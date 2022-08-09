@@ -206,23 +206,23 @@ typedef struct ct_data {
 #define Len  dl.len
 
 typedef struct tree_desc {
-    ct_data near *dyn_tree;	 /* the dynamic tree */
-    ct_data near *static_tree;	 /* corresponding static tree or NULL */
-    int	    near *extra_bits;	 /* extra bits for each code or NULL */
+    ct_data   near *dyn_tree;	 /* the dynamic tree */
+    ct_data   near *static_tree;	 /* corresponding static tree or NULL */
+    const int near *extra_bits;	 /* extra bits for each code or NULL */
     int	    extra_base;		 /* base index for extra_bits */
     int	    elems;		 /* max number of elements in the tree */
     int	    max_length;		 /* max bit length for the codes */
     int	    max_code;		 /* largest code with non zero frequency */
 } tree_desc;
 
-local int near extra_lbits[LENGTH_CODES] /* extra bits for each length code */
+local const int near extra_lbits[LENGTH_CODES] /* extra bits for each length code */
    = {0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0};
-local int near extra_dbits[D_CODES] /* extra bits for each distance code */
+local const int near extra_dbits[D_CODES] /* extra bits for each distance code */
    = {0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
-local int near extra_blbits[BL_CODES]/* extra bits for each bit length code */
+local const int near extra_blbits[BL_CODES]/* extra bits for each bit length code */
    = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7};
 
-local uch near bl_order[BL_CODES]
+local const uch near bl_order[BL_CODES]
    = {16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15};
 /* The lengths of the bit length codes are sent in order of decreasing
  * probability, to avoid transmitting the lengths for unused bit length codes.
@@ -233,7 +233,7 @@ local uch near bl_order[BL_CODES]
  * exclude worst case performance for pathological files. Better values may be
  * found for specific files.
  */
-local struct
+local const struct
 {
    ush good_length; /* reduce lazy search above this match length */
    ush max_lazy;    /* do not perform lazy search above this match length */
@@ -1279,12 +1279,12 @@ local void gen_bitlen(
     DeflateHandler encoder,
     tree_desc near *desc) /* the tree descriptor */
 {
-    ct_data near *tree	= desc->dyn_tree;
-    int near *extra	= desc->extra_bits;
-    int base		= desc->extra_base;
-    int max_code	= desc->max_code;
-    int max_length	= desc->max_length;
-    ct_data near *stree = desc->static_tree;
+    ct_data near *tree	  = desc->dyn_tree;
+    const int near *extra = desc->extra_bits;
+    int base		  = desc->extra_base;
+    int max_code	  = desc->max_code;
+    int max_length	  = desc->max_length;
+    ct_data near *stree   = desc->static_tree;
     int h;		/* heap index */
     int n, m;		/* iterate over the tree elements */
     int bits;		/* bit length */

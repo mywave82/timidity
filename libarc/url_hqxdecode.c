@@ -93,7 +93,7 @@ URL url_hqxdecode_open(URL reader, int dataonly, int autoclose)
 static int hqxgetchar(URL reader)
 {
     int c;
-    static int hqx_decode_table[256] =
+    static const int hqx_decode_table[256] =
     {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

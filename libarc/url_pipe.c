@@ -42,7 +42,7 @@ typedef struct _URL_pipe
 
 #define PIPE_FP(url) (((URL_pipe *)(url))->fp)
 
-static int name_pipe_check(char *url_string);
+static int name_pipe_check(const char *url_string);
 static long url_pipe_read(URL url, void *buff, long n);
 static char *url_pipe_gets(URL url, char *buff, int n);
 static int url_pipe_fgetc(URL url);
@@ -58,7 +58,7 @@ struct URL_module URL_module_pipe =
 };
 
 /* url_string := "command|" */
-static int name_pipe_check(char *url_string)
+static int name_pipe_check(const char *url_string)
 {
 #ifdef PIPE_SCHEME_ENABLE
     char *p;
@@ -74,7 +74,7 @@ static int name_pipe_check(char *url_string)
 #endif
 }
 
-URL url_pipe_open(char *command)
+URL url_pipe_open(const char *command)
 {
     URL_pipe *url;
     char buff[BUFSIZ], *p;
@@ -170,5 +170,5 @@ struct URL_module URL_module_pipe =
     NULL,			/* open */
     NULL			/* must be NULL */
 };
-URL url_pipe_open(char *command) { return NULL; } /* dmy */
+URL url_pipe_open(const char *command) { return NULL; } /* dmy */
 #endif

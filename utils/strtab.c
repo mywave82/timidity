@@ -39,7 +39,7 @@ void init_string_table(StringTable *stab)
     memset(stab, 0, sizeof(StringTable));
 }
 
-StringTableNode *put_string_table(StringTable *stab, char *str, int len)
+StringTableNode *put_string_table(StringTable *stab, const char *str, int len)
 {
     StringTableNode *p;
 

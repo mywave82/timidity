@@ -67,7 +67,7 @@ typedef struct _URL_newsgroup
     char *name;
 } URL_newsgroup;
 
-static int name_newsgroup_check(char *url_string);
+static int name_newsgroup_check(const char *url_string);
 static long url_newsgroup_read(URL url, void *buff, long n);
 static char *url_newsgroup_gets(URL url, char *buff, int n);
 static void url_newsgroup_close(URL url);
@@ -81,7 +81,7 @@ struct URL_module URL_module_newsgroup =
     NULL
 };
 
-static int name_newsgroup_check(char *s)
+static int name_newsgroup_check(const char *s)
 {
     if(strncmp(s, "news://", 7) == 0 && strchr(s, '@') == NULL)
 	return 1;
@@ -94,7 +94,7 @@ static void timeout(int sig)
     timeout_flag = 1;
 }
 
-URL url_newsgroup_open(char *name)
+URL url_newsgroup_open(const char *name)
 {
     URL_newsgroup *url;
     SOCKET fd;

@@ -85,7 +85,7 @@ URL url_b64decode_open(URL reader, int autoclose)
 static int b64getchar(URL reader)
 {
     int c;
-    static int b64_decode_table[256] =
+    static const int b64_decode_table[256] =
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 62, 0, 0,

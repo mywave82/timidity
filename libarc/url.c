@@ -41,7 +41,7 @@ static struct URL_module *url_mod_list = NULL;
 char *user_mailaddr = NULL;
 char *url_user_agent = NULL;
 int url_newline_code = '\n';
-char *url_lib_version = URL_LIB_VERSION;
+const char * const url_lib_version = URL_LIB_VERSION;
 int uudecode_unquote_html = 0;
 
 void url_add_module(struct URL_module *m)
@@ -69,7 +69,7 @@ static int url_init_nop(void)
     return 1;
 }
 
-int url_check_type(char *s)
+int url_check_type(const char *s)
 {
     struct URL_module *m;
 
@@ -79,7 +79,7 @@ int url_check_type(char *s)
     return -1;
 }
 
-URL url_open(char *s)
+URL url_open(const char *s)
 {
     struct URL_module *m;
 
@@ -412,7 +412,7 @@ void url_close(URL url)
 
 #if defined(TILD_SCHEME_ENABLE)
 #include <pwd.h>
-char *url_expand_home_dir(char *fname)
+const char *url_expand_home_dir(const char *fname)
 {
     static char path[BUFSIZ];
     char *dir;
@@ -449,10 +449,11 @@ char *url_expand_home_dir(char *fname)
     path[sizeof(path) - 1] = '\0';
     return path;
 }
-char *url_unexpand_home_dir(char *fname)
+const char *url_unexpand_home_dir(const char *fname)
 {
     static char path[BUFSIZ];
-    char *dir, *p;
+    char *dir;
+    const char *p;
     int dirlen;
 
     if(!IS_PATH_SEP(fname[0]))
@@ -485,17 +486,17 @@ char *url_unexpand_home_dir(char *fname)
     return path;
 }
 #else
-char *url_expand_home_dir(char *fname)
+const char *url_expand_home_dir(const char *fname)
 {
     return fname;
 }
-char *url_unexpand_home_dir(char *fname)
+const char *url_unexpand_home_dir(const char *fname)
 {
     return fname;
 }
 #endif
 
-static char *url_strerror_txt[] =
+static const char * const url_strerror_txt[] =
 {
     "",				/* URLERR_NONE */
     "Unknown URL",		/* URLERR_NOURL */
@@ -507,7 +508,7 @@ static char *url_strerror_txt[] =
     ""
 };
 
-char *url_strerror(int no)
+const char *url_strerror(int no)
 {
     if(no <= URLERR_NONE)
 	return strerror(no);

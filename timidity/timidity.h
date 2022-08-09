@@ -27,7 +27,7 @@
 #ifndef TIMIDITY_H_INCLUDED
 #define TIMIDITY_H_INCLUDED 1
 
-/* 
+/*
    Table of contents:
    (1) Flags and definitions to customize timidity
    (3) inportant definitions not to customize

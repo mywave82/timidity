@@ -36,7 +36,7 @@
 #include "unlzh.h"
 #include "explode.h"
 
-char *arc_lib_version = ARC_LIB_VERSION;
+const char *arc_lib_version = ARC_LIB_VERSION;
 
 #define GZIP_ASCIIFLAG		(1u<<0)
 #define GZIP_MULTIPARTFLAG	(1u<<1)
@@ -182,7 +182,7 @@ int parse_gzip_header_bytes(char *gz, long maxparse, int *hdrsiz)
 
 void (* arc_error_handler)(char *error_message) = NULL;
     
-static void arc_cant_open(char *s)
+static void arc_cant_open(const char *s)
 {
     if(arc_error_handler != NULL)
     {
@@ -192,7 +192,7 @@ static void arc_cant_open(char *s)
     }
 }
 
-int get_archive_type(char *archive_name)
+int get_archive_type(const char *archive_name)
 {
     int i, len;
     char *p;
@@ -237,7 +237,7 @@ int get_archive_type(char *archive_name)
     return -1;			/* Not found */
 }
 
-static ArchiveFileList *find_arc_filelist(char *basename)
+static ArchiveFileList *find_arc_filelist(const char *basename)
 {
     ArchiveFileList *p;
 
@@ -314,7 +314,7 @@ ArchiveEntryNode *arc_parse_entry(URL url, int archive_type)
     return entry_first;		/* Note that NULL if no archive file */
 }
 
-static ArchiveFileList *add_arc_filelist(char *basename, int archive_type)
+static ArchiveFileList *add_arc_filelist(const char *basename, int archive_type)
 {
     URL url;
     ArchiveFileList *afl;
@@ -348,7 +348,7 @@ static ArchiveFileList *add_arc_filelist(char *basename, int archive_type)
     return afl;
 }
 
-static ArchiveFileList *regist_archive(char *archive_filename)
+static ArchiveFileList *regist_archive(const char *archive_filename)
 {
     int archive_type;
 
@@ -385,8 +385,9 @@ static int arc_expand_newfile(StringTable *s, ArchiveFileList *afl,
 char **expand_archive_names(int *nfiles_in_out, char **files)
 {
     int i, nfiles, arc_type;
-    char *infile_name;
-    char *base, *pattern, *p, buff[BUFSIZ];
+    const char *infile_name;
+    const char *base;
+    char *pattern, *p, buff[BUFSIZ];
     char *one_file[1];
     int one;
     ArchiveFileList *afl;
@@ -417,9 +418,10 @@ char **expand_archive_names(int *nfiles_in_out, char **files)
 	else
 	{
 	    int len = p - infile_name;
-	    base = new_segment(pool, len + 1); /* +1 for '\0' */
-	    memcpy(base, infile_name, len);
-	    base[len] = '\0';
+            char *tmp = new_segment(pool, len + 1); /* +1 for '\0' */
+	    memcpy(tmp, infile_name, len);
+	    tmp[len] = '\0';
+            base = tmp;
 	    pattern = p + 1;
 	}
 
@@ -538,7 +540,7 @@ char **expand_archive_names(int *nfiles_in_out, char **files)
     return NULL;
 }
 
-ArchiveEntryNode *new_entry_node(char *name, int len)
+ArchiveEntryNode *new_entry_node(const char *name, int len)
 {
     ArchiveEntryNode *entry;
     entry = (ArchiveEntryNode *)safe_malloc(sizeof(ArchiveEntryNode));
@@ -704,10 +706,11 @@ static long archiver_read_func(char *buff, long buff_size, void *v)
     return n;
 }
 
-URL url_arc_open(char *name)
+URL url_arc_open(const char *name)
 {
     URL_arc *url;
-    char *base, *p;
+    const char *base;
+    char *p, *tmp;
     int len;
     ArchiveFileList *afl;
     ArchiveEntryNode *entry;
@@ -716,10 +719,11 @@ URL url_arc_open(char *name)
     if((p = strrchr(name, '#')) == NULL)
 	return NULL;
     len = p - name;
-    base = new_segment(&arc_buffer, len + 1);
-    memcpy(base, name, len);
-    base[len] = '\0';
-    base = url_expand_home_dir(base);
+
+    tmp = new_segment(&arc_buffer, len + 1);
+    memcpy(tmp, name, len);
+    tmp[len] = '\0';
+    base = url_expand_home_dir(tmp);
 
     if((afl = find_arc_filelist(base)) == NULL)
 	afl = regist_archive(base);
