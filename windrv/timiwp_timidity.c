@@ -61,7 +61,7 @@ static BOOL WINAPI handler(DWORD dw)
     return TRUE;
 }
 
-static	RETSIGTYPE sigterm_exit(int sig)
+static void sigterm_exit(int sig)
 {
     char s[4];
 

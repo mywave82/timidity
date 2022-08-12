@@ -22,6 +22,8 @@
     Functions to output FLAC / OggFLAC  (*.flac, *.ogg).
 */
 
+#warning .*OGGFLAC.* and LEGACY should be removed. OggFLAC has been merged into libflac a long time ago
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
@@ -304,7 +306,7 @@ void flac_set_option_verify(int verify)
 {
   flac_options.verify = verify;
 }
-#ifdef AU_OGGFLAC
+#if defined(LEGACY_FLAC) && defined(AU_OGGFLAC)
 void flac_set_option_oggflac(int isogg)
 {
   flac_options.isogg = isogg;
@@ -585,7 +587,10 @@ static int flac_output_open(const char *fname, const char *comment)
 		flac_session_close();
 		return -1;
 	}
+#endif
 
+
+#ifdef LEGACY_FLAC
 #ifdef AU_OGGFLAC
   if (flac_options.isogg) {
     /* set sequential number for serial */
@@ -648,7 +653,7 @@ static int auto_flac_output_open(const char *input_filename, const char *title)
 {
   char *output_filename;
 
-#ifdef AU_OGGFLAC
+#if defined(LEGACY_FLAC) && defined(AU_OGGFLAC)
   if (flac_options.isogg) {
 #ifndef __W32G__
   output_filename = create_auto_output_name(input_filename, "ogg", NULL, 0);
@@ -706,7 +711,7 @@ static int open_output(void)
   exclude_enc |= PE_BYTESWAP | PE_24BIT;
   dpm.encoding = validate_encoding(dpm.encoding, include_enc, exclude_enc);
 
-#ifdef AU_OGGFLAC
+#if defined(LEGACY_FLAC) && defined(AU_OGGFLAC)
   if (flac_options.isogg) {
     ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "*** cannot write back seekpoints when encoding to Ogg yet ***");
     ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "*** and stream end will not be written.                   ***");

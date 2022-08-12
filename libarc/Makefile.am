@@ -18,7 +18,7 @@
 
 include $(top_srcdir)/common.makefile.in
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/timidity \
 	-I$(top_srcdir)/utils \
 	$(EXTRAINCS)

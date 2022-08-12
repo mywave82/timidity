@@ -43,16 +43,10 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#if TIME_WITH_SYS_TIME
+#include <time.h>
+#ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif  /* TIME_WITH_SYS_TIME */
+#endif /* HAVE_SYS_TIME_H */
 #include <fcntl.h> /* for open */
 
 #ifdef BORLANDC_EXCEPTION
@@ -5347,7 +5341,7 @@ static void interesting_message(void)
 /* -------- functions for getopt_long ends here --------- */
 
 #ifdef HAVE_SIGNAL
-static RETSIGTYPE sigterm_exit(int sig)
+static void sigterm_exit(int sig)
 {
     char s[4];
 #if defined(__MINGW32__) && !defined(HAVE_SSIZE_T)

@@ -7,24 +7,13 @@ dnl XIPH_PATH_AO([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
 dnl Test for libao, and define AO_CFLAGS and AO_LIBS
 dnl
 AC_DEFUN([XIPH_PATH_AO],
-[dnl 
+[dnl
 dnl Get the cflags and libraries
 dnl
-AC_ARG_WITH(ao,
-	    AS_HELP_STRING([--with-ao=PFX], [Prefix where libao is installed (optional)]),
-	    		   [ao_prefix="$withval"], [ao_prefix=""])
-AC_ARG_WITH(ao-libraries,
-	    AS_HELP_STRING([--with-ao-libraries=DIR],
-	    		   [Directory where libao library is installed (optional)]),
-	    [ao_libraries="$withval"], [ao_libraries=""])
-AC_ARG_WITH(ao-includes,
-	    AS_HELP_STRING([--with-ao-includes=DIR],
-	    		   [Directory where libao header files are installed (optional)]),
-	    [ao_includes="$withval"], [ao_includes=""])
-AC_ARG_ENABLE(aotest,
-	      AS_HELP_STRING([--disable-aotest],
-	      		     [Do not try to compile and run a test ao program]),,
-	      [enable_aotest=yes])
+AC_ARG_WITH(ao,[  --with-ao=PFX   Prefix where libao is installed (optional)], ao_prefix="$withval", ao_prefix="")
+AC_ARG_WITH(ao-libraries,[  --with-ao-libraries=DIR   Directory where libao library is installed (optional)], ao_libraries="$withval", ao_libraries="")
+AC_ARG_WITH(ao-includes,[  --with-ao-includes=DIR   Directory where libao header files are installed (optional)], ao_includes="$withval", ao_includes="")
+AC_ARG_ENABLE(aotest, [  --disable-aotest       Do not try to compile and run a test ao program],, enable_aotest=yes)
 
 
   if test "x$ao_libraries" != "x" ; then
@@ -66,7 +55,7 @@ dnl
 dnl Now check if the installed ao is sufficiently new.
 dnl
       rm -f conf.aotest
-      AC_TRY_RUN([
+      AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,14 +67,14 @@ int main ()
   return 0;
 }
 
-],, no_ao=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+]])],[],[no_ao=yes],[echo $ac_n "cross compiling; assumed OK... $ac_c"])
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
   fi
 
   if test "x$no_ao" = "x" ; then
      AC_MSG_RESULT(yes)
-     ifelse([$1], , :, [$1])     
+     ifelse([$1], , :, [$1])
   else
      AC_MSG_RESULT(no)
      if test -f conf.aotest ; then
@@ -94,10 +83,10 @@ int main ()
        echo "*** Could not run ao test program, checking why..."
        CFLAGS="$CFLAGS $AO_CFLAGS"
        LIBS="$LIBS $AO_LIBS"
-       AC_TRY_LINK([
+       AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <ao/ao.h>
-],     [ return 0; ],
+]], [[ return 0; ]])],
        [ echo "*** The test program compiled, but did not run. This usually means"
        echo "*** that the run-time linker is not finding ao or finding the wrong"
        echo "*** version of ao. If it is not finding ao, you'll need to set your"

@@ -196,9 +196,10 @@ dnl WAPI_CHECK_FUNC(FUNCTION, INCLUDES, TEST-BODY,
 AC_DEFUN([WAPI_CHECK_FUNC],
 [AC_MSG_CHECKING(for $1)
 AC_CACHE_VAL(wapi_cv_func_$1,
-[AC_TRY_LINK([#include <windows.h>
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([
+#include <windows.h>
 $2
-], [$3],
+], [$3])],
 wapi_cv_func_$1=yes, wapi_cv_func_$1=no)])
 if eval "test \"`echo '$wapi_cv_func_'$1`\" = yes"; then
   AC_MSG_RESULT(yes)
@@ -220,9 +221,10 @@ ac_lib_var=`echo $1['_']$2 | sed 'y%./+-%__p_%'`
 AC_CACHE_VAL(wapi_cv_lib_$ac_lib_var,
 [ac_save_LIBS="$LIBS"
 LIBS="-l$1 $7 $LIBS"
-AC_TRY_LINK([#include <windows.h>
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
+#include <windows.h>
 $3
-], [$4],
+], [$4])],
 eval "wapi_cv_lib_$ac_lib_var=yes",
 eval "wapi_cv_lib_$ac_lib_var=no")
 LIBS="$ac_save_LIBS"

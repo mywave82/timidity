@@ -258,7 +258,7 @@ static void ctl_event(CtlEvent *e)
 {
 }
 
-static RETSIGTYPE sig_timeout(int sig)
+static void sig_timeout(int sig)
 {
     signal(SIGALRM, sig_timeout); /* For SysV base */
     /* Expect EINTR */
@@ -271,7 +271,7 @@ static void stop_sequencer(struct seq_context *ctxp);
 static void server_reset(void);
 
 /* reset all when SIGHUP is received */
-static RETSIGTYPE sig_reset(int sig)
+static void sig_reset(int sig)
 {
 	if (alsactx.active) {
 		stop_sequencer(&alsactx);

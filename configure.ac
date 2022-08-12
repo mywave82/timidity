@@ -47,9 +47,8 @@ dnl SHCFLAGS	- Additional flags to compile shared object library.
 dnl		  (such as -fPIC)
 
 # This is a autoscan-generated configure.scan.
-# AC_PREREQ(2.56)
+# AC_PREREQ([2.71])
 
-# "AC_INIT(timidity/timidity.c)" is obsolate yet.
 AC_INIT([TiMidity++],[2.15.0],[timidity-talk@lists.sourceforge.net],[TiMidity++])
 AC_CONFIG_AUX_DIR([autoconf])
 AC_CANONICAL_TARGET
@@ -71,25 +70,25 @@ AC_MSG_CHECKING(if --enable-debug option specified)
 AC_ARG_ENABLE(debug,
 	      AS_HELP_STRING([--enable-debug], [Build a debugging version.]),
 	      [timidity_cv_debug="yes"], [timidity_cv_debug="no"])
-if test "x$timidity_cv_debug" = "xyes"; then
+AS_IF([test "x$timidity_cv_debug" = "xyes"],[
   AC_DEFINE(DEBUG,1,Define to 1 if you are in debug mode)
   CFLAGS=${CFLAGS-"-g"}
-fi
-if test "x$timidity_cv_debug" = "xno"; then
+])
+AS_IF([test "x$timidity_cv_debug" = "xno"],[
   AC_DEFINE(NDEBUG,1,Define to 1 if you are NOT in debug mode)
-fi
+])
 AC_MSG_RESULT($timidity_cv_debug)
 
-if test "x$CFLAGS" = "x"; then
+AS_IF([test "x$CFLAGS" = "x"],[
   NOCFLAGS="yes"
-fi
+])
 
 dnl --with-x turns on if `--with-x' is NOT specified.
-if test "x$with_x" = x; then
+AS_IF([test "x$with_x" = x], [
   with_x=yes
-else
+],[
   x_config_flag=yes
-fi
+])
 
 # Checking gcc environment
 for i in `echo $LIBRARY_PATH|sed -e 's,:, ,g'`; do
@@ -100,11 +99,11 @@ for i in `echo $C_INCLUDE_PATH|sed -e 's,:, ,g'`; do
 done
 
 # add $prefix if specified.
-if test "x$prefix" != xNONE -a "x$prefix" != "x$ac_default_prefix" -a "x$prefix" != "x/usr"; then
+AS_IF([test "x$prefix" != xNONE -a "x$prefix" != "x$ac_default_prefix" -a "x$prefix" != "x/usr"],[
   LDFLAGS="-L$prefix/lib $LDFLAGS"
   SHLDFLAGS="-L$prefix/lib $SHLDFLAGS"
   CPPFLAGS="-I$prefix/include $CPPFLAGS"
-fi
+])
 
 dnl add --with-includes, --with-libraries
 AC_ARG_WITH(includes,
@@ -132,11 +131,11 @@ AC_ARG_WITH(default-path,
   AS_HELP_STRING([--with-default-path=DIR], [Where timidity.cfg is  (PREFIX/share/timidity)]),
   [pkgdatadir=$withval],
   [
-   if test "x$prefix" != "xNONE"; then
+   AS_IF([test "x$prefix" != "xNONE"], [
       pkgdatadir='${prefix}/share/timidity'
-   else
+   ], [
       pkgdatadir='/usr/local/share/timidity'
-   fi
+   ])
   ])
 tmpdefpath="`eval \"echo ${pkgdatadir}\"`"
 AC_DEFINE_UNQUOTED(DEFAULT_PATH,"$tmpdefpath",place to install patches)
@@ -146,11 +145,11 @@ AC_ARG_WITH(module-dir,
   AS_HELP_STRING([--with-module-dir=DIR], [Where to install interfaces (PREFIX/lib/timidity)]),
   [pkglibdir=$withval],
   [
-   if test "x$prefix" != "xNONE"; then
+   AS_IF([test "x$prefix" != "xNONE"],[
       pkglibdir='${prefix}/lib/timidity'
-   else
+   ], [
       pkglibdir='/usr/local/lib/timidity'
-   fi
+   ])
   ])
 tmplibdir="`eval \"echo ${pkglibdir}\"`"
 AC_DEFINE_UNQUOTED(PKGLIBDIR,"$tmplibdir",place to install modules)
@@ -171,13 +170,13 @@ AC_PROG_RANLIB
 AC_PROG_LN_S
 CHECK_COMPILER_OPTION(rdynamic)
 
-if test "x$NOCFLAGS" = "xyes"; then
-  if test "x$GCC" = "xyes"; then
+AS_IF([test "x$NOCFLAGS" = "xyes"], [
+  AS_IF([test "x$GCC" = "xyes"], [
     CFLAGS="-O2"
-  else
+  ], [
     CFLAGS=""
-  fi
-fi
+  ])
+])
 
 # Checks for target dependencies
 
@@ -192,33 +191,33 @@ AC_ARG_WITH(elf,
 case "$target" in
   *-*-hpux*)
     EXTRADEFS="-DHPUX"
-    test -n "$SHLD" || SHLD="ld -b"
+    AS_IF([! test -n "$SHLD" ], [ SHLD="ld -b" ])
     so="sl"
     ;;
   *-sgi-irix*)
     dnl IRIX cc needs -signed option
     case ".$CC" in .cc*) EXTRACFLAGS="-signed";; esac
-    test -n "$SHLD" || SHLD="cc -shared -all"
+    AS_IF([! test -n "$SHLD" ], [ SHLD="cc -shared -all" ])
     so="so"
     ;;
   *-*-netbsd*)
-    test -n "$SHLD" || SHLD="$CC -shared -nostartfiles"
+    AS_IF([! test -n "$SHLD" ], [ SHLD="$CC -shared -nostartfiles" ])
     so="so"
     ;;
 
   *-*-freebsd2*)
     dnl EXTRALIBS="$EXTRALIBS -lxpg4"
-    test -n "$SHLD" || SHLD="ld -Bshareable"
+    AS_IF([! test -n "$SHLD" ], [ SHLD="ld -Bshareable" ])
     so="so"
     ;;
   *-*-freebsd*)
-    if test "$ELFFORMAT" = yes; then
-	test -n "$SHLD" || SHLD="ld -Bshareable"
-    else
+    AS_IF([test "$ELFFORMAT" = yes],[
+	AS_IF([! test -n "$SHLD" ], [ SHLD="ld -Bshareable" ])
+    ], [
 	SHCFLAGS=-aou
 	SHLDFLAGS="-L/usr/X11R6/lib/aout $SHLDFLAGS"
-	test -n "$SHLD" || SHLD="env OBJFORMAT=aout ld -shared"
-    fi
+	AS_IF([! test -n "$SHLD" ], [ SHLD="env OBJFORMAT=aout ld -shared" ])
+    ])
     dnl EXTRALIBS="$EXTRALIBS -lxpg4"
     so="so"
     ;;
@@ -233,17 +232,17 @@ case "$target" in
     EXTRADEFS="-D__W32__"
     # ??
     case "x${CC} " in
-      "xbcc32 "*|xbcc32) 
+      "xbcc32 "*|xbcc32)
 #        test -n "$SHLD" || SHLD="tlink32 -Tpd"
-        test -n "$SHLD" || SHLD="BCC32 -WD"
+        AS_IF([! test -n "$SHLD" ], [ SHLD="BCC32 -WD" ])
         BORLANDC=yes
         BORLANDC_LDFLAGS="kernel32.lib winspool.lib comdlg32.lib advapi32.lib oleaut32.lib uuid.lib odbc32.lib ws2_32.lib user32.lib shell32.lib cw32mt.lib"
         BORLANDC_START='C0X32.OBJ'
         CFLAGS="$CFLAGS  -tWM -VM"
         EXTRADEFS="$EXTRADEFS -D_WINDOWS -DWIN32"
         ;;
-      "xcc "*|xcc) 
-        test -n "$SHLD" || SHLD="polink -DLL"
+      "xcc "*|xcc)
+        AS_IF([! test -n "$SHLD" ], [ SHLD="polink -DLL" ])
         POCC=yes
          case " $CFLAGS " in
            *" -MT "*)  NODEF="-nodefaultlib:pocrt.lib -nodefaultlib:crt.lib -defaultlib:crtmt.lib"  ;;
@@ -254,8 +253,8 @@ case "$target" in
         CFLAGS="$CFLAGS -Ze -D__POCC__OLDNAMES"
         EXTRADEFS="$EXTRADEFS -D_WINDOWS -DWIN32"
         ;;
-      "xdmc "*|xdmc) 
-        test -n "$SHLD" || SHLD="dmc -WD"
+      "xdmc "*|xdmc)
+        AS_IF([! test -n "$SHLD" ], [ SHLD="dmc -WD" ])
         DMC=yes
         DMC_LDFLAGS="winmm.lib ws2_32.lib user32.lib kernel32.lib shell32.lib gdi32.lib comctl32.lib comdlg32.lib ole32.lib advapi32.lib"
         CFLAGS="$CFLAGS  -mn -j0"
@@ -269,8 +268,8 @@ case "$target" in
          WATCOM_LDFLAGS=
          EXTRALIBS="$EXTRALIBS kernel32.lib winspool.lib comdlg32.lib advapi32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ws2_32.lib user32.lib shell32.lib"
          ;;
-      "xcl "*|xcl) 
-         test -n "$SHLD" || SHLD="link -dll"
+      "xcl "*|xcl)
+         AS_IF([! test -n "$SHLD" ], [ SHLD="link -dll" ])
          VCPP=yes
          case " $CFLAGS " in
            *" -MT "*)  NODEF="-nodefaultlib:msvcrt.lib -nodefaultlib:msvcrtd.lib -nodefaultlib:libcmtd.lib -nodefaultlib:libc.lib -nodefaultlib:libcd.lib"  ;;
@@ -283,8 +282,13 @@ case "$target" in
          CFLAGS="$CFLAGS -nologo -Zp16 -W3 -GX  -Ob2"
          EXTRADEFS="$EXTRADEFS -DNDEBUG -D_WINDOWS -DWIN32 -DMBCS -D_MT -YX  -FD -c"
          ;;
-      x*gcc*) test -n "$SHLD" || SHLD="gcc -mdll"; MINGWGCC=yes ;;
-      *) test -n "$SHLD" || SHLD="unknown" ;;
+      x*gcc*)
+         AS_IF([! test -n "$SHLD" ], [ SHLD="gcc -mdll" ]);
+         MINGWGCC=yes
+         ;;
+      *)
+         AS_IF([! test -n "$SHLD" ], [ SHLD="unknown" ])
+         ;;
     esac
     so="dll"
     MSYS=yes
@@ -292,38 +296,39 @@ case "$target" in
     ;;
   *-dec-*)
     EXTRADEFS="-DDEC"
-    test -n "$SHLD" || SHLD="ld -Bdynamic -G"
+    AS_IF([! test -n "$SHLD" ], [ SHLD="ld -Bdynamic -G" ])
     so="so"
     ;;
   *-*-solaris*)
     EXTRADEFS="-DSOLARIS"
-    test -n "$SHLD" || SHLD="/usr/ccs/bin/ld -G"
+    AS_IF([! test -n "$SHLD" ], [ SHLD="/usr/ccs/bin/ld -G" ])
     so="so"
     ;;
   *-*-nextstep*)
-    test -n "$SHLD" || SHLD="/usr/ccs/bin/ld -G"
+    AS_IF([! test -n "$SHLD" ], [ SHLD="/usr/ccs/bin/ld -G" ])
     so="so"
     ;;
   *-*-darwin*)
-    if test "x$SIMD" = "xyes"; then
+    AS_IF([test "x$SIMD" = "xyes"],[
        AC_DEFINE(USE_ALTIVEC,1,Define to 1 if you use altivec)
        # EXTRACFLAGS="$EXTRACFLAGS -faltivec -mabi=altivec -maltivec" # for GCC3.
        EXTRACFLAGS="$EXTRACFLAGS -faltivec"
-    else
+    ],[
        AC_DEFINE(USE_ALTIVEC,0,Define to 1 if you use altivec)
-    fi
+    ])
     CPPFLAGS="$CPPFLAGS -no-cpp-precomp"
     LDOPTS="-dynamic -undefined suppress -flat_namespace $LDOPTS"
-    test -n "$SHLD" || SHLD="$CC -dynamic -bundle -undefined suppress -flat_namespace $LDFLAGS"
+    AS_IF([! test -n "$SHLD" ], [ SHLD="$CC -dynamic -bundle -undefined suppress -flat_namespace $LDFLAGS" ])
     so="bundle"
     ;;
   *)
-    test -n "$SHLD" || \
-      if test "x$GCC" = xyes; then
+    AS_IF([! test -n "$SHLD"],[
+      AS_IF([test "x$GCC" = xyes],[
 	SHLD="$CC -shared"
-      else
+      ],[
 	SHLD="ld -Bdynamic -G"
-      fi
+      ])
+    ])
     so="so"
     ;;
 esac
@@ -336,9 +341,9 @@ AC_CHECK_LIB(m,sqrt)
 AC_CHECK_LIB(socket,socket)
 AC_CHECK_LIB(dl,dlopen,lib_dl_opt=-ldl)
 AC_CHECK_LIB(objc,NSLinkModule,lib_dl_opt=-lobjc) # Mac OS X need this.
-if test "x$VCPP" != "xyes" && test "x$BORLANDC" != "xyes" && test "x$WATCOM_C" != "xyes" && test "x$POCC" != "xyes"; then
-AC_CHECK_LIB(xpg4,setlocale) # Mac OS X (and maybe NetBSD) need this.
-fi
+AS_IF([test "x$VCPP" != "xyes" && test "x$BORLANDC" != "xyes" && test "x$WATCOM_C" != "xyes" && test "x$POCC" != "xyes"],[
+  AC_CHECK_LIB(xpg4,setlocale) # Mac OS X (and maybe NetBSD) need this.
+])
 AC_CHECK_FUNCS(gethostbyname,,[ AC_CHECK_LIB(nsl,gethostbyname) ])
 AC_PATH_XTRA
 
@@ -357,42 +362,44 @@ AC_ARG_WITH(xawlib,
   [ with_xawlib="$withval" ], [ with_xawlib="xaw3d,xaw" ])
 
 # Checks for X
-if test "x$with_x" = xyes; then
-  if test "x$have_x" = xno; then
-    if test "x$x_config_flag" = xyes; then
+AS_IF([test "x$with_x" = xyes], [
+  AS_IF([test "x$have_x" = xno], [
+    AS_IF([test "x$x_config_flag" = xyes], [
       AC_MSG_ERROR(Could not configure X)
-    else
+    ], [
       AC_MSG_WARN(Could not configure X)
-    fi
-  fi
-fi
-if test "x$with_x" = xyes -a "x$have_x" = xyes; then
-  if test "x$x_libraries" != x; then
+    ])
+  ])
+])
+AS_IF([test "x$with_x" = xyes -a "x$have_x" = xyes], [
+  AS_IF([test "x$x_libraries" != x], [
     ldflags_x_opt="-L$x_libraries"
     LDFLAGS="$LDFLAGS $ldflags_x_opt"
     SHLDFLAGS="$SHLDFLAGS $ldflags_x_opt"
-  else
+  ], [
     ldflags_x_opt=
-  fi
-  if test "x$x_includes" != x; then
+  ])
+  AS_IF([test "x$x_includes" != x], [
     CPPFLAGS="$CPPFLAGS -I$x_includes"
-  fi
+  ])
 
   AC_CHECK_LIB(X11,XOpenDisplay,
-  AC_DEFINE(HAVE_LIBX11,1,Define to 1 if you have the `X11' library (-lX11).))
+  AC_DEFINE(HAVE_LIBX11,1,Define to 1 if you have the ``X11'' library (-lX11).))
   AC_MSG_CHECKING(X11 version 6)
   AC_CACHE_VAL(timidity_cv_x11_version_6,
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>]], [[
+    AC_LINK_IFELSE([AC_LANG_PROGRAM(
+     [[#include <X11/Xlib.h>]],
+     [[
 #if XlibSpecificationRelease < 6
 fail;
 #endif
-]])],[timidity_cv_x11_version_6=yes],[timidity_cv_x11_version_6=no]))
-  if test "$timidity_cv_x11_version_6" = "yes"; then
+     ]])],[timidity_cv_x11_version_6=yes],[timidity_cv_x11_version_6=no]))
+  AS_IF([test "$timidity_cv_x11_version_6" = "yes"], [
     AC_MSG_RESULT(6 or newer)
     dnl AC_DEFINE(HAVE_X11R6)
-  else
+  ], [
     AC_MSG_RESULT(before 6)
-  fi
+  ])
 
   dnl checking order required
   KEEPLIBS=$LIBS
@@ -402,52 +409,55 @@ fail;
   AC_CHECK_LIB(Xt,XtVaAppInitialize,have_xt=yes; LIBS="-lXt $LIBS",have_xt=no)
   AC_CHECK_LIB(Xmu,XmuInternAtom,LIBS="-lXmu $LIBS")
   AC_CHECK_FUNCS(XmuRegisterExternalAgent)
-  if test "x$enable_xft" = "xyes"; then
+  AS_IF([test "x$enable_xft" = "xyes"], [
     AC_CHECK_LIB(Xft,XftInit,
-                 AC_DEFINE(HAVE_LIBXFT,1,Define to 1 if you have the 'Xft' library.),
+                 AC_DEFINE(HAVE_LIBXFT,1,Define to 1 if you have the ``Xft'' library.),
                  enable_xft=no)
-  fi
+  ])
   for i in `echo $with_xawlib | sed 's/,/ /g'`; do
-  case "$i" in
-  "xaw")
-    AC_CHECK_LIB(Xaw,XawInitializeWidgetSet,have_xaw=yes,have_xaw=no)
-    ;;
-  "xaw3d") 
-    AC_CHECK_LIB(Xaw3d,XawInitializeWidgetSet,
-      [ have_xaw=3d;
-          AC_CHECK_HEADER(X11/Xaw3d/Tip.h,
-          AC_DEFINE(HAVE_XAW3D_TIP,1,Define to 1 if you have the <X11/Xaw3d/Tip.h> header file.),
-          )
-      ],
+    case "$i" in
+    "xaw")
+      AC_CHECK_LIB(Xaw,XawInitializeWidgetSet,have_xaw=yes,have_xaw=no)
+      ;;
+    "xaw3d")
+      AC_CHECK_LIB(Xaw3d,XawInitializeWidgetSet,
+        [ have_xaw=3d;
+            AC_CHECK_HEADER(X11/Xaw3d/Tip.h,
+            AC_DEFINE(HAVE_XAW3D_TIP,1,Define to 1 if you have the <X11/Xaw3d/Tip.h> header file.),
+            )
+        ],
+        have_xaw=no
+      )
+      ;;
+    "neXtaw")
+      AC_CHECK_LIB(neXtaw,XawInitializeWidgetSet,have_xaw=next,have_xaw=no)
+      ;;
+    "XawPlus")
+      AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData)
+      AC_CHECK_LIB(XawPlus,XawInitializeWidgetSet,have_xaw=plus,have_xaw=no)
+      ;;
+    *)
       have_xaw=no
-    )
-    ;;
-  "neXtaw")
-    AC_CHECK_LIB(neXtaw,XawInitializeWidgetSet,have_xaw=next,have_xaw=no)
-    ;;
-  "XawPlus")
-    AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData)
-    AC_CHECK_LIB(XawPlus,XawInitializeWidgetSet,have_xaw=plus,have_xaw=no)
-    ;;
-  *)
-    have_xaw=no
-    ;;
-  esac
-  if test "x$have_xaw" != "xno"; then break; fi
+      ;;
+    esac
+    AS_IF([test "x$have_xaw" != "xno"],[break;])
   done
   AC_CHECK_LIB(Xm,XmCreateForm,have_xm=yes,have_xm=no)
   AC_CHECK_FUNCS(XShmCreatePixmap)
   LIBS=$KEEPLIBS
-fi
+])
 dnl End of X configure
 
 # Checks for header files.
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 #AC_HEADER_STDBOOL
 AC_HEADER_SYS_WAIT
-if test "x$WATCOM_C" != xyes ; then
-AC_HEADER_TIME
-fi
+AS_IF([test "x$WATCOM_C" != xyes], [
+  AC_CHECK_HEADERS_ONCE([sys/time.h])
+])
+
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS( \
   [arpa/inet.h \
@@ -489,11 +499,11 @@ AC_CHECK_HEADERS( \
   termios.h \
   X11/Xlib.h])
 
-if test "x$DMC" != xyes ; then
+AS_IF([test "x$DMC" != xyes], [
 AC_CHECK_HEADERS([ \
   unistd.h \
   ])
-fi
+])
 
 AC_CHECK_HEADERS(\
   [X11/extensions/XShm.h X11/Xmu/ExtAgent.h],[],[],[
@@ -504,9 +514,9 @@ AC_CHECK_HEADERS(\
 AC_CHECK_HEADER(string.h,, [ AC_DEFINE(NO_STRING_H,1,Define to 1 if you do not have <string.h>.)])
 
 # Checks for typedefs, structures, and compiler characteristics.
-if test "x$WATCOM_C" != xyes ; then
-AC_C_BIGENDIAN
-fi
+AS_IF([test "x$WATCOM_C" != xyes],[
+  AC_C_BIGENDIAN
+])
 AC_C_CHAR_UNSIGNED
 AC_C_CONST
 AC_C_INLINE
@@ -514,13 +524,13 @@ AC_C_VOLATILE
 AC_C_STRINGIZE
 AC_C_PROTOTYPES
 AC_STRUCT_TM
-if test "x$DMC" != xyes ; then
-AC_TYPE_SIZE_T
-fi
-if test "x$POCC" != xyes ; then
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
-fi
+AS_IF([test "x$DMC" != xyes], [
+  AC_TYPE_SIZE_T
+])
+AS_IF([test "x$POCC" != xyes], [
+  AC_TYPE_OFF_T
+  AC_TYPE_PID_T
+])
 
 # Older versions of MinGW do not define ssize_t in sys/types
 AC_MSG_CHECKING([for ssize_t])
@@ -533,17 +543,17 @@ AC_CACHE_VAL(ac_cv_type_$1,
 #endif], [ac_cv_type_ssize_t=yes], [ac_cv_type_ssize_t=no])])
 
 AC_MSG_RESULT([$ac_cv_type_ssize_t])
-if test $ac_cv_type_ssize_t = yes; then
+AS_IF([test $ac_cv_type_ssize_t = yes], [
   AC_DEFINE(HAVE_SSIZE_T, 1,
-    [Define to 1 if the system has the type `ssize_t'.])
-fi
+    [Define to 1 if the system has the type ``ssize_t''.])
+])
 
 dnl keyword "volatile" check
 AC_CACHE_CHECK(volatile declaration,timidity_cv_type_volatile,
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(, [[volatile int x]])],[timidity_cv_type_volatile=yes],[timidity_cv_type_volatile=no]))
-if test $timidity_cv_type_volatile = no; then
+AS_IF([test $timidity_cv_type_volatile = no], [
   AC_DEFINE(NO_VOLATILE,1,Define to 1 if you cannot use volatile keyword)
-fi
+])
 
 dnl union usenum check
 AC_CACHE_CHECK(union semun declaration,timidity_cv_type_union_semun,
@@ -552,72 +562,70 @@ AC_CACHE_CHECK(union semun declaration,timidity_cv_type_union_semun,
 #include <sys/ipc.h>
 #include <sys/sem.h>
 ]], [[union semun x]])],[timidity_cv_type_union_semun=yes],[timidity_cv_type_union_semun=no]))
-if test $timidity_cv_type_union_semun = yes; then
+AS_IF([test $timidity_cv_type_union_semun = yes], [
   AC_DEFINE(HAVE_UNION_SEMUN,1,Define to 1 if you use semun keyword)
-fi
+])
 
 dnl Cygnus and Mingw memory struct optiontest
-if test "x$MSYS" = xyes ; then
+AS_IF([test "x$MSYS" = xyes], [
 	case "x${CC}" in
-	"xgcc"*) 
+	"xgcc"*)
 		msnative_struct=''
-	    AC_MSG_CHECKING([how to get MSVC-compatible struct packing])
-	    if test -z "$ac_cv_prog_CC"; then
+		AC_MSG_CHECKING([how to get MSVC-compatible struct packing])
+		AS_IF([test -z "$ac_cv_prog_CC"], [
 			our_gcc="$CC"
-		else
+		], [
 			our_gcc="$ac_cv_prog_CC"
-		fi
+		])
 		case `$our_gcc --version | sed -e 's,\..*,.,' -e q` in
 			2.)
-		if $our_gcc -v --help 2>/dev/null | grep fnative-struct >/dev/null; then
+		AS_IF([$our_gcc -v --help 2>/dev/null | grep fnative-struct >/dev/null], [
 	  		msnative_struct='-fnative-struct'
-		fi
+		])
 		;;
 			*)
-		if $our_gcc -v --help 2>/dev/null | grep ms-bitfields >/dev/null; then
+		AS_IF([$our_gcc -v --help 2>/dev/null | grep ms-bitfields >/dev/null], [
 			msnative_struct='-mms-bitfields'
-		fi
+		])
 		;;
 		esac
-		if test x"$msnative_struct" = x ; then
+		AS_IF([test x"$msnative_struct" = x], [
 			AC_MSG_RESULT([no way])
 			AC_MSG_WARN([produced binary will be incompatible with windows' GUI ])
-		else
+		], [
 			CFLAGS="$CFLAGS $msnative_struct"
 			CPPFLAGS="$CPPFLAGS $msnative_struct"
 			AC_MSG_RESULT([${msnative_struct}])
-		fi
+		])
 		;;
-	*) 
+	*)
 		;;
 	esac
-fi
+])
 dnl Cygnus Mingw32 mmsystem check
-if test "x$MSYS" = xyes ; then
+AS_IF([test "x$MSYS" = xyes], [
   AC_CACHE_CHECK(Cygwin new mmsystem,timidity_cv_header_new_mmsystem,
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <windows.h>
 #include <mmsystem.h>
 ]], [[return WOM_OPEN != 0x3BB]])],[timidity_cv_header_new_mmsystem=yes],[timidity_cv_header_new_mmsystem=no]))
-  if test $timidity_cv_header_new_mmsystem = yes; then
+  AS_IF([test $timidity_cv_header_new_mmsystem = yes], [
     AC_DEFINE(HAVE_NEW_MMSYSTEM,1,Define to 1 if you have <mmsystem.h> file)
-  fi
-fi
+  ])
+])
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
-if test "x$DMC" != xyes ; then
-AC_FUNC_FORK
-fi
+AS_IF([test "x$DMC" != xyes], [
+  AC_FUNC_FORK
+])
 AC_FUNC_MEMCMP
-if test "x$DMC" != xyes ; then
-AC_FUNC_MMAP
-fi
-AC_FUNC_SETVBUF_REVERSED
-AC_TYPE_SIGNAL
-if test "x$VCPP" != xyes && test "x$BORLANDC" != xyes && test "x$WATCOM_C" != "xyes" && test "x$POCC" != "xyes"; then
-AC_FUNC_VPRINTF
-fi
+AS_IF([test "x$DMC" != xyes], [
+  AC_FUNC_MMAP
+])
+AS_IF([test "x$VCPP" != xyes && test "x$BORLANDC" != xyes && test "x$WATCOM_C" != "xyes" && test "x$POCC" != "xyes"], [
+  AC_FUNC_VPRINTF
+])
 AC_CHECK_FUNCS( \
   [alarm \
   dup2 \
@@ -655,11 +663,10 @@ AC_CHECK_FUNCS( \
   strlcat \
   strlcpy \
   usleep])
-if test "x$VCPP" = xyes; then
-  AC_DEFINE(RETSIGTYPE,int)
+AS_IF([test "x$VCPP" = xyes], [
   AC_DEFINE(HAVE_GETCWD,1)
-fi
-if test "x$POCC" = xyes; then
+])
+AS_IF([test "x$POCC" = xyes], [
   AC_DEFINE(HAVE_GETCWD,1)
   AC_DEFINE(HAVE_GETHOSTBYNAME,1)
   AC_DEFINE(HAVE_POPEN,1)
@@ -673,8 +680,8 @@ if test "x$POCC" = xyes; then
   AC_DEFINE(HAVE_VSNPRINTF,1)
   AC_DEFINE(HAVE_GETOPT,1)
   AC_DEFINE(TIMID_VERSION,[$(PACKAGE_VERSION)],[for windows gui])
-fi
-if test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes; then
+])
+AS_IF([test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes], [
   AC_DEFINE(HAVE_GETHOSTBYNAME,1)
   AC_DEFINE(HAVE_POPEN,1)
   AC_DEFINE(popen,_popen,[for VC])
@@ -690,16 +697,16 @@ if test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes;
   AC_DEFINE(HAVE_VSNPRINTF,1)
 dnl  AC_DEFINE(vsnprintf,_vsnprintf,[for VC])
   AC_DEFINE(TIMID_VERSION,[$(PACKAGE_VERSION)],[for windows gui])
-fi
+])
 
 AC_CHECK_FUNC(getopt_long,
-	 AC_DEFINE([HAVE_GETOPT_LONG],1,[Define to 1 if you have `getopt_long' function])
+	 AC_DEFINE([HAVE_GETOPT_LONG],1,[Define to 1 if you have ``getopt_long'' function])
 	 tm_cv_needgetopt="no",
 	 tm_cv_needgetopt="yes")
 AM_CONDITIONAL([NEEDGETOPT], test "x$tm_cv_needgetopt" = "xyes")
 
 AC_CHECK_FUNC(open_memstream, [
-	 AC_DEFINE([HAVE_OPEN_MEMSTREAM],1,[Define to 1 if you have `open_memstream' function])
+	 AC_DEFINE([HAVE_OPEN_MEMSTREAM],1,[Define to 1 if you have ``open_memstream'' function])
 	 ])
 
 dnl ***
@@ -744,16 +751,15 @@ AC_CACHE_CHECK([for an implementation of __va_copy()],lib_cv___va_copy,[
 	[lib_cv___va_copy=no],[])
 ])
 
-if test "x$lib_cv_va_copy" = "xyes"; then
+AS_IF([test "x$lib_cv_va_copy" = "xyes"], [
   va_copy_func=va_copy
-else if test "x$lib_cv___va_copy" = "xyes"; then
+], [test "x$lib_cv___va_copy" = "xyes"], [
   va_copy_func=__va_copy
-fi
-fi
+])
 
-if test -n "$va_copy_func"; then
+AS_IF([test -n "$va_copy_func"], [
   AC_DEFINE_UNQUOTED(VA_COPY,$va_copy_func,[A 'va_copy' style function])
-fi
+])
 
 AC_CACHE_CHECK([whether va_lists can be copied by value],lib_cv_va_val_copy,[
 	AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -774,12 +780,12 @@ AC_CACHE_CHECK([whether va_lists can be copied by value],lib_cv_va_val_copy,[
 	[lib_cv_va_val_copy=no],[])
 ])
 
-if test "x$lib_cv_va_val_copy" = "xno"; then
+AS_IF([test "x$lib_cv_va_val_copy" = "xno"], [
   AC_DEFINE(VA_COPY_AS_ARRAY,1, ['va_lists' cannot be copies as values])
-fi
+])
 
 # Checks on cygnus and MSYS
-if test "x$MSYS" = xyes ; then
+AS_IF([test "x$MSYS" = xyes], [
   case "$ac_cv_header_dirent_dirent_h$ac_cv_header_dirent_sys_ndir_h$ac_cv_header_dirent_sys_dir_h$ac_cv_header_dirent_ndir_h" in
   *yes*)
     AC_CHECK_FUNC(opendir,,
@@ -790,10 +796,10 @@ if test "x$MSYS" = xyes ; then
     W32READDIR=yes
     ;;
   esac
-  if test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes; then
+  AS_IF([test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes], [
     EXTRALIBS="$EXTRALIBS  ws2_32.lib"
-    EXTRADEFS="$EXTRADEFS -DWINSOCK" 
-  else
+    EXTRADEFS="$EXTRADEFS -DWINSOCK"
+  ], [
     AC_CHECK_FUNC(socket,,
      WAPI_CHECK_LIB(ws2_32,WSAStartup,
   	   [#include <winsock.h>],
@@ -802,50 +808,50 @@ if test "x$MSYS" = xyes ; then
         EXTRADEFS="$EXTRADEFS -DWINSOCK" ]
      )
     )
-  fi
-fi
+  ])
+])
 
 # Checks on extra paths
 
 dnl tcltk paths
 AC_ARG_WITH(tcl-includes,
   AS_HELP_STRING([--with-tcl-includes=DIR], [Tcl include file path]),
-  [ if test ! -d $withval; then
+  [ AS_IF([test ! -d $withval], [
       AC_MSG_WARN($withval is not found.)
-    fi
+    ])
     tcl_include_dir="-I$withval"
   ])
 AC_ARG_WITH(tcl-libs,
   AS_HELP_STRING([--with-tcl-libs=DIR], [Tcl library file path]),
-  [ if test ! -d $withval; then
+  [ AS_IF([test ! -d $withval], [
       AC_MSG_WARN($withval is not found.)
-    fi
+    ])
     tcl_libdir="-L$withval" ])
 AC_ARG_WITH(tk-includes,
   AS_HELP_STRING([--with-tk-includes=DIR], [Tk include file path]),
-  [ if test ! -d $withval; then
+  [ AS_IF([test ! -d $withval], [
       AC_MSG_WARN($withval is not found.)
-    fi
+    ])
     tk_includes="-I$withval" ])
 AC_ARG_WITH(tk-libs,
   AS_HELP_STRING([--with-tk-libs=DIR], [Tk library file path]),
-  [ if test ! -d $withval; then
+  [ AS_IF([test ! -d $withval], [
       AC_MSG_WARN($withval is not found.)
-    fi
+    ])
     tk_libdir="-L$withval" ])
 
 dnl offix paths
 AC_ARG_WITH(offix-includes,
   AS_HELP_STRING([--with-offix-includes=DIR], [Offix include file path]),
-  [ if test ! -d $withval; then
+  [ AS_IF([test ! -d $withval], [
       AC_MSG_WARN($withval is not found.)
-    fi
+    ])
     offix_include_dir="-I$withval" ])
 AC_ARG_WITH(offix-libs,
   AS_HELP_STRING([--with-offix-libs=DIR], [Offix include file path]),
-  [ if test ! -d $withval; then
+  [ AS_IF([test ! -d $withval], [
       AC_MSG_WARN($withval is not found.)
-    fi
+    ])
     offix_lib_dir="-L$withval" ])
 
 
@@ -879,7 +885,7 @@ dnl ao(O):      Libao
 audio_targets='default oss alsa sun hpux irix mme sb_dsp w32 alib nas arts esd vorbis flac gogo portaudio npipe jack ao'
 
 AC_ARG_WITH(nas-library,
-  AS_HELP_STRING([--with-nas-library=library], [NAS absolute library path(Don't use -laudio)]))
+  AS_HELP_STRING([--with-nas-library=library], [NAS absolute library path(Don''t use -laudio)]))
 AC_ARG_WITH(nas-includes,
   AS_HELP_STRING([--with-nas-includes=DIR], [NAS include files are in dir]))
 
@@ -915,13 +921,13 @@ AC_ARG_ENABLE(audio,
     have_audio_opt=no ])
 
 dnl yes -> default
-test "x$enable_audio" = xyes && enable_audio=default
+AS_IF([test "x$enable_audio" = xyes], [ enable_audio=default ])
 
-if test "x$enable_audio" != xno; then
+AS_IF([test "x$enable_audio" != xno], [
   for i in `echo $enable_audio | sed 's/,/ /g'`; do
     eval "au_enable_$i=yes"
   done
-fi
+])
 
 dnl Turn on default output mode
 DEFAULT_PLAYMODE=
@@ -931,12 +937,13 @@ AC_ARG_WITH(default-output,
                                 (default|alsa|alib|arts|nas|
                                 esd|wav|au|aiff|list|vorbis|flac|speex|
                                 gogo|portaudio|npipe|jack|ao)]),
-  [ if test "$enable_audio" != no; then
-    DEFAULT_PLAYMODE=$withval
-    eval "au_enable_$DEFAULT_PLAYMODE=yes"
-  else
-    AC_MSG_WARN([--with-default-output=$withval: audio is not enabled])
-  fi])
+  [ AS_IF([test "$enable_audio" != no], [
+      DEFAULT_PLAYMODE=$withval
+      eval "au_enable_$DEFAULT_PLAYMODE=yes"
+    ] , [
+      AC_MSG_WARN([--with-default-output=$withval: audio is not enabled])
+    ])
+  ])
 
 dnl compatibility matters.
 dnl AC_ARG_ENABLE(esd,
@@ -950,7 +957,7 @@ dnl   [  --enable-alsa        ALSA   (Obsoleted.  Use --enable-audio=alsa)],
 dnl   [ au_enable_alsa=$enableval ])
 
 dnl target-specific defaults
-if test "x$au_enable_default" = xyes; then
+AS_IF([test "x$au_enable_default" = xyes], [
   case "$target" in
   *-*-linux*|*-*-freebsd*)
     au_enable_oss=yes
@@ -995,91 +1002,91 @@ if test "x$au_enable_default" = xyes; then
     AC_MSG_WARN(No --enable-audio=default audio for $target)
     ;;
   esac
-fi
+])
 
 
 # Each audio mode's configurations
 dnl oss
 AC_MSG_CHECKING(enable_audio=oss)
-if test "x$au_enable_oss" = xyes; then
+AS_IF([test "x$au_enable_oss" = xyes], [
   EXTRADEFS="$EXTRADEFS -DAU_OSS"
   SYSEXTRAS="$SYSEXTRAS oss_a.c"
-  if test "x$ac_cv_header_sys_soundcard_h" = xyes; then
+  AS_IF([test "x$ac_cv_header_sys_soundcard_h" = xyes], [
     AC_MSG_RESULT(yes - <sys/soundcard.h>)
-  else
+  ], [
     case "$target" in
       *linux*|*freebsd*)
         dnl <linux/soundcard.h> or <machine/soundcard.h>
         AC_MSG_RESULT(yes)
         ;;
       *)
-        if test "x$ac_cv_header_soundcard_h" = xyes; then
+        AS_IF([test "x$ac_cv_header_soundcard_h" = xyes], [
           AC_MSG_RESULT(yes - <soundcard.h>)
-        else
+        ], [
           AC_MSG_WARN(<sys/soundcard.h> is not found)
-        fi
+        ])
 	;;
     esac
-  fi
+  ])
   AC_CHECK_LIB(ossaudio,open)
 
   dnl Why OpenBSD use /dev/audio instead of /dev/dsp for OSS
   case "$target" in
     *openbsd*)
-      if test ! -e "/dev/dsp"; then
+      AS_IF([test ! -e "/dev/dsp"], [
         oss_device=/dev/audio
-      fi
+      ])
       ;;
   esac
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl SunOS's
 AC_MSG_CHECKING(enable_audio=sun)
-if test "x$au_enable_sun" = xyes; then
+AS_IF([test "x$au_enable_sun" = xyes], [
   case "$target" in
     *-*-sunos4*)
-      if test -f /usr/demo/SOUND/libaudio.a; then
+      AS_IF([test -f /usr/demo/SOUND/libaudio.a], [
         EXTRALIBS="$EXTRALIBS /usr/demo/SOUND/libaudio.a"
 	AC_MSG_RESULT(yes)
-      else
+      ], [
 	AC_MSG_RESULT(Notice: libaudio.a is not found [(ignore)])
-      fi
+      ])
       ;;
     *-*-solaris*)
-      if test -f /usr/demo/SOUND/lib/libaudio.a; then
+      AS_IF([test -f /usr/demo/SOUND/lib/libaudio.a], [
         EXTRALIBS="$EXTRALIBS /usr/demo/SOUND/lib/libaudio.a"
 	AC_MSG_RESULT(yes)
-      else
+      ], [
         AC_MSG_RESULT(Notice: libaudio.a is not found [(ignore)])
-      fi
+      ])
       ;;
     *)   AC_MSG_RESULT(yes)
       ;;
   esac
   EXTRADEFS="$EXTRADEFS -DAU_SUN"
   SYSEXTRAS="$SYSEXTRAS sun_a.c"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl HP-UX's
 AC_MSG_CHECKING(enable_audio=hpux)
-if test "x$au_enable_hpux" = xyes; then
+AS_IF([test "x$au_enable_hpux" = xyes], [
   case "$target" in
     *-*-hpux*) AC_MSG_RESULT(yes) ;;
     *) AC_MSG_WARN(may not work on $target) ;;
   esac
   EXTRADEFS="$EXTRADEFS -DAU_HPUX_AUDIO"
   SYSEXTRAS="$SYSEXTRAS hpux_d_a.c"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl Irix's
 AC_MSG_CHECKING(enable_audio=irix)
-if test "x$au_enable_irix" = xyes; then
+AS_IF([test "x$au_enable_irix" = xyes], [
   case "$target" in
     *-sgi-irix5*|*-sgi-irix6.2)
       EXTRADEFS="$EXTRADEFS -DAU_AUDRIV -DSGI_OLDAL"
@@ -1093,13 +1100,13 @@ if test "x$au_enable_irix" = xyes; then
   esac
   SYSEXTRAS="$SYSEXTRAS audriv_a.c audriv_al.c"
   EXTRALIBS="$EXTRASLIBS -laudio"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl OSF/1 MME
 AC_MSG_CHECKING(enable_audio=mme)
-if test "x$au_enable_mme" = xyes; then
+AS_IF([test "x$au_enable_mme" = xyes], [
   case "$target" in
     *-dec-*) AC_MSG_RESULT(yes) ;;
     *) AC_MSG_WARN(may not work on $target) ;;
@@ -1108,26 +1115,26 @@ if test "x$au_enable_mme" = xyes; then
   SYSEXTRAS="$SYSEXTRAS audriv_a.c audriv_mme.c"
   CPPFLAGS="$CPPFLAGS -I/usr/opt/MME210/include"
   EXTRALIBS="$EXTRALIBS /usr/opt/MME220/lib/libmme.a"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl BSD/OS's sb_dsp
 AC_MSG_CHECKING(enable_audio=sb_dsp)
-if test "x$au_enable_sb_dsp" = xyes; then
+AS_IF([test "x$au_enable_sb_dsp" = xyes], [
   case "$target" in
     *-*-bsdi2.0) AC_MSG_RESULT(yes) ;;
     *) AC_MSG_WARN(may not work on $target) ;;
   esac
   EXTRADEFS="$EXTRADEFS -DAU_BSDI -DDEFAULT_RATE=22500"
   SYSEXTRAS="$SYSEXTRAS bsd20_a.c"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl Windows' MME
 AC_MSG_CHECKING(enable_audio=w32)
-if test "x$au_enable_w32" = xyes; then
+AS_IF([test "x$au_enable_w32" = xyes], [
   case "$target" in
     *-*-cygwin*)
      AC_MSG_RESULT(yes)
@@ -1140,19 +1147,19 @@ if test "x$au_enable_w32" = xyes; then
      ;;
   esac
   SYSEXTRAS="$SYSEXTRAS w32_a.c"
-  if test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes; then
+  AS_IF([test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes], [
   	EXTRALIBS="$EXTRALIBS winmm.lib"
-  else
+  ], [
     EXTRALIBS="$EXTRALIBS -lwinmm"
-  fi
+  ])
   EXTRADEFS="$EXTRADEFS -DAU_W32"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl Mac OS X / darwin-x86
 AC_MSG_CHECKING(enable_audio=darwin)
-if test "x$au_enable_darwin" = xyes; then
+AS_IF([test "x$au_enable_darwin" = xyes], [
   EXTRADEFS="$EXTRADEFS -DAU_DARWIN"
   SYSEXTRAS="$SYSEXTRAS darwin_a.c"
   EXTRALIBS="$EXTRALIBS -framework CoreAudio"
@@ -1164,72 +1171,72 @@ if test "x$au_enable_darwin" = xyes; then
      AC_MSG_WARN(may not work on $target)
      ;;
   esac
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 
 dnl alsa - Advanced Linux Sound Architecture
 AC_MSG_CHECKING(enable_audio=alsa)
-if test "x$au_enable_alsa" = xyes; then
+AS_IF([test "x$au_enable_alsa" = xyes], [
   AC_MSG_RESULT([yes, configuring alsa])
   KEEPCFLAGS=$CFLAGS
   KEEPLIBS=$LIBS
   KEEPLDFLAGS=$LDFLAGS
   AM_PATH_ALSA()
-  if test "x$alsa_found" = "xyes" ; then
+  AS_IF([test "x$alsa_found" = "xyes"], [
     dnl AC_MSG_RESULT(yes)
     EXTRADEFS="$EXTRADEFS -DAU_ALSA"
     SYSEXTRAS="$SYSEXTRAS alsa_a.c"
     EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$ALSA_CFLAGS)
     LIBS="$LIBS $ALSA_LIBS"
     AC_CHECK_FUNCS(snd_seq_port_info_set_timestamping)
-  else
+  ], [
     AC_MSG_WARN(Couldn't configure alsa.)
     CFLAGS=$KEEPCFLAGS
     LIBS=$KEEPLIBS
     LDFLAGS=$KEEPLDFLAGS
-  fi
-else
+  ])
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl HP-UX Alib
 AC_MSG_CHECKING(enable_audio=alib)
-if test "x$au_enable_alib" = xyes; then
+AS_IF([test "x$au_enable_alib" = xyes], [
   case "$target" in
     *-*-hpux*) AC_MSG_RESULT(yes) ;;
     *) AC_MSG_WARN(may not work on $target) ;;
   esac
   SYSEXTRAS="$SYSEXTRAS hpux_a.c"
   EXTRADEFS="$EXTRADEFS -DAU_HPUX_ALIB"
-  if test -d /opt/audio/include; then
+  AS_IF([test -d /opt/audio/include], [
     CPPFLAGS="$CPPFLAGS -I/opt/audio/include"
-  fi
-  if test -d /opt/audio/lib; then
+  ])
+  AS_IF([test -d /opt/audio/lib], [
     EXTRALIBS="$EXTRALIBS -L/opt/audio/lib"
-  fi
+  ])
   EXTRALIBS="$EXTRALIBS -lAlib"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl nas
 AC_MSG_CHECKING(enable_audio=nas)
-if test "x$au_enable_nas" = xyes; then
-  if test "x$with_x" != xyes; then
+AS_IF([test "x$au_enable_nas" = xyes], [
+  AS_IF([test "x$with_x" != xyes], [
     AC_MSG_ERROR(nas: --with-x option must be specified)
-  fi
+  ])
   EXTRADEFS="$EXTRADEFS -DAU_NAS"
   SYSEXTRAS="$SYSEXTRAS nas_a.c"
 
   dnl -laudio conflicts another audio library,
   dnl so I specify NAS library with absolete path.
 
-  if test "x$with_nas_library" != x; then
+  AS_IF([test "x$with_nas_library" != x], [
     AC_MSG_RESULT($with_nas_library);
     EXTRALIBS="$EXTRALIBS $with_nas_library"
-  else
+  ], [
     AC_MSG_RESULT()
     MY_SEARCH_LIBS(AuOpenServer,
 	[$x_libraries/libaudio.a \
@@ -1238,27 +1245,28 @@ if test "x$au_enable_nas" = xyes; then
 	[ AC_MSG_RESULT(NAS: $timidity_cv_search_AuOpenServer)
 	  EXTRALIBS="$EXTRALIBS $timidity_cv_search_AuOpenServer"],
 	[AC_MSG_WARN(NAS library is not found.)])
-  fi
-  test "x$with_nas_includes" != x && CPPFLAGS="$CPPFLAGS -I$with_nas_includes"
+  ])
+  AS_IF([test "x$with_nas_includes" != x], [
+    CPPFLAGS="$CPPFLAGS -I$with_nas_includes"
+  ])
   lib_xt_opt=-lXt
-  if test "x$have_xext" = xyes; then
+  AS_IF([test "x$have_xext" = xyes], [
     lib_xext_opt=-lXext
-  fi
-  if test "x$have_xprelibs" = xyes; then
+  ])
+  AS_IF([test "x$have_xprelibs" = xyes], [
     lib_xprelibs_opt='-lSM -lICE'
-  fi
-else
+  ])
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl aRts of KDE
 AC_MSG_CHECKING(enable_audio=arts)
-if test "x$au_enable_arts" = xyes; then
+AS_IF([test "x$au_enable_arts" = xyes], [
   AC_MSG_RESULT([yes, configuring aRts])
   dnl **** Check for aRts Sound Server ****
   AC_PATH_PROG(ARTSCCONFIG, artsc-config)
-  if test x$ARTSCCONFIG != x -a x$ARTSCCONFIG != x'"$ARTSCCONFIG"';
-  then
+  AS_IF([test x$ARTSCCONFIG != x -a x$ARTSCCONFIG != x'"$ARTSCCONFIG"'], [
     ARTSC_CFLAGS=""
     for i in `$ARTSCCONFIG --cflags`
     do
@@ -1269,31 +1277,30 @@ if test "x$au_enable_arts" = xyes; then
     ARTSC_LIBS=`$ARTSCCONFIG --libs`
     save_CFLAGS="$CFLAGS"
     CFLAGS="$CFLAGS $ARTSC_CFLAGS"
-    AC_TRY_COMPILE([#include <artsc.h>],[arts_stream_t stream;],
-        [AC_SUBST(ARTSLIBS, $ARTSC_LIBS)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <artsc.h>]], [[arts_stream_t stream;]])],[AC_SUBST(ARTSLIBS, $ARTSC_LIBS)
          AC_SUBST(ARTSINCL, $ARTSC_CFLAGS)
          AC_DEFINE(HAVE_ARTS, 1, [Define if you have ARTS sound server])
 	 have_arts="yes"
-         ])
+         ],[])
     CFLAGS="$save_CFLAGS"
-  fi
+  ])
 
-  if test "$have_arts" = "yes"; then
+  AS_IF([test "$have_arts" = "yes"], [
     dnl AC_MSG_RESULT(aRts: Enabled)
     EXTRADEFS="$EXTRADEFS -DAU_ARTS"
     SYSEXTRAS="$SYSEXTRAS aRts_a.c"
     EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$ARTSC_CFLAGS)
     LIBS="$LIBS $ARTSC_LIBS"
-  else
+  ], [
     AC_MSG_WARN(aRts: Couldn't configure)
-  fi
-else
+  ])
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl EsounD
 AC_MSG_CHECKING(enable_audio=esd)
-if test "x$au_enable_esd" = xyes; then
+AS_IF([test "x$au_enable_esd" = xyes], [
   AC_MSG_RESULT([yes, configuring esd])
   KEEPCFLAGS=$CFLAGS
   KEEPLIBS=$LIBS
@@ -1302,136 +1309,123 @@ if test "x$au_enable_esd" = xyes; then
   CFLAGS=$KEEPCFLAGS
   LIBS=$KEEPLIBS
   LDFLAGS=$KEEPLDFLAGS
-  if test "x$no_esd" = x; then
+  AS_IF([test "x$no_esd" = x], [
     dnl AC_MSG_RESULT(EsounD: Enabled)
     EXTRADEFS="$EXTRADEFS -DAU_ESD"
     SYSEXTRAS="$SYSEXTRAS esd_a.c"
     EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$ESD_CFLAGS)
     LIBS="$LIBS $ESD_LIBS"
-  else
+  ], [
     AC_MSG_WARN(EsounD: Couldn't configure)
-  fi
-else
+  ])
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl portaudio
 AC_MSG_CHECKING(enable_audio=portaudio)
-if test "x$au_enable_portaudio" = xyes; then
+AS_IF([test "x$au_enable_portaudio" = xyes], [
   AC_MSG_RESULT(yes)
-  if test "x$MSYS" = xyes ; then
+  AS_IF([test "x$MSYS" = xyes], [
 	SYSEXTRAS="$SYSEXTRAS portaudio_a.c w32_portaudio_dll.c"
   	EXTRALIBS="$EXTRALIBS -lportaudio"
   	EXTRADEFS="$EXTRADEFS -DAU_PORTAUDIO -DAU_PORTAUDIO_DLL"
-  else
+  ], [
   	SYSEXTRAS="$SYSEXTRAS portaudio_a.c"
   	EXTRALIBS="$EXTRALIBS -lportaudio"
   	EXTRADEFS="$EXTRADEFS -DAU_PORTAUDIO"
-  fi
-else
+  ])
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl npipe (windows named pipe)
 AC_MSG_CHECKING(enable_audio=npipe)
-if test "x$au_enable_npipe" = xyes; then
+AS_IF([test "x$au_enable_npipe" = xyes], [
   AC_MSG_RESULT(yes)
   	SYSEXTRAS="$SYSEXTRAS npipe_a.c"
   	EXTRADEFS="$EXTRADEFS -DAU_NPIPE"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 
 dnl JACK
 AC_MSG_CHECKING(enable_audio=jack)
-if test "x$au_enable_jack" = xyes; then
+AS_IF([test "x$au_enable_jack" = xyes], [
   AC_MSG_RESULT(yes)
   SYSEXTRAS="$SYSEXTRAS jack_a.c"
   EXTRALIBS="$EXTRALIBS $(pkg-config --libs jack)"
   EXTRADEFS="$EXTRADEFS -DAU_JACK $(pkg-config --cflags jack)"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl AO
 AC_MSG_CHECKING(enable_audio=ao)
-if test "x$au_enable_ao" = xyes; then
+AS_IF([test "x$au_enable_ao" = xyes], [
   AC_MSG_RESULT([yes, configuring ao])
   XIPH_PATH_AO()
-  if test "x$no_ao" = "x" ; then
+  AS_IF([test "x$no_ao" = "x"], [
     # AC_MSG_RESULT(yes)
     EXTRADEFS="$EXTRADEFS -DAU_AO"
     SYSEXTRAS="$SYSEXTRAS ao_a.c"
     EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$AO_CFLAGS)
     LIBS="$LIBS $AO_LIBS"
-  else
+  ], [
     AC_MSG_WARN(Couldn't configure libao.)
-  fi
-else
+  ])
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl ogg's vorbis
 AC_MSG_CHECKING(enable_audio=vorbis)
-if test "x$au_enable_vorbis" = xyes; then
+AS_IF([test "x$au_enable_vorbis" = xyes], [
   AC_MSG_RESULT([yes, configuring vorbis])
-  if test "x$MSYS" = "xyes" && test "x$MINGWGCC" != "xyes" ; then
-    AC_CHECK_HEADER(vorbis/vorbisenc.h,, [ 
+  AS_IF([test "x$MSYS" = "xyes" && test "x$MINGWGCC" != "xyes"], [
+    AC_CHECK_HEADER(vorbis/vorbisenc.h,, [
     EXTRADEFS="-DAU_VORBIS_DLL $EXTRADEFS"
 	SYSEXTRAS="$SYSEXTRAS w32g_vorbisenc_dll.c w32g_vorbis_dll.c w32g_ogg_dll.c"
     ])
-  else
-  XIPH_PATH_OGG([
-    XIPH_PATH_VORBIS([
-      have_vorbis=yes
-      SYSEXTRAS="$SYSEXTRAS vorbis_a.c"
-      EXTRADEFS="$EXTRADEFS -DAU_VORBIS $OGG_CFLAGS $VORBIS_CFLAGS"
-      EXTRALIBS="$EXTRALIBS $VORBIS_LIBS $VORBISENC_LIBS $OGG_LIBS"
-      if test "x$MSYS" = "xyes" && test "x$MINGWGCC" = "xyes" ; then
-      EXTRADEFS="-DAU_VORBIS_DLL $EXTRADEFS"
-	  SYSEXTRAS="$SYSEXTRAS w32g_vorbisenc_dll.c w32g_vorbis_dll.c w32g_ogg_dll.c"
-      fi
+  ], [
+    XIPH_PATH_OGG([
+      XIPH_PATH_VORBIS([
+        have_vorbis=yes
+        SYSEXTRAS="$SYSEXTRAS vorbis_a.c"
+        EXTRADEFS="$EXTRADEFS -DAU_VORBIS $OGG_CFLAGS $VORBIS_CFLAGS"
+        EXTRALIBS="$EXTRALIBS $VORBIS_LIBS $VORBISENC_LIBS $OGG_LIBS"
+        AS_IF([test "x$MSYS" = "xyes" && test "x$MINGWGCC" = "xyes"], [
+          EXTRADEFS="-DAU_VORBIS_DLL $EXTRADEFS"
+          SYSEXTRAS="$SYSEXTRAS w32g_vorbisenc_dll.c w32g_vorbis_dll.c w32g_ogg_dll.c"
+        ])
+      ],[
+        AC_MSG_WARN([Unable to configure vorbis, but ogg is there (???)])
+      ])
     ],[
-      AC_MSG_WARN([Unable to configure vorbis, but ogg is there (???)])
+      AC_MSG_WARN(Unable to configure vorbis!)
+      have_vorbis=no
     ])
-  ],[
-    AC_MSG_WARN(Unable to configure vorbis!)
-    have_vorbis=no
   ])
-  fi
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl libFLAC - Free Lossless Audio Codec
-if test "x$MSYS" = xyes ; then
+AS_IF([test "x$MSYS" = xyes], [
   AC_MSG_CHECKING(enable_audio=flac)
-  if test "x$au_enable_flac" = xyes; then
+  AS_IF([test "x$au_enable_flac" = xyes], [
     AC_MSG_RESULT([yes, configuring flac])
-    SYSEXTRAS="$SYSEXTRAS flac_a.c w32_libFLAC_dll.c w32_libOggFLAC_dll.c"
-    AC_CHECK_HEADER(FLAC/all.h, [ 
+    SYSEXTRAS="$SYSEXTRAS flac_a.c w32_libFLAC_dll.c"
+    AC_CHECK_HEADER(FLAC/all.h, [
       EXTRADEFS="$EXTRADEFS -DAU_FLAC -DAU_FLAC_DLL"
     ])
-    AC_CHECK_HEADER(OggFLAC/all.h, [ 
-      EXTRADEFS="$EXTRADEFS -DAU_OGGFLAC -DAU_OGGFLAC_DLL"
-    ])
-dnl    AM_PATH_LIBFLAC([
-dnl      EXTRADEFS="$EXTRADEFS -DAU_FLAC -DAU_FLAC_DLL"
-dnl      EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$LIBFLAC_CFLAGS)
-dnl      LIBS="$LIBS $LIBFLAC_LIBS"
-dnl    ])
-dnl    AM_PATH_LIBOGGFLAC([
-dnl      EXTRADEFS="$EXTRADEFS -DAU_OGGFLAC -DAU_OGGFLAC_DLL"
-dnl      EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$LIBOGGFLAC_CFLAGS)
-dnl      LIBS="$LIBS $LIBOGGFLAC_LIBS"
-dnl    ])
-  else
+  ], [
     AC_MSG_RESULT(no)
-  fi
-else
+  ])
+], [
   AC_MSG_CHECKING(enable_audio=flac)
-  if test "x$au_enable_flac" = xyes; then
+  AS_IF([test "x$au_enable_flac" = xyes], [
     AC_MSG_RESULT([yes, configuring flac])
     SYSEXTRAS="$SYSEXTRAS flac_a.c"
     AM_PATH_LIBFLAC([
@@ -1439,67 +1433,61 @@ else
       EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$LIBFLAC_CFLAGS)
       LIBS="$LIBS $LIBFLAC_LIBS"
     ])
-    AM_PATH_LIBOGGFLAC([
-      EXTRADEFS="$EXTRADEFS -DAU_OGGFLAC"
-      EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$LIBOGGFLAC_CFLAGS)
-      LIBS="$LIBS $LIBOGGFLAC_LIBS"
-    ])
-  else
+  ], [
     AC_MSG_RESULT(no)
-  fi
-fi
+  ])
+])
+
 dnl ogg's speex
 AC_MSG_CHECKING(enable_audio=speex)
-if test "x$au_enable_speex" = xyes; then
+AS_IF([test "x$au_enable_speex" = xyes], [
   AC_CACHE_VAL(timidity_cv_have_speex,
-  [AC_TRY_LINK([
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <speex/speex.h>
   #include <ogg/ogg.h>
-  ],
-  [
+  ]], [[
     SpeexBits *dummy;
-  ],
-  [have_speex=yes], [have_speex=no])])
+  ]])],[have_speex=yes],[have_speex=no])])
   AC_MSG_RESULT($have_speex)
-  if test "x$have_speex" = xyes; then
+  AS_IF([test "x$have_speex" = xyes], [
     SYSEXTRAS="$SYSEXTRAS speex_a.c"
     EXTRALIBS="$EXTRALIBS -lspeex -logg"
     EXTRADEFS="$EXTRADEFS -DAU_SPEEX"
-  fi
-else
+  ])
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl Win32 Gogo-no-coder
 AC_MSG_CHECKING(enable_audio=gogo)
-if test "x$au_enable_gogo" = xyes; then
-  if test "x$MSYS" = "xyes"; then
+AS_IF([test "x$au_enable_gogo" = xyes], [
+  AS_IF([test "x$MSYS" = "xyes"], [
     AC_MSG_RESULT(yes, configuring gogo)
-  else
+  ], [
     AC_MSG_WARN(May be gogo is not supported.  You need hack the gogo_a.c)
-  fi
-  AC_CHECK_HEADER(gogo/gogo.h, [ 
+  ])
+  AC_CHECK_HEADER(gogo/gogo.h, [
     have_gogo=yes
   ])
   SYSEXTRAS="$SYSEXTRAS gogo_a.c w32_gogo.c"
   EXTRADEFS="$EXTRADEFS -DAU_GOGO -DAU_GOGO_DLL"
 dnl  EXTRALIBS="$EXTRALIBS -lgogo"
-else
+], [
   AC_MSG_RESULT(no)
-fi
+])
 
 dnl Pseudo audio device (Undocumented).
-if test "x$au_enable_none" = xyes; then
+AS_IF([test "x$au_enable_none" = xyes], [
     EXTRADEFS="$EXTRADEFS -DAU_NONE -DAU_AUDRIV"
     SYSEXTRAS="$SYSEXTRAS audriv_a.c audriv_none.c"
-fi
+])
 dnl
 dnl TIMIDITY_OUTPUT_ID
 dnl
 AC_MSG_CHECKING(default output mode)
-if test "x$DEFAULT_PLAYMODE" = x; then
+AS_IF([test "x$DEFAULT_PLAYMODE" = x], [
   DEFAULT_PLAYMODE=`echo $enable_audio | sed 's/,.*//'`
-fi
+])
 case ".$DEFAULT_PLAYMODE" in
   .default)  TIMIDITY_OUTPUT_ID=d ;;
   .oss)      TIMIDITY_OUTPUT_ID=d ;;
@@ -1515,7 +1503,7 @@ case ".$DEFAULT_PLAYMODE" in
   .nas)      TIMIDITY_OUTPUT_ID=n ;;
   .arts)     TIMIDITY_OUTPUT_ID=R ;;
   .esd)      TIMIDITY_OUTPUT_ID=e ;;
-  .portaudio)      TIMIDITY_OUTPUT_ID=p ;;  
+  .portaudio)      TIMIDITY_OUTPUT_ID=p ;;
   .npipe)    TIMIDITY_OUTPUT_ID=N ;;
   .wav)      TIMIDITY_OUTPUT_ID=w ;;
   .au)       TIMIDITY_OUTPUT_ID=u ;;
@@ -1549,13 +1537,14 @@ AC_ARG_ENABLE(dynamic,
   AS_HELP_STRING([--enable-dynamic], [Enable dynamic link interface (default is no)])
   AS_HELP_STRING([--enable-dynamic=dynamic_list] [Comma separated dynamic interface list]),
   [ dnl --enable-dynamic=yes to --enable-dynamic=dynamic
-    if test "x$enable_dynamic" = xyes; then
+    AS_IF([test "x$enable_dynamic" = xyes], [
       enable_dynamic=dynamic
-    elif test "x$enable_dynamic" != xno; then
+    ], [test "x$enable_dynamic" != xno], [
       for i in `echo $enableval | sed 's/,/ /g'`; do
 	eval "enable_$i=dynamic"
       done
-    fi])
+    ])
+])
 
 join_targets=
 for i in $interface_targets; do
@@ -1568,36 +1557,37 @@ case ".$join_targets" in
 esac
 
 dnl check -fpic option for gcc
-if test "x$GCC" = xyes; then SHCFLAGS="$SHCFLAGS -fPIC"; fi
+AS_IF([test "x$GCC" = xyes],[ SHCFLAGS="$SHCFLAGS -fPIC" ])
 case "x$enable_ump" in xyes|xdynamic) EXTRACFLAGS="$EXTRACFLAGS -DXP_UNIX $SHCFLAGS";; esac
 
 dnl Which type of dynamic loader?
-if test "$NEEDDLOPEN" = "yes"; then
+AS_IF([test "$NEEDDLOPEN" = "yes"], [
   have_dl=no
 
   WAPI_CHECK_FUNC(LoadLibrary,,[LoadLibrary(0);],have_dl=w32)
-  test $wapi_cv_func_LoadLibrary = yes && have_dl=w32
-
-  if test "$have_dl" = "no"; then
+  AS_IF([test $wapi_cv_func_LoadLibrary = yes], [
+    have_dl=w32
+  ])
+  AS_IF([test "$have_dl" = "no"], [
     AC_CHECK_FUNC(shl_load,have_dl=hpux)
-  fi
-  if test "$have_dl" = "no"; then
+  ])
+  AS_IF([test "$have_dl" = "no"], [
     dnl darwin has both dyld and libdl: in case user installed dlcompat.
     dnl dyld is recommended because libdl is a wrapper for dyld.
     AC_CHECK_FUNC(NSLinkModule,have_dl=dyld)
-  fi
-  if test "$have_dl" = "no" -a "x$ac_cv_lib_dl_dlopen" = xyes; then
+  ])
+  AS_IF([test "$have_dl" = "no" -a "x$ac_cv_lib_dl_dlopen" = xyes], [
     have_dl=dlopen
-  fi
-  if test "$have_dl" = "no"; then
+  ])
+  AS_IF([test "$have_dl" = "no"], [
     AC_CHECK_FUNC(dlopen,have_dl=dlopen)
-  fi
-  if test "$have_dl" = "no"; then
+  ])
+  AS_IF([test "$have_dl" = "no"], [
     AC_CHECK_FUNC(dld_init,have_dl=dld)
-  fi
-  if test "$have_dl" = "no"; then
+  ])
+  AS_IF([test "$have_dl" = "no"], [
     AC_CHECK_LIB(dld,dld_init,have_dl=dld;lib_dl_opt=-ldld)
-  fi
+  ])
 
   AC_MSG_CHECKING(dynamic link method)
   case "$have_dl" in
@@ -1628,32 +1618,32 @@ if test "$NEEDDLOPEN" = "yes"; then
       AC_MSG_WARN(no method to open a shared object)
       ;;
   esac
-fi
+])
 
-if test "$NEEDDLOPEN" = "yes"; then
+AS_IF([test "$NEEDDLOPEN" = "yes"], [
   MY_DEFINE(IA_DYNAMIC)
   AC_DEFINE_UNQUOTED(SHARED_LIB_EXT,".$so", shared library extention)
   dnl needless?
   dnl EXTRADEFS="$EXTRADEFS \$(DEF_SHLIB_DIR)"
-  if test "x$GCC" = xyes; then
-    if test "x$timidity_cv_ccoption_rdynamic" = xyes; then
+  AS_IF([test "x$GCC" = xyes], [
+    AS_IF([test "x$timidity_cv_ccoption_rdynamic" = xyes], [
       timidity_LDFLAGS="-rdynamic"
-    else
+    ], [
       timidity_LDFLAGS="-Wl,--export-dynamic"
-    fi
-  fi
-fi
+    ])
+  ])
+])
 
 AM_CONDITIONAL(NEEDDLOPEN, test "$NEEDDLOPEN" = "yes")
 
 dnl xdnd support
 AC_ARG_ENABLE(xdnd,
   AS_HELP_STRING([--enable-xdnd], [Enable xdnd support             (default is no)]),
-  [ if test "$enableval" = "yes"; then
-    AC_DEFINE(XDND,1,Define to 1 if you want xdnd support.)
-    XDND_SRCS="xdnd.c"
-    enable_xdnd=yes
-    fi
+  [ AS_IF([test "$enableval" = "yes"], [
+      AC_DEFINE(XDND,1,Define to 1 if you want xdnd support.)
+      XDND_SRCS="xdnd.c"
+      enable_xdnd=yes
+    ])
   ])
 AM_CONDITIONAL(ENABLE_XDND, test "x$enable_xdnd" = "xyes")
 
@@ -1676,11 +1666,11 @@ dnl configure must check ncurses header with -I/usr/include/ncurses option.
   case "$ac_cv_header_curses_h$ac_cv_header_ncurses_curses_h$ac_cv_header_ncurses_h" in
     *yes*);;
     *)	for i in /usr/include /usr/local/include; do
-	  if test -f "$i/ncurses/curses.h" -a -f "$i/ncurses/unctrl.h"; then
+	  AS_IF([test -f "$i/ncurses/curses.h" -a -f "$i/ncurses/unctrl.h"], [
 	    AC_MSG_WARN(ncurses test is failure.  Please check config.h and common.makefile later)
 	    CPPFLAGS="$CPPFLAGS -I$i/ncurses"
 	    break
-	  fi
+	  ])
 	done
 	;;
     esac
@@ -1693,7 +1683,7 @@ dnl configure must check ncurses header with -I/usr/include/ncurses option.
 	    lib_user32_opt="$lib_user32_test"
 	    AC_CHECK_LIB(curses, vwprintw,
 	      AC_DEFINE(HAVE_VWPRINTW, 1,
-	        [Define to 1 if you have the `vwprintw' function.]))
+	        [Define to 1 if you have the ``vwprintw'' function.]))
 	  ],
 	  [ dnl checking libpdcurses
 	    AC_CHECK_LIB(pdcurses,PDC_set_ctrl_break,
@@ -1702,7 +1692,7 @@ dnl configure must check ncurses header with -I/usr/include/ncurses option.
 	      lib_user32_opt="$lib_user32_test"
 	      AC_CHECK_LIB(pdcurses, vwprintw,
 	        AC_DEFINE(HAVE_VWPRINTW, 1,
-	          [Define to 1 if you have the `vwprintw' function.]))
+	          [Define to 1 if you have the ``vwprintw'' function.]))
 	    ],
 	    [ dnl OpenBSD use -lcurses instead of -lncurses.
 	      case "$target" in
@@ -1712,16 +1702,16 @@ dnl configure must check ncurses header with -I/usr/include/ncurses option.
 		      enable_ncurses=no ])
 		  ;;
 		*)
-		  if test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes; then
+		  AS_IF([test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes], [
 		    lib_curses_opt=libpdcurses.lib
 		    AC_DEFINE(USE_PDCURSES,1,Define to 1 if you use PDcurses)
 		    AC_CHECK_LIB(pdcurses, vwprintw,
 		      AC_DEFINE(HAVE_VWPRINTW, 1,
-		        [Define to 1 if you have the `vwprintw' function.]))
-		  else
+		        [Define to 1 if you have the ``vwprintw'' function.]))
+		  ], [
 		    AC_MSG_WARN(ncurses interface is not enabled)
 		    enable_ncurses=no
-		  fi
+		  ])
 		  ;;
 	      esac
 	    ])
@@ -1778,25 +1768,25 @@ dnl Motif
 AM_CONDITIONAL(ENABLE_MOTIF, false)
 CONFIG_INTERFACE(motif,MOTIF,m,
   AS_HELP_STRING([--enable-motif], [Enable motif interface          (default is no)]),
-  [ if test "x$with_x" != xyes; then
+  [ AS_IF([test "x$with_x" != xyes], [
 	AC_MSG_ERROR(motif: --with-x option must be specified)
-    fi
-    if test "x$have_xm" != xyes; then
+    ])
+    AS_IF([test "x$have_xm" != xyes], [
       AC_MSG_WARN(Motif library is not found.)
       enable_motif=no
-    fi
+    ])
   ],
   [ lib_xm_opt=-lXm
     lib_xt_opt=-lXt
     lib_xext_opt=-lXext
-    if test "x$have_xprelibs" = xyes; then
+    AS_IF([test "x$have_xprelibs" = xyes], [
 	lib_xprelibs_opt='-lSM -lICE'
-    fi
+    ])
     INTERFACE_SRCS="$INTERFACE_SRCS motif_c.c motif_i.c motif_p.c"
   ],
-  [ if test x$have_xprelibs = xyes; then
+  [ AS_IF([test x$have_xprelibs = xyes], [
       m_so_libs="-lXext -lSM -lICE"
-    fi
+    ])
     m_so_libs="$ldflags_x_opt -lXm -lXt $m_so_libs -lX11"
   ])
 
@@ -1804,9 +1794,9 @@ dnl Tcl/Tk
 AM_CONDITIONAL(ENABLE_TCLTK, false)
 CONFIG_INTERFACE(tcltk,TCLTK,k,
   AS_HELP_STRING([--enable-tcltk], [Enable tcltk interface          (default is no)]),
-  [ if test "x$with_x" != xyes; then
+  [ AS_IF([test "x$with_x" != xyes], [
 	AC_MSG_ERROR(tcltk: --with-x option must be specified)
-    fi
+    ])
 
     dnl save flags
     KEEPCPPFLAGS=$CPPFLAGS
@@ -1828,14 +1818,14 @@ CONFIG_INTERFACE(tcltk,TCLTK,k,
     done
 
     LIBS=$KEEPLIBS
-    if test "x$tcl_lib" = x -o "x$tk_lib" = x; then
+    AS_IF([test "x$tcl_lib" = x -o "x$tk_lib" = x], [
       CPPFLAGS=$KEEPCPPFLAGS
       LDFLAGS=$KEEPLDFLAGS
       enable_tcltk=no
       AC_MSG_WARN(tcl/tk is not enable)
-    else
+    ], [
       tcltk_dep='tclIndex'
-    fi
+    ])
   ],
   [ LIBS="$tk_lib $tcl_lib -lX11 $LIBS"
     case "$target" in
@@ -1877,27 +1867,28 @@ dnl X Athena Widget
 AM_CONDITIONAL(ENABLE_XAW, false)
 CONFIG_INTERFACE(xaw,XAW,a,
   AS_HELP_STRING([--enable-xaw], [Enable athena interface         (default is no)]),
-  [ if test "x$with_x" != xyes; then
+  [ AS_IF([test "x$with_x" != xyes], [
 	AC_MSG_ERROR(xaw: --with-x option must be specified)
-    fi
-    if test "x$have_xaw" = "xno"; then
+    ])
+    AS_IF([test "x$have_xaw" = "xno"], [
       AC_MSG_WARN(X Athena Widget library is not found.)
       enable_xaw=no
-    fi ],
+    ])
+  ],
   [ dnl Add -lXext -lSM -lICE -lXmu -lXt {-lXaw|-lXaw3d}
-    if test "x$have_xext" = xyes; then
+    AS_IF([test "x$have_xext" = xyes], [
       lib_xext_opt=-lXext
-    fi
-    if test "x$have_xprelibs" = xyes; then
+    ])
+    AS_IF([test "x$have_xprelibs" = xyes], [
       lib_xprelibs_opt='-lSM -lICE'
-    fi
+    ])
     lib_xmu_opt=-lXmu
     lib_xt_opt=-lXt
-    if test "x$enable_xft" = "xyes" && test "x$have_xaw" != "xno"; then
+    AS_IF([test "x$enable_xft" = "xyes" && test "x$have_xaw" != "xno"], [
       XFT_CFLAGS="$(pkg-config --cflags xft)";
       EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$XFT_CFLAGS)
       lib_xft_opt="-lXft";
-    fi
+    ])
     case "$have_xaw" in
       "yes")
         lib_xaw_opt=-lXaw
@@ -1917,19 +1908,19 @@ CONFIG_INTERFACE(xaw,XAW,a,
     esac
     INTERFACE_SRCS="$INTERFACE_SRCS xaw_c.c xaw_i.c x_trace.c $XDND_SRCS"
   ],
-  [ if test "x$have_xext" = xyes; then
+  [ AS_IF([test "x$have_xext" = xyes], [
       a_so_libs="-lXext -lX11"
-    else
+    ], [
       a_so_libs="-lX11"
-    fi
+    ])
     case "$target" in
       *darwin*)
 	a_so_libs="$a_so_libs -lcc_dynamic"
 	;;
     esac
-    if test "x$have_xprelibs" = xyes; then
+    AS_IF([test "x$have_xprelibs" = xyes], [
       a_so_libs="-lSM -lICE $a_so_libs"
-    fi
+    ])
     case "$have_xaw" in
       "yes")
         a_so_libs="-lXaw -lXmu -lXt $a_so_libs"
@@ -1947,11 +1938,11 @@ CONFIG_INTERFACE(xaw,XAW,a,
         a_so_libs="-lneXtaw -lXmu -lXt $a_so_libs"
 	;;
     esac
-    if test "x$enable_xft" = "xyes" && test "x$have_xaw" != "xno"; then
+    AS_IF([test "x$enable_xft" = "xyes" && test "x$have_xaw" != "xno"], [
       XFT_CFLAGS="$(pkg-config --cflags xft)";
       EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$XFT_CFLAGS)
       a_so_libs="$a_so_libs -lXft";
-    fi
+    ])
     a_so_libs="$ldflags_x_opt $a_so_libs"
   ])
 AM_CONDITIONAL(ENABLE_DYNAMIC_XAW, test "x$enable_xaw" = "xdynamic")
@@ -1960,9 +1951,9 @@ dnl X skin
 AM_CONDITIONAL(ENABLE_XSKIN, false)
 CONFIG_INTERFACE(xskin,XSKIN,i,
   AS_HELP_STRING([--enable-xskin], [Enable X skin interface         (default is no)]),
-  [ if test "x$with_x" != xyes; then
+  [ AS_IF([test "x$with_x" != xyes], [
 	AC_MSG_ERROR(xskin: --with-x option must be specified)
-    fi
+    ])
   ],
   [ INTERFACE_SRCS="$INTERFACE_SRCS xskin_c.c xskin_i.c xskin_loadBMP.c xskin_spectrum.c" ],
   [ i_so_libs="$ldflags_x_opt -lX11" ])
@@ -1978,7 +1969,7 @@ CONFIG_INTERFACE(gtk, GTK, g,
     EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$GTK_CFLAGS)
     INTERFACE_SRCS="$INTERFACE_SRCS gtk_c.c gtk_i.c gtk_p.c"
   ],
-  [ if test "x$GCC" = xyes; then
+  [ AS_IF([test "x$GCC" = xyes], [
 	dnl Do not include -rdynamic option in $g_so_libs.
 	for i in $GTK_LIBS; do
 	    case "x$i" in
@@ -1986,9 +1977,9 @@ CONFIG_INTERFACE(gtk, GTK, g,
 		*) g_so_libs="$g_so_libs $i" ;;
 	    esac
 	done
-    else
+    ], [
 	g_so_libs="$GTK_LIBS"
-    fi
+    ])
     EXTRACT_CPPFLAGS(CPPFLAGS,CFLAGS,$GTK_CFLAGS) ])
 
 dnl TiMidity Network MIDI Server
@@ -2044,37 +2035,37 @@ CONFIG_INTERFACE(winsyng,W32G_SYN,W,
   AS_HELP_STRING([--enable-winsyng], [Enable Windows GUI Synthesizer interface
                                                           (default is no)]),
   ,
-  [ 
-  W32G_GUI=yes
-  if test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes; then
-    INTERFACE_SRCS="$INTERFACE_SRCS w32g_ini.c w32g_pref.c w32g_syn.c w32g_utl.c winsyn_c.c rtsyn_common.c rtsyn_winmm.c"
-    lib_w32gui_opt='gdi32.lib comctl32.lib comdlg32.lib ole32.lib'
-    lib_user32_opt='user32.lib'
-    if test "x$VCPP" = xyes; then
-	  VCPP_LDFLAGS="$VCPP_LDFLAGS -subsystem:windows "
-	fi
-	if test "x$BORLANDC" = xyes; then
-	  BORLANDC_START='C0W32.OBJ'
-	  CFLAGS="$CFLAGS -tW"
-	  lib_w32gui_opt="-aa $lib_w32gui_opt"
-	fi
-	if test "x$WATCOM_C" = xyes; then
-	  CFLAGS="$CFLAGS -bw"
-	  WATCOM_LDFLAGS="$WATCOM_LDFLAGS SYS nt_win"
-	fi
-	if test "x$DMC" = xyes; then
-	  DLLFLAG="-WA"
-	  lib_w32gui_opt="$lib_w32gui_opt -L/exet:nt/su:windows:4.0"
-	fi
-    if test "x$POCC" = xyes; then
-	  POCC_LDFLAGS="$POCC_LDFLAGS -subsystem:windows "
-    fi
-  else
-  	lib_w32gui_opt='-lgdi32 -lcomctl32 -lcomdlg32 -lole32'
-    lib_user32_opt='-luser32'
-    LDFLAGS="-mwindows $LDFLAGS"
-    INTERFACE_SRCS="$INTERFACE_SRCS w32g_ini.c w32g_pref.c w32g_syn_escaped.c w32g_utl.c winsyn_c.c rtsyn_common.c rtsyn_winmm.c"
-  fi
+  [
+    W32G_GUI=yes
+    AS_IF([test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes], [
+      INTERFACE_SRCS="$INTERFACE_SRCS w32g_ini.c w32g_pref.c w32g_syn.c w32g_utl.c winsyn_c.c rtsyn_common.c rtsyn_winmm.c"
+      lib_w32gui_opt='gdi32.lib comctl32.lib comdlg32.lib ole32.lib'
+      lib_user32_opt='user32.lib'
+      AS_IF([test "x$VCPP" = xyes], [
+        VCPP_LDFLAGS="$VCPP_LDFLAGS -subsystem:windows "
+      ])
+      AS_IF([test "x$BORLANDC" = xyes], [
+        BORLANDC_START='C0W32.OBJ'
+        CFLAGS="$CFLAGS -tW"
+        lib_w32gui_opt="-aa $lib_w32gui_opt"
+      ])
+      AS_IF([test "x$WATCOM_C" = xyes], [
+       CFLAGS="$CFLAGS -bw"
+       WATCOM_LDFLAGS="$WATCOM_LDFLAGS SYS nt_win"
+      ])
+      AS_IF([test "x$DMC" = xyes], [
+        DLLFLAG="-WA"
+        lib_w32gui_opt="$lib_w32gui_opt -L/exet:nt/su:windows:4.0"
+      ])
+      AS_IF([test "x$POCC" = xyes], [
+        POCC_LDFLAGS="$POCC_LDFLAGS -subsystem:windows "
+      ])
+    ], [
+      lib_w32gui_opt='-lgdi32 -lcomctl32 -lcomdlg32 -lole32'
+      lib_user32_opt='-luser32'
+      LDFLAGS="-mwindows $LDFLAGS"
+      INTERFACE_SRCS="$INTERFACE_SRCS w32g_ini.c w32g_pref.c w32g_syn_escaped.c w32g_utl.c winsyn_c.c rtsyn_common.c rtsyn_winmm.c"
+    ])
   ])
 
 
@@ -2082,55 +2073,54 @@ dnl Windows GUI
 AM_CONDITIONAL(ENABLE_W32GUI, false)
 CONFIG_INTERFACE(w32gui, W32GUI, w,
   AS_HELP_STRING([--enable-w32gui], [Enable Windows GUI interface    (default is no)]),
-  ,
-  [
-  W32G_GUI=yes 
-  if test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes; then
- 	INTERFACE_SRCS="$INTERFACE_SRCS w32g_c.c w32g_ini.c w32g_i.c w32g_playlist.c w32g_utl.c w32g_pref.c w32g_subwin.c w32g_subwin2.c w32g_subwin3.c w32g_ut2.c w32g_dib.c  wrdt_w32g.c w32g_mag.c"
-    lib_w32gui_opt='gdi32.lib comctl32.lib comdlg32.lib ole32.lib'
-    lib_user32_opt='user32.lib'
-    if test "x$VCPP" = xyes; then
-	  VCPP_LDFLAGS="$VCPP_LDFLAGS -subsystem:windows "
-	fi
-	if test "x$BORLANDC" = xyes; then
-	  BORLANDC_START='C0W32.OBJ'
-	  CFLAGS="$CFLAGS -tW"
-	  lib_w32gui_opt="-aa $lib_w32gui_opt"
-	fi
-	if test "x$WATCOM_C" = xyes; then
-	  CFLAGS="$CFLAGS -bw"
-	  WATCOM_LDFLAGS="$WATCOM_LDFLAGS SYS nt_win"
-	fi
-	if test "x$DMC" = xyes; then
-	  lib_w32gui_opt="$lib_w32gui_opt -L/SU:window"
-	  DLLFLAG="-WA"
-	fi
-    if test "x$POCC" = xyes; then
-	  POCC_LDFLAGS="$POCC_LDFLAGS -subsystem:windows "
-    fi
-  else
-    lib_w32gui_opt='-lgdi32 -lcomctl32 -lcomdlg32 -lole32'
-    lib_user32_opt='-luser32'
-    LDFLAGS="-mwindows $LDFLAGS"
-    INTERFACE_SRCS="$INTERFACE_SRCS w32g_c.c w32g_ini.c w32g_i.c w32g_playlist.c w32g_utl.c w32g_pref.c w32g_subwin_escaped.c w32g_subwin2.c w32g_subwin3.c w32g_ut2.c w32g_dib.c  wrdt_w32g.c w32g_mag.c"
-  fi
+  [], [
+    W32G_GUI=yes
+    AS_IF([test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes], [
+      INTERFACE_SRCS="$INTERFACE_SRCS w32g_c.c w32g_ini.c w32g_i.c w32g_playlist.c w32g_utl.c w32g_pref.c w32g_subwin.c w32g_subwin2.c w32g_subwin3.c w32g_ut2.c w32g_dib.c  wrdt_w32g.c w32g_mag.c"
+      lib_w32gui_opt='gdi32.lib comctl32.lib comdlg32.lib ole32.lib'
+      lib_user32_opt='user32.lib'
+      AS_IF([test "x$VCPP" = xyes],[
+        VCPP_LDFLAGS="$VCPP_LDFLAGS -subsystem:windows "
+      ])
+      AS_IF([test "x$BORLANDC" = xyes], [
+        BORLANDC_START='C0W32.OBJ'
+        CFLAGS="$CFLAGS -tW"
+        lib_w32gui_opt="-aa $lib_w32gui_opt"
+      ])
+      AS_IF([test "x$WATCOM_C" = xyes], [
+        CFLAGS="$CFLAGS -bw"
+        WATCOM_LDFLAGS="$WATCOM_LDFLAGS SYS nt_win"
+      ])
+      AS_IF([test "x$DMC" = xyes], [
+        lib_w32gui_opt="$lib_w32gui_opt -L/SU:window"
+        DLLFLAG="-WA"
+      ])
+      AS_IF([test "x$POCC" = xyes], [
+        POCC_LDFLAGS="$POCC_LDFLAGS -subsystem:windows "
+      ])
+    ], [
+      lib_w32gui_opt='-lgdi32 -lcomctl32 -lcomdlg32 -lole32'
+      lib_user32_opt='-luser32'
+      LDFLAGS="-mwindows $LDFLAGS"
+      INTERFACE_SRCS="$INTERFACE_SRCS w32g_c.c w32g_ini.c w32g_i.c w32g_playlist.c w32g_utl.c w32g_pref.c w32g_subwin_escaped.c w32g_subwin2.c w32g_subwin3.c w32g_ut2.c w32g_dib.c  wrdt_w32g.c w32g_mag.c"
+    ])
   ])
 
 dnl UMP configuration
 AM_CONDITIONAL(ENABLE_PLUGIN, false)
 CONFIG_INTERFACE(ump, PLUGIN, p,
   AS_HELP_STRING([--enable-ump], [UMP configuration               (default is no)]),
-  [ if test ! -d ump; then
+  [ AS_IF([test ! -d ump], [
 	AC_MSG_ERROR(UMP Package is not exists.  Can't configure it.)
-    fi
+    ])
     AC_CHECK_HEADER(X11/xpm.h,,AC_MSG_ERROR([UMP Package needs xpm.h[,] but could not find it.]))
     AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData,:,AC_MSG_ERROR([UMP Package needs libXpm.a[,] but could not find it.]))
-    if test "x$have_xext" = xyes; then
+    AS_IF([test "x$have_xext" = xyes], [
       lib_xext_opt=-lXext
-    fi
-    if test "x$have_xprelibs" = xyes; then
+    ])
+    AS_IF([test "x$have_xprelibs" = xyes], [
       lib_xprelibs_opt='-lSM -lICE'
-    fi
+    ])
     lib_xmu_opt=-lXmu
     lib_xt_opt=-lXt
   ])
@@ -2138,26 +2128,27 @@ CONFIG_INTERFACE(ump, PLUGIN, p,
 dnl Window Driver interface
 AC_ARG_ENABLE(windrv,
   AS_HELP_STRING([--enable-windrv], [Windows Driver interface(requires winsyn) ]),
-  [ if test "$enableval" = "yes"; then
-      if test "x$VCPP" != "xyes" && test "x$MINGWGCC" != "xyes" && test "x$BORLANDC" != "xyes" && test "x$WATCOM_C" != "xyes" && test "x$DMC" != "xyes" && test "x$POCC" != "xyes"; then
+  [ AS_IF([test "$enableval" = "yes"], [
+      AS_IF([test "x$VCPP" != "xyes" && test "x$MINGWGCC" != "xyes" && test "x$BORLANDC" != "xyes" && test "x$WATCOM_C" != "xyes" && test "x$DMC" != "xyes" && test "x$POCC" != "xyes"], [
 	AC_MSG_ERROR(windrv: Only Support VC++ or Mingw or Borland C or Open Watcom PellesC and Digital Mars)
-	  elif test "x$WINSYN" != "xyes"; then
+      ],[test "x$WINSYN" != "xyes"], [
 	AC_MSG_ERROR(windrv: Driver must have winsyn interface)
-	  else
-    AC_DEFINE(WINDRV,1,Define to 1 if you cpmpile windos driver.)
-    WINDRV=yes
-    if test "x$WATCOM_C" = "xyes"; then DLLFLAG="-bd" ;fi
-    if test "x$DMC" = "xyes"; then DLLFLAG="-WD" ;fi
-    CFLAGS="$CFLAGS -DANOTHER_MAIN "
-      fi
-    fi ])
+      ], [
+        AC_DEFINE(WINDRV,1,Define to 1 if you cpmpile windos driver.)
+        WINDRV=yes
+        AS_IF([test "x$WATCOM_C" = "xyes"], [DLLFLAG="-bd" ])
+        AS_IF([test "x$DMC" = "xyes"], [ DLLFLAG="-WD" ])
+        CFLAGS="$CFLAGS -DANOTHER_MAIN "
+      ])
+    ])
+  ])
 CFLAGS="$CFLAGS $DLLFLAG "
 
 dnl Offix support
 dnl this rely on  CFLAGS and LIBS
 AC_ARG_ENABLE(offix,
   AS_HELP_STRING([--enable-offix], [Enable offix support            (default is no)]),
-  [ if test "$enableval" = "yes"; then
+  [ AS_IF([test "$enableval" = "yes"], [
       KEEPCPPFLAGS=$CPPFLAGS
       KEEPLIBS=$LIBS
       KEEPLDFLAGS=$LDFLAGS
@@ -2173,26 +2164,28 @@ AC_ARG_ENABLE(offix,
 	CPPFLAGS=$KEEPCPPFLAGS
 	LIBS=$KEEPLIBS
       ])
-    fi
+    ])
   ])
 
 dnl Network section
 AC_ARG_ENABLE(network,
   AS_HELP_STRING([--enable-network], [Enable network support          (default is no)]),
-  [ if test "$enableval" = "yes"; then
+  [ AS_IF([test "$enableval" = "yes"], [
       AC_DEFINE(SUPPORT_SOCKET,1,Define to 1 if you need network support)
-    fi ])
+    ])
+  ])
 AM_CONDITIONAL(ENABLE_NETWORK, test "x$enable_network" = "xyes")
 
 dnl Sound Spectrogram Viewer
 AC_ARG_ENABLE(spectrogram,
   AS_HELP_STRING([--enable-spectrogram], [Enable Sound Spectrogram Viewer (default is no)]),
-  [ if test "$enableval" = "yes"; then
-      if test "x$with_x" != xyes; then
+  [ AS_IF([test "$enableval" = "yes"], [
+      AS_IF([test "x$with_x" != xyes], [
 	AC_MSG_ERROR(spectrogram: --with-x option must be specified)
-      fi
+      ])
       AC_DEFINE(SUPPORT_SOUNDSPEC,1,Define to 1 if you need spectrogram vewer.)
-    fi ])
+    ])
+  ])
 AM_CONDITIONAL(ENABLE_SOUND_SPEC, test "x$enable_spectrogram" = "xyes")
 
 dnl Wave Spline Interpolations
@@ -2226,28 +2219,29 @@ AC_ARG_ENABLE(spline,
 dnl WRD interface
 AC_ARG_ENABLE(wrd,
   AS_HELP_STRING([--enable-wrd], [Enable WRD interface for X      (default is no)]),
-  [ if test "$enableval" = "yes"; then
-      if test "x$with_x" = xyes; then
+  [ AS_IF([test "$enableval" = "yes"], [
+      AS_IF([test "x$with_x" = xyes], [
         LIBS="-lX11 $LIBS"
-      else
+      ], [
 	AC_MSG_ERROR(wrd: --with-x option must be specified)
-      fi
+      ])
       AC_DEFINE(WRDT_X,1,Define to 1 if you need wrd support for X.)
       enable_sherry_wrd=yes
       AC_CHECK_LIB(z,zlibVersion,:,enable_sherry_wrd=no)
       AC_CHECK_HEADER(png.h,,enable_sherry_wrd=no)
       AC_CHECK_LIB(png,png_init_io,:,enable_sherry_wrd=no,-lz)
-      if test "$enable_sherry_wrd" = yes; then
+      AS_IF([test "$enable_sherry_wrd" = yes], [
 	AC_DEFINE(ENABLE_SHERRY,1,Define to 1 if you enable Sherry WRD)
 	lib_zip_opt=-lz
 	lib_png_opt=-lpng
-      else
+      ], [
 	 AC_MSG_WARN([Sherry WRD is disabled: png.h, libpng.a, libz.a are required])
-      fi
-      if test "x$have_xext" = xyes; then
+      ])
+      AS_IF([test "x$have_xext" = xyes], [
 	lib_xext_opt=-lXext
-      fi
-    fi ])
+      ])
+    ])
+  ])
 
 
 dnl end of interfaces
@@ -2275,23 +2269,23 @@ SET_UNIQ_WORDS(SHLDFLAGS,$SHLDFLAGS)
 SET_UNIQ_WORDS(CFLAGS,$EXTRACFLAGS $CFLAGS)
 SET_UNIQ_WORDS(CPPFLAGS,$CPPFLAGS $EXTRADEFS)
 
-if test "x$oss_device" != x; then
+AS_IF([test "x$oss_device" != x], [
   AC_DEFINE_UNQUOTED(OSS_DEVICE,"$oss_device", oss device name)
-fi
+])
 
-if test "x$TIMIDITY_OUTPUT_ID" != x; then
+AS_IF([test "x$TIMIDITY_OUTPUT_ID" != x],[
   AC_DEFINE_UNQUOTED(TIMIDITY_OUTPUT_ID,"$TIMIDITY_OUTPUT_ID", the output specification)
-fi
+])
 
-if test "x$au_enable_nas"      = "xyes" -o \
-        "x$enable_motif"       = "xyes" -o \
-        "x$enable_tcltk"       = "xyes" -o \
-        "x$enable_xaw"         = "xyes" -o \
-        "x$enable_xskin"       = "xyes" -o \
-        "x$enable_spectrogram" = "xyes"; then
+AS_IF([test "x$au_enable_nas"      = "xyes" -o \
+            "x$enable_motif"       = "xyes" -o \
+            "x$enable_tcltk"       = "xyes" -o \
+            "x$enable_xaw"         = "xyes" -o \
+            "x$enable_xskin"       = "xyes" -o \
+            "x$enable_spectrogram" = "xyes"], [
   dnl Order of X-library is: -lXdnd -lXm -lXaw -lXft -lXmu -lXt -lSM -lICE -lXext -lX11
   LIBS="$lib_offix_opt $lib_xm_opt $lib_xaw_opt $lib_xft_opt $lib_xmu_opt $lib_xt_opt $lib_xprelibs_opt $lib_xext_opt -lX11 $LIBS"
-fi
+])
 LIBS="$LIBS $lib_dl_opt $lib_png_opt $lib_zip_opt $lib_user32_opt $lib_w32gui_opt $EXTRALIBS"
 SHLD="$SHLD $SHLDFLAGS"
 

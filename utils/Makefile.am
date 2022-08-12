@@ -18,7 +18,7 @@
 
 include $(top_srcdir)/common.makefile.in
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/libarc \
 	-I$(top_srcdir)/timidity
 

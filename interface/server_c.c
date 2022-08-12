@@ -399,7 +399,7 @@ static int pasv_open(int *port)
     return sfd;
 }
 
-static RETSIGTYPE sig_timeout(int sig)
+static void sig_timeout(int sig)
 {
     signal(SIGALRM, sig_timeout); /* For SysV base */
     /* Expect EINTR */

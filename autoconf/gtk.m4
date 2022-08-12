@@ -8,18 +8,12 @@ AC_DEFUN([AM_PATH_GTK],
 [dnl 
 dnl Get the cflags and libraries from the gtk-config script
 dnl
-AC_ARG_WITH(gtk-prefix,
-	    AS_HELP_STRING([--with-gtk-prefix=PFX],
-	    		   [Prefix where GTK is installed (optional)]),
-            [gtk_config_prefix="$withval"], [gtk_config_prefix=""])
-AC_ARG_WITH(gtk-exec-prefix,
-	    AS_HELP_STRING([--with-gtk-exec-prefix=PFX],
-	    		   [Exec prefix where GTK is installed (optional)]),
-	    [gtk_config_exec_prefix="$withval"], [gtk_config_exec_prefix=""])
-AC_ARG_ENABLE(gtktest,
-	      AS_HELP_STRING([--disable-gtktest],
-	      		     [Do not try to compile and run a test GTK program]),
-	      , [enable_gtktest=yes])
+AC_ARG_WITH(gtk-prefix,[  --with-gtk-prefix=PFX   Prefix where GTK is installed (optional)],
+            gtk_config_prefix="$withval", gtk_config_prefix="")
+AC_ARG_WITH(gtk-exec-prefix,[  --with-gtk-exec-prefix=PFX Exec prefix where GTK is installed (optional)],
+            gtk_config_exec_prefix="$withval", gtk_config_exec_prefix="")
+AC_ARG_ENABLE(gtktest, [  --disable-gtktest       Do not try to compile and run a test GTK program],
+		    , enable_gtktest=yes)
 
   for module in . $4
   do
@@ -68,7 +62,7 @@ dnl Now check if the installed GTK is sufficiently new. (Also sanity
 dnl checks the results of gtk-config to some extent
 dnl
       rm -f conf.gtktest
-      AC_TRY_RUN([
+      AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -142,7 +136,7 @@ main ()
     }
   return 1;
 }
-],, no_gtk=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+]])],[],[no_gtk=yes],[echo $ac_n "cross compiling; assumed OK... $ac_c"])
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
      fi
@@ -164,10 +158,10 @@ main ()
           echo "*** Could not run GTK test program, checking why..."
           CFLAGS="$CFLAGS $GTK_CFLAGS"
           LIBS="$LIBS $GTK_LIBS"
-          AC_TRY_LINK([
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <gtk/gtk.h>
 #include <stdio.h>
-],      [ return ((gtk_major_version) || (gtk_minor_version) || (gtk_micro_version)); ],
+]], [[ return ((gtk_major_version) || (gtk_minor_version) || (gtk_micro_version)); ]])],
         [ echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding GTK or finding the wrong"
           echo "*** version of GTK. If it is not finding GTK, you'll need to set your"
