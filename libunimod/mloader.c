@@ -100,7 +100,7 @@ static SWORD *SL_Load (SAMPLOAD *);
 static BOOL SL_Init (SAMPLOAD *);
 static void SL_Exit (SAMPLOAD *);
 
-BOOL 
+BOOL
 SL_Init (SAMPLOAD * s)
 {
   if (!sl_buffer)
@@ -115,7 +115,7 @@ SL_Init (SAMPLOAD * s)
   return 1;
 }
 
-void 
+void
 SL_Exit (SAMPLOAD * s)
 {
   if (sl_rlength > 0)
@@ -128,7 +128,7 @@ SL_Exit (SAMPLOAD * s)
 }
 
 /* unpack a 8bit IT packed sample */
-static BOOL 
+static BOOL
 read_itcompr8 (ITPACK * status, URL reader, SWORD * sl_buffer, UWORD count, UWORD * incnt)
 {
   SWORD *dest = sl_buffer, *end = sl_buffer + count;
@@ -215,7 +215,7 @@ read_itcompr8 (ITPACK * status, URL reader, SWORD * sl_buffer, UWORD count, UWOR
 }
 
 /* unpack a 16bit IT packed sample */
-static BOOL 
+static BOOL
 read_itcompr16 (ITPACK * status, URL reader, SWORD * sl_buffer, UWORD count, UWORD * incnt)
 {
   SWORD *dest = sl_buffer, *end = sl_buffer + count;
@@ -301,7 +301,7 @@ read_itcompr16 (ITPACK * status, URL reader, SWORD * sl_buffer, UWORD count, UWO
   return dest - sl_buffer;
 }
 
-static BOOL 
+static BOOL
 SL_LoadInternal (void *buffer, UWORD infmt, UWORD outfmt, int scalefactor, ULONG length, URL reader)
 {
   SBYTE *bptr = (SBYTE *) buffer;
@@ -521,12 +521,12 @@ SL_RegisterSample (SAMPLE * s, URL reader)
       SL_SampleSigned (news);
       SL_Sample8to16 (news);
     }
-  
+
 
   return news;
 }
 
-static void 
+static void
 FreeSampleList (void)
 {
   SAMPLOAD *old, *s = musiclist;
@@ -542,7 +542,7 @@ FreeSampleList (void)
 
 /* Returns the total amount of memory required by the musiclist queue. */
 #ifdef MAX_SAMPLESPACE
-static ULONG 
+static ULONG
 SampleTotal (void)
 {
   int total = 0;
@@ -562,14 +562,14 @@ SampleTotal (void)
   return total;
 }
 
-static ULONG 
+static ULONG
 RealSpeed (SAMPLOAD * s)
 {
   return (s->sample->speed / (s->scalefactor ? s->scalefactor : 1));
 }
 #endif
 
-BOOL 
+BOOL
 SL_LoadSamples (void)
 {
   SAMPLOAD *s;
@@ -647,28 +647,28 @@ SL_LoadSamples (void)
   return 0;
 }
 
-void 
+void
 SL_Sample16to8 (SAMPLOAD * s)
 {
   s->outfmt &= ~SF_16BITS;
   s->sample->flags = (s->sample->flags & ~SF_FORMATMASK) | s->outfmt;
 }
 
-void 
+void
 SL_Sample8to16 (SAMPLOAD * s)
 {
   s->outfmt |= SF_16BITS;
   s->sample->flags = (s->sample->flags & ~SF_FORMATMASK) | s->outfmt;
 }
 
-void 
+void
 SL_SampleSigned (SAMPLOAD * s)
 {
   s->outfmt |= SF_SIGNED;
   s->sample->flags = (s->sample->flags & ~SF_FORMATMASK) | s->outfmt;
 }
 
-void 
+void
 SL_SampleUnsigned (SAMPLOAD * s)
 {
   s->outfmt &= ~SF_SIGNED;
@@ -676,7 +676,7 @@ SL_SampleUnsigned (SAMPLOAD * s)
 }
 
 #ifdef MAX_SAMPLESPACE
-void 
+void
 SL_HalveSample (SAMPLOAD * s)
 {
   s->scalefactor = 2;		/* this is a divisor */
@@ -710,7 +710,7 @@ ML_InfoLoader (void)
   return list;
 }
 
-BOOL 
+BOOL
 ReadComment (UWORD len)
 {
   if (len)
@@ -736,7 +736,7 @@ ReadComment (UWORD len)
   return 1;
 }
 
-BOOL 
+BOOL
 ReadLinedComment (UWORD lines, UWORD linelen)
 {
   CHAR *tempcomment, *line, *storage;
@@ -791,7 +791,7 @@ ReadLinedComment (UWORD lines, UWORD linelen)
   return 1;
 }
 
-BOOL 
+BOOL
 AllocPositions (int total)
 {
   if (!total)
@@ -804,7 +804,7 @@ AllocPositions (int total)
   return 1;
 }
 
-BOOL 
+BOOL
 AllocPatterns (void)
 {
   int s, t, tracks = 0;
@@ -830,7 +830,7 @@ AllocPatterns (void)
   return 1;
 }
 
-BOOL 
+BOOL
 AllocTracks (void)
 {
   if (!of.numtrk)
@@ -843,7 +843,7 @@ AllocTracks (void)
   return 1;
 }
 
-BOOL 
+BOOL
 AllocInstruments (void)
 {
   int t, n;
@@ -869,7 +869,7 @@ AllocInstruments (void)
   return 1;
 }
 
-BOOL 
+BOOL
 AllocSamples (void)
 {
   UWORD u;
@@ -892,7 +892,7 @@ AllocSamples (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 ML_LoadSamples (void)
 {
   SAMPLE *s;
@@ -942,7 +942,7 @@ DupStr (CHAR * s, UWORD len, BOOL strict)
   return d;
 }
 
-static void 
+static void
 ML_XFreeSample (SAMPLE * s)
 {
   if (s->data)
@@ -951,14 +951,14 @@ ML_XFreeSample (SAMPLE * s)
     free (s->samplename);
 }
 
-static void 
+static void
 ML_XFreeInstrument (INSTRUMENT * i)
 {
   if (i->insname)
     free (i->insname);
 }
 
-void 
+void
 ML_Free (MODULE * mf)
 {
   UWORD t;
@@ -1037,7 +1037,7 @@ ML_LoadTitle (URL reader)
 }
 
 /* Check if it is a module given a reader */
-BOOL 
+BOOL
 ML_Test (URL reader)
 {
   MLOADER *l;
@@ -1154,7 +1154,7 @@ ML_Load (URL reader, int maxchan, BOOL curious)
 }
 
 
-void 
+void
 ML_RegisterAllLoaders (void)
 {
   MLOADER *last = NULL;
@@ -1162,8 +1162,8 @@ ML_RegisterAllLoaders (void)
   if (firstloader)
     return;
 
-#define LOADER(fmt)	{ 			\
-	extern MLOADER fmt; 			\
+#define LOADER(fmt)	{			\
+	extern MLOADER fmt;			\
 	if (!last)				\
 		firstloader = &fmt;		\
 	else					\

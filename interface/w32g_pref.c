@@ -116,7 +116,7 @@ static int gogoCofigDialog(void);
 #endif
 #endif
 
-#ifdef IA_W32G_SYN 
+#ifdef IA_W32G_SYN
 static char **GetMidiINDrivers ( void );
 #endif
 
@@ -264,8 +264,8 @@ static BOOL APIENTRY CALLBACK PrefWndDialogProc(HWND hwnd, UINT uMess, WPARAM wP
 
 	case WM_NOTIFY:
 	{
-		int idCtrl = (int) wParam; 
-    LPNMHDR pnmh = (LPNMHDR) lParam; 
+		int idCtrl = (int) wParam;
+    LPNMHDR pnmh = (LPNMHDR) lParam;
 		if ( pnmh->idFrom == IDC_TAB_MAIN ) {
 			switch ( pnmh->code ) {
 			case TCN_SELCHANGE:
@@ -402,7 +402,7 @@ void reload_cfg(void)
 static BOOL APIENTRY
 PrefPlayerDialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 {
-	static int initflag = 1; 
+	static int initflag = 1;
 	switch (uMess){
 	case WM_INITDIALOG:
 		SetDlgItemText(hwnd,IDC_EDIT_CONFIG_FILE,TEXT(sp_temp->ConfigFile));
@@ -472,10 +472,10 @@ PrefPlayerDialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 
 		if(getenv("TIMIDITY_CFG_EDITOR") != NULL){
 			ShellExecute(NULL, "open", getenv("TIMIDITY_CFG_EDITOR"), ConfigFile, NULL, SW_SHOWNORMAL);
-		}else{	
+		}else{
 			ShellExecute(NULL, "open", "notepad.exe", ConfigFile, NULL, SW_SHOWNORMAL);
 		}
-			break;		 
+			break;
 /*			ShellExecute(NULL, "open", "notepad.exe", ConfigFile, NULL, SW_SHOWNORMAL);
 			break;
 		case IDC_BUTTON_CFG_DIR:
@@ -664,7 +664,7 @@ static int find_combo_module_item(int val)
 static BOOL APIENTRY
 PrefTiMidity1DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 {
-	static int initflag = 1; 
+	static int initflag = 1;
 	int i;
 	char **cb_info;
 	switch (uMess){
@@ -672,7 +672,7 @@ PrefTiMidity1DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		// CHORUS
 		if (PlayerLanguage == LANGUAGE_JAPANESE)
 			cb_info = cb_info_IDC_COMBO_CHORUS_jp;
-		else 
+		else
 			cb_info = cb_info_IDC_COMBO_CHORUS_en;
 
 		for (i = 0; i < cb_num_IDC_COMBO_CHORUS; i++)
@@ -700,7 +700,7 @@ PrefTiMidity1DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		// REVERB
 		if (PlayerLanguage == LANGUAGE_JAPANESE)
 			cb_info = cb_info_IDC_COMBO_REVERB_jp;
-		else 
+		else
 			cb_info = cb_info_IDC_COMBO_REVERB_en;
 
 		for (i = 0; i < cb_num_IDC_COMBO_REVERB; i++)
@@ -724,7 +724,7 @@ PrefTiMidity1DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		// DELAY
 		if (PlayerLanguage == LANGUAGE_JAPANESE)
 			cb_info = cb_info_IDC_COMBO_DELAY_jp;
-		else 
+		else
 			cb_info = cb_info_IDC_COMBO_DELAY_en;
 
 		for (i = 0; i < cb_num_IDC_COMBO_DELAY; i++)
@@ -745,7 +745,7 @@ PrefTiMidity1DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		// LPF
 		if (PlayerLanguage == LANGUAGE_JAPANESE)
 			cb_info = cb_info_IDC_COMBO_LPF_jp;
-		else 
+		else
 			cb_info = cb_info_IDC_COMBO_LPF_en;
 
 		for (i = 0; i < cb_num_IDC_COMBO_LPF; i++)
@@ -857,7 +857,7 @@ PrefTiMidity1DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		} else {
 			st_temp->opt_surround_chorus = 0;
 		}
-  		// REVERB
+		// REVERB
 		st_temp->opt_reverb_control = (int)SendDlgItemMessage(hwnd, IDC_COMBO_REVERB, CB_GETCURSEL, 0, 0);
 		if(st_temp->opt_reverb_control && SendDlgItemMessage(hwnd, IDC_CHECKBOX_REVERB_LEVEL, BM_GETCHECK, 0, 0)) {
 			st_temp->opt_reverb_control = -(int)GetDlgItemInt(hwnd, IDC_EDIT_REVERB, NULL, TRUE)
@@ -944,7 +944,7 @@ static BOOL APIENTRY
 PrefTiMidity2DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 {
 	int i;
-	static int initflag = 1; 
+	static int initflag = 1;
 
 	switch (uMess){
 	case WM_INITDIALOG:
@@ -1594,7 +1594,7 @@ PrefTiMidity3DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 			st_temp->opt_playmode[i++] = 'M';
 		st_temp->opt_playmode[i] = '\0';
 		st_temp->output_rate = GetDlgItemInt(hwnd, IDC_COMBO_SAMPLE_RATE, NULL, FALSE);
- 		if(st_temp->auto_output_mode==0)
+		if(st_temp->auto_output_mode==0)
 			GetDlgItemText(hwnd,IDC_EDIT_OUTPUT_FILE,st_temp->OutputName,(WPARAM)sizeof(st_temp->OutputName));
 		else
 			GetDlgItemText(hwnd,IDC_EDIT_OUTPUT_FILE,st_temp->OutputDirName,(WPARAM)sizeof(st_temp->OutputDirName));
@@ -1620,7 +1620,7 @@ PrefTiMidity3DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 static BOOL APIENTRY
 PrefTiMidity4DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 {
-	static int initflag = 1; 
+	static int initflag = 1;
 	static int pref_channel_mode;
 	switch (uMess){
   case WM_INITDIALOG:
@@ -1849,7 +1849,7 @@ else UNSET_CHANNELMASK((channelbitmask),(ch)); }
 	return FALSE;
 }
 
-#ifdef IA_W32G_SYN 
+#ifdef IA_W32G_SYN
 extern int syn_ThreadPriority;
 static char **MidiINDrivers = NULL;
 // 0 MIDI Mapper -1
@@ -1888,7 +1888,7 @@ static BOOL APIENTRY
 PrefSyn1DialogProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 {
 	int i;
-	static int initflag = 1; 
+	static int initflag = 1;
 	switch (uMess){
   case WM_INITDIALOG:
 		for ( i = 0; i <= MAX_PORT; i ++ ) {
@@ -3586,14 +3586,14 @@ int asioConfigDialog(void)
 	int buffered_data;
 
 	PaHostApiIndex i, ApiCount;
-	
-	
+
+
 	if(load_portaudio_dll(0))
 		return -1;
-	
+
 	play_mode->acntl(PM_REQ_GETFILLED, &buffered_data);
 	if (buffered_data != 0) return -1;
-	
+
 	play_mode->close_output();
 	err = Pa_Initialize();
 	if( err != paNoError ) goto error1;
@@ -3613,16 +3613,16 @@ int asioConfigDialog(void)
 	if(DeviceIndex==paNoDevice) goto error2;
 
 	if (HostApiTypeId ==  paASIO){
-    	err = PaAsio_ShowControlPanel( DeviceIndex, (void*) hWnd);
+	err = PaAsio_ShowControlPanel( DeviceIndex, (void*) hWnd);
 		if( err != paNoError ) goto error1;
 	}
 	Pa_Terminate();
 	play_mode->open_output();
-//  	free_portaudio_dll();
+//	free_portaudio_dll();
 	return 0;
-	
+
 error1:
-//  	free_portaudio_dll();
+//	free_portaudio_dll();
 	MessageBox(NULL, Pa_GetErrorText( err ), "Port Audio (asio) error", IDOK);
 error2:
 	Pa_Terminate();

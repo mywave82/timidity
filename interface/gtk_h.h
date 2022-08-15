@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -18,10 +18,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
     motif.h: written by Vincent Pagel (pagel@loria.fr) 10/4/95
-   
+
     */
 
-/* 
+/*
  * MESSAGE FROM KERNEL TO MOTIF
  */
 #define REFRESH_MESSAGE 1

@@ -130,7 +130,7 @@ DSM_Cleanup (void)
   _mm_free (mh);
 }
 
-static BOOL 
+static BOOL
 GetBlockHeader (void)
 {
   /* make sure we're at the right position for reading the
@@ -164,7 +164,7 @@ GetBlockHeader (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 DSM_ReadPattern (void)
 {
   int flag, row = 0;

@@ -43,8 +43,8 @@ void v_memset(void* destp, int c, size_t len)
         int i,xlen;
 	int cccc[4] = { c, c, c, c, };
         vint32* destv;
-	vint32  pat = *(vint32*) cccc; 
-	
+	vint32  pat = *(vint32*) cccc;
+
 	/* first, write things to word boundary. */
 	if(( xlen = (int)dest % sizeof_vector ) != 0) {
 	    libc_memset(destp,c,xlen);
@@ -55,7 +55,7 @@ void v_memset(void* destp, int c, size_t len)
 	/* this is the maion loop. */
 	destv = (vint32*) dest;
 	for( i = 0; i < len / sizeof_vector; i++ ) {
-  	    destv[i] = pat;
+	    destv[i] = pat;
 	}
 	dest += i * sizeof_vector;
 	len %= sizeof_vector;
@@ -75,7 +75,7 @@ void v_memzero(void* destp, size_t len)
     if( len >= 2*sizeof_vector ) { /* 32 byte */
         int i,xlen;
         vint32* destv;
-	
+
 	/* first, write things to word boundary. */
 	if(( xlen = (int)dest % sizeof_vector ) != 0) {
 	    libc_memset(destp,0,xlen);
@@ -86,7 +86,7 @@ void v_memzero(void* destp, size_t len)
 	/* this is the maion loop. */
 	destv = (vint32*) dest;
 	for( i = 0; i < len / sizeof_vector; i++ ) {
-  	    destv[i] = vzero;
+	    destv[i] = vzero;
 	}
 	dest += i * sizeof_vector;
 	len %= sizeof_vector;

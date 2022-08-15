@@ -98,7 +98,7 @@ static char    sysexbuffer[EXBUFF_SIZE];
 void rtsyn_get_port_list(){
 	int i,j;
 	PmDeviceInfo *deviceinfo;
-	
+
 	pmerr=Pm_Initialize();
 	if( pmerr != pmNoError ) goto pmerror;
 
@@ -113,7 +113,7 @@ void rtsyn_get_port_list(){
 	}
 	rtsyn_nportlist=j;
 	Pm_Terminate();
-	
+
 	return;
 pmerror:
 		Pm_Terminate();
@@ -124,7 +124,7 @@ pmerror:
 int rtsyn_synth_start(){
 	int i;
 	unsigned int port;
-	
+
 	port=0;
 	Pt_Start(1,NULL,NULL);
 	pm_start_time = get_current_calender_time();
@@ -161,7 +161,7 @@ void rtsyn_synth_stop(){
 	rtsyn_stop_playing();
 //	play_mode->close_output();
 	rtsyn_midiports_close();
-	
+
 	return;
 pmerror:
 		Pm_Terminate();
@@ -181,11 +181,11 @@ void rtsyn_midiports_close(void){
 
 int rtsyn_play_some_data (void){
 	PmMessage pmmsg;
-	int played;	
+	int played;
 	int j,port,exlen,data,shift;
 	long pmlength,pmbpoint;
 	double event_time;
-	
+
 	played=0;
 		sleep(0);
 		for(port=0;port<rtsyn_portnumber;port++){
@@ -198,12 +198,12 @@ int rtsyn_play_some_data (void){
 				pmmsg=pmbuffer[pmbpoint].message;
 				event_time=((double)pmbuffer[pmbpoint].timestamp)/1000.0 + pm_start_time;
 				pmbpoint++;
-				if( 1==rtsyn_play_one_data (port, pmmsg, event_time) ){	
+				if( 1==rtsyn_play_one_data (port, pmmsg, event_time) ){
 
 					j=0;
 					sysexbuffer[j++] = 0xf0;
 					for (shift = 8,data=0; shift < 32 && (data != 0x0f7); shift += 8) {
-       		         	data= (pmmsg >> shift) & 0x0FF;
+						data= (pmmsg >> shift) & 0x0FF;
 						sysexbuffer[j++]=data;
 					}
 					if(data!=0x0f7){
@@ -218,7 +218,7 @@ int rtsyn_play_some_data (void){
 						}
 						while(j<EXBUFF_SIZE-4){
 							for (shift=0,data=0; shift < 32 && (data != 0x0f7); shift += 8) {
-                				data= (pmbuffer[pmbpoint].message >> shift) & 0x0FF;
+								data= (pmbuffer[pmbpoint].message >> shift) & 0x0FF;
 								sysexbuffer[j++]=data;
 							}
 							pmbpoint++;

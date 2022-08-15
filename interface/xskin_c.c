@@ -163,7 +163,7 @@ static void ctl_master_volume(int mv) {
   if ( mv != lastvol ) {
     if ( mv == CTL_LAST_STATUS ) mv = lastvol;
     else lastvol = mv;
-    
+
     sprintf( local_buf, "V %d", mv );
     xskin_pipe_write(local_buf);
   }
@@ -577,7 +577,7 @@ ControlMode *interface_i_loader(void)
 static void initialize_exp_hz_table( void ) {
   int i;
   double r, x, w;
-  
+
   w = (double)play_mode->rate * 0.5 / DEFAULT_ZOOM;
   r = exp(log(w) * (1.0/SPE_W));
   w = (FFTSIZE/2.0) / (w - 1.0);

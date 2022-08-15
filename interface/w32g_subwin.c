@@ -130,14 +130,14 @@ void InitConsoleWnd(HWND hParentWnd)
 	}
 	INILoadConsoleWnd();
 	switch(PlayerLanguage){
-  	case LANGUAGE_ENGLISH:
+	case LANGUAGE_ENGLISH:
 		hConsoleWnd = CreateDialog
-  			(hInst,MAKEINTRESOURCE(IDD_DIALOG_CONSOLE_EN),hParentWnd,ConsoleWndProc);
+			(hInst,MAKEINTRESOURCE(IDD_DIALOG_CONSOLE_EN),hParentWnd,ConsoleWndProc);
 		break;
- 	default:
+	default:
 	case LANGUAGE_JAPANESE:
 		hConsoleWnd = CreateDialog
-  			(hInst,MAKEINTRESOURCE(IDD_DIALOG_CONSOLE),hParentWnd,ConsoleWndProc);
+			(hInst,MAKEINTRESOURCE(IDD_DIALOG_CONSOLE),hParentWnd,ConsoleWndProc);
 	break;
 	}
 	ConsoleWndInfoReset(hConsoleWnd);
@@ -346,10 +346,10 @@ static int ConsoleWndInfoApply(void)
 // ---------------------------------------------------------------------------
 // Macros
 #define IDM_LISTWND_REMOVE		4101
-#define IDM_LISTWND_PLAY  		4102
-#define IDM_LISTWND_REFINE 		4103
-#define IDM_LISTWND_UNIQ 		4104
-#define IDM_LISTWND_CLEAR 		4105
+#define IDM_LISTWND_PLAY		4102
+#define IDM_LISTWND_REFINE		4103
+#define IDM_LISTWND_UNIQ		4104
+#define IDM_LISTWND_CLEAR		4105
 #define IDM_LISTWND_CHOOSEFONT	4106
 #define IDM_LISTWND_CURRENT 4107
 #define IDM_LISTWND_SEARCH 4108
@@ -406,8 +406,8 @@ void InitListWnd(HWND hParentWnd)
 		AppendMenu(ListWndInfo.hPopupMenu,MF_SEPARATOR,0,0);
 		AppendMenu(ListWndInfo.hPopupMenu,MF_STRING,IDM_LISTWND_CHOOSEFONT,"フォントの選択");
 		break;
- 	default:
-  	case LANGUAGE_ENGLISH:
+	default:
+	case LANGUAGE_ENGLISH:
 		AppendMenu(ListWndInfo.hPopupMenu,MF_STRING,IDM_LISTWND_PLAY,"Play");
 		AppendMenu(ListWndInfo.hPopupMenu,MF_STRING,IDC_BUTTON_DOC,"Doc");
 		AppendMenu(ListWndInfo.hPopupMenu,MF_SEPARATOR,0,0);
@@ -555,7 +555,7 @@ ListWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 				return FALSE;
 			case IDM_LISTWND_CHOOSEFONT:
 				{
- 					SendMessage(hwnd,WM_CHOOSEFONT_DIAG,0,0);
+					SendMessage(hwnd,WM_CHOOSEFONT_DIAG,0,0);
 				}
 				return FALSE;
 			case IDM_LISTWND_CURRENT:
@@ -862,12 +862,12 @@ static int ListWndInfoApply(void)
 {
 	RECT rc;
 	HFONT hFontPre = NULL;
-	DWORD fdwPitch = (ListWndInfo.fontFlags&FONT_FLAGS_FIXED)?FIXED_PITCH:VARIABLE_PITCH;	
+	DWORD fdwPitch = (ListWndInfo.fontFlags&FONT_FLAGS_FIXED)?FIXED_PITCH:VARIABLE_PITCH;
 	DWORD fdwItalic = (ListWndInfo.fontFlags&FONT_FLAGS_ITALIC)?TRUE:FALSE;
 	HFONT hFont =
 		CreateFont(ListWndInfo.fontHeight,ListWndInfo.fontWidth,0,0,FW_DONTCARE,fdwItalic,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-	      	fdwPitch | FF_DONTCARE,ListWndInfo.fontName);
+		fdwPitch | FF_DONTCARE,ListWndInfo.fontName);
 	if(hFont != NULL){
 		hFontPre = ListWndInfo.hFontListBox;
 		ListWndInfo.hFontListBox = hFont;
@@ -986,11 +986,11 @@ void InitDocWnd(HWND hParentWnd)
 	DocWndInfoReset2(hDocWnd);
 	INILoadDocWnd();
 	switch(PlayerLanguage){
-  	case LANGUAGE_ENGLISH:
+	case LANGUAGE_ENGLISH:
 		hDocWnd = CreateDialog
 			(hInst,MAKEINTRESOURCE(IDD_DIALOG_DOC_EN),hParentWnd,DocWndProc);
 		break;
- 	default:
+	default:
 	case LANGUAGE_JAPANESE:
 		hDocWnd = CreateDialog
 			(hInst,MAKEINTRESOURCE(IDD_DIALOG_DOC),hParentWnd,DocWndProc);
@@ -1005,8 +1005,8 @@ void InitDocWnd(HWND hParentWnd)
 		AppendMenu(hMenu,MF_SEPARATOR,0,0);
 		AppendMenu(hMenu,MF_STRING,IDM_DOCWND_CHOOSEFONT,"フォントの選択");
 		break;
- 	default:
-  	case LANGUAGE_ENGLISH:
+	default:
+	case LANGUAGE_ENGLISH:
 		AppendMenu(hMenu,MF_SEPARATOR,0,0);
 		AppendMenu(hMenu,MF_STRING,IDM_DOCWND_CHOOSEFONT,"Choose Font");
 		break;
@@ -1211,11 +1211,11 @@ static int DocWndInfoReset2(HWND hwnd)
 	DocWndInfo.fontFlags = FONT_FLAGS_FIXED;
 	switch(PlayerLanguage){
 	case LANGUAGE_ENGLISH:
-		DocWndInfo.fontName = DocWndInfo.fontNameEN; 
+		DocWndInfo.fontName = DocWndInfo.fontNameEN;
 		break;
 	default:
 	case LANGUAGE_JAPANESE:
-		DocWndInfo.fontName = DocWndInfo.fontNameJA; 
+		DocWndInfo.fontName = DocWndInfo.fontNameJA;
 		break;
 	}
 	return 0;
@@ -1224,12 +1224,12 @@ static int DocWndInfoApply(void)
 {
 	RECT rc;
 	HFONT hFontPre = NULL;
-	DWORD fdwPitch = (DocWndInfo.fontFlags&FONT_FLAGS_FIXED)?FIXED_PITCH:VARIABLE_PITCH;	
+	DWORD fdwPitch = (DocWndInfo.fontFlags&FONT_FLAGS_FIXED)?FIXED_PITCH:VARIABLE_PITCH;
 	DWORD fdwItalic = (DocWndInfo.fontFlags&FONT_FLAGS_ITALIC)?TRUE:FALSE;
 	HFONT hFont =
 		CreateFont(DocWndInfo.fontHeight,DocWndInfo.fontWidth,0,0,FW_DONTCARE,fdwItalic,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-	      	fdwPitch | FF_DONTCARE,DocWndInfo.fontName);
+		fdwPitch | FF_DONTCARE,DocWndInfo.fontName);
 	if(hFont != NULL){
 		hFontPre = DocWndInfo.hFontEdit;
 		DocWndInfo.hFontEdit = hFont;
@@ -1359,8 +1359,8 @@ stage1_end:
 #define MAX2(x,y) ((x)>=(y)?(x):(y))
 #endif
 	switch(PlayerLanguage){
-  	case LANGUAGE_ENGLISH:
- 	default:
+	case LANGUAGE_ENGLISH:
+	default:
 		strncpy(out,buffer,MAX2(buffer_size-1,out_size-1));
 		out[out_size-1] = '\0';
 		free(buffer);
@@ -1401,7 +1401,7 @@ static void DocWndSetInfo(char *info, char *filename)
 	DocWndInfoUnLock();
 }
 
-// *.doc *.txt *.hed archive#*.doc archive#*.txt archive#*.hed 
+// *.doc *.txt *.hed archive#*.doc archive#*.txt archive#*.hed
 
 static void DocWndInfoInit(void)
 {
@@ -1417,7 +1417,7 @@ static void DocWndInfoInit(void)
 //		DocWndInfoUnLock();
 }
 
-// Success -> TRUE   Failure -> FALSE 
+// Success -> TRUE   Failure -> FALSE
 static int DocWndInfoLock(void)
 {
 #if 0

@@ -104,7 +104,7 @@
 #  define EAI_SYSTEM -12
 # endif
 
-#endif 
+#endif
 
 #ifndef NO_ADDRESS
 #   define NO_ADDRESS  NO_DATA

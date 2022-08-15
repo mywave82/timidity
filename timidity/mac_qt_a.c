@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -20,7 +20,7 @@
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
 	   K.KINOSHITA
-		
+
     mac_qt_a.c
     Macintosh QuickTime audio driver
 */
@@ -262,8 +262,8 @@ static int open_output(void)
 
 static int output_data(char *buf, int32 count)
 {
- 	// Never called
- 	return 0;
+	// Never called
+	return 0;
 }
 
 static long current_tick(void)
@@ -859,7 +859,7 @@ static void qt_play_event(void *p)
 
 static int acntl(int request, void *arg)
 {
- 	int rc, ch;
+	int rc, ch;
 
     switch(request)
     {

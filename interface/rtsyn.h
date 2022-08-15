@@ -137,7 +137,7 @@ void rtsyn_play_calculate(void);
 /*  Interface dependent functions (see rtsyn_winmm.c rtsyn_portmidi.c)        */
 /*                                                                            */
 /******************************************************************************/
-#if defined(IA_WINSYN) || defined(IA_PORTMIDISYN) || defined(IA_W32G_SYN) 
+#if defined(IA_WINSYN) || defined(IA_PORTMIDISYN) || defined(IA_W32G_SYN)
 
 #define MAX_PORT 4
 extern int rtsyn_portnumber;

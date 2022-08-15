@@ -135,7 +135,7 @@ static UBYTE *rowend;		/* endaddress of a row (exclusive) */
 static UBYTE *rowpc;		/* current unimod(tm) programcounter */
 
 
-void 
+void
 UniSetRow (UBYTE * t)
 {
   rowstart = t;
@@ -143,19 +143,19 @@ UniSetRow (UBYTE * t)
   rowend = t ? rowstart + (*(rowpc++) & 0x1f) : t;
 }
 
-UBYTE 
+UBYTE
 UniGetByte (void)
 {
   return (rowpc < rowend) ? *(rowpc++) : 0;
 }
 
-UWORD 
+UWORD
 UniGetWord (void)
 {
   return ((UWORD) UniGetByte () << 8) | UniGetByte ();
 }
 
-void 
+void
 UniSkipOpcode (UBYTE op)
 {
   if (op < UNI_LAST)
@@ -199,7 +199,7 @@ static UWORD unitt;		/* current row index */
 static UWORD lastp;		/* previous row index */
 
 /* Resets index-pointers to create a new track. */
-void 
+void
 UniReset (void)
 {
   unitt = 0;			/* reset index to rep/len byte */
@@ -209,7 +209,7 @@ UniReset (void)
 }
 
 /* Expands the buffer */
-static BOOL 
+static BOOL
 UniExpand (int wanted)
 {
   if ((unipc + wanted) >= unimax)
@@ -233,7 +233,7 @@ UniExpand (int wanted)
 }
 
 /* Appends one byte of data to the current row of a track. */
-void 
+void
 UniWriteByte (UBYTE data)
 {
   if (UniExpand (1))
@@ -241,7 +241,7 @@ UniWriteByte (UBYTE data)
     unibuf[unipc++] = data;
 }
 
-void 
+void
 UniWriteWord (UWORD data)
 {
   if (UniExpand (2))
@@ -251,7 +251,7 @@ UniWriteWord (UWORD data)
     }
 }
 
-static BOOL 
+static BOOL
 MyCmp (UBYTE * a, UBYTE * b, UWORD l)
 {
   UWORD t;
@@ -264,7 +264,7 @@ MyCmp (UBYTE * a, UBYTE * b, UWORD l)
 
 /* Closes the current row of a unitrk stream (updates the rep/len byte) and sets
    pointers to start a new row. */
-void 
+void
 UniNewline (void)
 {
   UWORD n, l, len;
@@ -311,7 +311,7 @@ UniDup (void)
   return d;
 }
 
-BOOL 
+BOOL
 UniInit (void)
 {
   unimax = BUFPAGE;
@@ -321,7 +321,7 @@ UniInit (void)
   return 1;
 }
 
-void 
+void
 UniCleanup (void)
 {
   if (unibuf)

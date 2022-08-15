@@ -584,7 +584,7 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	len = strlen(p);
 	text = (char *)new_segment(&tmpbuffer, SAFE_CONVERT_LENGTH(len));
 
-	/*This must be not good thing,but as far as I know no wrd file 
+	/*This must be not good thing,but as far as I know no wrd file
 	  written in EUC-JP code found*/
 
 	strcpy(text,p);
@@ -600,7 +600,7 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 //			 putchar('\n');
 	break;
       case WRD_COLOR:
-/*Compatibility Hack,This remaps color(17-29 color seems 
+/*Compatibility Hack,This remaps color(17-29 color seems
 to be ignored in kterm)*/
 	esc_characterattribute(wrd_args[0]);
 	break;

@@ -396,7 +396,7 @@ static int open_output(void)
     if (snd_pcm_hw_params_test_channels(handle, pinfo, 2) < 0)
       dpm.encoding |= PE_MONO;
   }
-    
+
   if (dpm.encoding & PE_MONO) {
     if (snd_pcm_hw_params_set_channels(handle, pinfo, 1) < 0) {
       ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -537,7 +537,7 @@ static int output_data(char *buf, int32 nbytes)
   if (dpm.encoding & PE_16BIT)
     shift++;
   nframes >>= shift;
-  
+
   while (nframes > 0) {
     n = snd_pcm_writei(handle, buf, nframes);
     if (n == -EAGAIN || (n >= 0 && n < nframes)) {
@@ -597,7 +597,7 @@ static int acntl(int request, void *arg)
       return -1;
     *((int *)arg) = snd_pcm_status_get_avail(status);
     return 0;
-    
+
   case PM_REQ_GETFILLED:
     if (total_bytes == -1)
       return -1;

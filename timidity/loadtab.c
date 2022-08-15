@@ -43,7 +43,7 @@ int load_table(char *file)
 	FILE *fp;
 	char tmp[1024], *value;
 	int i = 0;
-	
+
 	if ((fp = fopen(file, "r")) == NULL) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				"Can't read %s %s\n", file, strerror(errno));

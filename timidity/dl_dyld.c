@@ -40,7 +40,7 @@ void dl_init(int argc,char** argv)
 void* dl_load_file(char* path)
 {
     NSObjectFileImage obj_file; /* file handler */
-    
+
     if (NSCreateObjectFileImageFromFile(path, &obj_file) != NSObjectFileImageSuccess) {
 	fprintf(stderr,"dl_load_file:Failed to load %.200s\n", path);
     }
@@ -49,12 +49,12 @@ void* dl_load_file(char* path)
 
 void* dl_find_symbol(void* libhandle, char* symbol)
 {
-    
+
     /* avoid a bug of how to treat '_'. */
     size_t len = strlen(symbol);
     char buf[len+2]; /* +2 for '_' and '\0' */
     sprintf(buf,"_%s",symbol);
-    
+
     if(!NSIsSymbolNameDefined(buf)) {
 	fprintf(stderr,"dl_find_symbol:Failed to find %.200s\n",symbol);
 	return NULL;

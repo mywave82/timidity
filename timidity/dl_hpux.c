@@ -76,7 +76,7 @@ void *dl_find_symbol(void *libhandle, char *symbolname)
 
     if(status == -1)
     {
- 	fprintf(stderr, "%s\n", errno ? strerror(errno) : "Symbol not found.");
+	fprintf(stderr, "%s\n", errno ? strerror(errno) : "Symbol not found.");
 	return NULL;
     }
     return symaddr;

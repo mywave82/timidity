@@ -456,7 +456,7 @@ static void N_ctl_scrinit(void)
     wmove(dftwin, VERSION_LINE,0);
     waddstr(dftwin, "TiMidity++ ");
     if (strcmp(timidity_version, "current"))
-    	waddch(dftwin, 'v');
+	waddch(dftwin, 'v');
     waddstr(dftwin, timidity_version);
     wmove(dftwin, VERSION_LINE,COLS-51);
     waddstr(dftwin, "(C) 1995,1999-2018 Tuukka Toivonen, Masanao Izumo");
@@ -501,7 +501,7 @@ static void N_ctl_scrinit(void)
 	   (char *)safe_malloc(indicator_width), 0, indicator_width);
     memset(current_indicator_message =
 	   (char *)safe_malloc(indicator_width), 0, indicator_width);
-    
+
     if(ctl.trace_playing)
     {
 	int o;
@@ -733,7 +733,7 @@ static void display_intonation(int mode)
 static void ctl_ncurs_mode_init(void)
 {
 	int i;
-	
+
 	if (current_file_info != NULL)
 		display_channels = (current_file_info->max_channel / 16) * 16 + 16;
 	else
@@ -1197,7 +1197,7 @@ static void ctl_metronome(int meas, int beat)
 {
 	static int lastmeas = CTL_STATUS_UPDATE;
 	static int lastbeat = CTL_STATUS_UPDATE;
-	
+
 	if (meas == CTL_STATUS_UPDATE)
 		meas = lastmeas;
 	else
@@ -1223,7 +1223,7 @@ static void ctl_keysig(int8 k, int ko)
 		"D#", "A#"
 	};
 	int i, j;
-	
+
 	if (k == CTL_STATUS_UPDATE)
 		k = lastkeysig;
 	else
@@ -1251,7 +1251,7 @@ static void ctl_tempo(int t, int tr)
 {
 	static int lasttempo = CTL_STATUS_UPDATE;
 	static int lastratio = CTL_STATUS_UPDATE;
-	
+
 	if (t == CTL_STATUS_UPDATE)
 		t = lasttempo;
 	else
@@ -1436,7 +1436,7 @@ static void ctl_temper_keysig(int8 tk, int ko)
 		"D#", "A#"
 	};
 	int adj, i, j;
-	
+
 	if (tk == CTL_STATUS_UPDATE)
 		tk = lastkeysig;
 	else
@@ -1681,7 +1681,7 @@ static void ctl_panning(int ch, int pan)
 	    waddch(dftwin, '-');
 	    pan = -pan;
 	}
-	else 
+	else
 	    waddch(dftwin, '+');
 	wprintw(dftwin, "%02d", pan);
 	break;
@@ -1789,7 +1789,7 @@ static void ctl_lyric(int lyricid)
         /* EAW -- if not a true KAR lyric, ignore \r, treat \n as \r */
         if (*lyric != ME_KARAOKE_LYRIC) {
             while (strchr(lyric, '\r')) {
-            	*(strchr(lyric, '\r')) = ' ';
+		*(strchr(lyric, '\r')) = ' ';
             }
 	    if (ctl.trace_playing) {
 		while (strchr(lyric, '\n')) {
@@ -1889,12 +1889,12 @@ static void ctl_gslcd(int id)
 	    {
 		if(data & mask)
 		{
- 		    ctl_lcd_mark(GS_LCD_MARK_ON, j * 10 + k,     i);
+		    ctl_lcd_mark(GS_LCD_MARK_ON, j * 10 + k,     i);
 		    ctl_lcd_mark(GS_LCD_MARK_ON, j * 10 + k + 1, i);
 		}
 		else
 	        {
- 		    ctl_lcd_mark(GS_LCD_MARK_OFF, j * 10 + k,     i);
+		    ctl_lcd_mark(GS_LCD_MARK_OFF, j * 10 + k,     i);
 		    ctl_lcd_mark(GS_LCD_MARK_OFF, j * 10 + k + 1, i);
 		}
 		mask >>= 1;
@@ -2510,11 +2510,11 @@ static int ctl_read(int32 *valp)
 	  continue;
 
 	case 'V':
- 	  *valp = 10 * u_prefix;
+	  *valp = 10 * u_prefix;
 	  return RC_CHANGE_VOLUME;
 	case 'v':
 	  *valp = -10 * u_prefix;
- 	  return RC_CHANGE_VOLUME;
+	  return RC_CHANGE_VOLUME;
 
 	case 16:
 	case 'P':
@@ -3338,7 +3338,7 @@ static void update_indicator(void)
 	       *ChannelStatus[current_indicator_chan].comm == '\0')
 		continue;
 
-	    if(first_ch == -1 && 
+	    if(first_ch == -1 &&
 	       ChannelStatus[current_indicator_chan].last_note_on > 0)
 		first_ch = current_indicator_chan;
 	    if(ChannelStatus[current_indicator_chan].prog != prog &&

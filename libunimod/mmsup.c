@@ -117,13 +117,13 @@ _mm_calloc (size_t nitems, size_t size)
 
 /*========== Read functions */
 
-int 
+int
 _mm_read_string (CHAR * buffer, int number, URL reader)
 {
   return url_nread (reader, buffer, number);
 }
 
-UWORD 
+UWORD
 _mm_read_M_UWORD (URL reader)
 {
   UWORD result = ((UWORD) _mm_read_UBYTE (reader)) << 8;
@@ -131,7 +131,7 @@ _mm_read_M_UWORD (URL reader)
   return result;
 }
 
-UWORD 
+UWORD
 _mm_read_I_UWORD (URL reader)
 {
   UWORD result = _mm_read_UBYTE (reader);
@@ -139,7 +139,7 @@ _mm_read_I_UWORD (URL reader)
   return result;
 }
 
-ULONG 
+ULONG
 _mm_read_M_ULONG (URL reader)
 {
   ULONG result = ((ULONG) _mm_read_M_UWORD (reader)) << 16;
@@ -147,7 +147,7 @@ _mm_read_M_ULONG (URL reader)
   return result;
 }
 
-ULONG 
+ULONG
 _mm_read_I_ULONG (URL reader)
 {
   ULONG result = _mm_read_I_UWORD (reader);
@@ -155,25 +155,25 @@ _mm_read_I_ULONG (URL reader)
   return result;
 }
 
-SWORD 
+SWORD
 _mm_read_M_SWORD (URL reader)
 {
   return ((SWORD) _mm_read_M_UWORD (reader));
 }
 
-SWORD 
+SWORD
 _mm_read_I_SWORD (URL reader)
 {
   return ((SWORD) _mm_read_I_UWORD (reader));
 }
 
-SLONG 
+SLONG
 _mm_read_M_SLONG (URL reader)
 {
   return ((SLONG) _mm_read_M_ULONG (reader));
 }
 
-SLONG 
+SLONG
 _mm_read_I_SLONG (URL reader)
 {
   return ((SLONG) _mm_read_I_ULONG (reader));

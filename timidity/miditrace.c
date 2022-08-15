@@ -97,7 +97,7 @@ static MidiTraceList *new_trace_node(void)
     else
     {
 	p = midi_trace.free_list;
-	midi_trace.free_list = midi_trace.free_list->next;	
+	midi_trace.free_list = midi_trace.free_list->next;
     }
     return p;
 }

@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,13 +19,13 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-	
+
     mac_util.c
 */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
-#include 	<stdio.h>
+#include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
 #include	<ctype.h>
@@ -37,19 +37,19 @@ OSErr GetFullPath( const FSSpec* spec, Str255 fullPath)
 	CInfoPBRec		myPB;
 	Str255		dirName;
 	OSErr		myErr;
-	 
+
 	fullPath[0] = '\0';
 	BlockMoveData(spec->name, fullPath, spec->name[spec->name[0]]+1 );
-	
+
 	myPB.dirInfo.ioNamePtr = dirName;
 	myPB.dirInfo.ioVRefNum = spec->vRefNum;
 	myPB.dirInfo.ioDrParID = spec->parID;
 	myPB.dirInfo.ioFDirIndex = -1;
-							
+
 	do{
 		myPB.dirInfo.ioDrDirID = myPB.dirInfo.ioDrParID;
 		myErr = PBGetCatInfoSync(&myPB);
-		
+
 		dirName[0]++;
 		dirName[ dirName[0] ]=':';
 		if( dirName[0]+fullPath[0]>=254 ){ fullPath[0]=0; return 1; }
@@ -77,11 +77,11 @@ void	LDeselectAll(ListHandle lHandle)
 void	TEReadFile(char* filename, TEHandle te)
 {
 	FILE	*in;
-	
+
 		//clear TE
 	TESetSelect(0, (**te).teLength, te);
 	TEDelete(te);
-	
+
 		//read
 	if( (in=fopen(filename, "rb"))==0 ){
 		char *s="No document.";
@@ -93,7 +93,7 @@ void	TEReadFile(char* filename, TEHandle te)
 			len=strlen(buf);
 			if( buf[len-1]==0xA ){
 				buf[len-1]=0xD; //len--;
-			} 
+			}
 			TEInsert(buf, len, te);
 		}
 		fclose(in);
@@ -108,7 +108,7 @@ void SetDialogItemValue(DialogPtr dialog, short item, short value)
 	short			itemType;
 	ControlHandle	itemHandle;
 	Rect			itemRect;
-	
+
 	GetDialogItem(dialog, item, &itemType, (Handle*)&itemHandle, &itemRect);
 	SetControlValue(itemHandle, value);
 }
@@ -118,7 +118,7 @@ short GetDialogItemValue(DialogPtr dialog, short item )
 	short			itemType;
 	ControlHandle	itemHandle;
 	Rect			itemRect;
-	
+
 	GetDialogItem(dialog, item, &itemType, (Handle*)&itemHandle, &itemRect);
 	return GetControlValue(itemHandle);
 }
@@ -126,7 +126,7 @@ short GetDialogItemValue(DialogPtr dialog, short item )
 void SetDialogTEValue(DialogRef dialog, short item, int value)
 {
 	Str255		s;
-	
+
 	NumToString(value, s);
 	mySetDialogItemText(dialog, item, s);
 }
@@ -134,7 +134,7 @@ void SetDialogTEValue(DialogRef dialog, short item, int value)
 int GetDialogTEValue(DialogRef dialog, short item )
 {
 	Str255		s;
-	
+
 	myGetDialogItemText(dialog, item, s);
 	return atof(p2cstr(s));
 }
@@ -144,7 +144,7 @@ short ToggleDialogItem(DialogPtr dialog, short item )
 	short			itemType, value;
 	ControlHandle	itemHandle;
 	Rect			itemRect;
-	
+
 	GetDialogItem(dialog, item, &itemType, (Handle*)&itemHandle, &itemRect);
 	value=GetControlValue(itemHandle);
 	SetControlValue(itemHandle, !value);
@@ -156,7 +156,7 @@ void myGetDialogItemText(DialogPtr theDialog, short itemNo, Str255 s)
 	short	itemType;
 	Handle	item;
 	Rect	box;
-	
+
 	GetDialogItem(theDialog, itemNo, &itemType, &item, &box);
 	GetDialogItemText(item, s);
 }
@@ -166,7 +166,7 @@ void mySetDialogItemText(DialogRef theDialog, short itemNo, const Str255 text)
 	short	itemType;
 	Handle	item;
 	Rect	box;
-	
+
 	GetDialogItem(theDialog, itemNo, &itemType, &item, &box);
 	SetDialogItemText(item, text);
 }
@@ -176,7 +176,7 @@ void SetDialogControlTitle(DialogRef theDialog, short itemNo, const Str255 text)
 	short	itemType;
 	Handle	item;
 	Rect	box;
-	
+
 	GetDialogItem(theDialog, itemNo, &itemType, &item, &box);
 	SetControlTitle((ControlRef)item, text);
 }
@@ -186,7 +186,7 @@ void SetDialogItemHilite(DialogRef dialog, short item, short value)
 	short		itemType;
 	ControlRef	itemHandle;
 	Rect		itemRect;
-	
+
 	GetDialogItem(dialog, item, &itemType, (Handle *)&itemHandle, &itemRect);
 	HiliteControl(itemHandle, value);
 }
@@ -210,14 +210,14 @@ char** sys_errlist_()
 	static char	s[80];
 	static char*	ps=s;
 	static char**	ret=&ps;
-	
+
 	/* if( errno==ENOENT )  strcpy(s,"File not Found.");
 	else */   /* ENOENT vanished at CWPro2 */
 	if( errno==ENOSPC )
 		strcpy(s,"Out of Space.");
 	else
 		snprintf(s, 80, "error no.%d", errno);
-	
+
 	return(ret-errno);
 }
 #endif /*0*/
@@ -230,19 +230,19 @@ char* mac_fgets( char buf[], int n, FILE* file)
 {
 
 	int c,i;
-	
+
 	if( n==0 )  return 0;
 	for( i=0; i<n-1; ){
 		buf[i++]=c=fgetc(file);
 		if( c=='\n' || c=='\r' || c==EOF ) break;
 	}
-	
+
 	buf[i]=0;
 	if( i>0 && buf[i-1]==EOF ){ buf[i-1]=0; i--; }
-	
+
 	if( i==0 && c==EOF && feof(file) ) return 0;
-	
-	
+
+
 	if( i==1 && buf[0]=='\n' ){ /* probably dos LF (Unix blank line?)*/
 		return mac_fgets( buf, n, file);
 	}
@@ -260,7 +260,7 @@ void *mac_memchr (const void *s, int c, size_t n)
 {
 	char* buf=(char*)s;
 	int i;
-	
+
 	for( i=0; i<n; i++ ){
 		if( buf[i]==c || (c=='\n' && buf[i]=='\r') ){
 			return buf+i;
@@ -281,7 +281,7 @@ void p2cstrcpy(char* dst, ConstStr255Param src)
 int mac_strcasecmp(const char *s1, const char *s2)
 {
 	int	c1,c2,i;
-	
+
 	for( i=0; ; i++){
 		if( !s1[i] && !s2[i] ) return 0; //equal
 		if( !s1[i] || !s2[i] ) return 1;
@@ -316,7 +316,7 @@ int strtailcasecmp(const char *s1, const char *s2)
 {
 	int	len1, len2, cmplen,
 		i, i1,i2;
-	
+
 	len1=strlen(s1); len2=strlen(s2);
 	cmplen= min(len1,len2);
 	for( i=0, i1=len1-1, i2=len2-1; i<cmplen; i++, i1--, i2--){

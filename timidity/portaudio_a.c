@@ -186,7 +186,7 @@ int paCallback(  const void *inputBuffer, void *outputBuffer,
 #else
 int paCallback(  void *inputBuffer, void *outputBuffer,
                      unsigned long framesPerBuffer,
-                     PaTimestamp outTime, 
+                     PaTimestamp outTime,
                      void *userData )
 #endif
 {
@@ -196,18 +196,18 @@ int paCallback(  void *inputBuffer, void *outputBuffer,
 
 /* Cast data passed through stream to our structure type. */
 //    pa_data_t pa_data = (pa_data_t*)userData;
-	
+
 	int32 samplesToGo;
 	char *bufpoint;
     char *out = (char*)outputBuffer;
 	unsigned long datalength = framesPerBuffer*data_nbyte*stereo;
 	char * buflimit = pa_data.buf+bytesPerInBuffer*2;
-	
+
 	samplesToGo=pa_data.samplesToGo;
 	bufpoint=pa_data.bufpoint;
-	
+
 	if(conv16_32){
-		if(samplesToGo < datalength  ){		
+		if(samplesToGo < datalength  ){
 			for(i=0;i<samplesToGo/2;i++){
 				*out++ = 0;
 				*out++ = 0;
@@ -298,12 +298,12 @@ static int open_output(void)
 	double rate;
 	int n, nrates, include_enc, exclude_enc, ret;
 	PaSampleFormat SampleFormat, nativeSampleFormats;
-	
+
 	if( dpm.name != NULL)
 		ret = sscanf(dpm.name, "%d", &opt_pa_device_id);
 	if (dpm.name == NULL || ret == 0 || ret == EOF)
 		opt_pa_device_id = -2;
-	
+
 #ifdef AU_PORTAUDIO_DLL
 #if PORTAUDIO_V19
   {
@@ -337,7 +337,7 @@ static int open_output(void)
 #endif
 #endif
 	/* if call twice Pa_OpenStream causes paDeviceUnavailable error  */
-	if(pa_active == 1) return 0; 
+	if(pa_active == 1) return 0;
 	if(pa_active == 0){
 		err = Pa_Initialize();
 		if( err != paNoError ) goto error;
@@ -350,7 +350,7 @@ static int open_output(void)
 	}
 #ifdef PORTAUDIO_V19
 #ifdef AU_PORTAUDIO_DLL
-       {	
+       {
         PaHostApiIndex i, ApiCount;
 	i = 0;
 	ApiCount = Pa_GetHostApiCount();
@@ -360,7 +360,7 @@ static int open_output(void)
 		i++;
 	}while ( i < ApiCount );
 	if ( i == ApiCount ) goto error;
-	
+
 	DeviceIndex = HostApiInfo->defaultOutputDevice;
 	if(DeviceIndex==paNoDevice) goto error;
         }
@@ -373,7 +373,7 @@ static int open_output(void)
 
 	if(opt_pa_device_id != -2){
 		const PaDeviceInfo *id_DeviceInfo;
-    	id_DeviceInfo=Pa_GetDeviceInfo((PaDeviceIndex)opt_pa_device_id);
+	id_DeviceInfo=Pa_GetDeviceInfo((PaDeviceIndex)opt_pa_device_id);
 		if(id_DeviceInfo==NULL) goto error;
 		if( DeviceInfo->hostApi == id_DeviceInfo->hostApi){
 			DeviceIndex=(PaDeviceIndex)opt_pa_device_id;
@@ -393,7 +393,7 @@ static int open_output(void)
 	stereo = (dpm.encoding & PE_MONO) ? 1 : 2;
 	data_nbyte = (dpm.encoding & PE_16BIT) ? 2 : 1;
 	data_nbyte = (dpm.encoding & PE_24BIT) ? 3 : data_nbyte;
-	
+
 	pa_data.samplesToGo = 0;
 	pa_data.bufpoint = pa_data.buf;
 	pa_data.bufepoint = pa_data.buf;
@@ -412,10 +412,10 @@ static int open_output(void)
 		StreamParameters.suggestedLatency = DeviceInfo->defaultLowOutputLatency;
 	}
 	StreamParameters.hostApiSpecificStreamInfo = NULL;
-	
+
 	if( SampleFormat == paInt16){
 		StreamParameters.sampleFormat = paInt16;
-		if( paFormatIsSupported != Pa_IsFormatSupported( NULL , 
+		if( paFormatIsSupported != Pa_IsFormatSupported( NULL ,
 							&StreamParameters,(double) dpm.rate )){
 			StreamParameters.sampleFormat = paInt32;
 			conv16_32 = 1;
@@ -430,9 +430,9 @@ static int open_output(void)
                              &StreamParameters,
 							(double) dpm.rate );
 	if ( err != paNoError) goto error;
-	err = Pa_OpenStream(    
+	err = Pa_OpenStream(
 		& stream,			/* passes back stream pointer */
-		NULL,			 	/* inputStreamParameters */
+		NULL,				/* inputStreamParameters */
 		&StreamParameters,	/* outputStreamParameters */
 		(double) dpm.rate,	/* sample rate */
 		paFramesPerBufferUnspecified,	/* frames per buffer */
@@ -443,7 +443,7 @@ static int open_output(void)
 //		Pa_Sleeep(1);
 	if ( err != paNoError) goto error;
 	return 0;
-	
+
 #else
 	if(opt_pa_device_id == -2){
 		DeviceID = Pa_GetDefaultOutputDeviceID();
@@ -451,7 +451,7 @@ static int open_output(void)
 	}else{
 		DeviceID = opt_pa_device_id;
 	}
-	DeviceInfo = Pa_GetDeviceInfo( DeviceID);	
+	DeviceInfo = Pa_GetDeviceInfo( DeviceID);
 	if(DeviceInfo==NULL) goto error2;
 	nativeSampleFormats = DeviceInfo->nativeSampleFormats;
 
@@ -489,7 +489,7 @@ static int open_output(void)
 		}
 	}
 	dpm.rate = (int32)rate;
-	
+
 	pa_data.samplesToGo = 0;
 	pa_data.bufpoint = pa_data.buf;
 	pa_data.bufepoint = pa_data.buf;
@@ -501,15 +501,15 @@ static int open_output(void)
 //	printf("%d\n",framesPerInBuffer);
 //	printf("%d\n",dpm.rate);
 	err = Pa_OpenDefaultStream(
-    	&stream,        /* passes back stream pointer */
-    	0,              /* no input channels */
-    	stereo,              /* 2:stereo 1:mono output */
-    	SampleFormat,      /* 24bit 16bit 8bit output */
+	&stream,        /* passes back stream pointer */
+	0,              /* no input channels */
+	stereo,              /* 2:stereo 1:mono output */
+	SampleFormat,      /* 24bit 16bit 8bit output */
 		(double)dpm.rate,          /* sample rate */
-    	framesPerBuffer,            /* frames per buffer */
-    	numBuffers,              /* number of buffers, if zero then use default minimum */
-    	paCallback, /* specify our custom callback */
-    	&pa_data);   /* pass our data through to callback */
+	framesPerBuffer,            /* frames per buffer */
+	numBuffers,              /* number of buffers, if zero then use default minimum */
+	paCallback, /* specify our custom callback */
+	&pa_data);   /* pass our data through to callback */
 	if ( err != paNoError && err != paHostError) goto error;
 	return 0;
 
@@ -533,11 +533,11 @@ static int output_data(char *buf, int32 nbytes)
 	int32 samplesToGo;
 	char *bufepoint;
 
-    if(pa_active == 0) return -1; 
-	
+    if(pa_active == 0) return -1;
+
 	while((pa_active==1) && (pa_data.samplesToGo > bytesPerInBuffer)){ Pa_Sleep(1);};
-	
-//	if(pa_data.samplesToGo > DATA_BLOCK_SIZE){ 
+
+//	if(pa_data.samplesToGo > DATA_BLOCK_SIZE){
 //		Sleep(  (pa_data.samplesToGo - DATA_BLOCK_SIZE)/dpm.rate/4  );
 //	}
 	samplesToGo=pa_data.samplesToGo;
@@ -577,7 +577,7 @@ static int output_data(char *buf, int32 nbytes)
 
 		if( err != paNoError ) goto error;
 	}
-		
+
 //	if(ctl->id_character != 'r' && ctl->id_character != 'A' && ctl->id_character != 'W' && ctl->id_character != 'P')
 //	    while((pa_active==1) && (pa_data.samplesToGo > bytesPerInBuffer)){ Pa_Sleep(1);};
 //	Pa_Sleep( (pa_data.samplesToGo - bytesPerInBuffer)/dpm.rate * 1000);
@@ -590,7 +590,7 @@ error:
 }
 
 static void close_output(void)
-{	
+{
 	if( pa_active==0) return;
 #ifdef PORTAUDIO_V19
 	if(Pa_IsStreamActive(stream)){
@@ -598,12 +598,12 @@ static void close_output(void)
 	if(Pa_StreamActive(stream)){
 #endif
 		Pa_Sleep(  bytesPerInBuffer/dpm.rate*1000  );
-	}	
+	}
 	err = Pa_AbortStream( stream );
     if( (err!=paStreamIsStopped) && (err!=paNoError) ) goto error;
 	err = Pa_CloseStream( stream );
 //	if( err != paNoError ) goto error;
-	Pa_Terminate(); 
+	Pa_Terminate();
 	pa_active=0;
 
 #ifdef AU_PORTAUDIO_DLL
@@ -630,60 +630,60 @@ static int acntl(int request, void *arg)
 {
     switch(request)
     {
- 
+
       case PM_REQ_GETQSIZ:
 		 *(int *)arg = bytesPerInBuffer*2;
-    	return 0;
+	return 0;
 		//break;
       case PM_REQ_GETFILLABLE:
 		 *(int *)arg = bytesPerInBuffer*2-pa_data.samplesToGo;
-    	return 0;
+	return 0;
 		//break;
       case PM_REQ_GETFILLED:
 		 *(int *)arg = pa_data.samplesToGo;
-    	return 0;
+	return 0;
 		//break;
 
-    	
-   	case PM_REQ_DISCARD:
+
+	case PM_REQ_DISCARD:
     case PM_REQ_FLUSH:
-    	pa_data.samplesToGo=0;
-    	pa_data.bufpoint=pa_data.bufepoint;
-    	err = Pa_AbortStream( stream );
-    	if( (err!=paStreamIsStopped) && (err!=paNoError) ) goto error;
-    	err = Pa_StartStream( stream );
-    	if(err!=paNoError) goto error;
+	pa_data.samplesToGo=0;
+	pa_data.bufpoint=pa_data.bufepoint;
+	err = Pa_AbortStream( stream );
+	if( (err!=paStreamIsStopped) && (err!=paNoError) ) goto error;
+	err = Pa_StartStream( stream );
+	if(err!=paNoError) goto error;
 		return 0;
 
 		//break;
 
-    case PM_REQ_RATE:  
-    	{
-    		int i;
-    		double sampleRateBack;
-    		i = *(int *)arg; //* sample rate in and out *
-    		close_output();
-    		sampleRateBack=dpm.rate;
-    		dpm.rate=i;
-    		if(0==open_output()){
-    			return 0;
-    		}else{    		
-    			dpm.rate=sampleRateBack;
-    			open_output();
-    			return -1;
-    		}
-    	}
-    	//break;
+    case PM_REQ_RATE:
+	{
+		int i;
+		double sampleRateBack;
+		i = *(int *)arg; //* sample rate in and out *
+		close_output();
+		sampleRateBack=dpm.rate;
+		dpm.rate=i;
+		if(0==open_output()){
+			return 0;
+		}else{
+			dpm.rate=sampleRateBack;
+			open_output();
+			return -1;
+		}
+	}
+	//break;
 
-//    case PM_REQ_RATE: 
+//    case PM_REQ_RATE:
 //          return -1;
-    	
+
     case PM_REQ_PLAY_START: //* Called just before playing *
     case PM_REQ_PLAY_END: //* Called just after playing *
         return 0;
-      
+
 	default:
-    	return -1;
+	return -1;
 
     }
 	return -1;
@@ -707,9 +707,9 @@ static void print_device_list(void){
 #if PORTAUDIO_V19
 	HostApiIndex=Pa_HostApiTypeIdToHostApiIndex(HostApiTypeId);
 #endif
-	
+
 	maxDeviceIndex=Pa_GetDeviceCount();
-	
+
 	for( i = 0; i < maxDeviceIndex; i++){
 		DeviceInfo=Pa_GetDeviceInfo(i);
 #if PORTAUDIO_V19

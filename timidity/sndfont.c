@@ -1391,9 +1391,9 @@ static void set_init_info(SFInfo *sf, SampleList *vp, LayerTable *tbl)
 		    last_sample_type == SF_SAMPLETYPE_RIGHT &&
 		    last_sample_instrument == tbl->val[SF_instrument] &&
 		    last_sample_keyrange == tbl->val[SF_keyRange]) {
-		    	/* The previous sample was a matching right sample
-		    	   set the link */
-		    	vp->v.sf_sample_link = last_sample_list->v.sf_sample_index;
+			/* The previous sample was a matching right sample
+			   set the link */
+			vp->v.sf_sample_link = last_sample_list->v.sf_sample_index;
 		}
 		break;
 	case SF_SAMPLETYPE_RIGHT:
@@ -1402,9 +1402,9 @@ static void set_init_info(SFInfo *sf, SampleList *vp, LayerTable *tbl)
 		    last_sample_type == SF_SAMPLETYPE_LEFT &&
 		    last_sample_instrument == tbl->val[SF_instrument] &&
 		    last_sample_keyrange == tbl->val[SF_keyRange]) {
-		    	/* The previous sample was a matching left sample
-		    	   set the link on the previous sample*/
-		    	last_sample_list->v.sf_sample_link = tbl->val[SF_sampleId];
+			/* The previous sample was a matching left sample
+			   set the link on the previous sample*/
+			last_sample_list->v.sf_sample_link = tbl->val[SF_sampleId];
 		}
 		break;
 	}

@@ -105,7 +105,7 @@ static void effect_left_right_delay(int32 *buff, int32 count)
 	static int status;
 	static double rate0, rate1, dr;
 	int32 *p;
-	
+
 	if (buff == NULL) {
 		memset(prev, 0, sizeof(prev));
 		return;
@@ -299,7 +299,7 @@ static void ns_shaping8(int32 *lp, int32 c)
 {
 	int32 l, i, ll;
 	int32 ns_tap_0, ns_tap_1, ns_tap_2, ns_tap_3;
-	
+
 	switch (noise_sharp_type) {
 	case 1:
 		ns_tap_0 = 1;
@@ -386,7 +386,7 @@ static void ns_shaping16_trad(int32 *lp, int32 c)
 {
 	int32 l, i, ll;
 	int32 ns_tap_0, ns_tap_1, ns_tap_2, ns_tap_3;
-	
+
 	ns_tap_0 = -4;
 	ns_tap_1 = 6;
 	ns_tap_2 = -4;
@@ -426,7 +426,7 @@ static void do_soft_clipping1(int32 *buf, int32 count)
 {
 	int32 i, x;
 	int32 ai = TIM_FSCALE(1.5f, 24), bi = TIM_FSCALE(0.5f, 24);
-	
+
 	for (i = 0; i < count; i++) {
 		x = buf[i];
 		x = (x > WS_AMP_MAX) ? WS_AMP_MAX
@@ -439,7 +439,7 @@ static void do_soft_clipping1(int32 *buf, int32 count)
 static void do_soft_clipping2(int32 *buf, int32 count)
 {
 	int32 i, x;
-	
+
 	for (i = 0; i < count; i++) {
 		x = buf[i];
 		x = (x > WS_AMP_MAX) ? WS_AMP_MAX
@@ -452,7 +452,7 @@ static void do_soft_clipping2(int32 *buf, int32 count)
 static void ns_shaping16_9(int32 *lp, int32 c)
 {
 	int32 i, l, sample, output;
-	
+
 	for (i = 0; i < c; i++) {
 		/* left channel */
 		ns9_r2l = ns9_r1l;

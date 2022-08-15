@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-		
+
     mac_mag.c
     Macintosh mag loader
 */
@@ -98,7 +98,7 @@ int pho_load_pixel ( char *image, int width, int height, char *filename)
 	static const int shift[4]={0,1,2,3};
 	struct timidity_file *fp;
 	char buffer[640/8];
-	
+
 	if((fp=wrd_open_file(filename))==NULL)
 		return 0;
 
@@ -128,7 +128,7 @@ close:
 
 void mag_load_pixel ( char *image, int width, int height, magdata *mh )
 {
-	int 		x,y,i, dx,dy,pxlpos,w,j,repl;
+	int		x,y,i, dx,dy,pxlpos,w,j,repl;
 	uint8 flag[800];
 	long pixels;
 	const int	DX[]={0,-4,-8,-16,  0,-4,  0,-4,-8,  0,-4,-8,  0,-4,-8, 0},
@@ -250,8 +250,8 @@ magdata *mag_create ( char *file )
 		pal[i] |=  ( (int)( buffer[0] / 16 ) & 0x0F ) << 8;
 		pal[i] |=  ( (int)( buffer[1] / 16 ) & 0x0F ) << 4;
 		pal[i] |=  ( (int)( buffer[2] / 16 ) & 0x0F ) << 0;
-	} 
-	
+	}
+
 	{
 		int flaga_size,res;
 		flaga_size=mg.flagboff-mg.flagaoff;
@@ -279,7 +279,7 @@ magdata *mag_create ( char *file )
 		mg.pxldata=pixels;
 	}
 	res=safe_malloc(sizeof(magdata));
-	
+
 	*res=mg;
 	close_file(fp);
 	res->next=top;

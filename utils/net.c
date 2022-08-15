@@ -232,7 +232,7 @@ static int socket_getc(SOCKET fd)
 {
     int n;
     unsigned char c;
-    
+
     n = socket_safe_recv(fd, (char *)&c, 1);
     if(n <= 0)
 	return EOF;

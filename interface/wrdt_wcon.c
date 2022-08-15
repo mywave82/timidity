@@ -764,7 +764,7 @@ static void borlandc_esc(char *str)
 
 static int wrdt_open(char *dummy)
 {
-  
+
     wrdt.opened = 1;
     inkey_flag = 0;
 #ifdef __OLD_BORLANDC__
@@ -823,7 +823,7 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	len = strlen(p);
 	text = (char *)new_segment(&tmpbuffer, SAFE_CONVERT_LENGTH(len));
 
-	/*This must be not good thing,but as far as I know no wrd file 
+	/*This must be not good thing,but as far as I know no wrd file
 	  written in EUC-JP code found*/
 
 //	code_convert(p, text, SAFE_CONVERT_LENGTH(len), "SJIS", "JISK");
@@ -839,7 +839,7 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	putchar('\n');
 	break;
       case WRD_COLOR:
-/*Compatibility Hack,This remaps color(17-29 color seems 
+/*Compatibility Hack,This remaps color(17-29 color seems
 to be ignored in kterm)*/
 #ifdef USE_ESC
 	txtclr_preserve=COLOR_REMAP(wrd_args[0]);

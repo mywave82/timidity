@@ -7,7 +7,7 @@ dnl XIPH_PATH_VORBIS([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
 dnl Test for libvorbis, and define VORBIS_CFLAGS and VORBIS_LIBS
 dnl
 AC_DEFUN([XIPH_PATH_VORBIS],
-[dnl 
+[dnl
 dnl Get the cflags and libraries
 dnl
 AC_ARG_WITH(vorbis,AS_HELP_STRING([--with-vorbis=PFX],[Prefix where libvorbis is installed (optional)]), vorbis_prefix="$withval", vorbis_prefix="")
@@ -69,7 +69,7 @@ dnl
 
 int main ()
 {
-    vorbis_block 	vb;
+    vorbis_block	vb;
     vorbis_dsp_state	vd;
     vorbis_info		vi;
 

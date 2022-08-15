@@ -175,7 +175,7 @@ libinterface_LIBADD = \
 	$(WRD_OBJS) \
 	$(WRD_WINCON_OBJS) \
 	$(SOUND_SPEC_OBJS)
-	
+
 libinterface_a_LIBADD=$(libinterface_LIBADD)
 
 libinterface_dep = \
@@ -303,22 +303,22 @@ install.el: $(ELFILES)
 
 if VCPP
 w32g_res.res: w32g_res.h w32g_rec.h w32g_res.rc \
-	w32g_btn.bmp w32g_icon.ico w32g_sleep.bmp w32g_subbtn.bmp 
+	w32g_btn.bmp w32g_icon.ico w32g_sleep.bmp w32g_subbtn.bmp
 	rc -l0x11 w32g_res.rc
 else
 if WATCOM_C
 w32g_res.res: w32g_res.h w32g_rec.h w32g_res.rc \
-	w32g_btn.bmp w32g_icon.ico w32g_sleep.bmp w32g_subbtn.bmp 
+	w32g_btn.bmp w32g_icon.ico w32g_sleep.bmp w32g_subbtn.bmp
 	rc -l0x11 w32g_res.rc
 else
 if DMC
 w32g_res.res: w32g_res.h w32g_rec.h w32g_res.rc \
-	w32g_btn.bmp w32g_icon.ico w32g_sleep.bmp w32g_subbtn.bmp 
+	w32g_btn.bmp w32g_icon.ico w32g_sleep.bmp w32g_subbtn.bmp
 	rc -D__NT__ -l0x11 w32g_res.rc
 else
 if POCC
 w32g_res.res: w32g_res.h w32g_rec.h w32g_res.rc \
-	w32g_btn.bmp w32g_icon.ico w32g_sleep.bmp w32g_subbtn.bmp 
+	w32g_btn.bmp w32g_icon.ico w32g_sleep.bmp w32g_subbtn.bmp
 	porc  w32g_res.rc
 else
 if BORLANDC

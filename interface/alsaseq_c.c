@@ -409,7 +409,7 @@ static long get_current_time(void)
 	t = tv.tv_sec * 1000000L + tv.tv_usec;
 	return t - start_time_base;
 }
-	
+
 /*
  * convert from snd_seq_real_time_t to sample count
  */
@@ -524,7 +524,7 @@ static void doit(struct seq_context *ctxp)
 			} else {
 				if (select(ctxp->fd + 1, &rfds, NULL, NULL, NULL) < 0)
 					goto __done;
-			}				
+			}
 		}
 	}
 
@@ -664,7 +664,7 @@ static int do_sequencer(struct seq_context *ctxp)
 			break;
 		seq_play_event(&ev);
 		break;
-		    
+
 	case SND_SEQ_EVENT_PITCHBEND:
 		ev.type    = ME_PITCHWHEEL;
 		ev.channel = CTRL_CHAN(aevp);
@@ -680,7 +680,7 @@ static int do_sequencer(struct seq_context *ctxp)
 		ev.a       = aevp->data.control.value;
 		seq_play_event(&ev);
 		break;
-		
+
 	case SND_SEQ_EVENT_NONREGPARAM:
 		/* Break it back into its controler values */
 		ev.type = ME_NRPN_MSB;
@@ -777,7 +777,7 @@ static int do_sequencer(struct seq_context *ctxp)
 		}
 		break;
 #endif
-		
+
 	default:
 		/*printf("Unsupported event %d\n", aevp->type);*/
 		break;

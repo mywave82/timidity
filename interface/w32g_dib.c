@@ -127,4 +127,4 @@ void dib_apply ( w32g_dib_t *dib, HDC hdc )
 	DeleteDC ( hmdc );
 }
 
-	
+

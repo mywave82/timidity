@@ -43,7 +43,7 @@ extern int load_portaudio_dll(int);
 extern void free_portaudio_dll(void);
 
 /***************************************************************
- name: portaudio_dll  dll: portaudio.dll 
+ name: portaudio_dll  dll: portaudio.dll
 ***************************************************************/
 
 typedef int(*type_Pa_GetVersion)( void );
@@ -474,7 +474,7 @@ extern int load_portaudio_dll(int type);
 extern void free_portaudio_dll(void);
 
 /***************************************************************
- name: portaudio_dll  dll: portaudio.dll 
+ name: portaudio_dll  dll: portaudio.dll
 ***************************************************************/
 
 // (PaError)0 -> paDeviceUnavailable

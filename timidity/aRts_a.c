@@ -68,7 +68,7 @@ static int acntl(int request, void *arg);
 
 /* export the playback mode. aRts cannot support auto-detection properly
  * see TiMidity bug report #35 on Kagemai.  Do not add any functionality
- * that would require TiMidity to call arts_init() again after an 
+ * that would require TiMidity to call arts_init() again after an
  * arts_free(), it will blow up */
 
 #define dpm arts_play_mode
@@ -118,7 +118,7 @@ static int open_output(void)
 	arts_init_state = 1;
 	break;
     case 2:
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 	    "TiMidity aRts bug: open_output() after close_output() not supported");
 	return -1;
     }

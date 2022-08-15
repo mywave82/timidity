@@ -56,7 +56,7 @@ REAL-TIME RESPONSE
 The interface tries to reset process scheduling to SCHED_FIFO and as
 high priority as possible.  The SCHED_FIFO'd program exhibits much
 better real-time response.  For example, without SCHED_FIFO, timidity
-may cause significant pauses at every time /proc is accessed. 
+may cause significant pauses at every time /proc is accessed.
 For enabling this feature, timidity must be invoked by root or
 installed with set-uid root.
 
@@ -79,7 +79,7 @@ RESET PLAYBACK
 
 You may stop all sounds during playback by sending SIGHUP signal to
 timiditiy.  The connections will be kept even after reset, but the
-events will be no longer processed.  For enabling the audio again, you 
+events will be no longer processed.  For enabling the audio again, you
 have to reconnect the ports.
 
 
@@ -89,7 +89,7 @@ VISUALIZATION
 If you prefer a bit more fancy visual output, try my tiny program,
 aseqview.
 	% aseqview -p2 &
-Then connect two ports to timidity ports (assumed 129:0 and 129:1 were 
+Then connect two ports to timidity ports (assumed 129:0 and 129:1 were
 created by aseqview):
 	% aconnect 129:0 128:0
 	% aconnect 129:1 128:1
@@ -111,7 +111,7 @@ device number to be accessed.
 	...
 	midi 1: [TiMidity port 0] ALSA port 128:0
 	  capability write / opened none
-	
+
 	midi 2: [TiMidity port 1] ALSA port 128:1
 	  capability write / opened none
        ---------------------------------------

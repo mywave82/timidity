@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-		
+
     mac_mag.c
     Macintosh mag loader
 */
@@ -120,7 +120,7 @@ Bool pho_load_pixel(XImage *image,XColor *pallet,char *filename){
 
 void mag_load_pixel(XImage *image,XColor *pallet,magdata *mh)
 {
-  int 		x,y,i, dx,dy,pxlpos,w,j,repl;
+  int		x,y,i, dx,dy,pxlpos,w,j,repl;
   uint8 flag[640];
   long pixels;
   const int	DX[]={0,-4,-8,-16,  0,-4,  0,-4,-8,  0,-4,-8,  0,-4,-8, 0},
@@ -240,8 +240,8 @@ magdata *mag_create(char *file)
 #else
     pal[i]=buffer[0]/16*16+buffer[1]/16*256+buffer[2]/16;
 #endif
-  } 
-  
+  }
+
   {
     int flaga_size,res;
     flaga_size=mg.flagboff-mg.flagaoff;
@@ -269,7 +269,7 @@ magdata *mag_create(char *file)
     mg.pxldata=pixels;
   }
   res=safe_malloc(sizeof(magdata));
-  
+
   *res=mg;
   close_file(fp);
   res->next=top;

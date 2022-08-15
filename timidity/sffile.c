@@ -332,16 +332,16 @@ static int process_list(int size, SFInfo *sf, struct timidity_file *fd)
 	}
 }
 
-			
+
 /*================================================================
  * process info list
  *================================================================*/
-		
+
 static int process_info(int size, SFInfo *sf, struct timidity_file *fd)
 {
 	sf->infopos = tf_tell(fd);
 	sf->infosize = size;
-	
+
 	/* parse the buffer */
 	while (size > 0) {
 		SFChunk chunk;
@@ -370,7 +370,7 @@ static int process_info(int size, SFInfo *sf, struct timidity_file *fd)
 			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 				  "  name %s", sf->sf_name);
 			break;
-			
+
 		default:
 			if(ctl->verbosity >= VERB_DEBUG)
 			{
@@ -516,7 +516,7 @@ static void load_sample_names(int size, SFInfo *sf, struct timidity_file *fd)
 		FSKIP(size, fd);
 		return;
 	}
-		
+
 	/* read each name from file */
 	for (i = 0; i < sf->nsamples; i++) {
 		READSTR(sf->sample[i].name, fd);
@@ -715,7 +715,7 @@ static void generate_layers(SFHeader *hdr, SFHeader *next, SFBags *bags)
 {
 	int i;
 	SFGenLayer *layp;
-	
+
 	hdr->nlayers = next->bagNdx - hdr->bagNdx;
 	if (hdr->nlayers < 0) {
 		ctl->cmsg(CMSG_WARNING, VERB_NORMAL,

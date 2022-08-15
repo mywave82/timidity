@@ -843,7 +843,7 @@
 
 	* timidity/instrum.h, timidity/playmidi.c,
 	  timidity/readmidi.c, timidity/timidity.c:
-	  Removed GM2 default MSB support.	
+	  Removed GM2 default MSB support.
 	  Added new map 'gm2[drum]' (GM2) and 'sc8850[drum]' (GS LSB=4).
 	  Note that although GS LSB=4 indicates both SC-8820 and SC-8850
 	  and they're mapped identically, waveforms in the actual
@@ -1409,14 +1409,14 @@
 	  The algorithm can be switched either by option --resample or
 	  -EFresample (i.e. dynamically changable on ncurses interface).
 	  The default algorighm is kept to gauss (defined in timidity.h).
-	  
+
 	  The behavior of -N option is now dependent on which algorithm
 	  is being chosen.  -N0 for gauss and newton will switch to linear
 	  interpolation for keeping compatibility.
-	  
+
 	  The gauss interpolation is optimized a bit for the default case.
 	  It will give more chance for the compiler to make its job better.
-	  
+
 	  The newton coeff. table is included statically in the source
 	  code, which was calculated formerly by calcnewt.c.
 
@@ -2129,14 +2129,14 @@
 
 	* configure.in
 	  Fix --enable-spline option to fit with EAW's commit.
-	
+
 2003-05-25  Eric A. Welsh <ewelsh@ccb.wustl.edu>
 
 	* au_a.c, wave_a.c:
 	  Fix the file headers when > 1 audio file was output per timidity
 	  session; the data length was not being reset between midi before
 	* recache.c, resample.c, timidity.c, timidity.h, playmidi.c,
-	  playmidi.h:	
+	  playmidi.h:
 	  Add Newton interpolation (slower and less accurate than Gauss).
 	  Add Gauss interpolation (recommended, but takes up to 560kb
 	  extra mem); defaults to -N 25 (best compromise between speed and
@@ -2156,7 +2156,7 @@
 	  the arrays.  Initialize the extra sample to zero, so that there
 	  will be no reads from unintialized memory.  Initialize the
 	  entire recache buffer to zero, for the same reason.
-	* playmidi.c:	
+	* playmidi.c:
 	  Fix a problem with voice reduction under Linux, maybe other
 	  systems as well; rate is now calculated as it is displayed in
 	  ncurs_c.c.  No more premature mass voice killings /
@@ -2964,44 +2964,44 @@
 
 2002-10-14  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Modify volume pressure faster using effect
 
 2002-10-10  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for each voiced LPF activating velocity
 	  according to SF2.01 documentation
 
 2002-10-09  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for NRPN, Drum Filter Cutoff, and Resonance (XG)
 	  Support for part of real time GS SysEx such as EQ and reverb
 
 2002-10-09  Daisuke Aoki <dai@sweetparty.ne.jp>
 
-	* 
+	*
 	  Bug fixed around tracer window (W32GUI version)
 
 2002-10-09  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Support for AltiVec technology for powerpc
 
 2002-10-08  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for each voiced NRPN
 
 2002-10-06  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for each voiced(sampled) LPF
 
 2002-10-05  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Modify NRPN Vibrato Rate and Vibrato Depth as relative change
 	  Hacked up panning finely
 	  Support for stereo sample (maybe)
@@ -3009,120 +3009,120 @@
 
 2002-09-29  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for GS SysEx. Rx. NOTE OFF
 
 2002-09-28  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for GS SysEx. Reverb Time (a little)
 
 2002-09-27  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for adjust drumset volume
 	  Support for GS SysEx. Reverb Level
 
 2002-09-25  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Bug fixed click noise around release-time
 
 2002-09-22  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for LIMITED-MULTI of assign mode
 
 2002-09-22  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Support for modulation patch option in unit value
 	  Bug fixed around tremolo_phase_increment
 
 2002-09-19  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Support for AIFF file as the voice data
 
 2002-09-18  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for GS SysEx. checksum
 
 2002-09-15  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Support for WAVE file as the voice data
 
 2002-09-14  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Bug fixed in case of MAX_CHANNEL >= 33
 	  # thanks to Mr.Ueda
 
 2002-09-10  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Add initial keysig GUI option for pure intonation
 
 2002-09-10  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Hacked up to use default value for LPF/resonance
 
 2002-09-08  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Add initial keysig option for pure intonation
 
 2002-09-01  Daisuke Aoki <dai@sweetparty.ne.jp>
 
-	* 
+	*
 	  Support for Windows synthesizer GUI version
 
 2002-08-31  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Support for config parameter with quotation
 
 2002-08-31  s_keishi <s_keishi@mutt.freemail.ne.jp>
 
-	* 
+	*
 	  Support for 2 ports on Windows synthesizer mode
 
 2002-08-29  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Bug fixed ALSA sequencer to add readmidi_read_init()
 
 2002-08-20  Likai Liu <news@likai.net>
 
-	* 
+	*
 	  Add ALSA daemon mode
 
 2002-08-17  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Bug fixed exit(1) -> return 1 in LZH extract
 
 2002-08-10  s_keishi <s_keishi@mutt.freemail.ne.jp>
 
-	* 
+	*
 	  Support for Windows synthesizer mode
 
 2002-07-31  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Support for meas.beat/keysig/tempo display on main panel
 
 2002-07-29  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Bug fixed to use equal frequency table to select voice sample
 
 2002-07-29  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Bug fixed MAP behavior
 
 2002-07-27  mput <root@mput.dip.jp>
@@ -3138,27 +3138,27 @@
 
 2002-07-22  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Rewrite all do_compute_data_midi()
 
 2002-07-21  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Add key shift and fixed key signature GUI option
 
 2002-07-20  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Add pure intonation playing GUI option
 
 2002-07-18  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Add frequency table for minor song playing
 
 2002-07-08  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Support for ME_TIMESIG/ME_KEYSIG for RCP/R36/G18/G36 MIDI data
 
 2002-07-06  mput <root@mput.dip.jp>
@@ -3168,112 +3168,112 @@
 
 2002-07-06  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Support for real-time display of measure/beat (ncurses)
 
 2002-07-01  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Support for playing MIDI data in pure intonation
 
 2002-06-21  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Add key change command line option
 	  Update command help
 	  Modify moving song with not only down/up but only j/k (ncurses)
 
 2002-06-15  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Add function to play with fixed key signature number
 
 2002-06-15  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Modify volume to 1.63
 
 2002-06-11  Daisuke Aoki <dai@sweetparty.ne.jp>
 
-	* 
+	*
 	  Support for channel_mute on tracer window (W32GUI version)
 
 2002-06-10  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for non-linear for pan
 
 2002-06-08  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Support for real-time display key signature on SMF (ncurses)
 	  Reflect keychange up/down to current key signature
 
 2002-06-06  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Support for real-time display of key/tempo (ncurses)
 
 2002-06-06  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Bug fixed not to initialize NRPN on reset all controller
 
 2002-06-05  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Bug fixed to override patch option
 
 2002-06-04  TAMUKI Shoichi <tamuki@linet.gr.jp>
 
-	* 
+	*
 	  Support for real-time channel mute control (ncurses)
 	  Modify moving ch. with not only c/C but only j/k (ncurses)
 
 2002-06-01  Daisuke Aoki <dai@sweetparty.ne.jp>
 
-	* 
+	*
 	  Support for WRD graphic surface (W32GUI version)
 
 2002-05-28  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Make table for Vel./Vol./Exp. volume
 
 2002-05-27  Daisuke Aoki <dai@sweetparty.ne.jp>
 
-	* 
+	*
 	  Add location/size of window option (W32GUI version)
 	  Add tracer window (glow up right window) (W32GUI version)
 
 2002-05-19  Daisuke Aoki <dai@sweetparty.ne.jp>
 
-	* 
+	*
 	  Keep window location (W32GUI version)
 	  Specify max. of sub windows (W32GUI version)
 	  Hacked up display surface (W32GUI version)
 
 2002-05-19  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Bug fixed noise in delay effect
 
 2002-05-18  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support below
 	  drumset n
 	  #extension level [note] [tva level]
 
 2002-05-17  Kentaro Sato <kentaro@ps.catv.ne.jp>
 
-	* 
+	*
 	  Modify velocity_table[] and linear_vol_table[]
 	  Support for playing MFi(Melody Format for i-mode, *.mld) file
 
 2002-05-17  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for #extension legato [prog] [0 or 1]
 	  Arrange tables and hacked up velocity table
 
@@ -3285,18 +3285,18 @@
 
 2002-05-12  Daisuke Aoki <dai@sweetparty.ne.jp>
 
-	* 
+	*
 	  Bug fixed random play (W32GUI version)
 	  Keep last time play list
 
 2002-05-11  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Enable "note=" for SoundFont
 
 2002-05-06  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for GS SysEx. Pitch Offset Fine
 	  Hacked up GS SysEx. around tone map
 	  Hacked up user drumset behavior
@@ -3304,14 +3304,14 @@
 
 2002-05-05  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for Velocity Sense Depth/Offset
 	  Modity to display unsupported GS/XG SysEx on console
 	  Define int64
 
 2002-05-02  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Bug fixed to work alternate sound in case of -j option
 
 2002-04-30  TAMUKI Shoichi <tamuki@linet.gr.jp>
@@ -3326,7 +3326,7 @@
 
 2002-04-18  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Bug fixed to reflect CFG setting in case of alternate sound
 	  Bug fixed infinite looped in rs_bidir() of resample.c
 	  Support for insertion effect only [01 10: Overdrive]
@@ -3338,72 +3338,72 @@
 
 2002-04-14  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Change Sample struct (loop_end,loop_start,data_length) to uint32
 
 2002-04-12  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Modify to calculate LPF/resonance default value from parameter
 
 2002-04-08  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for LPF/resonance per channel
 
 2002-03-27  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Modify cfg option for SoundFont
 	  You may use "note=" "pan=" "strip=tail"
 	  Modify "amp=" algorithm
 
 2002-03-04  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for NRPN drum pitch coarse & fine
 
 2002-02-28  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for insertion effect
 
 2002-02-19  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for EQ ON/OFF per channel
 
 2002-02-15  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Fasten effect modules without reverb
 
 2002-02-11  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for chorus similar to delay
 	  Adjust delay/chorus effect volume same as reverb
 	  #define NEW_CHORUS to select previous surround chorus
 
 2002-02-10  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for delay nearly same as do_ch_reverb()
 
 2002-01-31  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Added semi-RT LPF (with resonance)
 
 2002-01-27  Saito <timidity@flashmail.com>
 
-	* 
+	*
 	  Support for assign group for user drumset
 	  Hacked up LPF of SoundFont
 
 2002-01-21  Daisuke Aoki <dai@sweetparty.ne.jp>
 
-	* 
+	*
 	  Support for text only WRD display (W32GUI version)
 
 2002-01-17  Daisuke Aoki <dai@sweetparty.ne.jp>
@@ -3538,7 +3538,7 @@
 2001-12-23  Masanao Izumo <mo@goice.co.jp>
 
 	* timidity/aq.c (aq_flush): Bug fixed.
-  	* timidity/vorbis_a.c: Enable to encode to variable sample rates.
+	* timidity/vorbis_a.c: Enable to encode to variable sample rates.
 
 2001-12-20  Masanao Izumo <mo@goice.co.jp>
 
@@ -3564,7 +3564,7 @@
 2001-11-10  Daisuke Nagano <breeze.nagano@nifty.ne.jp>
 
 	* doc/C/timidity.1: Updated.
-	
+
 2001-11-05  Saito <timidity@flashmail.com>
 
 	* timidity/sndfont.c:
@@ -3602,7 +3602,7 @@
 
 	* timidity/sffile.h: Bug fix.
 	  Change uint8 pitchCorrection to int8 pitchCorrection.
-	
+
 2001-10-09  Masanao Izumo <mo@goice.co.jp>
 
 	* Windows: Use w32_a.c instead of w32g_a.c
@@ -3651,7 +3651,7 @@
 	  utils/{fft4g.c,fft4g.h},
 	  doc/m2m.txt;
 	  New feature: MOD to MIDI conversion.
-	
+
 
 2001-05-29  Eric A. Welsh <ewelsh@ccb.wustl.edu>
 
@@ -3754,7 +3754,7 @@
 
 	* timidity/mod.c: The XM E1,E2,EA,EB,X1,X2 effects were all
 	  implemented improperly before.
-	
+
 2000-11-02  Masanao Izumo <mo@goice.co.jp>
 
 	* Version 2.10.2 released.
@@ -3800,7 +3800,7 @@
 	* libunimod/mloader.c: register the Oktalyzer loader
 	* libunimod/mlutil.c: moved the STM module signatures here, so that
 	the STX loader can use them
-	
+
 	* libunimod/unimod_priv.h: moved the STM module signatures here, so
 	that the STX loader can use them
 
@@ -3814,10 +3814,10 @@
     * utils/nkflib.c: Update newer version.
 
 2000-08-30  Masanao Izumo <mo@goice.co.jp>
-	
+
     * interface/{Makefile.am,Makefile.in}:
 	Added target of interface_r.so and interface_A.so.
-	
+
 2000-08-29  Masanao Izumo <mo@goice.co.jp>
 
     * interface/x_sherry.c: Remove memory leak.
@@ -3826,7 +3826,7 @@
 
     * Bug fixed about dynamic_interface_id
     * Added interface_?.txt files
-	
+
 2000-08-20  Eric A. Welsh <ewelsh@gpc.wustl.edu>
 
     * timidity/mix.c(sustain): Changed behavior to not begin the decay until
@@ -3854,7 +3854,7 @@
 2000-07-21/2000-07-24  Takashi SHIRAI <shirai@nintendo.co.jp>
 
     * timidity/oss_a.c: Bug fixed for the calculation of the counter.
-	
+
 2000-07-20  Masanao Izumo <mo@goice.co.jp>
 
     * configure: Added new options.
@@ -3890,7 +3890,7 @@
 2000-07-05  Masanao Izumo <mo@goice.co.jp>
 
     * Version 2.9.5 released.
-	
+
 2000-07-04  Daisuke Aoki <dai@sweetparty.ne.jp>
 
     * interface/{w32g.h,w32g_c.c,w32g_i.c,w32g_ini.c,w32g_playlist.c,
@@ -4271,7 +4271,7 @@
 
 1999-11-07  Takaya Nogami <t-nogami@happy.email.ne.jp>
 
-    * timidity/{playmidi.c,readmidi.h}: 
+    * timidity/{playmidi.c,readmidi.h}:
       Use pre-converted file *.mid.wav or *.mid.aiff file to play *.mid
       if it is exists.
 
@@ -4371,7 +4371,7 @@
       Added new Channel structure member `int pan_random' for random pan flag.
       Note that all of dynamic interfaces must be re-compiled,
       because the size of `Channel' structure is changed.
-      
+
 1999-09-26  Eric A. Welsh <ewelsh@gpc.wustl.edu>
 
     * timidity/readmidi.c (XG SysEx): Support for XG Multi Part Data
@@ -4444,12 +4444,12 @@
       remove garbage of output.
 
 1999-09-06  Masanao Izumo <mo@goice.co.jp>
-	
+
     * timidity/alsa_c.c:
 	Check output rate with snd_pcm_playback_status.
 	acntl: PM_REQ_GETQSIZ, PM_REQ_GETFILLABLE, PM_REQ_GETFILLED,
 	PM_REQ_GETSAMPLES, and PM_REQ_FLUSH are supported.
-	
+
 1999-09-05  Masanao Izumo <mo@goice.co.jp>
 
     * Version 2.6.0-beta3 released for test version.
@@ -4597,7 +4597,7 @@
 1999-08-27  Masanao Izumo <mo@goice.co.jp>
 
     * timidity/aq.c: Bug fixed.  Avoid infinite loop in aq_flush();
-    * timidity/{output.h,aq.c,w32g_a.c} (PM_REQ_OUTPUT_FINISH): 
+    * timidity/{output.h,aq.c,w32g_a.c} (PM_REQ_OUTPUT_FINISH):
     * interface/{x_wrdt.c,x_sherry.c},configure.in (ENABLE_SHERRY): Bug fix.
 
 1999-08-26  Masanao Izumo <mo@goice.co.jp>
@@ -4716,13 +4716,13 @@
       Windows console ncurses interface recognizes both
       "/" and "\" as path separator.
     * utils/{bitset.c,bitset.h} (check_bitset,change_bitset): New function.
-	
+
 1999-08-16  Masanao Izumo <mo@goice.co.jp>
 
     * interface/x_wrdwindow.c: Works more stable for TrueColor.
     * interface/x_sherry.c: Don't draw the window in skipping.
     * interface/x_sherry.c: Bug fixed:
- 	- Could not re-open window.
+	- Could not re-open window.
 	- Printed unexpected character.
 
 1999-08-15  Masanao Izumo <mo@goice.co.jp>
@@ -4991,7 +4991,7 @@
 1999-06-05  Michael Haardt <michael@moria.de>
 
     * timidity/nas_a.c: Reduce BUFFERED_SECS to 3 and increase
-	LOW_WATER_PERCENT to 40. 
+	LOW_WATER_PERCENT to 40.
 
 1999-05-22  Keiichi Sakai <sakai@amor.aial.hiroshima-u.ac.jp>
 
@@ -5201,7 +5201,7 @@ Major new features:
       (interface/server_c.c).
     - Portamento control time is completely adjusted.
     - Expanded playlist files (.m3u, .pls, and .asx).
-   
+
 
 Date: Tue Apr 6 1999
 From: Masanao Izumo <mo@goice.co.jp>

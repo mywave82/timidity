@@ -103,7 +103,7 @@ static UWORD *paraptr = NULL;	/* parapointer array (see STX docs) */
 
 /*========== Loader code */
 
-static BOOL 
+static BOOL
 STX_Test (void)
 {
   UBYTE id[8];
@@ -125,7 +125,7 @@ STX_Test (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 STX_Init (void)
 {
   if (!(stxbuf = (STXNOTE *) _mm_malloc (4 * 64 * sizeof (STXNOTE))))
@@ -139,7 +139,7 @@ STX_Init (void)
   return 1;
 }
 
-static void 
+static void
 STX_Cleanup (void)
 {
   _mm_free (stxbuf);
@@ -148,7 +148,7 @@ STX_Cleanup (void)
   _mm_free (mh);
 }
 
-static BOOL 
+static BOOL
 STX_ReadPattern (void)
 {
   int row = 0, flag, ch;
@@ -288,7 +288,7 @@ STX_ConvertTrack (STXNOTE * tr)
   return UniDup ();
 }
 
-static BOOL 
+static BOOL
 STX_Load (BOOL curious)
 {
   int t, u, track = 0;

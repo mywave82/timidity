@@ -113,24 +113,24 @@ static void *url2mem(URL url,long *lenp)
 {
 #define URL2MEM_BUFFER_BLOCK_SIZE 10240
 	char *buffer = NULL;
-    long buffer_size = 0;
-    long buffer_size2 = 0;
-    long ret;
+	long buffer_size = 0;
+	long buffer_size2 = 0;
+	long ret;
 
 	for(;;){
 		if(buffer_size2 < buffer_size + URL2MEM_BUFFER_BLOCK_SIZE){
-	    	if((buffer = (char *)safe_realloc(buffer,buffer_size2 + URL2MEM_BUFFER_BLOCK_SIZE))==NULL)
-            	return NULL;
-            buffer_size2+=URL2MEM_BUFFER_BLOCK_SIZE;
-        }
+			if((buffer = (char *)safe_realloc(buffer,buffer_size2 + URL2MEM_BUFFER_BLOCK_SIZE))==NULL)
+				return NULL;
+			buffer_size2+=URL2MEM_BUFFER_BLOCK_SIZE;
+		}
 		ret=url_nread(url,buffer+buffer_size,URL2MEM_BUFFER_BLOCK_SIZE);
 		if(ret<0)
-        	break;
-        buffer_size+=ret;
-        if(ret<URL2MEM_BUFFER_BLOCK_SIZE)
-        	break;
-    }
-    *lenp = buffer_size;
+			break;
+		buffer_size+=ret;
+		if(ret<URL2MEM_BUFFER_BLOCK_SIZE)
+			break;
+	}
+	*lenp = buffer_size;
 	return (void *)buffer;
 }
 
@@ -138,13 +138,13 @@ static void *url2mem(URL url,long *lenp)
           NULL (not exist) */
 static int exist_rcpcv_dll(void)
 {
-    HINSTANCE hRcpcv;
+	HINSTANCE hRcpcv;
 	UINT fuErrorMode;
 
 	fuErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX);
 	hRcpcv = LoadLibrary("rcpcv.dll");
-    SetErrorMode(fuErrorMode);
-    if(hRcpcv==NULL)
+	SetErrorMode(fuErrorMode);
+	if(hRcpcv==NULL)
 		return NULL;
 	FreeLibrary(hRcpcv);
 	return 1;
@@ -157,7 +157,7 @@ static int exist_rcpcv_dll(void)
 static URL rcpcv_convert(URL url,int type)
 {
 	char *buffer;
-    HINSTANCE hRcpcv;
+	HINSTANCE hRcpcv;
 	UINT fuErrorMode;
 	long len;
 	HRCPCV CALLBACK h;
@@ -171,29 +171,29 @@ static URL rcpcv_convert(URL url,int type)
 
 	/* type */
 	switch(type){
-    	case IS_RCP_FILE:
-    	case IS_R36_FILE:
+		case IS_RCP_FILE:
+		case IS_R36_FILE:
 			rcpcv_type = RCPCV_FORMATTYPE_RCM25F;
 			break;
 		case IS_G18_FILE:
 		case IS_G36_FILE:
 			rcpcv_type = RCPCV_FORMATTYPE_RCM25G;
 			break;
-        default:
-        	return NULL;
-    }
+		default:
+			return NULL;
+	}
 
-    /* rcpcv 1*/
+	/* rcpcv 1*/
 	fuErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX);
 	hRcpcv = LoadLibrary("rcpcv.dll");
-    SetErrorMode(fuErrorMode);
-    if(hRcpcv==NULL)
+	SetErrorMode(fuErrorMode);
+	if(hRcpcv==NULL)
 		return NULL;
 
 	/* url -> buffer */
 	buffer = (char *)url2mem(url,&len);
 
-    /* rcpcv 2*/
+	/* rcpcv 2*/
 	lpRcpcvConvertFileFromBuffer = GetProcAddress(hRcpcv,"rcpcvConvertFileFromBuffer");
 	lpRcpcvDeleteObject = GetProcAddress(hRcpcv,"rcpcvDeleteObject");
 	lpRcpcvGetSMF = GetProcAddress(hRcpcv,"rcpcvGetSMF");
@@ -201,23 +201,23 @@ static URL rcpcv_convert(URL url,int type)
 
 	h = (*lpRcpcvConvertFileFromBuffer)((LPCSTR)buffer,(UINT)len,(UINT)rcpcv_type,RCPCV_CALLBACK_NULL,NULL, 0, 0);
 	if (h==NULL){
-    	free(buffer);
+	free(buffer);
 		FreeLibrary(hRcpcv);
 		return NULL;
 	}
 	len = (*lpRcpcvGetSMFLength)(h);
-    if((buffer = (char *)safe_realloc(buffer,len + 10))==NULL){
+	if((buffer = (char *)safe_realloc(buffer,len + 10))==NULL){
 		FreeLibrary(hRcpcv);
 		return NULL;
 	}
-    memcpy(buffer,(*lpRcpcvGetSMF)(h),len);
-    (*lpRcpcvDeleteObject)(h);
+	memcpy(buffer,(*lpRcpcvGetSMF)(h),len);
+	(*lpRcpcvDeleteObject)(h);
 	FreeLibrary(hRcpcv);
 
 	/* url_mem_open */
 	if((new_url=url_mem_open(buffer,len,1))==NULL){
-    	return NULL;
-    }
+		return NULL;
+	}
 
 	url_close(url);
 	return new_url;
@@ -228,64 +228,62 @@ static URL rcpcv_convert(URL url,int type)
 int smfconv_w32(struct timidity_file *tf, char *fn)
 {
 	URL url;
-    int ret;
+	int ret;
 	struct midi_file_info *infop;
 
 /* rcpcv.dll convertion stage */
 rcpcv_dll_stage:
 	if(exist_rcpcv_dll())
 	{
-
-	ret = is_midifile_filename(fn);
-	if(ret == IS_RCP_FILE || ret == IS_R36_FILE || ret == IS_G18_FILE || ret == IS_G36_FILE)
-    {
-    	if(!IS_URL_SEEK_SAFE(tf->url))
-    	    tf->url = url_cache_open(tf->url, 1);
-        ret = is_midifile_url(tf->url);
-		url_rewind(tf->url);
+		ret = is_midifile_filename(fn);
 		if(ret == IS_RCP_FILE || ret == IS_R36_FILE || ret == IS_G18_FILE || ret == IS_G36_FILE)
-    	{
-			ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Try to Convert RCP,R36,G18,G36 to SMF by RCPCV.DLL (c)1997 Fumy.");
-	        url = rcpcv_convert(tf->url,ret);
-			if(url == NULL){
-				/* url_arc or url_cash is buggy ? */
-				/*
-				url_rewind(tf->url);
-				url_cache_disable(tf->url);
-				ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed.");
-				goto end_of_rcpcv_dll_stage;
-				*/
+		{
+			if(!IS_URL_SEEK_SAFE(tf->url))
+				tf->url = url_cache_open(tf->url, 1);
+			ret = is_midifile_url(tf->url);
+			url_rewind(tf->url);
+			if(ret == IS_RCP_FILE || ret == IS_R36_FILE || ret == IS_G18_FILE || ret == IS_G36_FILE)
+			{
+				ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Try to Convert RCP,R36,G18,G36 to SMF by RCPCV.DLL (c)1997 Fumy.");
+				url = rcpcv_convert(tf->url,ret);
+				if(url == NULL){
+					/* url_arc or url_cash is buggy ? */
+					/*
+					url_rewind(tf->url);
+					url_cache_disable(tf->url);
+					ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed.");
+					goto end_of_rcpcv_dll_stage;
+					*/
 
-				char *buffer;
-				int len;
-                URL new_url;
+					char *buffer;
+					int len;
+					URL new_url;
 
-				url_rewind(tf->url);
-				if((buffer = (char *)url2mem(tf->url,&len))==NULL){
+					url_rewind(tf->url);
+					if((buffer = (char *)url2mem(tf->url,&len))==NULL){
+						ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed.");
+						goto end_of_rcpcv_dll_stage;
+					}
+					if((new_url=url_mem_open(buffer,len,1))==NULL){
+						ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed and Memory Allocate Error.");
+						url_cache_disable(tf->url);
+						return -1;
+					}
+					url_close(tf->url);
+					tf->url = new_url;
 					ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed.");
 					goto end_of_rcpcv_dll_stage;
 				}
-				if((new_url=url_mem_open(buffer,len,1))==NULL){
-					ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed and Memory Allocate Error.");
-					url_cache_disable(tf->url);
-    				return -1;
-				}
-				url_close(tf->url);
-				tf->url = new_url;
-				ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed.");
-				goto end_of_rcpcv_dll_stage;
-            }
-			url_cache_disable(tf->url);
-            tf->url = url;
-			ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Completed.");
+				url_cache_disable(tf->url);
+				tf->url = url;
+				ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Completed.");
 
-			/* Store the midi file type information */
-			infop = get_midi_file_info(fn, 1);
-			infop->file_type = ret;
-		} else
-        	url_cache_disable(tf->url);
-    }
-
+				/* Store the midi file type information */
+				infop = get_midi_file_info(fn, 1);
+				infop->file_type = ret;
+			} else
+				url_cache_disable(tf->url);
+		}
 	}
 /* end of rcpcv.dll convertion stage */
 end_of_rcpcv_dll_stage:

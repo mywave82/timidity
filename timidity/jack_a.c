@@ -357,7 +357,7 @@ static int open_jack(void)
 		return -1;
 	}
 
-	/* 
+	/*
 	 * it seems the JACK port connection must be done after
 	 * activating jack client...
 	 */
@@ -493,7 +493,7 @@ static int actl_jack(int request, void *arg)
 	case PM_REQ_GETFILLABLE:
 		*((int *)arg) = ringbuf_get_empty(&ctx->rbuf);
 		return 0;
-    
+
 	case PM_REQ_GETFILLED:
 		*((int *)arg) = ringbuf_get_available(&ctx->rbuf);
 		return 0;

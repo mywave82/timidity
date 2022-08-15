@@ -105,7 +105,7 @@ ULT_Cleanup (void)
 {
 }
 
-static UBYTE 
+static UBYTE
 ReadUltEvent (ULTEVENT * event)
 {
   UBYTE flag, rep = 1;

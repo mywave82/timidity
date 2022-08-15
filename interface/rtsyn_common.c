@@ -230,7 +230,7 @@ void rtsyn_init(void){
 	allocate_cache_size = 0; /* Don't use pre-calclated samples */
 	auto_reduce_polyphony = 0;
 	opt_sf_close_each_file = 0;
-	
+
 	if(ctl->id_character != 'N')
 	  aq_set_soft_queue(rtsyn_latency*(double)1.01, 0.0);
 	i = current_keysig + ((current_keysig < 8) ? 7 : -9), j = 0;
@@ -238,7 +238,7 @@ void rtsyn_init(void){
 		i += (i < 7) ? 5 : -7, j++;
 	j += note_key_offset, j -= floor(j / 12.0) * 12;
 	current_freq_table = j;
-	
+
 	rtsyn_reset();
 	play_mode->open_output();
 	rtsyn_system_mode=DEFAULT_SYSTEM_MODE;
@@ -281,7 +281,7 @@ void rtsyn_play_event_time(MidiEvent *ev, double event_time){
 				rtsyn_seq_set_time(&nev, buf_time);
 				play_event(&nev);
 				aq_fill_nonblocking();
-				
+
 				while( event_time > buf_time + 1.0/(double)TICKTIME_HZ){
 					buf_time = buf_time + 1.0/(double)TICKTIME_HZ;
 					rtsyn_seq_set_time(&nev, buf_time);
@@ -327,8 +327,8 @@ void rtsyn_wot_reset(void){
 }
 
 void rtsyn_tmr_reset(void){
-    	if(ctl->id_character == 'N')
-        	current_sample = 0;	
+	if(ctl->id_character == 'N')
+	current_sample = 0;
 		rtsyn_start_time=get_current_calender_time();
 		rtsyn_start_sample=current_sample;
 		last_event_time=rtsyn_start_time + rtsyn_latency;
@@ -365,7 +365,7 @@ void rtsyn_stop_playing(void)
 void rtsyn_seq_set_time(MidiEvent *ev, double event_time)
 {
 	double currenttime, time_div;
-	
+
 	time_div = event_time  - rtsyn_start_time;
 	ev->time = rtsyn_start_sample
 		+(int32) ((double)(play_mode->rate) * time_div+0.5);
@@ -375,10 +375,10 @@ void rtsyn_seq_set_time(MidiEvent *ev, double event_time)
 void rtsyn_play_calculate(){
 	MidiEvent ev;
 	double currenet_event_time, current_time;
-	
+
 	current_time = get_current_calender_time();
 	currenet_event_time = current_time + rtsyn_latency;
-	
+
 	if( (rtsyn_played == 0)  && (currenet_event_time > last_calc_time + 1.0/(double)TICKTIME_HZ) /* event buffer is empty */
 		||  (current_time + 1.0/(double)TICKTIME_HZ*2.0 > last_event_time) /* near miss */
 	){
@@ -387,7 +387,7 @@ void rtsyn_play_calculate(){
 		last_calc_time=currenet_event_time;
 	}
 	rtsyn_played = 0;
-	
+
 
 	if(active_sensing_flag==~0 && (get_current_calender_time() > active_sensing_time+0.5)){
 //normaly acitive sensing expiering time is 330ms(>300ms) but this loop is heavy
@@ -398,10 +398,10 @@ void rtsyn_play_calculate(){
 		active_sensing_flag=0;
 	}
 }
-	
+
 int rtsyn_play_one_data (int port, int32 dwParam1, double event_time){
 	MidiEvent ev;
-	
+
 	if(rtsyn_sample_time_mode != 1){
 		event_time += rtsyn_latency;
 	}
@@ -515,7 +515,7 @@ void rtsyn_play_one_sysex (char *sysexbuffer, int exlen, double event_time ){
 	int i,j,chk,ne;
 	MidiEvent ev;
 	MidiEvent evm[260];
-	
+
 	if(rtsyn_sample_time_mode != 1){
 		event_time += rtsyn_latency;
 	}
@@ -574,5 +574,5 @@ void rtsyn_play_one_sysex (char *sysexbuffer, int exlen, double event_time ){
 			}
 		}
 	}
-	
+
 }

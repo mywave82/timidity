@@ -20,7 +20,7 @@
 
 /*
  * REVERB EFFECT FOR TIMIDITY++-1.X (Version 0.06e  1999/1/28)
- * 
+ *
  * Copyright (C) 1997,1998,1999  Masaki Kiryu <mkiryu@usa.net>
  *                           (http://w3mb.kcom.ne.jp/~mkiryu/)
  *
@@ -110,7 +110,7 @@ void set_dry_signal(register int32 *buf, int32 n)
 #endif
 
 /* XG has "dry level". */
-#if OPT_MODE != 0 	/* fixed-point implementation */
+#if OPT_MODE != 0	/* fixed-point implementation */
 #if  !defined(_AMD64_) && (defined(_MSC_VER) || defined(__WATCOMC__) || defined(__DMC__) || (defined(__BORLANDC__) && (__BORLANDC__ >= 1380)) )
 void set_dry_signal_xg(int32 *buf, int32 count, int32 level)
 {
@@ -131,7 +131,7 @@ L1:		mov		eax, [esi]
 		shl		edx, 16
 		or		eax, edx	/* u */
 		mov		edx, [edi]	/* v */
-		add		esi, 4		/* u */	
+		add		esi, 4		/* u */
 		add		edx, eax	/* v */
 		mov		[edi], edx	/* u */
 		add		edi, 4		/* v */
@@ -180,7 +180,7 @@ void mix_dry_signal(int32 *buf, int32 n)
 #else /* SYS_EFFECT_CLIP */
 void mix_dry_signal(int32 *buf, int32 n)
 {
- 	memcpy(buf, direct_buffer, sizeof(int32) * n);
+	memcpy(buf, direct_buffer, sizeof(int32) * n);
 	memset(direct_buffer, 0, sizeof(int32) * n);
 }
 #endif /* SYS_EFFECT_CLIP */
@@ -215,7 +215,7 @@ static void free_delay(simple_delay *delay)
 
 static void set_delay(simple_delay *delay, int32 size)
 {
-	if(size < 1) {size = 1;} 
+	if(size < 1) {size = 1;}
 	free_delay(delay);
 	delay->buf = (int32 *)safe_malloc(sizeof(int32) * size);
 	if(delay->buf == NULL) {return;}
@@ -957,7 +957,7 @@ L1:		mov		eax, [esi]
 		shl		edx, 8
 		or		eax, edx	/* u */
 		mov		edx, [edi]	/* v */
-		add		esi, 4		/* u */	
+		add		esi, 4		/* u */
 		add		edx, eax	/* v */
 		mov		[edi], edx	/* u */
 		add		edi, 4		/* v */
@@ -982,7 +982,7 @@ void set_ch_reverb(register int32 *sbuffer, int32 n, int32 level)
     register int32  i;
 	if(!level) {return;}
     FLOAT_T send_level = (FLOAT_T)level / 127.0 * REV_INP_LEV;
-	
+
 	for(i = 0; i < n; i++)
     {
         reverb_effect_buffer[i] += sbuffer[i] * send_level;
@@ -1040,7 +1040,7 @@ static void init_standard_reverb(InfoStandardReverb *info)
 	info->ta = info->tb = 0;
 	info->HPFL = info->HPFR = info->LPFL = info->LPFR = info->EPFL = info->EPFR = 0;
 	info->spt0 = info->spt1 = info->spt2 = info->spt3 = 0;
-	time = reverb_time_table[reverb_status_gs.time] * gs_revchar_to_rt(reverb_status_gs.character) 
+	time = reverb_time_table[reverb_status_gs.time] * gs_revchar_to_rt(reverb_status_gs.character)
 		/ reverb_time_table[64] * 0.8;
 	info->rpt0 = REV_VAL0 * play_mode->rate / 1000.0 * time;
 	info->rpt1 = REV_VAL1 * play_mode->rate / 1000.0 * time;
@@ -1504,7 +1504,7 @@ static void alloc_freeverb_buf(InfoFreeverb *rev)
 static void free_freeverb_buf(InfoFreeverb *rev)
 {
 	int i;
-	
+
 	for(i = 0; i < numcombs; i++)
 	{
 		if(rev->combL[i].buf != NULL) {
@@ -1992,7 +1992,7 @@ L1:		mov		eax, [esi]
 		shl		edx, 16
 		or		eax, edx	/* u */
 		mov		edx, [edi]	/* v */
-		add		esi, 4		/* u */	
+		add		esi, 4		/* u */
 		add		edx, eax	/* v */
 		mov		[edi], edx	/* u */
 		add		edi, 4		/* v */
@@ -2228,7 +2228,7 @@ static void do_ch_stereo_chorus(int32 *buf, int32 count, InfoStereoChorus *info)
 	spt1 = wpt0 - pdelay - (f1 >> 8);	/* integral part of delay */
 	f1 = 0xFF - (f1 & 0xFF);	/* (1 - frac) * 256 */
 	if(spt1 < 0) {spt1 += rpt0;}
-	
+
 	for(i = 0; i < count; i++) {
 		v0 = bufL[spt0];
 		v1 = bufR[spt1];
@@ -2300,7 +2300,7 @@ L1:		mov		eax, [esi]
 		shl		edx, 16
 		or		eax, edx	/* u */
 		mov		edx, [edi]	/* v */
-		add		esi, 4		/* u */	
+		add		esi, 4		/* u */
 		add		edx, eax	/* v */
 		mov		[edi], edx	/* u */
 		add		edi, 4		/* v */
@@ -2445,7 +2445,7 @@ void set_ch_eq_gs(register int32 *buf, int32 n)
 void set_ch_eq_gs(register int32 *sbuffer, int32 n)
 {
     register int32  i;
-    
+
 	for(i = 0; i < n; i++)
     {
         eq_buffer[i] += sbuffer[i];
@@ -3015,7 +3015,7 @@ static inline int clip_int(int val, int min, int max)
 
 static void conv_gs_eq2(struct insertion_effect_gs_t *ieffect, EffectList *ef)
 {
-	InfoEQ2 *eq = (InfoEQ2 *)ef->info; 
+	InfoEQ2 *eq = (InfoEQ2 *)ef->info;
 
 	eq->high_freq = 4000;
 	eq->high_gain = clip_int(ieffect->parameter[16] - 0x40, -12, 12);
@@ -3026,7 +3026,7 @@ static void conv_gs_eq2(struct insertion_effect_gs_t *ieffect, EffectList *ef)
 static void conv_gs_overdrive1(struct insertion_effect_gs_t *ieffect, EffectList *ef)
 {
 	InfoOverdrive1 *od = (InfoOverdrive1 *)ef->info;
-	
+
 	od->drive = ieffect->parameter[0];
 	od->amp_type = ieffect->parameter[1];
 	od->amp_sw = ieffect->parameter[2];
@@ -3066,7 +3066,7 @@ static double calc_wet_gs(int val)
 static void conv_gs_hexa_chorus(struct insertion_effect_gs_t *ieffect, EffectList *ef)
 {
 	InfoHexaChorus *info = (InfoHexaChorus *)ef->info;
-	
+
 	info->level = (double)ieffect->parameter[19] / 127.0;
 	info->pdelay = pre_delay_time_table[ieffect->parameter[0]] * (double)play_mode->rate / 1000.0;
 	info->depth = (double)(ieffect->parameter[2] + 1) / 3.2  * (double)play_mode->rate / 1000.0;
@@ -3096,7 +3096,7 @@ static double calc_wet_xg(int val, struct effect_xg_t *st)
 	case XG_CONN_SYSTEM_REVERB:
 		return ((double)st->ret / 127.0);
 	default:
-		return ((double)val / 127.0); 
+		return ((double)val / 127.0);
 	}
 }
 
@@ -3317,7 +3317,7 @@ static void do_chorus(int32 *buf, int32 count, EffectList *ef)
 	spt1 = wpt0 - pdelay - (f1 >> 8);	/* integral part of delay */
 	f1 = 0xFF - (f1 & 0xFF);	/* (1 - frac) * 256 */
 	if (spt1 < 0) {spt1 += rpt0;}
-	
+
 	for (i = 0; i < count; i++) {
 		v0 = bufL[spt0];
 		v1 = bufR[spt1];
@@ -3464,7 +3464,7 @@ static void do_delay_lcr(int32 *buf, int32 count, EffectList *ef)
 	int32 buf_index = delayL->index, buf_size = delayL->size;
 	int32 index0 = info->index[0], index1 = info->index[1], index2 = info->index[2],
 		x1l = lpf->x1l, x1r = lpf->x1r;
-	int32 cleveli = info->cleveli, feedbacki = info->feedbacki, 
+	int32 cleveli = info->cleveli, feedbacki = info->feedbacki,
 		dryi = info->dryi, weti = info->weti, ai = lpf->ai, iai = lpf->iai;
 
 	if(count == MAGIC_INIT_EFFECT_INFO) {
@@ -3568,7 +3568,7 @@ static void do_delay_lr(int32 *buf, int32 count, EffectList *ef)
 		indexr = delayR->index, sizer = delayR->size;
 	int32 index0 = info->index[0], index1 = info->index[1],
 		x1l = lpf->x1l, x1r = lpf->x1r;
-	int32 feedbacki = info->feedbacki, 
+	int32 feedbacki = info->feedbacki,
 		dryi = info->dryi, weti = info->weti, ai = lpf->ai, iai = lpf->iai;
 
 	if(count == MAGIC_INIT_EFFECT_INFO) {
@@ -3722,7 +3722,7 @@ static void do_cross_delay(int32 *buf, int32 count, EffectList *ef)
 	int32 indexl = delayL->index, sizel = delayL->size,
 		indexr = delayR->index, sizer = delayR->size,
 		x1l = lpf->x1l, x1r = lpf->x1r;
-	int32 feedbacki = info->feedbacki, 
+	int32 feedbacki = info->feedbacki,
 		dryi = info->dryi, weti = info->weti, ai = lpf->ai, iai = lpf->iai;
 
 	if(count == MAGIC_INIT_EFFECT_INFO) {
@@ -4101,19 +4101,19 @@ static const struct early_reflection_param_t early_reflection_param[] = {
 		{ 381, 636, 906, 1026, 1040, 1315, 1320, 1415, 1445, 1556, 1588, 1628, 1637, 1663, 1693, 1768, 1788, 1824, 1882, 1920,},
 		{ 0.1896, 0.0706, 0.0467, 0.0388, 0.0298, 0.0211, 0.0137, 0.0181, 0.0144, 0.0101, 0.0088, 0.0118, 0.0072, 0.0081, 0.0073, 0.0071, 0.0062, 0.0042, 0.0057, 0.0024, },
 	},
-	{ ER_LARGE_ROOM, 
+	{ ER_LARGE_ROOM,
 		{ 577, 875, 1665, 1713, 1784, 1790, 1835, 1913, 1954, 2023, 2062, 2318, 2349, 2371, 2405, 2409, 2469, 2492, 2534, 2552, },
 		{ 0.2727, 0.0752, 0.0070, 0.0110, 0.0083, 0.0056, 0.0089, 0.0079, 0.0051, 0.0066, 0.0043, 0.0019, 0.0035, 0.0023, 0.0038, 0.0017, 0.0015, 0.0029, 0.0027, 0.0032,},
 		{ 381, 636, 1485, 1570, 1693, 1768, 1875, 1895, 1963, 2066, 2128, 2220, 2277, 2309, 2361, 2378, 2432, 2454, 2497, 2639,},
 		{ 0.5843, 0.1197, 0.0117, 0.0098, 0.0032, 0.0028, 0.0042, 0.0022, 0.0020, 0.0038, 0.0035, 0.0043, 0.0040, 0.0022, 0.0028, 0.0035, 0.0033, 0.0018, 0.0010, 0.0008, },
 	},
-	{ ER_MEDIUM_HALL, 
+	{ ER_MEDIUM_HALL,
 		{ 1713, 1835, 2534, 2618, 2780, 2849, 2857, 3000, 3071, 3159, 3226, 3338, 3349, 3407, 3413, 3465, 3594, 3669, 3714, 3728,},
 		{ 0.0146, 0.0118, 0.0036, 0.0033, 0.0033, 0.0030, 0.0031, 0.0013, 0.0012, 0.0023, 0.0021, 0.0018, 0.0016, 0.0015, 0.0016, 0.0016, 0.0015, 0.0013, 0.0006, 0.0012,},
 		{ 381, 636, 1693, 1768, 2066, 2128, 2362, 2416, 2454, 2644, 2693, 2881, 2890, 2926, 2957, 3036, 3185, 3328, 3385, 3456,},
 		{ 0.7744, 0.1586, 0.0042, 0.0037, 0.0051, 0.0046, 0.0036, 0.0034, 0.0024, 0.0018, 0.0017, 0.0024, 0.0015, 0.0023, 0.0008, 0.0012, 0.0013, 0.0005, 0.0012, 0.0005, },
 	},
-	{ ER_LARGE_HALL, 
+	{ ER_LARGE_HALL,
 		{ 1713, 1835, 2534, 2618, 3159, 3226, 3669, 3728, 4301, 4351, 4936, 5054, 5097, 5278, 5492, 5604, 5631, 5714, 5751, 5800,},
 		{ 0.0150, 0.0121, 0.0037, 0.0034, 0.0023, 0.0022, 0.0013, 0.0012, 0.0005, 0.0005, 0.0006, 0.0002, 0.0002, 0.0004, 0.0004, 0.0004, 0.0004, 0.0002, 0.0002, 0.0003,},
 		{ 381, 636, 1693, 1768, 2066, 2128, 2644, 2693, 3828, 3862, 4169, 4200, 4792, 5068, 5204, 5231, 5378, 5460, 5485, 5561,},
@@ -4227,28 +4227,28 @@ const struct effect_parameter_xg_t effect_parameter_xg[] = {
 	12, 25, 16, 0, 0, 28, 64, 46, 64, 127, 46, 64, 10, 0, 0, 0,}, 9,},
 
 {	0x49, 0, "DISTORTION", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
-	40, 20, 72, 53, 48, 0, 43, 74, 10, 127, 120, 0, 0, 0, 0,0,}, 0,}, 
+	40, 20, 72, 53, 48, 0, 43, 74, 10, 127, 120, 0, 0, 0, 0,0,}, 0,},
 
 {	0x49, 0x08, "STEREO DISTORTION", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
-	18, 27, 71, 48, 84, 0, 32, 66, 10, 127, 105, 0, 0, 0, 0, 0,}, 0,}, 
+	18, 27, 71, 48, 84, 0, 32, 66, 10, 127, 105, 0, 0, 0, 0, 0,}, 0,},
 
 {	0x4A, 0, "OVERDRIVE", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
-	29, 24, 68, 45, 55, 0, 41, 72, 10, 127, 104, 0, 0, 0, 0, 0,}, 0,}, 
+	29, 24, 68, 45, 55, 0, 41, 72, 10, 127, 104, 0, 0, 0, 0, 0,}, 0,},
 
 {	0x4A, 0x08, "STEREO OVERDRIVE", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
-	10, 24, 69, 46, 105, 0, 41, 66, 10, 127, 104, 0, 0, 0, 0, 0,}, 0,}, 
+	10, 24, 69, 46, 105, 0, 41, 66, 10, 127, 104, 0, 0, 0, 0, 0,}, 0,},
 
 {	0x4B, 0, "AMP SIMULATOR", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
-	39, 1, 48, 55, 0, 0, 0, 0, 0, 127, 112, 0, 0, 0, 0, 0,}, 0,}, 
+	39, 1, 48, 55, 0, 0, 0, 0, 0, 127, 112, 0, 0, 0, 0, 0,}, 0,},
 
 {	0x4B, 0x08, "STEREO AMP SIMULATOR", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
-	16, 2, 46, 119, 0, 0, 0, 0, 0, 127, 106, 0, 0, 0, 0, 0,}, 0,}, 
+	16, 2, 46, 119, 0, 0, 0, 0, 0, 127, 106, 0, 0, 0, 0, 0,}, 0,},
 
 {	0x4C, 0, "3-BAND EQ", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
-	70, 34, 60, 10, 70, 28, 46, 0, 0, 127, 0, 0, 0, 0, 0, 0,}, -1,}, 
+	70, 34, 60, 10, 70, 28, 46, 0, 0, 127, 0, 0, 0, 0, 0, 0,}, -1,},
 
 {	0x4D, 0, "2-BAND EQ", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
-	28, 70, 46, 70, 0, 0, 0, 0, 0, 127, 0, 0, 0, 0, 0, 0,}, -1,}, 
+	28, 70, 46, 70, 0, 0, 0, 0, 0, 127, 0, 0, 0, 0, 0, 0,}, -1,},
 
 {	0x4E, 0, "AUTO WAH", { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},{
 	70, 56, 39, 25, 0, 28, 66, 46, 64, 127, 0, 0, 0, 0, 0, 0,}, 2, },

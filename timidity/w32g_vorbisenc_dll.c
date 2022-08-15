@@ -19,7 +19,7 @@
 */
 
 /***************************************************************
- name: vorbisenc_dll  dll: vorbisenc.dll 
+ name: vorbisenc_dll  dll: vorbisenc.dll
 ***************************************************************/
 
 #ifdef HAVE_CONFIG_H

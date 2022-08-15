@@ -619,7 +619,7 @@ char *create_auto_output_name(const char *input_filename, char *ext_str, char *o
 #else
       p1 = p + 1;
       while((p1 = STRCHR(p1,'\\'))!=NULL && p1<ext){
-      	*p1 = '_';
+	*p1 = '_';
 	p1++;
       }
       p1 = p;

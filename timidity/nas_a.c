@@ -135,12 +135,12 @@ static void play(struct DevAudio *fd, AuUint32 len)
   if(dpm.encoding & PE_16BIT)
       count /= 2;
 
-  if (len<fd->used) 
+  if (len<fd->used)
   {
     AuWriteElement(fd->aud,fd->flow,0,len,fd->data,AuFalse,(AuStatus*)0);
     memmove(fd->data,fd->data+len,fd->used-=len);
   }
-  else 
+  else
   {
     AuWriteElement(fd->aud,fd->flow,0,fd->used,fd->data,len!=fd->used,(AuStatus*)0);
     fd->used=0;
@@ -196,7 +196,7 @@ static void syncdevaudio(void)
 {
   AuEvent ev;
 
-  while ((!fd.synced) && (!fd.finished)) 
+  while ((!fd.synced) && (!fd.finished))
   {
     AuNextEvent(fd.aud,AuTrue,&ev);
     AuDispatchEvent(fd.aud,&ev);
@@ -215,7 +215,7 @@ static int opendevaudio(void)
   dpm.encoding = validate_encoding(dpm.encoding,
 				   PE_16BIT|PE_SIGNED,
 				   PE_BYTESWAP|PE_ULAW|PE_ALAW);
- 
+
   if (!(fd.aud = AuOpenServer((char*)0, 0, NULL, 0, NULL, NULL))) return -1;
   fd.capacity = 0;
 

@@ -81,7 +81,7 @@ TCL_DIR = $(PKGLIBDIR)
 # Define the timidity default file search path.
 DEF_DEFAULT_PATH = -DDEFAULT_PATH=\"$(PKGDATADIR)\"
 
-# You sould not change follows definitions. 
+# You sould not change follows definitions.
 DEF_PKGDATADIR = -DPKGDATADIR=\"$(PKGDATADIR)\"
 DEF_PKGLIBDIR = -DPKGLIBDIR=\"$(PKGLIBDIR)\"
 DEF_SHLIB_DIR = -DSHLIB_DIR=\"$(SHLIB_DIR)\"

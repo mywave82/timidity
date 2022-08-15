@@ -222,16 +222,16 @@ void fill_vol_nonlin_to_lin_table(void)
     /* derive the power used to generate the user volume table */
     log_127 = log(127);
     for (i = 1; i <= 126; i++)
-    	power += (log(user_vol_table[i]) - log_127) / (log(i) - log_127);
+	power += (log(user_vol_table[i]) - log_127) / (log(i) - log_127);
     power /= 126;
 
     /* use the inverse of the power to generate the new table */
     for (i = 1; i <= 127; i++)
     {
-    	inverse = pow(i / 127.0, 1.0 / power);
-       	temp = 127 * inverse;
+	inverse = pow(i / 127.0, 1.0 / power);
+	temp = 127 * inverse;
 
-    	coarse = floor(temp + 0.5);
+	coarse = floor(temp + 0.5);
 	if (coarse < temp) coarse += 1;
 
 	fine = floor(127 * temp / coarse + 0.5);
@@ -371,7 +371,7 @@ int create_m2m_cfg_file(char *cfgname)
     }
 
     fprintf(cfgout, "%s\t%s\t\t%s\t%s\t%s\n\n",
-    	    "# Sample", "Program", "Transpose", "FineTuning", "%Volume");
+	    "# Sample", "Program", "Transpose", "FineTuning", "%Volume");
 
     for (i = 1; i <= maxsample; i++)
     {
@@ -472,7 +472,7 @@ void read_m2m_cfg_file(void)
 		   &mod_sample, program_str, &trans, finetune_str, &amp);
 
 	    if (strchr(program_str, '!'))
-	    	silent_samples[mod_sample] = 1;
+		silent_samples[mod_sample] = 1;
 
 	    program = labs(atoi(program_str));
 	    if ((slash_pos = strchr(program_str, '/')))
@@ -663,7 +663,7 @@ void scan_ahead_for_m2m_tweaks(MidiEvent * ev, int midi_ch, int midi_note,
 	    lowbend = bend;
 	if (bend > highbend)
 	    highbend = bend;
-	    
+
 	pitch = init_note + notes_per_pb * bend;
 	freq = 13.75 * exp((pitch - 9) * 0.05776226505f);
 
@@ -763,9 +763,9 @@ void m2m_kill_notes_early(MidiEvent * ev, double time)
 	    kill_n = 3;
 	    newnote = kill_early_note[j];
 	    while (newnote > 127)
-	    	newnote -= 12;
+		newnote -= 12;
 	    while (newnote < 0)
-	    	newnote += 12;
+		newnote += 12;
 	    event[0] = 0x80 | (kill_ch & 0x0F);
 	    event[1] = newnote;
 	    event[2] = kill_early_velocity[j];
@@ -815,9 +815,9 @@ void m2m_kill_notes_early(MidiEvent * ev, double time)
 		    if (newnote == event[kill_n - 2])
 			continue;
 		    while (newnote > 127)
-		    	newnote -= 12;
+			newnote -= 12;
 		    while (newnote < 0)
-		    	newnote += 12;
+			newnote += 12;
 		    p_track_event[0] = 0x00;
 		    p_track_event[1] = event[kill_n - 3];
 		    p_track_event[2] = newnote;
@@ -1043,9 +1043,9 @@ void m2m_process_events(MidiEvent * ev)
 		newnote += tweak_note_offset[ch];
 	    }
 	    while (newnote > 127)
-	    	newnote -= 12;
+		newnote -= 12;
 	    while (newnote < 0)
-	    	newnote += 12;
+		newnote += 12;
 
 	    event[0] = 0x80 | (ch & 0x0F);
 	    event[1] = newnote;
@@ -1071,9 +1071,9 @@ void m2m_process_events(MidiEvent * ev)
 		newnote += tweak_note_offset[ch];
 	    }
 	    while (newnote > 127)
-	    	newnote -= 12;
+		newnote -= 12;
 	    while (newnote < 0)
-	    	newnote += 12;
+		newnote += 12;
 
 	    event[0] = 0x90 | (ch & 0x0F);
 	    event[1] = newnote;
@@ -1094,7 +1094,7 @@ void m2m_process_events(MidiEvent * ev)
 	    /* HACK -- insert a prior expression event */
 	    else if (expression != current_channel_expr[ch])
 	    {
-	    	/* NOTEON event */
+		/* NOTEON event */
 		n = 11;
 		event[7] = 0x00;
 		event[8] = event[0];
@@ -1129,9 +1129,9 @@ void m2m_process_events(MidiEvent * ev)
 		newnote += tweak_note_offset[ch];
 	    }
 	    while (newnote > 127)
-	    	newnote -= 12;
+		newnote -= 12;
 	    while (newnote < 0)
-	    	newnote += 12;
+		newnote += 12;
 
 	    event[0] = 0xA0 | (ch & 0x0F);
 	    event[1] = newnote;
@@ -1284,13 +1284,13 @@ void m2m_process_events(MidiEvent * ev)
 	    /* HACK - mutate it into a KEYPRESSUE event */
 	    /* but only if there's a note playing */
 	    if (current_track_note[old_ch] >= 0) {
-	    	event_type = ME_KEYPRESSURE;
+		event_type = ME_KEYPRESSURE;
 		event[0] = 0xA0 | (ch & 0x0F);
 		event[1] = current_track_note[old_ch];
 		event[2] = expression;
 	    }
 	    else
-	    	n = 0;
+		n = 0;
 #endif
 
 	    /* non-linear expression event */
@@ -1352,8 +1352,8 @@ void m2m_process_events(MidiEvent * ev)
 	if (n)
 	{
 	    if (!(ch == 9 && (event_type == ME_EXPRESSION ||
-	    		      event_type == ME_PITCHWHEEL ||
-	    		      event_type == ME_PAN)) && !skip_ch_expr_flag)
+			      event_type == ME_PITCHWHEEL ||
+			      event_type == ME_PAN)) && !skip_ch_expr_flag)
 	    {
 		/* resize the track event array */
 		length = track_size[ch];

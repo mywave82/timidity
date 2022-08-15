@@ -330,7 +330,7 @@ int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn)
 static void rcp_tempo_set(int32 at, int32 tempo)
 {
     int lo, mid, hi;
-    
+
     lo = (tempo & 0xff);
     mid = ((tempo >> 8) & 0xff);
     hi = ((tempo >> 16) & 0xff);
@@ -340,7 +340,7 @@ static void rcp_tempo_set(int32 at, int32 tempo)
 static int32 rcp_tempo_change(struct RCPNoteTracer *ntr, int a, int b)
 {
     int32 tempo;
-    
+
     tempo = (int32)((uint32)60000000 * 64 / (init_tempo * a));	/* 6*10^7 / (ini*a/64) */
     ntr->tempo_grade = b;
     if (b != 0)
@@ -361,7 +361,7 @@ static int32 rcp_tempo_change(struct RCPNoteTracer *ntr, int a, int b)
 static void rcp_timesig_change(int32 at)
 {
 	int n, d;
-	
+
 	n = current_file_info->time_sig_n;
 	d = current_file_info->time_sig_d;
 	MIDIEVENT(at, ME_TIMESIG, 0, n, d);
@@ -370,7 +370,7 @@ static void rcp_timesig_change(int32 at)
 static void rcp_keysig_change(int32 at, int32 key)
 {
 	int8 sf, mi;
-	
+
 	if (key < 8)
 		sf = key, mi = 0;
 	else if (key < 16)
@@ -464,7 +464,7 @@ static int rcp_parse_sysex_event(int32 at, uint8 *val, int32 len)
 			evm[i].time = at;
 			readmidi_add_event(&evm[i]);
 		}
-    
+
     return 0;
 }
 
@@ -1323,9 +1323,9 @@ static void ntr_note_on(struct RCPNoteTracer *ntr,
 static void rcp_tempo_gradate(struct RCPNoteTracer *ntr, int step)
 {
     int tempo_grade, tempo_step, tempo, diff, sign, at;
-    
+
     if (step <= 0 || (tempo_grade = ntr->tempo_grade) == 0)
-    	return;
+	return;
     tempo_step = ntr->tempo_step - step;
     if (tempo_step <= 0)
     {
@@ -1402,7 +1402,7 @@ static void ntr_incr(struct RCPNoteTracer *ntr, int step)
 	}
 	ntr->notes = q;
 
- 	if(step == 0)
+	if(step == 0)
 	    return;
 
 	step -= mingate;

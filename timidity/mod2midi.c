@@ -126,7 +126,7 @@
  * is of course 128.
  */
 
-#define WHEEL_SENSITIVITY 		(1 << 7)
+#define WHEEL_SENSITIVITY		(1 << 7)
 #define WHEEL_VALUE(bend)		((bend) / WHEEL_SENSITIVITY + 0x2000)
 
 
@@ -213,7 +213,7 @@ period2note (int period, int *finetune)
        107,  101,   95,   90,   85,   80,   75,   71,   67,   63,   60,   56,
 	53,   50,   47,   45,   42,   40,   37,   35,   33,   31,   30,   28,
 	27,   25,   24,   22,   21,   20,   19,   18,   17,   16,   15,   14,
-	  
+
 	-100 /* just a guard */
   };
 
@@ -252,7 +252,7 @@ period2note (int period, int *finetune)
      * (e.g. 721 - 720 < 762 - 721 ----> pick 720)    */
     if (period - period_table[note + 1] < period_table[note] - period)
       note++;
-    
+
     /* fine tune completion */
     *finetune = ((period_table[note] - period) << 8) /
 		   (period_table[note] - period_table[note + 1]);
@@ -399,7 +399,7 @@ Voice_Play (UBYTE v, SAMPLE * s, ULONG start)
       ModV[v].wheel = bend;
       MIDIEVENT (at, ME_PITCHWHEEL, v, bend & 0x7F, (bend >> 7) & 0x7F);
     }
- 
+
   MIDIEVENT (at, ME_NOTEON, v, ModV[v].noteon, 127);
 }
 
@@ -415,7 +415,7 @@ Voice_Stop (UBYTE v)
   if (ModV[v].noteon == -1)
     return;
 
-#define TURN_OFF_8(base, ofs) 						\
+#define TURN_OFF_8(base, ofs)						\
   while (j & (0xFFL << (ofs))) {					\
     n = ofs + significantDigitsLessOne[(unsigned char) (j >> (ofs))];	\
     MIDIEVENT (at, ME_NOTEOFF, v, (base) + n, 63);			\
@@ -556,7 +556,7 @@ void shrink_huge_sample (Sample *sp)
     ctl->cmsg(CMSG_INFO, VERB_NORMAL,
         "Sample too large (%ld): resampling down to %ld samples",
         data_length, new_data_length);
-    
+
     orig_data = sp->data;
     new_data = calloc(new_data_length + 1, sizeof(sample_t));
 
@@ -566,11 +566,11 @@ void shrink_huge_sample (Sample *sp)
 	x = i * scale2;
 	xtrunc = (uint32) x;
 	xfrac = x - xtrunc;
-	
+
 	if (xtrunc >= data_length - 1)
 	{
 	    if (xtrunc == data_length)
-	    	new_data[i] = orig_data[data_length];
+		new_data[i] = orig_data[data_length];
 	    else	/* linear interpolation */
 	    {
 	        y2 = orig_data[data_length - 1];
@@ -587,7 +587,7 @@ void shrink_huge_sample (Sample *sp)
 
 	    y = (6*y3 + (5*y4 - 11*y3 + 7*y2 - y1) *
 		0.25 * (xfrac+1) * (xfrac-1)) * xfrac;
-	    y = (((6*y2 + (5*y1 - 11*y2 + 7*y3 - y4) * 
+	    y = (((6*y2 + (5*y1 - 11*y2 + 7*y3 - y4) *
 		0.25 * xfrac * (xfrac-2)) * (1-xfrac)) + y) / 6.0;
 
 	    if (y > 32767) y = 32767;
@@ -684,7 +684,7 @@ void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
 	sp->envelope_rate[5]   = 0; /* skip this stage, then the voice is
 				       disappeared */
 #endif
- 	sp->sample_rate = PAL_RATE >> s->divfactor;
+	sp->sample_rate = PAL_RATE >> s->divfactor;
 	sp->low_freq = 0;
 	sp->high_freq = 0x7fffffff;
 	sp->root_freq = freq_table[MOD_ROOT_NOTE];
@@ -696,7 +696,7 @@ void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
 	sp->tremolo_sweep_increment =
 		sp->tremolo_phase_increment = sp->tremolo_depth =
 		sp->vibrato_sweep_increment = sp->vibrato_control_ratio = sp->vibrato_depth = 0;
-	sp->cutoff_freq = sp->resonance = sp->tremolo_to_pitch = 
+	sp->cutoff_freq = sp->resonance = sp->tremolo_to_pitch =
 		sp->tremolo_to_fc = sp->modenv_to_pitch = sp->modenv_to_fc =
 		sp->vel_to_fc = sp->key_to_fc = sp->vel_to_resonance = 0;
 	sp->envelope_velf_bpo = sp->modenv_velf_bpo =

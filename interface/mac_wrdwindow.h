@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-		
+
     mac_wrdwindow.h
     Macintosh graphics driver for WRD
 */
@@ -33,7 +33,7 @@
 #if ENTITY
  #define EXTERN /*entitiy*/
 #else
- #define EXTERN  extern 
+ #define EXTERN  extern
 #endif
 
 static const RGBColor	black={0,0,0},white={0xFFFF,0xFFFF,0xFFFF};
@@ -83,7 +83,7 @@ EXTERN int		wrd_text_color_attr;
 #define CATTR_LPART (1)
 #define CATTR_16FONT (1<<1)
 #define CATTR_COLORED (1<<2)
-#define CATTR_BGCOLORED (1<<3) 
+#define CATTR_BGCOLORED (1<<3)
 #define CATTR_TXTCOL_MASK_SHIFT 4
 #define CATTR_TXTCOL_MASK (7<<CATTR_TXTCOL_MASK_SHIFT)
 #define CATTR_INVAL (1<<31)

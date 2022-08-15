@@ -165,7 +165,7 @@ XM_Cleanup (void)
   _mm_free (mh);
 }
 
-static int 
+static int
 XM_ReadNote (XMNOTE * n)
 {
   UBYTE cmp, result = 1;
@@ -363,7 +363,7 @@ XM_Convert (XMNOTE * xmtrack, UWORD rows)
   return UniDup ();
 }
 
-static BOOL 
+static BOOL
 LoadPatterns (BOOL dummypat)
 {
   int t, u, v, numtrk;
@@ -465,7 +465,7 @@ LoadPatterns (BOOL dummypat)
   return 1;
 }
 
-static BOOL 
+static BOOL
 LoadInstruments (void)
 {
   int t, u, ck;
@@ -559,11 +559,11 @@ LoadInstruments (void)
 		d->samplenumber[u] = pth.what[u] + of.numsmp;
 	      d->volfade = pth.volfade;
 
-#define XM_ProcessEnvelope(name) 											\
- 				for (u = 0; u < (XMENVCNT / 2); u++) {						\
- 					d->name##env[u].pos = pth.name##env[2*u];		\
- 					d->name##env[u].val = pth.name##env[2*u + 1];	\
- 				}															\
+#define XM_ProcessEnvelope(name)											\
+				for (u = 0; u < (XMENVCNT / 2); u++) {						\
+					d->name##env[u].pos = pth.name##env[2*u];		\
+					d->name##env[u].val = pth.name##env[2*u + 1];	\
+				}															\
 				memcpy(d->name##env,pth.name##env,XMENVCNT);			\
 				if (pth.name##flg&1) d->name##flg|=EF_ON;				\
 				if (pth.name##flg&2) d->name##flg|=EF_SUSTAIN;			\

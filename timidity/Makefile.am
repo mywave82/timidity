@@ -334,13 +334,13 @@ timidity$(EXEEXT): $(timidity_OBJECTS) $(timidity_DEPENDENCIES) $(timidity_dep) 
 	@rm -f timidity$(EXEEXT)
 	$(POCC_LINK) $(timidity_OBJECTS) $(SYSEXTRAS:.c=.$(OBJEXT)) -out:timidity.lib
 	touch timidity$(EXEEXT)
-	
+
 else
 POCC_LINK = polink.exe
 timidity$(EXEEXT): $(timidity_OBJECTS) $(timidity_DEPENDENCIES) $(timidity_dep) $(W32GUI_RES)
 	@rm -f timidity$(EXEEXT)
 	$(POCC_LINK) $(POCC_LDFLAGS) $(timidity_OBJECTS) $(timidity_LDADD) $(LIBS) -out:timidity.exe
-	
+
 endif
 
 POCCC_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
@@ -372,7 +372,7 @@ calcnewt$(EXEEXT): $(calcnewt_OBJECTS) $(calcnewt_DEPENDENCIES)
 else
 
 if WATCOM_C
-WATCOM_LINK = wlink.exe 
+WATCOM_LINK = wlink.exe
 if WINDRV
 timidity$(EXEEXT): $(timidity_OBJECTS) $(SYSEXTRAS:.c=.$(OBJEXT)) $(timidity_dep) $(W32GUI_RES)
 	@rm -f $@
@@ -391,7 +391,7 @@ calcnewt$(EXEEXT): $(calcnewt_OBJECTS) $(calcnewt_DEPENDENCIES)
 	$(WATCOM_LINK) File calcnewt.$(OBJEXT) Name $@
 else
 if DMC
-DMC_LINK = dmc.exe 
+DMC_LINK = dmc.exe
 if WINDRV
 timidity$(EXEEXT): $(timidity_OBJECTS) $(SYSEXTRAS:.c=.$(OBJEXT)) $(timidity_dep) $(W32GUI_RES)
 	@rm -f $@ $(@:.exe=.lib)
@@ -412,17 +412,17 @@ calcnewt.$(OBJEXT): calcnewt.c
 else
 if MINGWGCC
 if WINDRV
-calcnewt$(EXEEXT): $(calcnewt_OBJECTS) $(calcnewt_DEPENDENCIES) 
+calcnewt$(EXEEXT): $(calcnewt_OBJECTS) $(calcnewt_DEPENDENCIES)
 	@rm -f calcnewt$(EXEEXT)
 	$(LINK) $(calcnewt_LDFLAGS) $(calcnewt_OBJECTS) $(calcnewt_LDADD) $(LIBS)
-timidity$(EXEEXT): $(timidity_OBJECTS) $(timidity_DEPENDENCIES) 
+timidity$(EXEEXT): $(timidity_OBJECTS) $(timidity_DEPENDENCIES)
 	@rm -f timidity$(EXEEXT)
-	ar -cru timidity.exe $(timidity_LDFLAGS) $(timidity_OBJECTS) $(timidity_LDADD) 
+	ar -cru timidity.exe $(timidity_LDFLAGS) $(timidity_OBJECTS) $(timidity_LDADD)
 else
-calcnewt$(EXEEXT): $(calcnewt_OBJECTS) $(calcnewt_DEPENDENCIES) 
+calcnewt$(EXEEXT): $(calcnewt_OBJECTS) $(calcnewt_DEPENDENCIES)
 	@rm -f calcnewt$(EXEEXT)
 	$(LINK) $(calcnewt_LDFLAGS) $(calcnewt_OBJECTS) $(calcnewt_LDADD) $(LIBS)
-timidity$(EXEEXT): $(timidity_OBJECTS) $(timidity_DEPENDENCIES) 
+timidity$(EXEEXT): $(timidity_OBJECTS) $(timidity_DEPENDENCIES)
 	@rm -f timidity$(EXEEXT)
 	$(LINK) $(timidity_LDFLAGS) $(timidity_OBJECTS) $(timidity_LDADD) $(LIBS)
 endif

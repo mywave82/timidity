@@ -195,7 +195,7 @@ static Window try_create_window(Display *disp, int width, int height,
 	rvinfo.class  = want_class;
 	rvinfo.screen = defScreen;
 	rvinfo.depth = want_depth;
-	vinfo = XGetVisualInfo(disp, 
+	vinfo = XGetVisualInfo(disp,
 			       VisualClassMask |
 			       VisualScreenMask |
 			       VisualDepthMask,
@@ -865,7 +865,7 @@ static void sry_load_png(uint8 *data)
     png_get_IHDR(pngPtr, infoPtr, &width, &height,
 		 &bitDepth, &colorType,
 		 &interlaceType, &compressionType, &filterType);
-    
+
     /* transformation */
     /* contert to 256 palette */
     if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
@@ -1496,7 +1496,7 @@ static void vscreen_drawline(VirtualScreen* scr,
 		idx = scr->width * y + x;
 		scr->data[idx] = ROP3_CA0749(mask, pixel, scr->data[idx]);
 	    }
-	}		
+	}
     }
     else
     {
@@ -2209,7 +2209,7 @@ static int bitmap_drawimage(ImagePixmap *ip, char *sjis_str, int nbytes)
     {
 	sjis_c1 = *sjis_str & 0xff;
 	sjis_str++;
-	
+
 	if(IS_MULTI_BYTE(sjis_c1))
 	{
 	    int e1, e2;

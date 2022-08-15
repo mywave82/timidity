@@ -12,7 +12,7 @@ This file contains fllowing instructions.
 1.Mingw in Msys environment
 
 (1)Setup Mingw and MSYS
-    1)Setup Mingw(http://sourceforge.net/projects/mingw/) 
+    1)Setup Mingw(http://sourceforge.net/projects/mingw/)
       and MSYS (See MingwWiki(http://mingw.sourceforge.net/MinGWiki/))
 (2)Setup needed libraries
         2-0)get pexports from Mingw
@@ -57,12 +57,12 @@ This file contains fllowing instructions.
               REM FLAC
               set PATH=\usr\local\flac-1.2.1-devel-win\lib;;%PATH%
               set C_INCLUDE_PATH=/usr/local/flac-1.2.1-devel-win/include:%C_INCLUDE_PATH%
-              set LD_LIBRARY_PATH=/usr/local/flac-1.2.1-devel-win/bin:%LD_LIBRARY_PATH%	
+              set LD_LIBRARY_PATH=/usr/local/flac-1.2.1-devel-win/bin:%LD_LIBRARY_PATH%
 
         2-5)portaudio(http://www.portaudio.com/)
             Download portaudio v1.19. and extarct it.
             Move portaudio.h to include path.
-            Get portaudio.dll from Csound5.08.2-gnu-win32-f.exe(http://sourceforge.net/project/showfiles.php?group_id=81968). 
+            Get portaudio.dll from Csound5.08.2-gnu-win32-f.exe(http://sourceforge.net/project/showfiles.php?group_id=81968).
 			Rename portaudio.dll to libportaudio.dll and move it to library path.
             Only portaudo.h is needed for compiling TiMidity++.
 
@@ -139,16 +139,16 @@ This file contains fllowing instructions.
            implib -a -c xxx.lib xxx.dll
         2-0-2)coff2omf.exe(VCC library to BCC library)
            coff2omf  xxxx.lib xxx_bcpp.lib.
-        
+
         2-1)pdcurses
            pdcurses-2.6.0-src.tar.bz2 from Mingw(http://sourceforge.net/project/showfiles.php?group_id=2435)
            and make them.
            rename pdcurses.lib libpdcurses.lib
-           Add include path and library path bcc32.cfg. 
+           Add include path and library path bcc32.cfg.
            Add library path in ilink32.cfg
         2-2)oggvorbis(http://www.vorbis.com/)
            get OggVorbis-win32sdk-1.0.1.zip and extract it.
-           Add include path and library path bcc32.cfg. 
+           Add include path and library path bcc32.cfg.
            Add library path in ilink32.cfg
            Only hederfiles are need for compiling TiMidity++
         2-3)gogo no coder(http://www.marinecat.net/mct_top.htm)
@@ -156,7 +156,7 @@ This file contains fllowing instructions.
            get gogo.h files from Gogo no Coder source(http://www.marinecat.net/cgi/lcount/count.cgi?page=3111&name=petit311-src.lzh&downex=petit311.lzh)
            move gogo.h gogo\include\gogo
            (for timidity gogo.lib is not necessary)
-           Add include path and library path bcc32.cfg. 
+           Add include path and library path bcc32.cfg.
            Add library path in ilink32.cfg
            Only hederfiles are need for TiMidity++
         2-5)flac(http://flac.sourceforge.net/)
@@ -165,17 +165,17 @@ This file contains fllowing instructions.
                 (export.h)
                 58 #if defined(FLAC__NO_DLL) || !defined(_MSC_VER) \
                     || !defined(__BORLANDC__) || !defined(__CYGWIN32__) || !defined(__MINGW32__)
-           Add include path and library path bcc32.cfg. 
+           Add include path and library path bcc32.cfg.
            Add library path in ilink32.cfg
         2-6)portaudio(http://www.portaudio.com/)
              I don't know how to comple portaudio with bcc commandline tools.
              Only portaudio.h is needed for compiling TiMidity++.
              You can get portaudio.dll from Csound5.08.2-gnu-win32-f.exe(http://sourceforge.net/project/showfiles.php?group_id=81968).
-             
+
 (3)Make TiMidity++ binaries
         3-0) perl -pe 's/CC\s-o\s\S\S*\s/CC /g' configure >configure_bc
                 ( -o xxxx options are not work correctly with BCC)
-                
+
         3-1)timw32g.exe
             (configure)
              CC="bcc32" CPP="cpp32" CFLAGS="" ./configure_bc  --enable-w32gui --enable-spline=gauss \
@@ -447,7 +447,7 @@ This file contains fllowing instructions.
 
 5.Digital Mars in Msys environment
 
-(1) Digtal Mars & MSYS 
+(1) Digtal Mars & MSYS
 	1) Installing up Digtal Mars(http://www.digitalmars.com/)
 		1-1) Download Digtal Mars.
 		2-2) replace rc.exe by that from Microsoft Platform SDK.
@@ -464,7 +464,7 @@ This file contains fllowing instructions.
 			Set PATH=i:\dm\bin;%PATH%
 			Set INCLUDE=i:\dm\include;i:\dm\include\win32;%INCLUDE%
 			Set LIB=i:\dm\lib;%LIB%
-			
+
 			Set PATH=i:\usr\local\gogo\bin;%PATH%
 			Set INCLUDE=i:\usr\local\gogo\include;%INCLUDE%
 			Set LIB=i:\usr\local\gogo\lib;%LIB%
@@ -484,7 +484,7 @@ This file contains fllowing instructions.
 		Change name of pccurses.lil to libpdcuses.lib/
 
     2-2) oggvorbis(http://www.vorbis.com/)
-    	Use "OggVorbis-win32sdk-1.0.1.zip".
+	Use "OggVorbis-win32sdk-1.0.1.zip".
            Edit include\ogg\os_types.h as follows.
               (os_types.h)
               36 #  elif defined(__MINGW32__) || defined(__DMC__)
@@ -494,11 +494,11 @@ This file contains fllowing instructions.
            Get gogo.dll from Gogo no Coder(http://www.marinecat.net/cgi/lcount/count.cgi?page=3112&name=wing311.exe&downex=wing311a.exe)
            Get gogo.h files from Gogo noCoder source(http://www.marinecat.net/cgi/lcount/count.cgi?page=3111&name=petit311-src.lzh&downex=petit311.lzh)
 		   Make gogo.lib from gogo.dll
-    	   Move gogo.h gogo\include\gogo
-    	   Move gogo.dll libgogo.a gogo\lib
-		
+	   Move gogo.h gogo\include\gogo
+	   Move gogo.dll libgogo.a gogo\lib
+
 	2-4) flac(http://flac.sourceforge.net/)
-		Use "http://downloads.sourceforge.net/flac/flac-1.2.1-devel-win.zip" 
+		Use "http://downloads.sourceforge.net/flac/flac-1.2.1-devel-win.zip"
 		Edit line 58 of include\*\export.h s.
 			(export.h)
 			58 #if defined(FLAC__NO_DLL) || !defined(_MSC_VER) \
@@ -517,7 +517,7 @@ This file contains fllowing instructions.
         3-0-1) perl -pe 's/CC\s-o\s\S\S*\s/CC /g' configure |perl -pe 's/CXX\s-o\s\S\S*\s/CXX /g' - >configure_dm
                 (because "-o xxxx" is not suitbable dmc.exe )
         3-0-2) Get cpp.exe from Free Pascal Compiler(http://www.freepascal.org/),
-             and rename it as fpcpp.exe. 
+             and rename it as fpcpp.exe.
             Åipreprocessor of dmc.exe is not compatible "gnu autotools"Åj
 
         3-1)timw32g.exe
@@ -562,7 +562,7 @@ This file contains fllowing instructions.
             make
               commentout timiditydrv.h 23:
               23 //#error this stub requires an updated version of <rpcndr.h>
-           	make
+	make
 
 
 
@@ -590,15 +590,15 @@ This file contains fllowing instructions.
 		Rname pccurses.lib to libpdcuses.lib.
 
     2-2) oggvorbis(http://www.vorbis.com/)
-    	Get "OggVorbis-win32sdk-1.0.1.zipÅh(http://www.vorbis.com/files/1.0.1/windows/OggVorbis-win32sdk-1.0.1.zip)
+	Get "OggVorbis-win32sdk-1.0.1.zipÅh(http://www.vorbis.com/files/1.0.1/windows/OggVorbis-win32sdk-1.0.1.zip)
 
     2-3) Gogo no Coder (mp3 encoding dll) (http://www.marinecat.net/mct_top.htm)
            Get gogo.dll from Gogo no Coder(http://www.marinecat.net/cgi/lcount/count.cgi?page=3112&name=wing311.exe&downex=wing311a.exe)
            Get gogo.h files from Gogo noCoder source(http://www.marinecat.net/cgi/lcount/count.cgi?page=3111&name=petit311-src.lzh&downex=petit311.lzh)
 		   Make gogo.lib from gogo.dll
-    	   Move gogo.h gogo\include\gogo
-    	   Move gogo.dll libgogo.a gogo\lib
-			
+	   Move gogo.h gogo\include\gogo
+	   Move gogo.dll libgogo.a gogo\lib
+
 	2-4) flac(http://flac.sourceforge.net/)
 		Use "http://downloads.sourceforge.net/flac/flac-1.2.1-devel-win.zip".
 		Edit "line 58"s of include\*\export.h as follows.
@@ -606,7 +606,7 @@ This file contains fllowing instructions.
 			58  #if defined(FLAC__NO_DLL) || !defined(_MSC_VER) \
 				|| !defined(__BORLANDC__) || !defined(__CYGWIN32__) || !defined(__MINGW32__) \
 				|| !defined(__WATCOMC__) || !defined(__DMC__)
-		
+
 	2-5) portaudio(http://www.portaudio.com/)
 		Only "portaudio.h" is requierd for compiling.
         You can get portaudio.dll from Csound5.08.2-gnu-win32-f.exe(http://sourceforge.net/project/showfiles.php?group_id=81968).

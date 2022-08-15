@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-		
+
     mac_a.c
     Macintosh audio driver
 */
@@ -109,7 +109,7 @@ static SndChannelPtr MyCreateSndChannel(short synth, long initOptions,
 		else
 			mySndChan->userInfo = 0;	// {reset userInfo field}
 	}
-	return mySndChan; 					// {return new sound channel}
+	return mySndChan;					// {return new sound channel}
 }
 
 // ***************************************
@@ -134,7 +134,7 @@ static pascal void callback(SndChannelPtr chan, SndCommand * cmd)
 static int GetCurrentFrameSize(void)
 {
 	int frameSize;
-	
+
 	frameSize = (dpm.encoding & PE_MONO) ? 1 : 2;
 	if (dpm.encoding & PE_16BIT)
 		frameSize *= 2;
@@ -164,7 +164,7 @@ static int open_output (void)
 	int			i, include_enc, exclude_enc, sndBufferSize, sndBufferCount;
 	SndCommand	theCmd;
 	char		*sndBufferPtr;
-	
+
 	if (dpm.fd != -1)
 		return -1;
 	// buffer fragments
@@ -200,7 +200,7 @@ static int open_output (void)
 	for(i = 0; i < sndBufferCount; i++)
 	{
 		MySoundHeader	*header = &soundHeader[i];
-		
+
 		header->samplePtr = soundBuffer[i] = sndBufferPtr;
 		header->loopStart = header->loopEnd = 0;
 		header->encode = SOUND_MANAGER_3_OR_LATER ? cmpSH : extSH;
@@ -252,7 +252,7 @@ static void filling_end()
 static void QuingSndCommand(SndChannelPtr chan, const SndCommand *cmd)
 {
 	OSErr err;
-	
+
 	for(;;)/* wait for successful quing */
 	{
 		err= SndDoCommand(chan, cmd, 1);
@@ -268,7 +268,7 @@ static void QuingSndCommand(SndChannelPtr chan, const SndCommand *cmd)
 			YieldToAnyThread();
 		}
 		else	/*queueFull ˆÈŠO‚Ìerr‚È‚çI—¹*/
-			mac_ErrorExit("\pSound out error--quit");			
+			mac_ErrorExit("\pSound out error--quit");
 	}
 }
 
@@ -280,7 +280,7 @@ static int output_data (char *buf, int32 nbytes)
 	OSType			codec;
 	SndCommand		theCmd;
 	int				frameSize;
-	
+
 	if( gCursorIsWatch ){
 		InitCursor();	gCursorIsWatch=false;
 	}
@@ -291,12 +291,12 @@ static int output_data (char *buf, int32 nbytes)
 		theCmd.cmd=pauseCmd; SndDoImmediate(gSndCannel, &theCmd);
 	}
 #endif
-	
+
 	if (dpm.encoding & PE_MONO)
 		numChannels = 1, frameSize = 1;
 	else	/* Stereo sample */
 		numChannels = 2, frameSize = 2;
-	
+
 	#if SOUND_MANAGER_3_OR_LATER
 	if (dpm.encoding & PE_16BIT)
 		sampleSize = 16, frameSize *= 2, codec = k16BitBigEndianFormat;	// kSoundNotCompressed
@@ -312,11 +312,11 @@ static int output_data (char *buf, int32 nbytes)
 	else
 		sampleSize = 8;
 	#endif
-	
+
 	rest = nbytes;
 	do {
 		header = &soundHeader[nextBuf];
-		
+
 		nbytes = rest;
 		if (nbytes > bufferSize)
 		{
@@ -326,7 +326,7 @@ static int output_data (char *buf, int32 nbytes)
 		else
 			samples = nbytes / frameSize;
 		rest -= nbytes;
-		
+
 		header->numChannels = numChannels;
 		header->sampleRate = dpm.rate << 16;
 		header->numFrames = samples;
@@ -337,15 +337,15 @@ static int output_data (char *buf, int32 nbytes)
 		header->sampleSize = sampleSize;
 		BlockMoveData(buf, soundBuffer[nextBuf], nbytes);
 		buf += nbytes;
-		
+
 		theCmd.cmd= bufferCmd;
 		theCmd.param2=(long)header;
-		
+
 		QuingSndCommand(gSndCannel, &theCmd);
 		mac_buf_using_num++;
 		if (++nextBuf >= bufferCount)
 			nextBuf = 0;
-		
+
 		theCmd.cmd= callBackCmd;	// post set
 		theCmd.param1= 0;
 		theCmd.param2= samples;
@@ -359,7 +359,7 @@ static void fade_output()
 	unsigned int	fade_start_tick=TickCount();
 	int				i;
 	SndCommand		theCmd;
-	
+
 	for( i=0; i<=30; i++ ){
 		theCmd.cmd=ampCmd;
 		theCmd.param1=mac_amplitude*(30-i)/30;		/*amplitude->0*/
@@ -387,7 +387,7 @@ static void purge_output (void)
 
 	theCmd.cmd=resumeCmd;
 	err= SndDoImmediate(gSndCannel, &theCmd);
-	
+
 	theCmd.cmd=waitCmd;
 	theCmd.param1=2000*0.5; /* wait 0.5 sec */
 	SndDoCommand(gSndCannel, &theCmd, 1);
@@ -395,7 +395,7 @@ static void purge_output (void)
 	theCmd.cmd=ampCmd;
 	theCmd.param1=mac_amplitude;
 	SndDoCommand(gSndCannel, &theCmd,0);
-	
+
 	filling_end();
 	initCounter();
 }
@@ -420,22 +420,22 @@ static int flush_output (void)
 	theCmd.param1= 0;
 	theCmd.param2= FLUSH_END;
 	QuingSndCommand(gSndCannel, &theCmd);
-	
+
 	filling_end();
 	for(;;){
 		trace_loop();
 		YieldToAnyThread();
 		//ctl->current_time(current_samples());
-   		if( ! mac_flushing_flag ){ //end of midi
-   			ret= RC_NONE;
-   			break;
-   		}else if( mac_rc!=RC_NONE ){
-  			ret= mac_rc;
-  			break;
-   		}
-   	}
-   	initCounter();
-   	return ret;
+		if( ! mac_flushing_flag ){ //end of midi
+			ret= RC_NONE;
+			break;
+		}else if( mac_rc!=RC_NONE ){
+			ret= mac_rc;
+			break;
+		}
+	}
+	initCounter();
+	return ret;
 }
 
 static int32 current_samples(void)
@@ -452,17 +452,17 @@ static int acntl(int request, void * arg)
 	return 0;
       case PM_REQ_FLUSH:
       case PM_REQ_OUTPUT_FINISH:
-      	flush_output();
+	flush_output();
 	return 0;
       case PM_REQ_GETQSIZ:
         *(int32*)arg = bufferCount * bufferSize;
-      	return 0;
+	return 0;
       case PM_REQ_GETSAMPLES:
-      	*(int*)arg= current_samples();
-      	return 0;
+	*(int*)arg= current_samples();
+	return 0;
       case PM_REQ_PLAY_START:
 	initCounter();
-      	return 0;
+	return 0;
     }
     return -1;
 }

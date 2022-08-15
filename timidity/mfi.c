@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	
+
 	mfi.c (Melody Format for i-mode)
 	by Kentaro Sato	<kentaro@ranvis.com>
 */
@@ -116,7 +116,7 @@ int read_mfi_file(timidity_file *tf)
 	uint32				type;
 	uint8				numTracks;
 	int					i;
-	
+
 	if (tf_read_beint32(&dataLength, tf) != 1
 			|| tf_read_beint16(&infoLength, tf) != 1
 			|| tf_read_beint16(&dataType, tf) != 1
@@ -168,7 +168,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 	uint32			type;
 	uint8			byteData;
 	char			buf[512];
-	
+
 	*mfiVersion = 1;
 	while (infoLength > 0)
 	{
@@ -193,7 +193,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 		{
 			case BE_FCC(0x7469746C /*titl*/): {	/* title */
 				char			*title;
-				
+
 				if (current_file_info->seq_name == NULL)
 					goto skip_info_data;
 				title = safe_malloc(length + 1);
@@ -208,7 +208,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 			}	break;
 			case BE_FCC(0x736F7263 /*sorc*/): {	/* source */
 				const char		*srcInfo;
-				
+
 				if (length != 1)
 					goto skip_info_data;
 				if (tf_read(&byteData, 1, 1, tf) != 1)
@@ -242,7 +242,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 				break;
 			case BE_FCC(0x64617465 /*date*/): {	/* created date */
 				char			created[9];
-				
+
 				if (length != 8)
 					goto skip_info_data;
 				if (tf_read(created, 8, 1, tf) != 1)
@@ -252,7 +252,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 			}	break;
 			case BE_FCC(0x636F7079 /*copy*/): {	/* copyright */
 				int				lengthToRead;
-				
+
 				lengthToRead = length >= sizeof buf ? sizeof buf - 1 : length;
 				if (lengthToRead > 0 && tf_read(buf, lengthToRead, 1, tf) != 1)
 					return 1;
@@ -296,7 +296,7 @@ char *get_mfi_file_title(timidity_file *tf)
 	int				length, dataLength, infoLength, dataType;
 	uint32			type;
 	uint8			numTracks;
-	
+
 	if (tf_read_beint32(&dataLength, tf) != 1
 			|| tf_read_beint16(&infoLength, tf) != 1
 			|| tf_read_beint16(&dataType, tf) != 1
@@ -316,7 +316,7 @@ char *get_mfi_file_title(timidity_file *tf)
 		if (type == BE_FCC(0x7469746C /*titl*/))
 		{
 			char				*title;
-			
+
 			if (length == 0)
 				return NULL;
 			if ((title = malloc(length + 1)) == NULL)
@@ -373,7 +373,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 	uint8				instruments[MAX_CHANNELS];
 	int					channelMap[4];
 	LastNoteInfo		lastNotes[MAX_CHANNELS];
-	
+
 	readmidi_set_track(trackNo, 1);
 	pos = 0;
 	velocity = 0x7F;
@@ -390,7 +390,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 		if (data[1] != 0xFF)	/* note */
 		{
 			int					channel;
-			
+
 			channel = channelMap[data[1] >> 6];
 			note = 0x48 - 0x1B + (data[1] & 0x3F);
 			if (dataLength >= 4)
@@ -438,7 +438,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 			if ((data[2] & 0xF0) == 0xC0)	/* tempo */
 			{
 				int				timebase, tempo;
-				
+
 				timebase = data[2] & 0xF;
 				if ((timebase & 0x7) == 0x7)
 					ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Undefined tempo timebase.");
@@ -456,7 +456,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 			{
 				int				extLength, channel;
 				uint8			extData[512];
-				
+
 				CHECK_AND_READ_FROM_FILE(&data[4], 1);
 				extLength = (data[3] << 8) | data[4];
 				if (extLength <= sizeof extData)
@@ -489,7 +489,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 			{
 				int				part, channel, value;
 				#define GET_PART_AND_CHANNEL(p, c)		(p) = data[3] >> 6; (c) = channelMap[p]
-				
+
 				switch(data[2])
 				{
 					case 0xB0:	/* master volume */
@@ -605,7 +605,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 static int tf_read_beint16(int *value, timidity_file *tf)
 {
 	uint16				value_;
-	
+
 	if (tf_read(&value_, 2, 1, tf) != 1)
 		return 0;
 	*value = BE_SHORT(value_);
@@ -615,7 +615,7 @@ static int tf_read_beint16(int *value, timidity_file *tf)
 static int tf_read_beint32(int *value, timidity_file *tf)
 {
 	uint32				value_;
-	
+
 	if (tf_read(&value_, 4, 1, tf) != 1)
 		return 0;
 	*value = BE_LONG(value_);

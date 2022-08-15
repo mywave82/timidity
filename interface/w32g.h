@@ -125,7 +125,7 @@ enum {
 
 #define IDM_CONSOLE		2511
 #define IDM_LIST		2512
-#define IDM_TRACER	 	2513
+#define IDM_TRACER		2513
 #define IDM_DOC			2514
 #define IDM_WRD			2515
 #define IDM_SOUNDSPEC	2516
@@ -218,7 +218,7 @@ extern PanelInfo *Panel;
 #define TMCCC_RED	RGB(0xff,0x00,0x00)
 
 #define TMCCC_FORE	TMCCC_BLACK // Aliased
-#define TMCCC_BACK 	RGB(0x00, 0xf0, 0x00)
+#define TMCCC_BACK	RGB(0x00, 0xf0, 0x00)
 #define TMCCC_LOW	RGB(0x80, 0xd0, 0x00)
 #define TMCCC_MIDDLE	RGB(0xb0, 0xb0, 0x00)
 #define TMCCC_HIGH	RGB(0xe0, 0x00, 0x00)

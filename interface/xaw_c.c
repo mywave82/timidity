@@ -298,7 +298,7 @@ ctl_lyric(int lyricid) {
   lyric = event2string(lyricid);
   if (lyric != NULL) {
     if (lyric[0] == ME_KARAOKE_LYRIC) {
-      if ((lyric[1] == '/') || (lyric[1] == '\\')) { 
+      if ((lyric[1] == '/') || (lyric[1] == '\\')) {
         lyric[1] = '\n';
         a_pipe_write_msg_nobr(lyric + 1);
       }
@@ -535,7 +535,7 @@ ctl_blocking_read(int32 *valp) {
 
           target_play_mode = NULL;
           for (ii = play_mode_list; *ii != NULL; ii++)
-            if ((*ii)->id_character == id) 
+            if ((*ii)->id_character == id)
               target_play_mode = *ii;
           if (target_play_mode == NULL) goto z1error;
           p = strchr(local_buf, ' ');
@@ -1001,7 +1001,7 @@ static void
 ctl_pause(int is_paused, int time) {
   if (is_paused) {
     a_pipe_write("%c1", M_PAUSE);
-  } else { 
+  } else {
     ctl_current_time(time, -1);
     a_pipe_write("%c0", M_PAUSE);
   }

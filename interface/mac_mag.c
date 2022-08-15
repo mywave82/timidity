@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-		
+
     mac_mag.c
     Macintosh mag loader
 */
@@ -64,7 +64,7 @@ typedef struct {
 static void read_flagA_setup(Mag_Header * mh, struct timidity_file *tf )
 {
 	int	 readbytes;
-	
+
 	readbytes=mh->offset_flagB - mh->offset_flagA;
 	mh->flagA_work=(uint8*)safe_malloc( readbytes );
 	tf_seek(tf, mh->header_pos + mh->offset_flagA, SEEK_SET);
@@ -73,7 +73,7 @@ static void read_flagA_setup(Mag_Header * mh, struct timidity_file *tf )
 }
 
 static void read_flagB_setup(Mag_Header * mh, struct timidity_file *tf )
-{	
+{
 	mh->flagB_work=(uint8*)safe_malloc( mh->size_flagB );
 	tf_seek(tf, mh->header_pos + mh->offset_flagB, SEEK_SET);
 	tf_read(mh->flagB_work, 1, mh->size_flagB, tf);
@@ -83,7 +83,7 @@ static void read_flagB_setup(Mag_Header * mh, struct timidity_file *tf )
 static void read_flag_1line(Mag_Header * mh )
 {
 	int		x, flagA,flagB;
-	
+
 	for( x=mh->x1; x<=mh->x2; ){
 		flagA= mh->flagA_work[mh->flagA_pos/8] & (0x80 >> (mh->flagA_pos & 0x07) );
 		mh->flagA_pos++;
@@ -99,7 +99,7 @@ static void read_flag_1line(Mag_Header * mh )
 
 static void load_pixel(Mag_Header * mh, struct timidity_file *tf )
 {
-	int 		fpos,x,y,i, dx,dy;
+	int		fpos,x,y,i, dx,dy;
 	uint16		pixels;
 	const int	DX[]={0,-4,-8,-16,  0,-4,  0,-4,-8,  0,-4,-8,  0,-4,-8, 0},
 				DY[]={0, 0, 0,  0, -1,-1, -2,-2,-2, -4,-4,-4, -8,-8,-8, -16};
@@ -128,7 +128,7 @@ static void load_pixel(Mag_Header * mh, struct timidity_file *tf )
 				 mh->bitMap[y*mh->rowBytes+x  ]= mh->bitMap[(y+dy)*mh->rowBytes+ x+dx  ];
 				 mh->bitMap[y*mh->rowBytes+x+1]= mh->bitMap[(y+dy)*mh->rowBytes+ x+dx+1];
 				 mh->bitMap[y*mh->rowBytes+x+2]= mh->bitMap[(y+dy)*mh->rowBytes+ x+dx+2];
-				 mh->bitMap[y*mh->rowBytes+x+3]= mh->bitMap[(y+dy)*mh->rowBytes+ x+dx+3];			
+				 mh->bitMap[y*mh->rowBytes+x+3]= mh->bitMap[(y+dy)*mh->rowBytes+ x+dx+3];
 			}
 		}
 	}
@@ -144,38 +144,38 @@ int mac_mag_load(const char* fn, int dx, int dy, PixMapHandle pixmap,
 	struct timidity_file	*tf;
 	static Mag_Header mag_header;
 	RGBColor	color;
-	
+
 //	if( strcmp( mag_header.filename, fn)==0 ){
 //		SetRect(imageRect, mag_header.x1, mag_header.y1, mag_header.x2+1, mag_header.y2+1);
 //		return; //nothing to do
 //	}
-	
+
 	if( (tf=wrd_open_file((char *)fn))==0 )
 		return 1;
-	
+
 	// initialize table
 	memset(&mag_header, 0, sizeof(Mag_Header) );
 	strcpy( mag_header.filename, fn );
 	mag_header.bitMap = GetPixBaseAddr(pixmap);
 	mag_header.rowBytes= (**pixmap).rowBytes & 0x1FFF;
-	
+
 	// magic string check
 	ret=tf_read(buf, 1, 8,tf);
 	if( ret!=8 || memcmp(buf, "MAKI02  ",8)!=0 ){
 		err=1;
 		goto mac_mag_load_exit;
 	}
-	
-	
+
+
 	while( tf_getc(tf) != 0x1A ) //skip machine code,user name, comment
 		/*nothing*/;
-	
+
 	mag_header.header_pos=tf_tell(tf); //get header position
-	
-	// read header	
+
+	// read header
 	ret=tf_read(&mag_header, 1, 32, tf);
 	if( ret!=32 ) goto mac_mag_load_exit; //unexpected end of file
-	
+
 	//transrate endian
 	mag_header.x1=LE_SHORT(mag_header.x1);
 	mag_header.y1=LE_SHORT(mag_header.y1);
@@ -186,9 +186,9 @@ int mac_mag_load(const char* fn, int dx, int dy, PixMapHandle pixmap,
 	mag_header.size_flagB=LE_LONG(mag_header.size_flagB);
 	mag_header.offset_pixel=LE_LONG(mag_header.offset_pixel);
 	mag_header.size_pixel=LE_LONG(mag_header.size_pixel);
-	
+
 	mag_header.x1 &= ~0x7;
-	mag_header.x2 |= 0x7;	
+	mag_header.x2 |= 0x7;
 
 	if( dx!=WRD_NOARG ){
 		int width= mag_header.x2-mag_header.x1;
@@ -201,17 +201,17 @@ int mac_mag_load(const char* fn, int dx, int dy, PixMapHandle pixmap,
 		mag_header.y1= dy;
 		mag_header.y2= mag_header.y1+hight;
 	}
-	
-	
-	
+
+
+
 	mag_header.width=mag_header.x2-mag_header.x1+1;
 	mag_header.hight=mag_header.y2-mag_header.y1+1;
 	SetRect(imageRect, mag_header.x1, mag_header.y1, mag_header.x2+1, mag_header.y2+1);
-	
+
 	if( mag_header.screen_mode != 0 ){
 		goto mac_mag_load_exit; //not support mode
 	}
-	
+
 	//read pallet
 	for( i=0; i<16; i++){
 		ret=tf_read(buf, 1, 3, tf);
@@ -221,11 +221,11 @@ int mac_mag_load(const char* fn, int dx, int dy, PixMapHandle pixmap,
 		color.blue=buf[2]*256;
 		dev_palette[17][i]=color; //(buf[1]>>4)*0x100 + (buf[0]>>4)*0x10 + (buf[2]>>4);
 	}
-	
+
 	//ActivatePalette(qd.thePort);
 	if( mode==0 || mode==1 )
 		load_pixel(&mag_header, tf );
-	
+
  mac_mag_load_exit:
 	free(mag_header.flagA_work);
 	free(mag_header.flagB_work);
@@ -247,7 +247,7 @@ int mac_pho_load(const char* fn, PixMapHandle pm)
 	PaintRect(&portRect);
 
 	if( (tf=wrd_open_file((char *)fn))==0 )
-		return 1;	
+		return 1;
 	rowBytes= (**pm).rowBytes & 0x1FFF;
 	bitMap = GetPixBaseAddr(pm);
 

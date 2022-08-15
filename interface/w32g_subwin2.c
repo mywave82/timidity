@@ -239,12 +239,12 @@ void InitWrdWnd(HWND hParentWnd)
 	INILoadWrdWnd();
 	ShowWindow(hWrdWnd,SW_HIDE);
 	w32g_wrd_wnd.draw_skip = 0;
-	w32g_wrd_wnd.font_height = 16; 
-	w32g_wrd_wnd.font_width = 8; 
-	w32g_wrd_wnd.row = 80; 
+	w32g_wrd_wnd.font_height = 16;
+	w32g_wrd_wnd.font_width = 8;
+	w32g_wrd_wnd.row = 80;
 	w32g_wrd_wnd.col = 25;
-	w32g_wrd_wnd.width = w32g_wrd_wnd.font_width * w32g_wrd_wnd.row; 
-	w32g_wrd_wnd.height = w32g_wrd_wnd.font_height * w32g_wrd_wnd.col; 
+	w32g_wrd_wnd.width = w32g_wrd_wnd.font_width * w32g_wrd_wnd.row;
+	w32g_wrd_wnd.height = w32g_wrd_wnd.font_height * w32g_wrd_wnd.col;
 	w32g_wrd_wnd.pals[W32G_WRDWND_BLACK] = RGB ( 0x00, 0x00, 0x00 );
 	w32g_wrd_wnd.pals[W32G_WRDWND_RED] = RGB ( 0xFF, 0x00, 0x00 );
 	w32g_wrd_wnd.pals[W32G_WRDWND_BLUE] = RGB ( 0x00, 0x00, 0xFF );
@@ -267,7 +267,7 @@ void InitWrdWnd(HWND hParentWnd)
 	wndclass.lpszMenuName  = NULL;
 	wndclass.lpszClassName = "wrd canvas wnd";
 	RegisterClass(&wndclass);
-  	w32g_wrd_wnd.hwnd = CreateWindowEx(0,"wrd canvas wnd",0,WS_CHILD,
+	w32g_wrd_wnd.hwnd = CreateWindowEx(0,"wrd canvas wnd",0,WS_CHILD,
 		CW_USEDEFAULT,0,w32g_wrd_wnd.width,w32g_wrd_wnd.height,
 		hWrdWnd,0,hInst,0);
 	w32g_wrd_wnd.hdc = GetDC(w32g_wrd_wnd.hwnd);
@@ -312,7 +312,7 @@ void InitWrdWnd(HWND hParentWnd)
 			strcpy(fontname,"Times New Roman");
 		w32g_wrd_wnd.hFont = CreateFont(w32g_wrd_wnd.font_height,w32g_wrd_wnd.font_width,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-	      	FIXED_PITCH | FF_MODERN	,fontname);
+		FIXED_PITCH | FF_MODERN	,fontname);
 	}
 	hIcon = LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON_TIMIDITY), IMAGE_ICON, 16, 16, 0);
 	if (hIcon!=NULL) SendMessage(hWrdWnd,WM_SETICON,FALSE,(LPARAM)hIcon);
@@ -695,7 +695,7 @@ void wrd_graphic_gline ( int x1, int y1, int x2, int y2, int p1, int sw, int p2 
 	GdiFlush ();
 	// w32g_wrd_wnd.gmode
 	if ( sw >= 1 ) {
-		for ( x = x1; x <= x2; x ++ ) 
+		for ( x = x1; x <= x2; x ++ )
 			bits[ y1 * w32g_wrd_wnd.width + x] = w32g_wrd_wnd.gmode & p1;
 		SetRect ( &rc[rc_max++], x1, y1, x2+1, y1+1 );
 		for ( y = y1 + 1; y <= y2 - 1; y ++ ) {
@@ -704,27 +704,27 @@ void wrd_graphic_gline ( int x1, int y1, int x2, int y2, int p1, int sw, int p2 
 		}
 		SetRect ( &rc[rc_max++], x1, y1, x1+1, y2+1 );
 		SetRect ( &rc[rc_max++], x2, y1, x2+1, y2+1 );
-		for ( x = x1; x <= x2; x ++ ) 
+		for ( x = x1; x <= x2; x ++ )
 			bits[ y2 * w32g_wrd_wnd.width + x] = w32g_wrd_wnd.gmode & p1;
 		SetRect ( &rc[rc_max++], x1, y2, x2+1, y2+1 );
 		if ( sw == 2 ) {
-			for ( y = y1 + 1; y <= y2 - 1; y ++ ) 
-				for ( x = x1 + 1; x <= x2 - 1; x ++ ) 
+			for ( y = y1 + 1; y <= y2 - 1; y ++ )
+				for ( x = x1 + 1; x <= x2 - 1; x ++ )
 					bits[ y * w32g_wrd_wnd.width + x] = w32g_wrd_wnd.gmode & p2;
 			rc_max = 0;
 			SetRect ( &rc[rc_max++], x1, y1, x2+1, y2+1 );
 		}
 	} else if ( sw == 0 ) {
 		if ( x1 == x2 ) {
-			for ( y = y1 ; y <= y2 ; y ++ ) 
+			for ( y = y1 ; y <= y2 ; y ++ )
 				bits[ y * w32g_wrd_wnd.width + x1] = w32g_wrd_wnd.gmode & p1;
 			SetRect ( &rc[rc_max++], x1, y1, x1+1, y2+1 );
 		} else if ( y1 == y2 ) {
-			for ( x = x1; x <= x2; x ++ ) 
+			for ( x = x1; x <= x2; x ++ )
 				bits[ y1 * w32g_wrd_wnd.width + x] = w32g_wrd_wnd.gmode & p2;
 			SetRect ( &rc[rc_max++], x1, y1, x2+1, y1+1 );
 		} else if ( x2 - x1 == y2 - y1 ) {
-			for ( y = y1; y <= y2; y ++ ) 
+			for ( y = y1; y <= y2; y ++ )
 				bits[ y1 * w32g_wrd_wnd.width + (y - y1) + x1] = w32g_wrd_wnd.gmode & p2;
 			SetRect ( &rc[rc_max++], x1, y1, x2+1, y2+1 );
 		} else if ( x2 - x1 > y2 - y1 ) {
@@ -805,8 +805,8 @@ void wrd_graphic_pload ( char *path )
 
 static COLORREF g4r4b4_to_rgb ( int g4r4b4 )
 {
-	return RGB ( ((g4r4b4 & 0x00F0) >> 4 ) << 4, 
-		((g4r4b4 & 0x0F00) >> 8 ) << 4, 
+	return RGB ( ((g4r4b4 & 0x00F0) >> 4 ) << 4,
+		((g4r4b4 & 0x0F00) >> 8 ) << 4,
 		((g4r4b4 & 0x000F) >> 0 ) << 4 );
 }
 
@@ -938,7 +938,7 @@ void wrd_graphic_fadestep ( int v )
 	for ( i = 0; i < W32G_WRDWND_GRAPHIC_PALLETE_MAX; i++ ) {
 		RGBQUAD *rq1 = &w32g_wrd_wnd.gpal_buff[w32g_wrd_wnd.fade_from][i];
 		RGBQUAD *rq2 = &w32g_wrd_wnd.gpal_buff[w32g_wrd_wnd.fade_to][i];
-		gpal[i].rgbBlue = (char) ( v1 * rq1->rgbBlue + v2 * rq2->rgbBlue ); 
+		gpal[i].rgbBlue = (char) ( v1 * rq1->rgbBlue + v2 * rq2->rgbBlue );
 		gpal[i].rgbGreen = (char) ( v1 * rq1->rgbGreen + v2 * rq2->rgbGreen );
 		gpal[i].rgbRed = (char) ( v1 * rq1->rgbRed + v2 * rq2->rgbRed );
 		gpal[i].rgbReserved = 0;
@@ -1017,11 +1017,11 @@ void wrd_graphic_gmove ( int x1, int y1, int x2, int y2, int xd, int yd, int vs,
 	xd = ( ( xd + 7 ) / 8 ) * 8;
 	if ( xd + x2 - x1 >= w32g_wrd_wnd.width ) {
 		int d =  w32g_wrd_wnd.width - 1 - xd;
-		x2 = x1 + d; 
+		x2 = x1 + d;
 	}
 	if ( yd + y2 - y1 >= w32g_wrd_wnd.height ) {
 		int d =  w32g_wrd_wnd.height - 1 - yd;
-		y2 = y1 + d; 
+		y2 = y1 + d;
 	}
 	switch ( sw ) {
 	default:
@@ -1207,13 +1207,13 @@ void wrd_text_scroll ( int x1, int y1, int x2, int y2, int mode, int color, int 
 	if ( mode == 0 ) {
 		int dx = x2 - x1 + 1;
 		for ( y = y1+1; y <= y2; y ++ ) {
-			memcpy ( &w32g_wrd_wnd.textbuf [ y - 1 ][x1], 
+			memcpy ( &w32g_wrd_wnd.textbuf [ y - 1 ][x1],
 				&w32g_wrd_wnd.textbuf [ y ][x1], dx );
-			memcpy ( &w32g_wrd_wnd.forecolorbuf [ y - 1 ][x1], 
+			memcpy ( &w32g_wrd_wnd.forecolorbuf [ y - 1 ][x1],
 				&w32g_wrd_wnd.forecolorbuf [ y ][x1], dx );
-			memcpy ( &w32g_wrd_wnd.backcolorbuf [ y - 1 ][x1], 
+			memcpy ( &w32g_wrd_wnd.backcolorbuf [ y - 1 ][x1],
 				&w32g_wrd_wnd.backcolorbuf [ y ][x1], dx );
-			memcpy ( &w32g_wrd_wnd.attrbuf [ y - 1 ][x1], 
+			memcpy ( &w32g_wrd_wnd.attrbuf [ y - 1 ][x1],
 				&w32g_wrd_wnd.attrbuf [ y ][x1], dx );
 		}
 		WrdWndCurStateSaveAndRestore ( 1 );
@@ -1228,13 +1228,13 @@ void wrd_text_scroll ( int x1, int y1, int x2, int y2, int mode, int color, int 
 	} else if ( mode == 1 ) {
 		int dx = x2 - x1 + 1;
 		for ( y = y2 - 1; y >= y1; y -- ) {
-			memcpy ( &w32g_wrd_wnd.textbuf [ y + 1 ][x1], 
+			memcpy ( &w32g_wrd_wnd.textbuf [ y + 1 ][x1],
 				&w32g_wrd_wnd.textbuf [ y ][x1], dx );
-			memcpy ( &w32g_wrd_wnd.forecolorbuf [ y + 1 ][x1], 
+			memcpy ( &w32g_wrd_wnd.forecolorbuf [ y + 1 ][x1],
 				&w32g_wrd_wnd.forecolorbuf [ y ], dx );
-			memcpy ( &w32g_wrd_wnd.backcolorbuf [ y + 1 ][x1], 
+			memcpy ( &w32g_wrd_wnd.backcolorbuf [ y + 1 ][x1],
 				&w32g_wrd_wnd.backcolorbuf [ y ][x1], dx );
-			memcpy ( &w32g_wrd_wnd.attrbuf [ y + 1 ][x1], 
+			memcpy ( &w32g_wrd_wnd.attrbuf [ y + 1 ][x1],
 				&w32g_wrd_wnd.attrbuf [ y ][x1], dx );
 		}
 		WrdWndCurStateSaveAndRestore ( 1 );
@@ -1249,13 +1249,13 @@ void wrd_text_scroll ( int x1, int y1, int x2, int y2, int mode, int color, int 
 	} else if ( mode == 2 ) {
 		for ( y = y1; y <= y2; y ++ ) {
 			for ( x = x1+1; x <= x2; x ++ ) {
-				w32g_wrd_wnd.textbuf [ y ][ x ] 
+				w32g_wrd_wnd.textbuf [ y ][ x ]
 					= w32g_wrd_wnd.textbuf [ y ][ x - 1];
-				w32g_wrd_wnd.forecolorbuf[ y ][ x ] 
+				w32g_wrd_wnd.forecolorbuf[ y ][ x ]
 					= w32g_wrd_wnd.forecolorbuf [ y ][ x - 1];
-				w32g_wrd_wnd.backcolorbuf [ y ][ x ] 
+				w32g_wrd_wnd.backcolorbuf [ y ][ x ]
 					= w32g_wrd_wnd.backcolorbuf [ y ][ x - 1];
-				w32g_wrd_wnd.attrbuf [ y ][ x ] 
+				w32g_wrd_wnd.attrbuf [ y ][ x ]
 					= w32g_wrd_wnd.attrbuf [ y ][ x - 1];
 			}
 		}
@@ -1271,13 +1271,13 @@ void wrd_text_scroll ( int x1, int y1, int x2, int y2, int mode, int color, int 
 	} else if ( mode == 3 ) {
 		for ( y = y1; y <= y2; y ++ ) {
 			for ( x = x2 - 1; x >= x1; x -- ) {
-				w32g_wrd_wnd.textbuf [ y ][ x ] 
+				w32g_wrd_wnd.textbuf [ y ][ x ]
 					= w32g_wrd_wnd.textbuf [ y ][ x + 1];
-				w32g_wrd_wnd.forecolorbuf[ y ][ x ] 
+				w32g_wrd_wnd.forecolorbuf[ y ][ x ]
 					= w32g_wrd_wnd.forecolorbuf [ y ][ x + 1];
-				w32g_wrd_wnd.backcolorbuf [ y ][ x ] 
+				w32g_wrd_wnd.backcolorbuf [ y ][ x ]
 					= w32g_wrd_wnd.backcolorbuf [ y ][ x + 1];
-				w32g_wrd_wnd.attrbuf [ y ][ x ] 
+				w32g_wrd_wnd.attrbuf [ y ][ x ]
 					= w32g_wrd_wnd.attrbuf [ y ][ x + 1];
 			}
 		}
@@ -1326,11 +1326,11 @@ void wrd_graphic_xcopy ( int sx1, int sy1, int sx2, int sy2, int tx, int ty, int
 	GdiFlush ();
 	if ( tx + sx2 - sx1 >= w32g_wrd_wnd.width ) {
 		d =  w32g_wrd_wnd.width - 1 - tx;
-		sx2 = sx1 + d; 
+		sx2 = sx1 + d;
 	}
 	if ( ty + sy2 - sy1 >= w32g_wrd_wnd.height ) {
 		d =  w32g_wrd_wnd.height - 1 - ty;
-		sy2 = sy1 + d; 
+		sy2 = sy1 + d;
 	}
 	switch ( method ) {
 	case 0:	// COPY
@@ -1740,7 +1740,7 @@ void WrdWndLineClearFrom(int left, int lockflag)
 		memset( w32g_wrd_wnd.backcolorbuf[w32g_wrd_wnd.curposy], W32G_WRDWND_BLACK, w32g_wrd_wnd.curposx + 1 );
 		memset( w32g_wrd_wnd.attrbuf[w32g_wrd_wnd.curposy], 0, w32g_wrd_wnd.curposx + 1 );
 		if ( lockflag ) wrd_wnd_unlock();
-		wrd_text_update ( 0, w32g_wrd_wnd.curposy, 
+		wrd_text_update ( 0, w32g_wrd_wnd.curposy,
 			w32g_wrd_wnd.curposx - 1, w32g_wrd_wnd.curposy, lockflag );
 	} else {
 		memset( &w32g_wrd_wnd.textbuf[w32g_wrd_wnd.curposy][w32g_wrd_wnd.curposx],
@@ -1812,7 +1812,7 @@ void WrdWndSetAttr98(int attr)
 		w32g_wrd_wnd.curforecolor = W32G_WRDWND_PURPLE;
 		w32g_wrd_wnd.curbackcolor = W32G_WRDWND_BLACK;
 		w32g_wrd_wnd.curattr = 0;
-		break;	
+		break;
 	case 20:		// —Î
 		w32g_wrd_wnd.curforecolor = W32G_WRDWND_GREEN;
 		w32g_wrd_wnd.curbackcolor = W32G_WRDWND_BLACK;
@@ -1991,8 +1991,8 @@ WrdCanvasWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		case WM_CREATE:
 			break;
 		case WM_PAINT:
-	      	WrdWndPaintDo(FALSE);
-	    	return 0;
+		WrdWndPaintDo(FALSE);
+		return 0;
 		case WM_DROPFILES:
 			SendMessage(hMainWnd,WM_DROPFILES,wParam,lParam);
 			return 0;
@@ -2035,7 +2035,7 @@ WrdCanvasWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 				hPopupMenu = NULL;
 			}
 			}
-			break;		
+			break;
 		default:
 			return DefWindowProc(hwnd,uMess,wParam,lParam) ;
 	}

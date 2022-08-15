@@ -109,7 +109,7 @@ struct cache_hash *resamp_cache_fetch(Sample *sp, int note)
 {
 	unsigned int addr;
 	struct cache_hash *p;
-	
+
 	if (sp->vibrato_control_ratio || (sp->modes & MODES_PINGPONG)
 			|| (sp->sample_rate == play_mode->rate
 			&& sp->root_freq == get_note_freq(sp, sp->note_to_use)))
@@ -128,7 +128,7 @@ void resamp_cache_refer_on(Voice *vp, int32 sample_start)
 	unsigned int addr;
 	struct cache_hash *p;
 	int note, ch;
-	
+
 	ch = vp->channel;
 	if (vp->vibrato_control_ratio || channel[ch].portamento
 			|| (vp->sample->modes & MODES_PINGPONG)
@@ -163,7 +163,7 @@ void resamp_cache_refer_off(int ch, int note, int32 sample_end)
 	int32 sample_start, len;
 	struct cache_hash *p;
 	Sample *sp;
-	
+
 	p = channel_note_table[ch].cache[note];
 	if (p == NULL)
 		return;
@@ -180,7 +180,7 @@ void resamp_cache_refer_off(int ch, int note, int32 sample_end)
 	if (! (sp->modes & MODES_LOOPING)) {
 		double a;
 		int32 slen;
-		
+
 		a = ((double) sp->root_freq * play_mode->rate)
 				/ ((double) sp->sample_rate * get_note_freq(sp, note));
 		slen = (int32) ((sp->data_length >> FRACTION_BITS) * a);
@@ -194,7 +194,7 @@ void resamp_cache_refer_off(int ch, int note, int32 sample_end)
 void resamp_cache_refer_alloff(int ch, int32 sample_end)
 {
 	int i;
-	
+
 	for (i = 0; i < 128; i++)
 		resamp_cache_refer_off(ch, i, sample_end);
 }
@@ -204,7 +204,7 @@ void resamp_cache_create(void)
 	int i, skip;
 	int32 n, t1, t2, total;
 	struct cache_hash **array;
-	
+
 	/* It is NP completion that solve the best cache hit rate.
 	 * So I thought better algorism O(n log n), but not a best solution.
 	 * Follows implementation takes good hit rate, and it is fast.
@@ -214,17 +214,17 @@ void resamp_cache_create(void)
 	/* set size per count */
 	for (i = 0; i < HASH_TABLE_SIZE; i++) {
 		struct cache_hash *p, *q;
-		
+
 		p = cache_hash_table[i], q = NULL;
 		while (p) {
 			struct cache_hash *tmp;
-			
+
 			t1 += p->cnt;
 			tmp = p, p = p->next;
 			if (tmp->cnt > 0) {
 				Sample *sp;
 				splen_t newlen;
-				
+
 				sp = tmp->sp;
 				sample_resamp_info(sp, tmp->note, NULL, NULL, &newlen);
 				if (newlen > 0) {
@@ -246,7 +246,7 @@ void resamp_cache_create(void)
 	n = 0;
 	for (i = 0; i < HASH_TABLE_SIZE; i++) {
 		struct cache_hash *p;
-		
+
 		for (p = cache_hash_table[i]; p; p = p->next)
 			array[n++] = p;
 	}
@@ -272,11 +272,11 @@ void resamp_cache_create(void)
 	if (skip)
 		for (i = 0; i < HASH_TABLE_SIZE; i++) {
 			struct cache_hash *p, *q;
-			
+
 			p = cache_hash_table[i], q = NULL;
 			while (p) {
 				struct cache_hash *tmp;
-				
+
 				tmp = p, p = p->next;
 				if (tmp->resampled)
 					tmp->next = q, q = tmp;
@@ -290,7 +290,7 @@ static double sample_resamp_info(Sample *sp, int note,
 {
 	splen_t xls, xle, ls, le, ll, newlen;
 	double a, xxls, xxle, xn;
-	
+
 	a = ((double) sp->sample_rate * get_note_freq(sp, note))
 			/ ((double) sp->root_freq * play_mode->rate);
 	a = TIM_FSCALENEG((double) (int32) TIM_FSCALE(a, FRACTION_BITS),
@@ -325,7 +325,7 @@ static double sample_resamp_info(Sample *sp, int note,
 		splen_t newxle;
 		double xl;	/* Resampled new loop length */
 		double xnewxle;
-		
+
 		xl = ll / a;
 		if (xl >= SPLEN_T_MAX) {
 			/* Ignore this sample */
@@ -356,7 +356,7 @@ static void qsort_cache_array(struct cache_hash **a, long first, long last)
 {
 	long i = first, j = last;
 	struct cache_hash *x, *t;
-	
+
 	if (j - i < SORT_THRESHOLD) {
 		insort_cache_array(a + i, j - i + 1);
 		return;
@@ -382,7 +382,7 @@ static void insort_cache_array(struct cache_hash **data, long n)
 {
 	long i, j;
 	struct cache_hash *x;
-	
+
 	for (i = 1; i < n; i++) {
 		x = data[i];
 		for (j = i - 1; j >= 0 && x->r < data[j]->r; j--)
@@ -400,7 +400,7 @@ static int cache_resampling(struct cache_hash *p)
 	resample_rec_t resrc;
 	double a;
 	int8 note;
-	
+
 	sp = p->sp;
 	if (sp->note_to_use)
 		note = sp->note_to_use;
@@ -453,7 +453,7 @@ static void loop_connect(sample_t *data, int32 start, int32 end)
 {
 	int i, mixlen;
 	int32 t0, t1;
-	
+
 	mixlen = MIXLEN;
 	if (start < mixlen)
 		mixlen = start;
@@ -465,7 +465,7 @@ static void loop_connect(sample_t *data, int32 start, int32 end)
 	t1 = end   - mixlen;
 	for (i = 0; i < mixlen; i++) {
 		double x, b;
-		
+
 		b = i / (double) mixlen;	/* 0 <= b < 1 */
 		x = b * data[t0 + i] + (1.0 - b) * data[t1 + i];
 #ifdef LOOKUP_HACK

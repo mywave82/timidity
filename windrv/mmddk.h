@@ -32,13 +32,13 @@
 /* Maxium drivers  */
 #define MAXWAVEDRIVERS 10
 
-#define MAX_MIDIINDRV 	(16)
+#define MAX_MIDIINDRV	(16)
 /* For now I'm making 16 the maximum number of midi devices one can
  * have. This should be more than enough for everybody. But as a purist,
  * I intend to make it unbounded in the future, as soon as I figure
  * a good way to do so.
  */
-#define MAX_MIDIOUTDRV 	(16)
+#define MAX_MIDIOUTDRV	(16)
 
 /* ==================================
  *   Multimedia DDK compatible part
@@ -61,8 +61,8 @@
 #define DRVM_REMOVE_THRU	(DRVM_IOCTL+2)
 #define DRVM_IOCTL_LAST		(DRVM_IOCTL+5)
 typedef struct {
-    DWORD  dwSize; 	/* size of this structure */
-    DWORD  dwCmd;  	/* IOCTL command code, 0x80000000 and above reserved for system */
+    DWORD  dwSize;	/* size of this structure */
+    DWORD  dwCmd;	/* IOCTL command code, 0x80000000 and above reserved for system */
 } DRVM_IOCTL_DATA, *LPDRVM_IOCTL_DATA;
 
 /* command code ranges for dwCmd field of DRVM_IOCTL message
@@ -75,7 +75,7 @@ typedef struct {
 #define DRVM_MAPPER			0x2000
 #define DRVM_USER			0x4000
 #define DRVM_MAPPER_STATUS		(DRVM_MAPPER+0)
-#define DRVM_MAPPER_RECONFIGURE 	(DRVM_MAPPER+1)
+#define DRVM_MAPPER_RECONFIGURE	(DRVM_MAPPER+1)
 #define DRVM_MAPPER_PREFERRED_GET	(DRVM_MAPPER+21)
 #define DRVM_MAPPER_CONSOLEVOICECOM_GET	(DRVM_MAPPER+23)
 
@@ -152,30 +152,30 @@ typedef struct {
 #define MODM_UNPREPARE		6
 #define MODM_DATA		7
 #define MODM_LONGDATA		8
-#define MODM_RESET          	9
+#define MODM_RESET	9
 #define MODM_GETVOLUME		10
 #define MODM_SETVOLUME		11
 #define MODM_CACHEPATCHES	12
 #define MODM_CACHEDRUMPATCHES	13
 
 #define MIDM_INIT		DRVM_INIT
-#define MIDM_GETNUMDEVS  	53
-#define MIDM_GETDEVCAPS  	54
-#define MIDM_OPEN        	55
-#define MIDM_CLOSE       	56
-#define MIDM_PREPARE     	57
-#define MIDM_UNPREPARE   	58
-#define MIDM_ADDBUFFER   	59
-#define MIDM_START       	60
-#define MIDM_STOP        	61
-#define MIDM_RESET       	62
+#define MIDM_GETNUMDEVS	53
+#define MIDM_GETDEVCAPS	54
+#define MIDM_OPEN	55
+#define MIDM_CLOSE	56
+#define MIDM_PREPARE	57
+#define MIDM_UNPREPARE	58
+#define MIDM_ADDBUFFER	59
+#define MIDM_START	60
+#define MIDM_STOP	61
+#define MIDM_RESET	62
 
 
-#define AUXM_INIT             	DRVM_INIT
-#define AUXDM_GETNUMDEVS    	3
-#define AUXDM_GETDEVCAPS    	4
-#define AUXDM_GETVOLUME     	5
-#define AUXDM_SETVOLUME     	6
+#define AUXM_INIT	DRVM_INIT
+#define AUXDM_GETNUMDEVS	3
+#define AUXDM_GETDEVCAPS	4
+#define AUXDM_GETVOLUME	5
+#define AUXDM_SETVOLUME	6
 
 #define MXDM_INIT		DRVM_INIT
 #define MXDM_USER               DRVM_USER
@@ -280,7 +280,7 @@ typedef struct joyreguservalues_tag {
     DWORD	dwTimeOut;	/* value at which to timeout joystick polling */
     JOYRANGE	jrvRanges;	/* range of values app wants returned for axes */
     JOYPOS	jpDeadZone;	/* area around center to be considered
-    				   as "dead". specified as a percentage
+				   as "dead". specified as a percentage
 				   (0-100). Only X & Y handled by system driver */
 } JOYREGUSERVALUES, *LPJOYREGUSERVALUES;
 
@@ -384,7 +384,7 @@ typedef struct {
 	DWORD_PTR		dwCallback;
 	DWORD_PTR		dwInstance;
 	HMIDIOUT		hMidi;
-	DWORD   		dwFlags;
+	DWORD		dwFlags;
 } PORTALLOC, *LPPORTALLOC;
 
 typedef struct {
@@ -397,8 +397,8 @@ typedef struct {
 } WAVEOPENDESC, *LPWAVEOPENDESC;
 
 typedef struct {
-        DWORD  			dwStreamID;
-        WORD   			wDeviceID;
+        DWORD			dwStreamID;
+        WORD			wDeviceID;
 } MIDIOPENSTRMID;
 
 typedef struct {
@@ -406,8 +406,8 @@ typedef struct {
 	DWORD_PTR		dwCallback;
 	DWORD_PTR		dwInstance;
         DWORD_PTR		dnDevNode;
-        DWORD          		cIds;
-        MIDIOPENSTRMID 		rgIds;
+        DWORD		cIds;
+        MIDIOPENSTRMID		rgIds;
 } MIDIOPENDESC, *LPMIDIOPENDESC;
 
 typedef struct tMIXEROPENDESC
@@ -432,7 +432,7 @@ typedef struct {
 	UINT			wType;			/* driver type (filled in by the driver) */
 } MCI_OPEN_DRIVER_PARMSW, *LPMCI_OPEN_DRIVER_PARMSW;
 
-DWORD 			WINAPI	mciGetDriverData(UINT uDeviceID);
+DWORD			WINAPI	mciGetDriverData(UINT uDeviceID);
 BOOL			WINAPI	mciSetDriverData(UINT uDeviceID, DWORD dwData);
 UINT			WINAPI	mciDriverYield(UINT uDeviceID);
 BOOL			WINAPI	mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
@@ -449,7 +449,7 @@ BOOL			WINAPI	mciFreeCommandResource(UINT uTable);
 #define DCB_TYPEMASK		0x0007
 #define DCB_NOSWITCH		0x0008			/* don't switch stacks for callback */
 
-BOOL		 	WINAPI	DriverCallback(DWORD_PTR dwCallBack, UINT uFlags, HDRVR hDev,
+BOOL			WINAPI	DriverCallback(DWORD_PTR dwCallBack, UINT uFlags, HDRVR hDev,
 					       UINT wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 
 typedef void (*LPTASKCALLBACK)(DWORD_PTR dwInst);

@@ -120,35 +120,35 @@ static int npipe_input_open(const char *pipe_name)
   static HANDLE hEvent;
   char PipeName[256];
   DWORD ret;
- 
+
 
  hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
  memset( &overlapped, 0, sizeof(OVERLAPPED));
  overlapped.hEvent = hEvent;
-	
+
   sprintf(PipeName, "\\\\.\\pipe\\%s", pipe_name);
-  hPipe = CreateNamedPipe(PipeName, PIPE_ACCESS_DUPLEX|FILE_FLAG_OVERLAPPED, 
+  hPipe = CreateNamedPipe(PipeName, PIPE_ACCESS_DUPLEX|FILE_FLAG_OVERLAPPED,
 //    PIPE_WAIT|
-  	PIPE_READMODE_BYTE |PIPE_TYPE_BYTE, 2, 
+	PIPE_READMODE_BYTE |PIPE_TYPE_BYTE, 2,
    0, PIPE_BUFFER_SIZE, 0, NULL);
   if (hPipe == INVALID_HANDLE_VALUE) {
     ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Can't create Named Pipe %s : %ld",
-    	pipe_name, GetLastError());
- 	return -1;
+	pipe_name, GetLastError());
+	return -1;
   }
   ret = ConnectNamedPipe(hPipe, &overlapped);
 	if ( (ret == 0)  && (ERROR_IO_PENDING!=GetLastError()) ){
     ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "CnnectNamePipe(%ld) error %s",
-    	GetLastError(), pipe_name);
+	GetLastError(), pipe_name);
         CloseHandle(hPipe);
-  	    hPipe=NULL;
+	    hPipe=NULL;
         return -1;
    }
 //	WaitForSingleObject(overlapped.hEvent, 1000);
 	CloseHandle(hEvent);
   return 0;
 }
-	
+
 int rtsyn_np_synth_start()
 {
 	if( 0 != npipe_input_open(pipe_name)) return 0;
@@ -198,19 +198,19 @@ int rtsyn_np_play_some_data(void)
 	static DWORD  pre_time;
 	static DWORD timeoffset;
 	double event_time;
-	
+
 //	rtsyn_play_one_data (0,0x007f3c90, get_current_calender_time());
 	if ( 0 != read_pipe_data()) return 0;
-	
+
 	played=0;
-		if( -1 == rtsyn_np_buf_check() ){ 
+		if( -1 == rtsyn_np_buf_check() ){
 			played=~0;
 			return played;
 		}
 
 		do{
 
-			
+
 			EnterCriticalSection(&mim_np_section);
 			evbpoint=np_evbrpoint;
 			if (++np_evbrpoint >= EVBUFF_SIZE)
@@ -220,9 +220,9 @@ int rtsyn_np_play_some_data(void)
 			dwParam1=evbuf[evbpoint].dwParam1;
 			dwParam2=evbuf[evbpoint].dwParam2;
 			exlen = evbuf[evbpoint].exlen;
-			sysexbuffer = evbuf[evbpoint].exbuffer;			
+			sysexbuffer = evbuf[evbpoint].exbuffer;
 			LeaveCriticalSection(&mim_np_section);
-			
+
 			if(rtsyn_sample_time_mode !=1){
 				if((first_ev == 1)  || ( pre_time > dwParam2)){
 					pre_time=dwParam2;
@@ -231,12 +231,12 @@ int rtsyn_np_play_some_data(void)
 					first_ev=0;
 				}
 				if(dwParam2 !=0){
-			    	 event_time= mim_start_time+((double)(dwParam2-timeoffset))*(double)1.0/(double)1000.0;
+				 event_time= mim_start_time+((double)(dwParam2-timeoffset))*(double)1.0/(double)1000.0;
 				}else{
 					event_time = get_current_calender_time();
 				}
 			}
-			
+
 			switch (wMsg) {
 			case RTSYN_NP_DATA:
 				if(rtsyn_sample_time_mode !=1){
@@ -255,7 +255,7 @@ int rtsyn_np_play_some_data(void)
 				break;
 			}
 			pre_time =dwParam2;
-			
+
 		}while( 0==rtsyn_np_buf_check());
 
 	return played;
@@ -268,7 +268,7 @@ static void parse_ev(char* buffer, int *len){
 	DWORD	dwParam2;
 	int  exlen;
 	char *exbuffer;
-	
+
 	char *bp, *sp;
 	UINT evbpoint;
 	RtsynNpEvBuf *npevbuf;
@@ -277,13 +277,13 @@ static void parse_ev(char* buffer, int *len){
 	printf ("buhihi %d \n", *len);
 	{
 		int i,j;
-		
+
 		for(j=0; j < 4; j++){
 			for(i=0; i <16;i++){
 				printf("%2X:", buffer[j*16+i]);
 			}
 			printf ("\n");
-		}	
+		}
 	}
 */
 	bp=buffer;
@@ -310,14 +310,14 @@ static void parse_ev(char* buffer, int *len){
 		if( wMsg == RTSYN_NP_LONGDATA ){
 			exlen=npevbuf->exlen;
 			bp = sp+sizeof(RtsynNpEvBuf);
-			
+
 			dwParam2=npevbuf->dwParam2;
 		    if (*len >= sizeof(RtsynNpEvBuf)+exlen){
 				exbuffer= (char *)malloc( sizeof(char) * exlen);
 				memmove(exbuffer,sp+sizeof(RtsynNpEvBuf), exlen);
 				bp += exlen;
 		    }else{
-		    	memmove(buffer, sp, *len);
+			memmove(buffer, sp, *len);
 				return;
 			}
 
@@ -348,20 +348,20 @@ static int read_pipe_data()
 	DWORD last_error;
 	DWORD n;
 	DWORD length;
-	
+
 	OVERLAPPED overlapped;
 	HANDLE hEvent;
-	
+
 	if( hPipe == NULL ) return -1;
-	
+
 //	if ( ( 0 == PeekNamedPipe(hPipe,NULL,0,NULL,&length,NULL)) &&
 //		 (GetLastError()==ERROR_BAD_PIPE) )  return -1;
 	if ( 0 == PeekNamedPipe(hPipe,NULL,0,NULL,&length,NULL))  return -1;
 	if(length == 0) return -1;
 
 	 hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
- 	memset( &overlapped, 0, sizeof(OVERLAPPED));
- 	overlapped.hEvent = hEvent;
+	memset( &overlapped, 0, sizeof(OVERLAPPED));
+	overlapped.hEvent = hEvent;
 	npipe_len=0;   // not good fix
 	memset(npipe_buffer+npipe_len, 0, PIPE_BUFFER_SIZE-npipe_len);
 	if(length <=  PIPE_BUFFER_SIZE - npipe_len){
@@ -374,7 +374,7 @@ static int read_pipe_data()
 			}
 		}
 	}else{
-	  	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Named Pipe buffer overlow");
+		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Named Pipe buffer overlow");
 		return -1;
 	}
 	if(last_error == ERROR_SUCCESS){
@@ -383,13 +383,13 @@ static int read_pipe_data()
 	}
 	CloseHandle(hEvent);
 	if ( (last_error != ERROR_SUCCESS) &&
-		(last_error != ERROR_NOACCESS) ){ 
+		(last_error != ERROR_NOACCESS) ){
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Named Pipe Error: %ld",last_error);
 			return -1;
 	}
 	return 0;
 }
-	
+
 void rtsyn_np_pipe_close()
 {
 	CloseHandle(hPipe);

@@ -204,7 +204,7 @@ BMPHeader *loadBMPHeader( struct timidity_file *fp ) {
   if ( i != 1 ) return NULL;
 
   h.bitcounts = Get2bytes(fp); /* bit-counts */
-  if ( h.bitcounts != 4 && h.bitcounts != 8 && h.bitcounts != 24 ) 
+  if ( h.bitcounts != 4 && h.bitcounts != 8 && h.bitcounts != 24 )
     return NULL;
 
   if ( h.hsize==40 || h.hsize==64 ) {
@@ -235,7 +235,7 @@ Bool loadBMPColors( Display *d, BMPHeader *h, struct timidity_file *fp ) {
       }
     }
   }
-  
+
   tf_seek( fp, h->hsize+14, SEEK_SET );
   if ( h->ncolors == 0 ) return True;
 
@@ -245,7 +245,7 @@ Bool loadBMPColors( Display *d, BMPHeader *h, struct timidity_file *fp ) {
       g = ugetc(fp)*256;
       r = ugetc(fp)*256;
       if ( ugetc(fp)==EOF ) return False;
-	  
+
       color_palletes[i] = GetColor( d, r, g, b );
     }
   } else {
@@ -274,13 +274,13 @@ int GetColor( Display *d, int r, int g, int b ) {
   case StaticGray:
     if (rshift<0) r = r << (-rshift);
     else r = r >> rshift;
-  
+
     if (gshift<0) g = g << (-gshift);
     else g = g >> gshift;
-    
+
     if (bshift<0) b = b << (-bshift);
     else b = b >> bshift;
-    
+
     r = r & xskin_vis->red_mask;
     g = g & xskin_vis->green_mask;
     b = b & xskin_vis->blue_mask;
@@ -319,7 +319,7 @@ int Get4bytes( struct timidity_file *fp ) {
   ret += i*256*256;
   if ( (i=ugetc(fp))==EOF ) return -1;
   ret += i*256*256*256;
-  
+
   return ret;
 }
 
@@ -391,10 +391,10 @@ int Draw8bit( Display *d, Pixmap p, GC gc, BMPHeader *bmp, struct timidity_file 
       col = ugetc(fp);
       if ( col == EOF ) { y=0; break; }
       if ( col >= bmp->ncolors ) col=0;
-      
+
       if ( x<bmp->w ) {
 	XSetForeground( d, gc, color_palletes[col] );
-	XDrawPoint( d, p, gc, x, y-1 ); 
+	XDrawPoint( d, p, gc, x, y-1 );
       }
     }
   }
@@ -415,9 +415,9 @@ int Draw24bit( Display *d, Pixmap p, GC gc, BMPHeader *bmp, struct timidity_file
       g = ugetc(fp)*256;
       r = ugetc(fp)*256;
       if ( r == EOF ) { y=0; break; }
-      
+
       XSetForeground( d, gc, GetColor( d, r, g, b ) );
-      XDrawPoint( d, p, gc, x, y-1 ); 
+      XDrawPoint( d, p, gc, x, y-1 );
     }
     for ( x=0 ; x<pad ; x++ ) {
       ugetc(fp);
@@ -485,14 +485,14 @@ int DrawCompressed4bit( Display *d, Pixmap p, GC gc,
 	  if ( j>=bmp->ncolors ) j=0;
 	  if (x<bmp->w) {
 	    XSetForeground( d, gc, color_palletes[j] );
-	    XDrawPoint( d, p, gc, x, y-1 ); 
+	    XDrawPoint( d, p, gc, x, y-1 );
 	    x++;
 	  }
 	  j=a&0x0f;
 	  if ( j>=bmp->ncolors ) j=0;
 	  if (x<bmp->w) {
 	    XSetForeground( d, gc, color_palletes[j] );
-	    XDrawPoint( d, p, gc, x, y-1 ); 
+	    XDrawPoint( d, p, gc, x, y-1 );
 	    x++;
 	  }
 
@@ -500,7 +500,7 @@ int DrawCompressed4bit( Display *d, Pixmap p, GC gc,
 	if (b%2==1) ugetc(fp);
       }
       break;
-    } 
+    }
 
   }
 
@@ -528,7 +528,7 @@ int DrawCompressed8bit( Display *d, Pixmap p, GC gc,
       for ( i=0 ; i<a ; i++ ) {
 	if ( x<bmp->w ) {
 	  XSetForeground( d, gc, color_palletes[b] );
-	  XDrawPoint( d, p, gc, x, y-1 ); 
+	  XDrawPoint( d, p, gc, x, y-1 );
 	  x++;
 	}
       }
@@ -560,14 +560,14 @@ int DrawCompressed8bit( Display *d, Pixmap p, GC gc,
 
 	  if (x<bmp->w) {
 	    XSetForeground( d, gc, color_palletes[a] );
-	    XDrawPoint( d, p, gc, x, y-1 ); 
+	    XDrawPoint( d, p, gc, x, y-1 );
 	    x++;
 	  }
 	}
 	if (b%2==1) ugetc(fp);
 	break;
       }
-    } 
+    }
 
   }
 

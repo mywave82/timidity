@@ -53,7 +53,7 @@ sub read_config_file
 	local *CFG;
 	my ($status, $i, $x, $y, $k);
 	my (@args, $bank, $orig_name, $line, $patch, @options);
-	
+
 	if ($rcf_count > 50) {
 		print STDERR "Probable source loop in configuration files";
 		return -1;
@@ -256,7 +256,7 @@ sub open_file
 {
 	local (*fiz) = shift;
 	my ($fname) = shift;
-	
+
 	if ($fname =~ /^\//) {
 		return $fname if open(*fiz, $fname);
 		return 0;
@@ -272,7 +272,7 @@ sub lspatch
 {
 	my ($tag, @insts) = @_;
 	my ($i, $j, $bank, $p, @inst, $pos);
-	
+
 	for ($i = 0; $i < 128; $i++) {
 		next if ! defined $insts[$i];
 		$bank = $insts[$i];
@@ -292,7 +292,7 @@ sub find_patch
 	my ($f) = @_;
 	local *FIZ;
 	my $realpath;
-	
+
 	for (@patch_ext_list) {
 		$realpath = &open_file(*FIZ, "$f$_");
 		return $realpath if $realpath;

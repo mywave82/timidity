@@ -69,7 +69,7 @@ void *dl_find_symbol(void *libhandle, char *symbolname)
     if (RETVAL == NULL)
     {
 	fprintf(stderr, "dl_find_symbol: Unable to find '%s' symbol\n",
- 		symbolname);
+		symbolname);
     }
     return RETVAL;
 }

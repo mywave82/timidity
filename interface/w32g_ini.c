@@ -311,7 +311,7 @@ SaveIniFile(SETTING_PLAYER *sp,  SETTING_TIMIDITY *st)
     IniPutKeyStringN(INI_SEC_TIMIDITY,"opt_qsize",st->opt_qsize,sizeof(st->opt_qsize));
     IniPutKeyInt32(INI_SEC_TIMIDITY,"modify_release",&(st->modify_release));
     IniPutKeyInt32(INI_SEC_TIMIDITY,"allocate_cache_size",&(st->allocate_cache_size));
-	IniPutKeyInt(INI_SEC_TIMIDITY,"key_adjust",&(st->key_adjust)); 
+	IniPutKeyInt(INI_SEC_TIMIDITY,"key_adjust",&(st->key_adjust));
 	IniPutKeyInt8(INI_SEC_TIMIDITY,"opt_force_keysig",&(st->opt_force_keysig));
 	IniPutKeyInt(INI_SEC_TIMIDITY,"opt_pure_intonation",&(st->opt_pure_intonation));
 	IniPutKeyInt8(INI_SEC_TIMIDITY,"opt_init_keysig",&(st->opt_init_keysig));

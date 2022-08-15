@@ -223,7 +223,7 @@ the traceHeight resource to a lower value.
 Application class name is 'TiMidity', so specity resources in
 .Xdefaults or .Xresources in your home directory as follows for example;
 
-  TiMidity*textbackground: LemonChiffon    
+  TiMidity*textbackground: LemonChiffon
   TiMidity*background: PeachPuff1
   TiMidity*menubutton: goldenrod
   TiMidity*buttonbackground: gold
@@ -244,9 +244,9 @@ textbackground      TextBackground          gray85
 toggleforeground    ToggleForeground        MediumBlue
   Foreground color of toggle buttons.
 buttonforeground    ButtonForeground        blue
-  Foreground color of command buttons and other transient windows. 
+  Foreground color of command buttons and other transient windows.
 buttonbackground    ButtonBackground        gray76
-  Background color of command buttons and other transient windows. 
+  Background color of command buttons and other transient windows.
 text2background     Text2Background         gray80
   Background color of labels in file dialogs.
 
@@ -292,7 +292,7 @@ volforeground       VolForeground           LightPink
 expforeground       ExpForeground           aquamarine
   Color of bar in 'expr' column.
 panforeground       PanForeground           blue
-  Color of triangle in pan column. 
+  Color of triangle in pan column.
 rimcolor            RimColor                gray20
   Color of the border between channel bars.
 boxcolor            BoxColor                gray76
@@ -319,7 +319,7 @@ Also traceWidth setting does not work yet.
 
 !!! NOTE !!!
 Some resource files were attached to TiMidity++1.3.6 or later.
-If you create a resource file of another locale except English or 
+If you create a resource file of another locale except English or
 Japanese, please mail it to the timidity mailing list
 <timidity-talk@lists.sourceforge.net>.
 After building TiMidity++, put TiMidity.ad into the resources directory
@@ -329,7 +329,7 @@ And put TiMidity-uj.ad, which is the Japanese-EUC resource file into;
  $(X11R6)/lib/X11/$(LANG)/app-defaults
 For example, those are as follows if the Japanese-EUC locale of your
 system is ja_JP.EUC as FreeBSD;
- # cp TiMidity.ad /usr/X11R6/lib/X11/app-defaults/TiMidity 
+ # cp TiMidity.ad /usr/X11R6/lib/X11/app-defaults/TiMidity
  # cp TiMidity-uj.ad /usr/X11R6/lib/X11/app-defaults/ja_JP.EUC/TiMidity
 
 * SETTINGS FILE

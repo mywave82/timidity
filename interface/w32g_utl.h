@@ -80,8 +80,8 @@ typedef struct SETTING_PLAYER_ {
 	char DocFileExt[256];
 // End.
 	int PlayerLanguage;
-	int DocWndIndependent; 
-	int DocWndAutoPopup; 
+	int DocWndIndependent;
+	int DocWndAutoPopup;
 	int SeachDirRecursive;
 	int IniFileAutoSave;
 	int SecondMode;
@@ -106,7 +106,7 @@ typedef struct SETTING_TIMIDITY_ {
 				// E...
     int opt_modulation_wheel;	// E w/W
     int opt_portamento;		// E p/P
-    int opt_nrpn_vibrato;  	// E v/V
+    int opt_nrpn_vibrato;	// E v/V
     int opt_channel_pressure;	// E s/S
     int opt_trace_text_meta_event; // E t/T
     int opt_overlap_voice_allow;// E o/O

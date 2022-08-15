@@ -98,33 +98,33 @@ PlayMode dpm = {
 
 static int npipe_output_open(const char *pipe_name)
 {
-  char PipeName[256];  
+  char PipeName[256];
   DWORD ret;
   DWORD n;
   int i;
-	
+
 
  if (hPipe != NULL) return 0;
  hPipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
  memset( &pipe_ovlpd, 0, sizeof(OVERLAPPED));
  pipe_ovlpd.hEvent = hPipeEvent;
-	
+
   sprintf(PipeName, "\\\\.\\pipe\\%s", pipe_name);
-  hPipe = CreateNamedPipe(PipeName, PIPE_ACCESS_DUPLEX|FILE_FLAG_OVERLAPPED, 
+  hPipe = CreateNamedPipe(PipeName, PIPE_ACCESS_DUPLEX|FILE_FLAG_OVERLAPPED,
 //    PIPE_WAIT|
-  	PIPE_READMODE_BYTE |PIPE_TYPE_BYTE, 2, 
+	PIPE_READMODE_BYTE |PIPE_TYPE_BYTE, 2,
    PIPE_BUFFER_SIZE, 0, 0, NULL);
   if (hPipe == INVALID_HANDLE_VALUE) {
     ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Can't create Named Pipe %s : %ld",
-    	pipe_name, GetLastError());
- 	return -1;
+	pipe_name, GetLastError());
+	return -1;
   }
   ret = ConnectNamedPipe(hPipe, &pipe_ovlpd);
 	if ( (ret == 0)  && (ERROR_IO_PENDING!=GetLastError()) ){
     ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "CnnectNamePipe(%ld) error %s",
-    	GetLastError(), pipe_name);
+	GetLastError(), pipe_name);
         CloseHandle(hPipe);
-  	    hPipe=NULL;
+	    hPipe=NULL;
         return -1;
    }
 //	WaitForSingleObject(pipe_ovlpd.hPipeEvent, 1000);
@@ -139,10 +139,10 @@ static int open_output(void)
   if(dpm.name == NULL) {
     if (NULL==current_file_info || NULL==current_file_info->filename){
       return -1;
-  	}
+	}
   }else{
-  	      if ( -1 == npipe_output_open(dpm.name))
-  			return -1;
+	      if ( -1 == npipe_output_open(dpm.name))
+			return -1;
   }
   dpm.fd = 1;
 //  clear_pipe = 0;
@@ -157,7 +157,7 @@ static int output_data(char *buf, int32 bytes)
 	retnum = bytes;
 	DWORD length;
 	char *clear_data;
-		
+
 	if (hPipe == NULL) return -1;
 	if ( ( 0 == PeekNamedPipe(hPipe,NULL,0,NULL,&length,NULL)) &&
 		 (GetLastError()==ERROR_BAD_PIPE) )  return -1;
@@ -167,7 +167,7 @@ static int output_data(char *buf, int32 bytes)
 		  dpm.fd = -1;
 		  return retnum;
 	}
-	
+
 	if (0 != PeekNamedPipe(hPipe,NULL,0,NULL,&length,NULL)){
 		if(clear_pipe == -1){
 			if(bytes <= PIPE_BUFFER_SIZE-length){
@@ -175,11 +175,11 @@ static int output_data(char *buf, int32 bytes)
 				if( (GetLastError() != ERROR_SUCCESS) &&
 					(GetLastError() != ERROR_IO_PENDING) &&
 					(GetLastError() != ERROR_BAD_PIPE) ){      //why BAD_PIPE occurs here?
-	      			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "npipe_a_error %s: %ld",
-		    		dpm.name, GetLastError());
+				ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "npipe_a_error %s: %ld",
+				dpm.name, GetLastError());
 					if(hPipe != NULL) CloseHandle(hPipe);
-		 			hPipe=NULL;
-					dpm.fd = -1;					
+					hPipe=NULL;
+					dpm.fd = -1;
 					return -1;
 				}
 			}else{
@@ -194,10 +194,10 @@ static int output_data(char *buf, int32 bytes)
 				if( (GetLastError() != ERROR_SUCCESS) &&
 					(GetLastError() != ERROR_IO_PENDING) &&
 					(GetLastError() != ERROR_BAD_PIPE) ){      //why BAD_PIPE occurs here?
-	      			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "npipe_a_error %s: %ld",
-		    		dpm.name, GetLastError());
+				ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "npipe_a_error %s: %ld",
+				dpm.name, GetLastError());
 					if(hPipe != NULL) CloseHandle(hPipe);
-		 			hPipe=NULL;
+					hPipe=NULL;
 					dpm.fd = -1;
 					return -1;
 				}
@@ -214,7 +214,7 @@ static void close_output(void)
 		CloseHandle(hPipeEvent);
 		CloseHandle(hPipe);
 		hPipe=NULL;
-    	dpm.fd = -1;
+	dpm.fd = -1;
 	}
 }
 
@@ -228,7 +228,7 @@ static int acntl(int request, void *arg)
   case PM_REQ_DISCARD:
   case PM_REQ_FLUSH:
 //		clear_pipe=0;
-  	return 0;
+	return 0;
 
   }
   return -1;
@@ -245,7 +245,7 @@ int npipe_a_pipe_close()
 		CloseHandle(hPipe);
 		hPipe=NULL;
 	}
-	
+
 }
 
 

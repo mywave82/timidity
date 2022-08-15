@@ -24,7 +24,7 @@
 /*
  * TiMidity server interface uses on OSSv3's midi sequencer definitions,
  * so this file does not have to be the one included to define the
- * interface's macros - 
+ * interface's macros -
  * sys/soundcard.h or (on netBSD/openBSD) sys/midiio.h should do.
  */
 
@@ -38,7 +38,7 @@
  * /dev/sequencer input events.
  *
  * The data written to the /dev/sequencer is a stream of events. Events
- * are records of 4 or 8 bytes. The first byte defines the size. 
+ * are records of 4 or 8 bytes. The first byte defines the size.
  * Any number of events can be written with a write call. There
  * is a set of macros for sending these events. Use these macros if you
  * want to maximize portability of your program.
@@ -160,7 +160,7 @@
 
 /*
  * The 4 most significant bits of byte 0 specify the class of
- * the event: 
+ * the event:
  *
  *	0x8X = system level events,
  *	0x9X = device/port specific events, event[1] = device/port,

@@ -82,7 +82,7 @@ static void ctl_event(CtlEvent *e);
 
 #define ctl mac_control_mode
 
-ControlMode ctl= 
+ControlMode ctl=
 {
   "mac interface", 'm',
   "mac",
@@ -109,7 +109,7 @@ Rect	rFileName={10,10, 26,140},
 		rTime={10,150, 26,200},
 		rLogo={38,5,94,98},
 		rVol={28,220,92,239},
-		
+
 		rPlay={40,110,62,142},
 		rStop={40,145,62,177},
 		rPause={40,180,62,212},
@@ -131,7 +131,7 @@ pascal OSErr DragTrackingProc(
 	WindowPtr				/*window*/,
 	void*					/*theRefCon*/,
 	DragReference			/*drag*/)
-{	
+{
 	switch (theMessage)
 	{
 	case kDragTrackingEnterWindow:
@@ -140,7 +140,7 @@ pascal OSErr DragTrackingProc(
 		DrawPicture(logoDown, &rLogo);
 		recieveHiliting=true;
 		break;
-	case kDragTrackingInWindow:				
+	case kDragTrackingInWindow:
 		break;
 	case kDragTrackingLeaveWindow:
 		if( recieveHiliting )
@@ -169,14 +169,14 @@ pascal OSErr DragReceiveFunc(
 	FlavorType		flavor;
 
 	if( recieveHiliting )
-	{		
+	{
 		int	oldListEnd=mac_n_files;
 		CountDragItems(drag, &itemCount);
 
 		for( i=1; i<=itemCount; i++)
 		{
 			GetDragItemReferenceNumber(drag, i, &theItem);
-			
+
 			if( noErr!=CountDragItemFlavors(drag, theItem, &numFlavors))
 						continue;
 			if( noErr!=GetFlavorType(drag, theItem, 1, &flavor))
@@ -195,7 +195,7 @@ pascal OSErr DragReceiveFunc(
 		}
 		if( gShuffle ) ShuffleList( oldListEnd, mac_n_files);
 	}
-	
+
 	return noErr;
 }
 
@@ -237,7 +237,7 @@ void close_default(MacWindow* macwin)
 {
 	Point	p;
 	Rect	r;
-	
+
 	//Get Log Window position
 	SetPortWindowPort(macwin->ref);
 	p.v=p.h=0;
@@ -286,17 +286,17 @@ void DoVolume()
 	short		lastAmp=mac_amplitude;
 	//SndCommand	theCmd;
 	Point		p;
-	
+
 	SetPortWindowPort(win.ref);
 	GetMouse(&p);
 	/*GlobalToLocal(&p);*/
 	if( PtInRect(p, &rVol) && FrontWindow()==win.ref )
 	{
-		
+
 		mac_amplitude=255*((double)rVol.bottom-10-p.v)/(rVol.bottom-rVol.top-20);
 		if( mac_amplitude<0 ) mac_amplitude=0;
 		if( mac_amplitude>255 ) mac_amplitude=255;
-		
+
 		if( lastAmp!=mac_amplitude )
 		{
 			//theCmd.cmd=ampCmd;
@@ -306,7 +306,7 @@ void DoVolume()
 			InvalRect(&rVol);
 		}
 	}
-}		
+}
 
 void DrawButton()
 {
@@ -338,16 +338,16 @@ static int open_PlayerWin()
 	OSErr	err;
 	RGBColor	back={0,0,0},
 				fore={65535,65535,65535};
-	
+
 	open_window( &win, kPlayerWinID);
 	position_window(&win);
-	
+
 	SetPortWindowPort(win.ref);
 	RGBForeColor(&fore);
 	RGBBackColor(&back);
 	logo= GetPicture(128);
 	logoDown= GetPicture(132);
-	
+
 	for(i=0; i<6; i++)
 		button[i]= GetCIcon(i+200);
 	iconPlay=GetCIcon(210);
@@ -356,7 +356,7 @@ static int open_PlayerWin()
 	iconTab=GetCIcon(207);
 	iconNotLoop=GetCIcon(208);
 	iconLoop=GetCIcon(209);
-	
+
 	if(gHasDragMgr)
 	{
 		//receiveRgn=NewRgn();
@@ -366,7 +366,7 @@ static int open_PlayerWin()
 			err=InstallTrackingHandler(NewDragTrackingHandlerProc(DragTrackingProc),
 								(WindowPtr)win.ref, 0);
 			if(err) ExitToShell();
-			
+
 			err=InstallReceiveHandler(NewDragReceiveHandlerProc(DragReceiveFunc),
 							(WindowPtr)win.ref, 0);
 			if(err) ExitToShell();
@@ -392,7 +392,7 @@ static void click_PlayerWin(Point p, short /*modifiers*/)
 									InvalRect(&rLoop); return; } /* don't call mac_HandleControl();*/
 	else	if( PtInRect(p, &rVol))	DoVolume();
 	else	return; /* no button click*/
-	
+
 	/* if button clicked */
 	mac_HandleControl();
 }
@@ -401,19 +401,19 @@ static void update_PlayerWin()
 {
 	short	y=((double)mac_amplitude/255)*(rVol.bottom-rVol.top-20);
 	Rect	rFrame,rTab;
-	
+
 	SetPortWindowPort(win.ref);
 	DrawButton();
 	skin_f_repeat? PlotCIcon(&rLoop, iconLoop):PlotCIcon(&rLoop, iconNotLoop);
 	PlotCIcon(&rVol, iconVol);
 	SetRect(&rTab, rVol.left+2, rVol.top+49-y, rVol.right-2, rVol.top+59-y);
 	PlotCIcon(&rTab, iconTab);
-	
+
 	rFrame=rFileName; InsetRect(&rFrame, -2, -2);	DrawPicture(GetPicture(129), &rFrame);
 	rFrame=rTime; InsetRect(&rFrame, -2, -2);	DrawPicture(GetPicture(130), &rFrame);
-	
+
 	DrawPicture(logo, &rLogo);
-	
+
 	DrawTimeStr();
 	DrawFileStr();
 }
@@ -455,16 +455,16 @@ MacWindow win={
 static void	PrintLogStr(char str[])
 {
 	int len=strlen(str);
-	
+
 	if( !mac_LogWindow.show ) return;
-	
+
 	if( (**gLogTE).teLength > 10000)	/* clear first half*/
 	{
 		TEFeatureFlag(teFAutoScroll, teBitClear, gLogTE);
 		TESetSelect(0, 5000, gLogTE);
 		TEDelete(gLogTE);
 	}
-	
+
 	TESetSelect((**gLogTE).teLength, (**gLogTE).teLength, gLogTE); /* move to end*/
 	if( len>=1 && str[len-1]=='\n' ){
 		str[len-1]=0; len--;	//convert dos return code to mac's
@@ -480,12 +480,12 @@ static int open_LogWin()
 	open_window(&win, kLogWinID);
 	position_window(&win);
 	setsize_window(&win);
-	
+
 	SetPortWindowPort(win.ref);
 	TextSize(10);
 	gLogTE=TENew(&win.ref->portRect, &win.ref->portRect);
 	if( gLogTE==0 ) mac_ErrorExit("\ppCannot open LogWindow!");
-	
+
 	TEFeatureFlag(teFAutoScroll, teBitSet, gLogTE);
 	TEActivate(gLogTE);
 	return 0;
@@ -505,7 +505,7 @@ static void update_LogWin()
 static int	message_LogWin(int message, long /*param*/)
 {
 	Rect rect;
-	
+
 	switch(message){
 	case MW_GROW:
 		rect=win.ref->portRect;
@@ -556,13 +556,13 @@ void change_ListRow( short row, const MidiFile* file)
 {
 	Point	aCell;
 	char	buf[256]="",*p;
-	
+
 	if( file && file->mfn && file->mfn->title )
 	{
 		strncpy(buf, file->mfn->title, sizeof(buf) - 1);
 		buf[sizeof(buf)-1] = '\0';
 	}
-	
+
 	p= strrchr(file->filename, PATH_SEP);
 	if( p ){
 		size_t len = strlen(buf);
@@ -578,10 +578,10 @@ void add_ListWin(MidiFile * file)
 {
 	short	rowNum=1;
 	//Str255	fullPath;
-	
+
 	//GetFullPath(&file->spec, fullPath);
 	file->mfn=make_new_MFnode_entry(file->filename);
-	rowNum = (**gPlaylist).dataBounds.bottom;	
+	rowNum = (**gPlaylist).dataBounds.bottom;
 	rowNum = LAddRow(1, rowNum, gPlaylist);
 	change_ListRow(  rowNum, file);
 }
@@ -603,13 +603,13 @@ static int open_ListWin()
 	open_window(&win, kListWinID);
 	position_window(&win);
 	setsize_window(&win);
-	
+
 	SetPortWindowPort(win.ref);
 	TextSize(10);
 	listRect=win.ref->portRect;	listRect.right-=14; listRect.bottom-=14;
 	dataBounds.top=dataBounds.left=0; dataBounds.right=1; dataBounds.bottom=0;
 	cSize.h=1024; cSize.v=14;
-	gPlaylist = LNew(&listRect, &dataBounds, cSize, 0, win.ref, 
+	gPlaylist = LNew(&listRect, &dataBounds, cSize, 0, win.ref,
 						1, 1, 0, 1);
 	return 0;
 }
@@ -618,7 +618,7 @@ static void click_ListWin(Point local, short modifiers)
 {
 	Boolean	doubleclick;
 	Cell	cell;
-	
+
 	SetPortWindowPort(win.ref);
 	doubleclick=LClick(local, modifiers, gPlaylist);
 	if(doubleclick){
@@ -640,7 +640,7 @@ static int message_ListWin(int message, long param)
 {
 	Cell	cell;
 	Rect	rect;
-	
+
 	switch(message){
 	case MW_GROW:
 		rect=win.ref->portRect;
@@ -688,7 +688,7 @@ static void	PrintDocStr(char str[])
 		TESetSelect(0, 5000, gDocTE);
 		TEDelete(gDocTE);
 	}
-	
+
 	TESetSelect((**gDocTE).teLength, (**gDocTE).teLength, gDocTE); /* move to end*/
 	TEInsert(str, strlen(str), gDocTE);
 	TESelView(gDocTE);
@@ -702,13 +702,13 @@ static int open_DocWin()
 	open_window(&win, kDocWinID);
 	position_window(&win);
 	setsize_window(&win);
-	
+
 	SetPortWindowPort(win.ref);
 	TextSize(10);
 	r=win.ref->portRect; r.right-=16;
 	gDocTE=TENew(&r, &r);
 	if( gDocTE==0 ) mac_ErrorExit("\pCannot open DocWindow!");
-	
+
 	TEFeatureFlag(teFAutoScroll, teBitSet, gDocTE);
 	TEActivate(gDocTE);
 	return 0;
@@ -727,7 +727,7 @@ static void update_DocWin()
 }
 
 static int	message_DocWin(int message, long param)
-{	
+{
 	switch(message){
 	case MW_GROW:
 		{
@@ -751,16 +751,16 @@ static int	message_DocWin(int message, long param)
 			//midiname= (char*)param;
 		    strncpy(docname, midiname, sizeof docname - 1);
 		    docname[sizeof docname - 1] = '\0';
-	    	if((p = strrchr(docname, '.')) == NULL){
+		if((p = strrchr(docname, '.')) == NULL){
 				return 0;
 		    }
 		    else if(p - docname >= sizeof docname - 4) {
 				return 0;	/* cannot strcpy: that cause buffer overrun */
 		    }
 		    if('A' <= p[1] && p[1] <= 'Z')	strcpy(p + 1, "DOC");
-	    						else		strcpy(p + 1, "doc");
+							else		strcpy(p + 1, "doc");
 
-	    	TEReadFile( docname, gDocTE );
+		TEReadFile( docname, gDocTE );
 			break;
 		}
 	}
@@ -797,11 +797,11 @@ static int open_SpecWin()
 #ifdef SUPPORT_SOUNDSPEC
 	open_window(&win, kSpecWinID);
 	position_window(&win);
-	
-	//always 
+
+	//always
 	//if( win.show ){ //Preference on
 		open_soundspec();
-	   	soundspec_update_wave(NULL, 0);
+		soundspec_update_wave(NULL, 0);
 	//}
 #endif /* SUPPORT_SOUNDSPEC */
 	return 0;
@@ -825,7 +825,7 @@ static void goaway_SpecWin(MacWindow *macwin)
 static int	message_SpecWin(int message, long /*param*/)
 {
 	Rect rect;
-	
+
 	switch(message){
 	case MW_GROW:
 		rect=win.ref->portRect;
@@ -834,7 +834,7 @@ static int	message_SpecWin(int message, long /*param*/)
 		rect.right  -= 15;
 		//rect.bottom -= 15;
 		return 0;
-	
+
 	}
 
 	return -1;  //not supported
@@ -858,7 +858,7 @@ static MacWindow* WindowList[]={
 void DoUpdate(WindowRef win_ref)
 {
 	MacWindow* macwin;
-	
+
 	macwin = (MacWindow*)GetWRefCon(win_ref);
 	if( macwin ) macwin->update();
 }
@@ -867,8 +867,8 @@ static void mac_AdjustMenus(short modifiers)
 {
 	MenuHandle	filenemu=GetMenu(mFile),
 				synthemu=GetMenu(mSynth);
-	
-	
+
+
 	//CheckItem(filenemu, iLogWindow  & 0xFFFF, gShowMsg);
 	//CheckItem(filenemu, iListWindow & 0xFFFF, gShowList);
 	//CheckItem(filenemu, iWrdWindow  & 0xFFFF, gShowWrd);
@@ -886,10 +886,10 @@ void HandleMouseDown(EventRecord *event)
 	MacWindow   *macwin;
 	Rect		growRect={100,100,32000,32000};
 	long		size;
-	
+
 	part=FindWindow(event->where, &window);
 	macwin = (MacWindow*)GetWRefCon(window);
-	
+
 	switch(part)
 	{
 	case inMenuBar:
@@ -932,14 +932,14 @@ void HandleMouseDown(EventRecord *event)
 
 // *****************************************************
 #pragma mark -
-#pragma mark ===============control function 
+#pragma mark ===============control function
 
 
 static int ctl_open(int /*using_stdin*/, int /*using_stdout*/)
 		/*success-> return 0;*/
 {
 	int i, err;
-	
+
 	for(i=0; WindowList[i]; i++){
 		err=WindowList[i]->open();
 		if(err) break;
@@ -954,7 +954,7 @@ static void ctl_close(void)
 	for( i=0; WindowList[i]; i++ ){
 		WindowList[i]->close(WindowList[i]);
 	}
-	
+
 	ctl.opened=0;
 	return;
 }
@@ -969,24 +969,24 @@ static int ctl_pass_playing_list(int init_number_of_files,
 		cmsg(CMSG_FATAL, VERB_NORMAL,
 		  "ctl_pass_playing_list: Sorry. Fatal error.");
 	}
-	
+
 #ifdef MAC_USE_OMS
 	mac_oms_setup();
 #endif
-	
+
 	{
 		FSSpec	spec;
 		OSErr	err;
 		err=FSMakeFSSpec(0, 0, MAC_STARTUP_FOLDER_NAME, &spec);
 		if( err==noErr ){ mac_add_fsspec( &spec ); }
 	}
-	
+
 	gQuit=false;
 	while(!gQuit)
 	{
 		WaitNextEvent(everyEvent, &event, 1,0);
 		mac_HandleEvent(&event);
-	}	
+	}
 	Do_Quit();
 	return 0;
 }
@@ -1004,13 +1004,13 @@ static Boolean UserWantsControl()
 static int ctl_read(int32* /*valp*/)
 {
 	int			ret;
-	
+
 	if (cuepoint_pending) {
 		*valp = cuepoint;
 		cuepoint_pending = 0;
 		return RC_FORWARD;
 	}
-	
+
 	//if( gCursorIsWatch ){ gCursorIsWatch=false; InitCursor(); }
 	if( gQuit ) Do_Quit();	/* Quit Apple event occured */
 	if( mac_rc ){ret=mac_rc; mac_rc=0; return ret;}
@@ -1035,11 +1035,11 @@ static void ctl_gslcd(int lyricid)
 
 	lyric = event2string(lyricid);
 	if(lyric == NULL) return;
-	
+
 	if( lyric[0] == ME_GSLCD ){
 		int i,j, data, mask;
 		char tmp[3]= "00";
-		
+
 		lyric++;
 		for( j=0; j<4; j++ ){
 		for( i=0; i<16; i++ ){
@@ -1076,17 +1076,17 @@ static int cmsg(int type, int verbosity_level, char * fmt, ...)
 	}
   va_start(ap, fmt);
     {
-    	vsnprintf(buf, BUFSIZE, fmt, ap);
+	vsnprintf(buf, BUFSIZE, fmt, ap);
 		if(mac_LogWindow.ref ){
 			PrintLogStr(buf);
 			PrintLogStr("\r");
 		}
 		if( !mac_LogWindow.ref || type==CMSG_FATAL){
-      		StopAlertMessage(c2pstr(buf));  /* no Window or Fatal ERR*/
-    	}
+		StopAlertMessage(c2pstr(buf));  /* no Window or Fatal ERR*/
 	}
-  	va_end(ap);
-  	return 0;
+	}
+	va_end(ap);
+	return 0;
 }
 
 static void ctl_refresh(void)
@@ -1104,14 +1104,14 @@ static void ctl_file_name(char *name)
 {
 	int	i;
 	char	*s;
-	
+
 	for( i=strlen(name); i>=0; i--)
 		if( name[i]==PATH_SEP ) {
 			s=&name[i]+1; //remove pathname
 			break;
 		}
 	snprintf(fileStr, FILESTR_LEN, "%d. %s", nPlaying+1, s);
-	
+
 	if (ctl.verbosity>=0 || ctl.trace_playing){
 		DrawFileStr();
 	}
@@ -1125,7 +1125,7 @@ static void ctl_current_time(int current, int /*v*/)
 {
 	static int	lastSec=-1, lastYieldThread=-1;
 	int			mins, secs, realSecs;
-	
+
 	if( gStartTick==0 ) gStartTick=TickCount();
 						/*select*/
 	realSecs=(TickCount()-gStartTick)/60; /*real time*/

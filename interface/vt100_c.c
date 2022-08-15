@@ -426,7 +426,7 @@ static void ctl_lyric(uint16 lyricid)
         /* EAW -- if not a true KAR lyric, ignore \r, treat \n as \r */
         if (*lyric != ME_KARAOKE_LYRIC) {
             while (strchr(lyric, '\r')) {
-            	*(strchr(lyric, '\r')) = ' ';
+		*(strchr(lyric, '\r')) = ' ';
             }
             while (strchr(lyric, '\n')) {
                 *(strchr(lyric, '\n')) = '\r';
@@ -521,8 +521,8 @@ static int ctl_open(int using_stdin, int using_stdout)
 
     vt100_move(0, 0);
     fprintf(stdout, "TiMidity++ %s%s" NLS,
-    		(strcmp(timidity_version, "current")) ? "v" : "",
-    		timidity_version);
+		(strcmp(timidity_version, "current")) ? "v" : "",
+		timidity_version);
     vt100_move(0, VT100_COLS-45);
     fputs("(C) 1995 Tuukka Toivonen <tt@cgs.fi>", stdout);
     vt100_move(1,0);
@@ -761,7 +761,7 @@ static int ctl_read(int32 *valp)
 static int ctl_write(char *valp, int32 size)
 {
 	static int warned = 0;
-	
+
 	if (!warned) {
 		fprintf(stderr, "Warning: using stdout with vt100 interface "
 				"will not\ngive the desired effect.\n");

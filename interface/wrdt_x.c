@@ -242,8 +242,8 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	len = strlen(p);
 	text = (char *)new_segment(&tmpbuffer, SAFE_CONVERT_LENGTH(len));
 
-	/*This must be not good thing,but as far as I know no wrd file 
-	  written in EUC-JP code can be found,And Hankaku kana required 
+	/*This must be not good thing,but as far as I know no wrd file
+	  written in EUC-JP code can be found,And Hankaku kana required
 	  for layout of charactor and ASCII art.*/
 
 	code_convert(p, text, SAFE_CONVERT_LENGTH(len), "SJIS", "JISK");
@@ -314,9 +314,9 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	       wrd_args[0], wrd_args[1], wrd_args[2], wrd_args[3], wrd_args[4],
 	       wrd_args[5], wrd_args[6], wrd_args[7], wrd_args[8]);
 	wrd_args[0] &= ~0x7;
-	wrd_args[4] &= ~0x7;  
+	wrd_args[4] &= ~0x7;
 	wrd_args[2] |= 0x7;
- 	x_GMove(wrd_args[0], wrd_args[1], wrd_args[2],
+	x_GMove(wrd_args[0], wrd_args[1], wrd_args[2],
 		wrd_args[3], wrd_args[4],wrd_args[5],
 		wrd_args[6], wrd_args[7], wrd_args[8]);
 	break;
@@ -346,7 +346,7 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
       case WRD_LOOP: /* Never call */
 	break;
       case WRD_MAG:
-  	{
+	{
 	  magdata *m;
 	  p = (char *)new_segment(&tmpbuffer, MIN_MBLOCK_SIZE);
 	  snprintf(p, MIN_MBLOCK_SIZE-1, "@MAG(%s", wrd_event2string(wrd_args[0]));
@@ -369,7 +369,7 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	  }
 	  reuse_mblock(&tmpbuffer);
 	  break;
-  	}
+	}
       case WRD_MIDI: /* Never call */
 	break;
       case WRD_OFFSET: /* Never call */

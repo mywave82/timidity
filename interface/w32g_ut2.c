@@ -382,7 +382,7 @@ int INILoadConsoleWnd(void)
 //   ...
 
 // ヘッダ
-#define MC_HEADER	"TiMidity++Win32GUI Mailslot-1.0"	
+#define MC_HEADER	"TiMidity++Win32GUI Mailslot-1.0"
 // コマンド名
 // TiMidity の終了
 #define MC_TERMINATE	"Terminate"
@@ -491,7 +491,7 @@ int WriteMailslot(HANDLE hmailslot, char *buffer, int size)
 int isURLFile(char *filename);
 extern volatile DWORD dwWindowThreadID;
 volatile argc_argv_t MailslotArgcArgv;
-volatile int MailslotThreadTeminateFlag = FALSE; 
+volatile int MailslotThreadTeminateFlag = FALSE;
 void w32gMailslotThread(void)
 {
 	int i;

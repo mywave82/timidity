@@ -243,7 +243,7 @@ URL url_ftp_open(const char *name)
                 return NULL;
             *p = '\0';
             ++host;
-        } 
+        }
 
 #ifdef DEBUG
 	fprintf(stderr, "open(host=`%s', port=`%d')\n", host, port);

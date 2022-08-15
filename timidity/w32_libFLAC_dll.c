@@ -5301,7 +5301,7 @@ FLAC_API FLAC__bool FLAC__file_decoder_seek_absolute(FLAC__FileDecoder *decoder,
 
 
 /***************************************************************
- name: libFLAC_dll  dll: libFLAC.dll 
+ name: libFLAC_dll  dll: libFLAC.dll
 ***************************************************************/
 
 extern int g_load_libFLAC_dll(void);
@@ -5516,7 +5516,7 @@ typedef FLAC_API FLAC__bool(*type_FLAC__metadata_object_picture_set_description)
 typedef FLAC_API FLAC__bool(*type_FLAC__metadata_object_picture_set_data)(FLAC__StreamMetadata *object, FLAC__byte *data, FLAC__uint32 length, FLAC__bool copy);
 typedef FLAC_API FLAC__bool(*type_FLAC__metadata_object_picture_is_legal)(const FLAC__StreamMetadata *object, const char **violation);
 
-	
+
 static struct libFLAC_dll_ {
 	 type_FLAC__format_sample_rate_is_valid FLAC__format_sample_rate_is_valid;
 	 type_FLAC__format_sample_rate_is_subset FLAC__format_sample_rate_is_subset;
@@ -5567,7 +5567,7 @@ static struct libFLAC_dll_ {
 	 type_FLAC__stream_encoder_set_do_mid_side_stereo FLAC__stream_encoder_set_do_mid_side_stereo;
 	 type_FLAC__stream_encoder_set_loose_mid_side_stereo FLAC__stream_encoder_set_loose_mid_side_stereo;
 	 type_FLAC__stream_encoder_set_apodization FLAC__stream_encoder_set_apodization;
-  	 type_FLAC__stream_encoder_set_max_lpc_order FLAC__stream_encoder_set_max_lpc_order;
+	 type_FLAC__stream_encoder_set_max_lpc_order FLAC__stream_encoder_set_max_lpc_order;
 	 type_FLAC__stream_encoder_set_qlp_coeff_precision FLAC__stream_encoder_set_qlp_coeff_precision;
 	 type_FLAC__stream_encoder_set_do_qlp_coeff_prec_search FLAC__stream_encoder_set_do_qlp_coeff_prec_search;
 	 type_FLAC__stream_encoder_set_do_escape_coding FLAC__stream_encoder_set_do_escape_coding;
@@ -5700,7 +5700,7 @@ static struct libFLAC_dll_ {
 	 type_FLAC__metadata_object_picture_set_description FLAC__metadata_object_picture_set_description;
 	 type_FLAC__metadata_object_picture_set_data FLAC__metadata_object_picture_set_data;
 	 type_FLAC__metadata_object_picture_is_legal FLAC__metadata_object_picture_is_legal;
-	
+
 } libFLAC_dll;
 
 static volatile HANDLE h_libFLAC_dll = NULL;
@@ -5748,7 +5748,7 @@ int g_load_libFLAC_dll(void)
     if (g_FLAC__StreamEncoderWriteStatusString == NULL ){ g_free_libFLAC_dll(); return -1; }
 	g_FLAC__treamEncoderReadStatusString = (const char * const * *)GetProcAddress ( h_libFLAC_dll, "FLAC__treamEncoderReadStatusString" );
     if (g_FLAC__treamEncoderReadStatusString == NULL ){ g_free_libFLAC_dll(); return -1; }
-	
+
 	g_FLAC__ChannelAssignmentString = (const char * const * *)GetProcAddress ( h_libFLAC_dll, "FLAC__ChannelAssignmentString" );
     if (g_FLAC__ChannelAssignmentString == NULL ){ g_free_libFLAC_dll(); return -1; }
 	g_FLAC__EntropyCodingMethodTypeString = (const char * const * *)GetProcAddress ( h_libFLAC_dll, "FLAC__EntropyCodingMethodTypeString" );
@@ -5767,7 +5767,7 @@ int g_load_libFLAC_dll(void)
     if (g_FLAC__StreamMetadata_Picture_TypeString == NULL ){ g_free_libFLAC_dll(); return -1; }
 	g_FLAC__SubframeTypeString = (const char * const * *)GetProcAddress ( h_libFLAC_dll, "FLAC__SubframeTypeString" );
     if (g_FLAC__SubframeTypeString == NULL ){ g_free_libFLAC_dll(); return -1; }
-	
+
 	libFLAC_dll.FLAC__format_sample_rate_is_valid = (type_FLAC__format_sample_rate_is_valid)GetProcAddress(h_libFLAC_dll,"FLAC__format_sample_rate_is_valid");
 	if(!libFLAC_dll.FLAC__format_sample_rate_is_valid){ g_free_libFLAC_dll(); return -1; }
 	libFLAC_dll.FLAC__format_sample_rate_is_subset = (type_FLAC__format_sample_rate_is_subset)GetProcAddress(h_libFLAC_dll,"FLAC__format_sample_rate_is_subset");
@@ -7665,6 +7665,6 @@ FLAC__VERSION_STRING DATA
 
 
 #endif /* LEGACY_FLAC */
-	
+
 #endif /* AU_FLAC_DLL */
 

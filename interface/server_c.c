@@ -320,7 +320,7 @@ static int pasv_open(int *port)
     hints.ai_flags = AI_PASSIVE;
 
     snprintf(service, sizeof(service), "%d", *port);
-    
+
     s = getaddrinfo(NULL, service, &hints, &result);
     if (s)
     {
@@ -660,8 +660,8 @@ static void doit(void)
     control_fd_buffer.fd = control_fd;
 
     send_status(220, "TiMidity++ %s%s ready (Server Version %s)",
-    		(strcmp(timidity_version, "current")) ? "v" : "",
-    		timidity_version, SERVER_VERSION);
+		(strcmp(timidity_version, "current")) ? "v" : "",
+		timidity_version, SERVER_VERSION);
 
 /*    while(data_fd != -1 && control_fd != -1) */
     while(control_fd != -1)
@@ -1042,12 +1042,12 @@ static int cmd_patch(int argc, char **argv)
     else if(strcasecmp(argv[1], "bank") == 0)
 	dr = 0;
     else
-	return send_status(502, "PATCH: Invalid argument: %s", argv[1]); 
+	return send_status(502, "PATCH: Invalid argument: %s", argv[1]);
 
     bank = atoi(argv[2]);
     prog = atoi(argv[3]);
     if(bank < 0 || bank > 127 || prog < 0 || prog > 127)
-	return send_status(502, "PATCH: Invalid argument"); 
+	return send_status(502, "PATCH: Invalid argument");
     if(play_midi_load_instrument(dr, bank, prog) == NULL)
 	return send_status(514, "PATCH: Can't load the patch");
     return send_status(200, "OK");
@@ -1295,7 +1295,7 @@ static int do_sequencer(void)
 		if (!(status & 0x80)) {
 		    /* no status byte, skip this crap */
 		    READ_NEEDBUF(frame_size);
-	    	    ctl.cmsg(CMSG_INFO, VERB_NORMAL, "no status byte for %#x, skipping",
+		    ctl.cmsg(CMSG_INFO, VERB_NORMAL, "no status byte for %#x, skipping",
 			    data_buffer[offset + data_offs]);
 		    READ_ADVBUF(frame_size);
 		    break;
@@ -1479,7 +1479,7 @@ static int do_sequencer(void)
 			    data_buffer[offset + data_offs]);
 		return 1;
 	    }
-    	    rstatus = status;
+	    rstatus = status;
 	    break;
 
 	  case SEQ_FULLSIZE:

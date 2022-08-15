@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-		
+
     mac_trace.c
     Macintosh trace window
 */
@@ -73,7 +73,7 @@ static void close_TraceWin();
 static int	message_TraceWin(int message, long param);
 // ****************************************************
 static void init_trace_window_chan(int /*ch*/)
-{	
+{
 }
 
 static void DrawInstrumentName(int ch, char *comm)
@@ -84,12 +84,12 @@ static void DrawInstrumentName(int ch, char *comm)
 
 	SetPortWindowPort(win.ref);
 	RGBForeColor(&black);
-	
+
 		//channel number
 	MoveTo(2, UPPER_MERGIN+CHANNEL_HIGHT*(ch+1)-1);
 	snprintf(buf, 80,"%2d", ch+1);
 	DrawText(buf, 0, strlen(buf));
-		
+
 		//InstrumentName
 	box.top=UPPER_MERGIN+CHANNEL_HIGHT*ch;
 	box.left=20;
@@ -113,7 +113,7 @@ static void mac_ctl_refresh_trc()
 	for( i=0; i<16; i++ ){
 		DrawInstrumentName(i, instr_comment[i].comm);
 	}
-	
+
 #define MAX_NOTE_NUM 120
 	r.top=		UPPER_MERGIN;
 	r.left=		LEFT_MERGIN;
@@ -121,7 +121,7 @@ static void mac_ctl_refresh_trc()
 	r.right=	r.left+CHANNEL_WIDTH*MAX_NOTE_NUM;
 	RGBForeColor(&darkGray);
 	PaintRect(&r);
-	
+
 		//draw separater line
 	RGBForeColor(&black);
 	for(i=1; i<16; i++){	//horizontal
@@ -137,7 +137,7 @@ static void mac_ctl_refresh_trc()
 void mac_ctl_reset_trc()
 {
 	int i;
-	
+
     for(i = 0; i < MAX_CHANNELS; i++)
     {
 		instr_comment[i].last_note_on = 0.0;
@@ -197,7 +197,7 @@ void mac_ctl_program(int ch, int val, void *comm)
 #pragma mark -
 static void update_channel(int /*ch*/)
 {
-	
+
 }
 
 static void update_filename()
@@ -206,7 +206,7 @@ static void update_filename()
 
 	if( !mac_TraceWindow.show ) return;
 	SetPortWindowPort(win.ref);
-	
+
 	if( mac_n_files>0 && nPlaying<=mac_n_files && fileList[nPlaying].mfn &&
 										fileList[nPlaying].mfn->file )
 		snprintf(buf, 256,"File: %s", fileList[nPlaying].mfn->file);
@@ -232,12 +232,12 @@ void mac_trc_update_time( int cur_sec, int tot_sec )
 	static int	save_tot_sec=0, save_cur_sec;
 	//int rate;
 	char		buf[80];
-	
+
 	if( cur_sec!=-1 ) save_cur_sec=tot_sec;
 	if( tot_sec!=-1 ) save_tot_sec=tot_sec;
 	if( cur_sec==-1 ) cur_sec=0;
 	if( cur_sec > save_tot_sec ) cur_sec=save_tot_sec;
-	
+
 	if( !win.show ) return;
 	//rate = (int)(aq_filled_ratio() * 100 + 0.5);
 
@@ -256,7 +256,7 @@ void mac_trc_update_voices()
 
 	if( !mac_TraceWindow.show ) return;
 	SetPortWindowPort(win.ref);
-	
+
 	snprintf(buf, 20, "Voice %3d/%3d   ", current_voices, voices);
 	RGBForeColor(&black);
 	MoveTo(450,24); DrawText(buf, 0, strlen(buf));
@@ -265,11 +265,11 @@ void mac_trc_update_voices()
 void mac_trc_update_all_info()
 {
 	Rect r;
-	
+
 	SetPortWindowPort(win.ref);
 	SetRect(&r, 0,0, win.ref->portRect.right,UPPER_MERGIN);
 	EraseRect(&r);
-	
+
 	mac_trc_update_voices();
 	update_filename();
 	update_title();
@@ -295,7 +295,7 @@ static int open_TraceWin()
 
 	open_window(&win, kTraceWinID);
 	position_window(&win);
-	
+
 	mac_ctl_reset_trc();
 	for(i = 0; i < 16; i++)
 	    init_bitset(channel_program_flags + i, 128);
@@ -317,8 +317,8 @@ static void update_TraceWin()
 static int	message_TraceWin(int /*message*/, long /*param*/)
 {
 	//Rect rect;
-	
-	//switch(message){	
+
+	//switch(message){
 	//}
 
 	return -1;  //not supported
@@ -347,25 +347,25 @@ static unsigned int UpdateNote(int status, int ch, int note, int vel)
     unsigned int onoff=0 /*, check, prev_check*/;
 	const RGBColor	dieColor=	{0x3000,0x3000,0x3000},	//dark gray
 					freeColor=	{0x3000,0x3000,0x3000},	//dark gray
-			onColor=	{0xffff,0xffff,0}, 	//yellow
+			onColor=	{0xffff,0xffff,0},	//yellow
 					sustainedColor={0x8000,0x8000,0},	//dark yellow
 			offColor=	{0x4000,0x4000,0},	//dark yellow
 			noColor=	{0x2000,0x2000,0x2000};
 	RGBColor	color;
-	
+
 	vel=(10 * vel) / 128; /* 0-9 */
 	if( vel>9 ) vel=9;
-	
+
 	r1.left=r2.left=	LEFT_MERGIN+CHANNEL_WIDTH* note;
 	r1.right=r2.right=	r1.left+CHANNEL_WIDTH-1;
 
 	r1.top=		UPPER_MERGIN+CHANNEL_HIGHT* ch;
-	r1.bottom= 	r1.top+(9-vel);
+	r1.bottom=	r1.top+(9-vel);
 	r2.top=		r1.bottom;
 	r2.bottom=	r1.top+CHANNEL_HIGHT-1;
-	
+
 	SetPortWindowPort(win.ref);
-    
+
     color=vel_color[vel];
     switch(status){
 	case VOICE_DIE:	 DARKEN2(color);  onoff = 1;	break;
@@ -376,7 +376,7 @@ static unsigned int UpdateNote(int status, int ch, int note, int vel)
 	default:	color= noColor; break;
     }
     RGBForeColor(&freeColor);
-    PaintRect(&r1);    
+    PaintRect(&r1);
     RGBForeColor(&color);
     PaintRect(&r2);
     return onoff;
@@ -389,7 +389,7 @@ void v_ctl_note(int status, int ch, int note, int vel)
     int xl, n, c;
     unsigned int onoff=0, prev_onoff, check;
     Bitset *bitset;
-	
+
     if( !mac_TraceWindow.show || ch >= 16)
 	return;
 
@@ -406,20 +406,20 @@ void v_ctl_note(int status, int ch, int note, int vel)
 		c = 1;
     xl=note % c;
     if( note>=MAX_NOTE_NUM ) return;
-	
+
 	onoff= UpdateNote( status, ch, note, vel);   //draw at first
     bitset = channel_program_flags + ch;
 	get_bitset(bitset, &prev_onoff, note, 1);
     onoff <<= (8 * sizeof(onoff) - 1);
     set_bitset(bitset, &onoff, note, 1);
     check = has_bitset(bitset);
-            
+
 	if( prev_onoff && !onoff ) current_voices--;
 	if( !prev_onoff && onoff ){
 		current_voices++;
 		mac_trc_update_voices();
 	}
-	
+
 }
 
 #undef win

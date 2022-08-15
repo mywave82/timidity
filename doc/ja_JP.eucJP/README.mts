@@ -397,10 +397,10 @@ F7		EOX
 
 -----------------------------------------------------------------------------
 D--   A--   E--   B--   F#--  C#--  G#--  D#--  A#--  E#--  B#--  F##-- C##--
-Bb-   F-    C-    G-    D-    A-    E-    B-    F#-   C#-   G#-   D#-   A#-  
-Gb    Db    Ab    Eb    Bb    F     C     G     D     A     E     B     F#   
-Ebb+  Bbb+  Fb+   Cb+   Gb+   Db+   Ab+   Eb+   Bb+   F+    C+    G+    D+   
-Cbb++ Gbb++ Dbb++ Abb++ Ebb++ Bbb++ Fb++  Cb++  Gb++  Db++  Ab++  Eb++  Bb++ 
+Bb-   F-    C-    G-    D-    A-    E-    B-    F#-   C#-   G#-   D#-   A#-
+Gb    Db    Ab    Eb    Bb    F     C     G     D     A     E     B     F#
+Ebb+  Bbb+  Fb+   Cb+   Gb+   Db+   Ab+   Eb+   Bb+   F+    C+    G+    D+
+Cbb++ Gbb++ Dbb++ Abb++ Ebb++ Bbb++ Fb++  Cb++  Gb++  Db++  Ab++  Eb++  Bb++
 -----------------------------------------------------------------------------
 
 “ABCDEFG”の表記はピタゴラス音律に従います。また“+”“-”“++”“--”
@@ -412,30 +412,30 @@ Cbb++ Gbb++ Dbb++ Abb++ Ebb++ Bbb++ Fb++  Cb++  Gb++  Db++  Ab++  Eb++  Bb++
 
 [Cチューニング(ハ長調)]
 ----------------------
-A-    E-    B-    F#- 
-F     C     G     D   
-Db+   Ab+   Eb+   Bb+ 
+A-    E-    B-    F#-
+F     C     G     D
+Db+   Ab+   Eb+   Bb+
 ----------------------
 
 [Aチューニング(イ短調)]
 ----------------------
-F#-   C#-   G#-   D#- 
-D     A     E     B   
-Bb+   F+    C+    G+  
+F#-   C#-   G#-   D#-
+D     A     E     B
+Bb+   F+    C+    G+
 ----------------------
 
 [C+チューニング(経過的ハ長調)]
 ----------------------
-A     E     B     F#  
-F+    C+    G+    D+  
+A     E     B     F#
+F+    C+    G+    D+
 Db++  Ab++  Eb++  Bb++
 ----------------------
 
 [A-チューニング(経過的イ短調)]
 ----------------------
 F#--  C#--  G#--  D#--
-D-    A-    E-    B-  
-Bb    F     C     G   
+D-    A-    E-    B-
+Bb    F     C     G
 ----------------------
 
 長調主体の曲には平行調チューニングの音程を僅かに下げたチューニングの組

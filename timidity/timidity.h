@@ -111,12 +111,12 @@ typedef double FLOAT_T;
 /* A somewhat arbitrary frequency range. The low end of this will
    sound terrible as no lowpass filtering is performed on most
    instruments before resampling. */
-#define MIN_OUTPUT_RATE 	4000
-#define MAX_OUTPUT_RATE 	400000
+#define MIN_OUTPUT_RATE	4000
+#define MAX_OUTPUT_RATE	400000
 
 
 /* Master volume in percent. */
-#define DEFAULT_AMPLIFICATION 	70
+#define DEFAULT_AMPLIFICATION	70
 
 
 /* Default sampling rate, default polyphony, and maximum polyphony.

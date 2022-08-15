@@ -40,7 +40,7 @@
 #define WRD_TEXT_COLOR7 "white"
 
 /*sherry data is little endian*/
-#define SRY_GET_SHORT(charp)  ( (charp)[0]+((charp)[1]<<8) ) 
+#define SRY_GET_SHORT(charp)  ( (charp)[0]+((charp)[1]<<8) )
 
 
 enum wrd_token_type

@@ -85,19 +85,19 @@ static int printf_string_upper_bound (const char* format,
       int long_int = 0;
       int extra_long = 0;
       char c;
-      
+
       c = *format++;
-      
+
       if (c == '%')
 	{
 	  int done = 0;
-	  
+
 	  while (*format && !done)
 	    {
 	      switch (*format++)
 		{
 		  char *string_arg;
-		  
+
 		case '*':
 		  len += va_arg (args, int);
 		  break;
@@ -703,7 +703,7 @@ int stat(const char *filename, struct stat *st)
 	Str255				pfilename;
 	CInfoPBRec			pb;
 	FSSpec				fss;
-	
+
 	c2pstrcpy(pfilename, filename);
 	if (FSMakeFSSpec(0, 0, pfilename, &fss) == noErr)
 	{
@@ -850,7 +850,7 @@ strlcat(char *dst, const char *src, size_t siz)
 int strcasecmp(const char *s1, const char *s2)
 {
 	int	c1,c2,i;
-	
+
 	for( i=0; ; i++){
 		if( !s1[i] && !s2[i] ) return 0; //equal
 		if( !s1[i] || !s2[i] ) return 1;

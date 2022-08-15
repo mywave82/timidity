@@ -79,7 +79,7 @@ typedef struct{
 #define CATTR_LPART (1)
 #define CATTR_16FONT (1<<1)
 #define CATTR_COLORED (1<<2)
-#define CATTR_BGCOLORED (1<<3) 
+#define CATTR_BGCOLORED (1<<3)
 #define CATTR_TXTCOL_MASK_SHIFT 4
 #define CATTR_TXTCOL_MASK (7<<CATTR_TXTCOL_MASK_SHIFT)
 #define CATTR_INVAL (1<<31)
@@ -301,7 +301,7 @@ static int InitColor(Colormap cmap, Bool allocate)
 					    mywin.curcoltab[i].green / 257,
 					    mywin.curcoltab[i].blue / 257);
   }
-    
+
   for(i=0;i<MAXPAL;i++)
     memcpy(mywin.gcolor[i],mywin.curcoltab,sizeof(mywin.curcoltab));
   memcpy(mywin.gcolorbase,mywin.curcoltab,sizeof(mywin.curcoltab));
@@ -461,7 +461,7 @@ static int InitWin(char *opt)
 }
 
 /***************************************************
- Redraw Routine 
+ Redraw Routine
   This redraw Text screen.
   Graphic Screen is treated as background bitmap
  ***************************************************/
@@ -560,9 +560,9 @@ static int RedrawText(Drawable drawable, int x,int y,int width,int height)
 	      tcol=(prevattr&CATTR_TXTCOL_MASK)>>CATTR_TXTCOL_MASK_SHIFT;
 	      XSetForeground(mywin.d,mywin.gc,
 			     mywin.txtcolor[tcol].pixel);
-  	    }else if(prevattr&CATTR_BGCOLORED){
-  	      int tcol;
-  	      tcol=(prevattr&CATTR_TXTCOL_MASK)>>CATTR_TXTCOL_MASK_SHIFT;
+	    }else if(prevattr&CATTR_BGCOLORED){
+	      int tcol;
+	      tcol=(prevattr&CATTR_TXTCOL_MASK)>>CATTR_TXTCOL_MASK_SHIFT;
 	      DrawStringFunc=(DrawStringFunc==XDrawString)?(int(*)())DrawReverseString:(int(*)())DrawReverseString16;
 	      XSetForeground(mywin.d,mywin.gc,
 			     mywin.txtcolor[tcol].pixel);
@@ -861,7 +861,7 @@ void x_VRel()
   vgvram.vpix=NULL;
   vgvram.num=0;
 }
- 
+
 void x_VCopy(int sx1,int sy1,int sx2,int sy2,int tx,int ty
 	     ,int ss,int ts,int mode)
 {
@@ -1696,7 +1696,7 @@ static int Parse(int c)
     if(hankaku==1)
       c|=0x80;
     mywin.scrnbuf[mywin.curline][mywin.curcol].attr=mywin.curattr;
-    mywin.scrnbuf[mywin.curline][mywin.curcol].c=c;  
+    mywin.scrnbuf[mywin.curline][mywin.curcol].c=c;
     mywin.curcol++;
     break;
   case CASE_CUU:
@@ -1724,7 +1724,7 @@ static int Parse(int c)
 	if(mywin.scrnbuf[mywin.curline]!=NULL)
 	  ClearLeft();
 	for(j=0;j<mywin.curline;j++)
-	  ClearLine(j);	
+	  ClearLine(j);
       }
       break;
     case 0:
@@ -1734,7 +1734,7 @@ static int Parse(int c)
 	  ClearRight();
 	}
 	for(j=mywin.curline;j<LINES;j++)
-	  ClearLine(j);	
+	  ClearLine(j);
       }
       break;
     case 2:
@@ -1878,7 +1878,7 @@ void AddLine(const unsigned char *str,int len)
   int i,j;
   /*Initialize Redraw rectangle Manager*/
   RedrawInject(-1,-1,-1,-1,False);
-  
+
   /*Allocate LineBuffer*/
   if(len==0)
     len=strlen(str);
@@ -1927,7 +1927,7 @@ void WinFlush(void){
 }
 /*
  *This Function Dumps Charactor Screen buffer status
- *Purely Debugging Purpose this code should be desabled 
+ *Purely Debugging Purpose this code should be desabled
  *if you need not.
  */
 
@@ -1953,7 +1953,7 @@ DebugDump(void)
 void WinEvent(void)
 {
   XEvent e;
-  int rdx1, rdy1, rdx2, rdy2; 
+  int rdx1, rdy1, rdx2, rdy2;
   rdx1 = rdy1 = rdx2 = rdy2 = -1;
   XSync(mywin.d, False);
   while(QLength(mywin.d)>0){
@@ -1972,7 +1972,7 @@ void WinEvent(void)
       }
     }
   }
-  
+
   if(rdx1 != -1){
     Redraw(rdx1, rdy1, rdx2 - rdx1, rdy2 - rdy1);
     XFlush(mywin.d);
@@ -1989,7 +1989,7 @@ void EndWin(void)
     free(image_buffer);
   }
   mywin.d=NULL;
-}  
+}
 
 int OpenWRDWindow(char *opt)
 {

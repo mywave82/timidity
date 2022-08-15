@@ -82,7 +82,7 @@ static int siglen[REJECT] =
 
 /*========== Loader code */
 
-static BOOL 
+static BOOL
 LoadModuleHeader (MODULEHEADER * mh)
 {
   int t, u;
@@ -150,11 +150,11 @@ LoadModuleHeader (MODULEHEADER * mh)
 }
 
 /* Checks the patterns in the modfile for UST / 15-inst indications.
-   For example, if an effect 3xx is found, it is assumed that the song 
-   is 15-inst.  If a 1xx effect has dat greater than 0x20, it is UST.   
+   For example, if an effect 3xx is found, it is assumed that the song
+   is 15-inst.  If a 1xx effect has dat greater than 0x20, it is UST.
 
    Returns:  0 indecisive; 1 = UST; 2 = 15-inst                               */
-static int 
+static int
 CheckPatternType (int numpat)
 {
   int t;
@@ -191,7 +191,7 @@ CheckPatternType (int numpat)
   return 0;
 }
 
-static BOOL 
+static BOOL
 M15_Test (void)
 {
   int t, numpat;
@@ -271,7 +271,7 @@ M15_Test (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 M15_Init (void)
 {
   if (!(mh = (MODULEHEADER *) _mm_malloc (sizeof (MODULEHEADER))))
@@ -279,7 +279,7 @@ M15_Init (void)
   return 1;
 }
 
-static void 
+static void
 M15_Cleanup (void)
 {
   _mm_free (mh);
@@ -312,7 +312,7 @@ static UWORD npertab[7 * OCTAVE] =
 };
 
 
-static void 
+static void
 M15_ConvertNote (MODNOTE * n)
 {
   UBYTE instrument, effect, effdat, note;
@@ -431,7 +431,7 @@ M15_ConvertTrack (MODNOTE * n)
 }
 
 /* Loads all patterns of a modfile and converts them into the 3 byte format. */
-static BOOL 
+static BOOL
 M15_LoadPatterns (void)
 {
   int t, s, tracks = 0;
@@ -463,7 +463,7 @@ M15_LoadPatterns (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 M15_Load (BOOL curious)
 {
   int t, scan;

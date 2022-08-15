@@ -160,7 +160,7 @@ S3M_Cleanup (void)
    this procedure.
 
    Returns 1 on fail.                                                         */
-static BOOL 
+static BOOL
 S3M_GetNumChannels (void)
 {
   int row = 0, flag, ch;
@@ -199,7 +199,7 @@ S3M_GetNumChannels (void)
   return 0;
 }
 
-static BOOL 
+static BOOL
 S3M_ReadPattern (void)
 {
   int row = 0, flag, ch;

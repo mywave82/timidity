@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-	
+
     mac_main.h
 */
 
@@ -36,7 +36,7 @@ extern SndChannelPtr	gSndCannel;
 extern Boolean	skin_f_repeat, gQuit,gBusy, gCursorIsWatch,
 				gHasDragMgr, gShuffle;
 extern int		mac_rc;
-extern short	mac_amplitude;				
+extern short	mac_amplitude;
 extern long		gStartTick;
 extern int		skin_state, mac_n_files, nPlaying;
 extern double	gSilentSec;
@@ -71,7 +71,7 @@ void	DoQuit();
 void	add_ListWin(MidiFile * file);
 void	change_ListRow( short row, const MidiFile* file);
 void	init_ListWin();
-void 	HandleSpecKeydownEvent(long message, short /*modifiers*/);
+void	HandleSpecKeydownEvent(long message, short /*modifiers*/);
 void	ShuffleList(int start, int end);
 
 void	mac_add_fsspec( FSSpec *spec );
@@ -88,7 +88,7 @@ enum{
 enum{
 	mApple=0x0080,
 	iAbout=	0x00800001,
-	
+
 	mFile=		0x0081,
 	iOpen=		0x00810001,
 	iClose=		0x00810002,
@@ -101,7 +101,7 @@ enum{
 	iTraceWindow=0x00810009,
 	iSkinWindow=0x0081000A,
 	//-                  B,
-	//-                  C,	
+	//-                  C,
 	iSaveAs=	0x0081000D,
 	iPref=		0x0081000E,
 	//-                  F,
@@ -114,12 +114,12 @@ enum{
 	//-            4
 	iPrev=0x00820005,
 	iNext=0x00820006,
-	
+
 	mSynth=0x00A0,
 	iTiMidity=0x00A00001,
 	iQuickTime=0x00A00002,
 	iOMS=0x00A00003
-	
+
 };
 
 #define	kPlayerWinID	128
@@ -148,10 +148,10 @@ typedef struct MacWindow_ {
 	int			(*message)(int message, long param);
 						//return -1 if message is not supported
 	int			show, X, Y, width, hight, opened;
-	
+
 }MacWindow;
 
-extern MacWindow 	mac_PlayerWindow,
+extern MacWindow	mac_PlayerWindow,
 					mac_LogWindow,
 					mac_ListWindow,
 					mac_WrdWindow,
@@ -171,9 +171,9 @@ extern MacWindow 	mac_PlayerWindow,
 #endif
 
 extern int evil_level;
-#define EVIL_NORMAL 	1
+#define EVIL_NORMAL	1
 #define EVIL_SUPER		2
-#define EVIL_SPECIAL 	3
+#define EVIL_SPECIAL	3
 
 extern int		do_initial_filling;
 extern volatile int	mac_buf_using_num, mac_flushing_flag;

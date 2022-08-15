@@ -1793,7 +1793,7 @@ static int sry_check_head(struct timidity_file	*tf)
 {
 	char	magic[12];
 	uint8	version[4];
-	
+
 	tf_read(magic, 12,1,tf);
 	if( memcmp(magic, "Sherry WRD\0\0", 12) ){
 		ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
@@ -1877,7 +1877,7 @@ static int sry_read_datapacket(struct timidity_file	*tf, sry_datapacket* packet)
 		return 1;
 	    }
 	} while(len == 0);
-	data = 	(uint8 *)new_segment(&sry_pool, len + 1);
+	data =	(uint8 *)new_segment(&sry_pool, len + 1);
 	if(tf_read(data, 1, len, tf) < len)
 	{
 	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -1927,7 +1927,7 @@ static void sry_timebase21(struct wrd_step_tracer* wrdstep, int timebase)
 
 #ifdef DEBUG
     fprintf(stderr, "Timebase: %d, divisions:%d\n",
-    		wrdstep->timebase, current_file_info->divisions);
+		wrdstep->timebase, current_file_info->divisions);
     fprintf(stderr, "Step: %d\n", wrdstep->step_inc);
 #endif /* DEBUG */
 }
@@ -1996,7 +1996,7 @@ static void sry_read_headerblock(struct wrd_step_tracer* wrdstep,
 	packet.data = (uint8 *)new_segment(&sry_pool, 1);
 	packet.data[0] = 0x01;
 	sry_regist_datapacket(wrdstep , &packet);
-	
+
 	for(;;){
 		err= sry_read_datapacket(tf, &packet);
 		if( err ) break;
@@ -2083,18 +2083,18 @@ static int import_sherrywrd_file(const char * fn)
 	char	*cp;
 	struct timidity_file	*tf;
     struct wrd_step_tracer wrdstep;
-	
+
 	strncpy(sry_fn, fn, sizeof(sry_fn));
 	cp=strrchr(sry_fn, '.');
 	if( cp==0 ) return 0;
-	
+
 	strncpy(cp+1, "sry", sizeof(sry_fn) - (cp - sry_fn) - 1);
 	tf= open_file( sry_fn, 0, OF_NORMAL);
 	if( tf==NULL ) return 0;
 	if( sry_check_head(tf)!=0 ) return 0;
 	ctl->cmsg(CMSG_INFO, VERB_NORMAL,
 		  "%s: reading sherry data...", sry_fn);
-	
+
 	wrd_readinit();
 	memset(&wrdstep, 0, sizeof(wrdstep));
 

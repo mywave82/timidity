@@ -220,7 +220,7 @@ int TracerThreadPriority;
 int WrdThreadPriority;
 
 // dir
-int SeachDirRecursive = 0;	// 再帰的ディレクトリ検索 
+int SeachDirRecursive = 0;	// 再帰的ディレクトリ検索
 
 // Ini File
 int IniFileAutoSave = 1;	// INI ファイルの自動セーブ
@@ -242,15 +242,15 @@ void TiMidityHeapCheck(void);
 volatile DWORD dwWindowThreadID = -1;
 void w32g_i_init(void)
 {
-    ThreadNumMax++;
-    hProcess = GetCurrentProcess();
-    hWindowThread = GetCurrentThread();
+	ThreadNumMax++;
+	hProcess = GetCurrentProcess();
+	hWindowThread = GetCurrentThread();
 	dwWindowThreadID = GetCurrentThreadId();
 
-    InitCommonControls();
+	InitCommonControls();
 
 #ifdef W32GUI_DEBUG
-    DebugThreadInit();
+	DebugThreadInit();
 #endif
 }
 
@@ -259,10 +259,12 @@ int PlayerLanguage = LANGUAGE_ENGLISH;
 #define PInfoOK 1
 long SetValue(int32 value, int32 min, int32 max)
 {
-  int32 v = value;
-  if(v < min) v = min;
-  else if( v > max) v = max;
-  return v;
+	int32 v = value;
+	if(v < min)
+		v = min;
+	else if( v > max)
+		v = max;
+	return v;
 }
 
 int w32gSecondTiMidity(int opt, int argc, char **argv);
@@ -321,15 +323,15 @@ void OnExitReady(void)
 #ifdef W32GUI_DEBUG
 	PrintfDebugWnd("OnExitReady: Start.\n");
 #endif
-    w32g_send_rc(RC_STOP, 0);
+	w32g_send_rc(RC_STOP, 0);
 
 	/* Exit after 10 sec. */
-	
+
 	timeSetEvent(10000, 1000, KillProcess, 0, TIME_ONESHOT);
 
 	/* Wait really stopping to play */
 	i = 1000/OnExitReadyWait; /* 1 sec. */
-    while(w32g_play_active && i-- > 0)
+	while(w32g_play_active && i-- > 0)
 	{
 		Sleep(OnExitReadyWait);
 		VOLATILE_TOUCH(w32g_play_active);
@@ -360,7 +362,7 @@ void InitStartWnd(int nCmdShow)
 	InitWrdWnd(hMainWnd);
 	InitSoundSpecWnd(hMainWnd);
 
-    hMainWndScrollbarProgressWnd = GetDlgItem(hMainWnd, IDC_SCROLLBAR_PROGRESS);
+	hMainWndScrollbarProgressWnd = GetDlgItem(hMainWnd, IDC_SCROLLBAR_PROGRESS);
 	hMainWndScrollbarVolumeWnd = GetDlgItem(hMainWnd, IDC_SCROLLBAR_VOLUME);
 	EnableScrollBar(hMainWndScrollbarVolumeWnd, SB_CTL,ESB_ENABLE_BOTH);
 	SetScrollRange(hMainWndScrollbarVolumeWnd, SB_CTL,
@@ -381,25 +383,25 @@ typedef struct SUBWINDOW_ {
 }	SUBWINDOW;
 SUBWINDOW subwindow[] =
 {
-  {&hConsoleWnd,0},
-  {&hListWnd,0},
-  {&hTracerWnd,0},
-  {&hDocWnd,0},
-  {&hWrdWnd,0},
-  {&hSoundSpecWnd,0},
-  {NULL,0}
+	{&hConsoleWnd,0},
+	{&hListWnd,0},
+	{&hTracerWnd,0},
+	{&hDocWnd,0},
+	{&hWrdWnd,0},
+	{&hSoundSpecWnd,0},
+	{NULL,0}
 };
 
 int SubWindowMax = 5;
 SUBWINDOW SubWindowHistory[] =
 {
-  {&hConsoleWnd,0},
-  {&hListWnd,0},
-  {&hTracerWnd,0},
-  {&hDocWnd,0},
-  {&hWrdWnd,0},
-  {&hSoundSpecWnd,0},
-  {NULL,0}
+	{&hConsoleWnd,0},
+	{&hListWnd,0},
+	{&hTracerWnd,0},
+	{&hDocWnd,0},
+	{&hWrdWnd,0},
+	{&hSoundSpecWnd,0},
+	{NULL,0}
 };
 
 MAINWNDINFO MainWndInfo;
@@ -496,9 +498,9 @@ static void InitMainWnd(HWND hParentWnd)
 
 	if (hIcon!=NULL) SendMessage(hMainWnd,WM_SETICON,FALSE,(LPARAM)hIcon);
 	{  // Set the title of the main window again.
-   	char buffer[256];
-   	SendMessage( hMainWnd, WM_GETTEXT, (WPARAM)255, (LPARAM)buffer);
-   	SendMessage( hMainWnd, WM_SETTEXT, (WPARAM)0, (LPARAM)buffer);
+	char buffer[256];
+	SendMessage( hMainWnd, WM_GETTEXT, (WPARAM)255, (LPARAM)buffer);
+	SendMessage( hMainWnd, WM_SETTEXT, (WPARAM)0, (LPARAM)buffer);
 	}
 	MainWndInfoApply();
 }
@@ -573,7 +575,7 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 	// PrintfDebugWnd("MainProc: Mess%lx WPARAM%lx LPARAM%lx\n",uMess,wParam,lParam);
 	switch (uMess)
 	{
-      case WM_INITDIALOG:
+	case WM_INITDIALOG:
 		PrefWndShow = FALSE;
 		update_subwindow();
 		MainWndUpdateConsoleButton();
@@ -586,7 +588,7 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		InitCanvasWnd(hwnd);
 		InitMainToolbar(hwnd);
 		InitSubWndToolbar(hwnd);
-	    {
+		{
 			HMENU hMenu = GetSystemMenu(hwnd, FALSE);
 #if 1
 			RemoveMenu(hMenu,SC_MAXIMIZE,MF_BYCOMMAND);
@@ -605,23 +607,23 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 			InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING, IDM_NEXT, "Next");
 			InsertMenu(hMenu, 0, MF_BYPOSITION | MF_STRING, IDM_PLAY, "Play");
 			DrawMenuBar(hwnd);
-    	}
-			{
-				RECT d_rc, w_rc;
-				GetClientRect ( GetDesktopWindow (), &d_rc );
-				GetWindowRect ( hwnd, &w_rc );
-				d_rc.right -= w_rc.right - w_rc.left;
-				d_rc.bottom -= w_rc.bottom - w_rc.top;
-				if ( MainWndInfo.PosX < d_rc.left ) MainWndInfo.PosX = d_rc.left; 
-				if ( MainWndInfo.PosX > d_rc.right ) MainWndInfo.PosX = d_rc.right; 
-				if ( MainWndInfo.PosY < d_rc.top ) MainWndInfo.PosY = d_rc.top; 
-				if ( MainWndInfo.PosY > d_rc.bottom ) MainWndInfo.PosY = d_rc.bottom; 
-				SetWindowPosSize(GetDesktopWindow(),hwnd,MainWndInfo.PosX, MainWndInfo.PosY );
-			}
+		}
+		{
+			RECT d_rc, w_rc;
+			GetClientRect ( GetDesktopWindow (), &d_rc );
+			GetWindowRect ( hwnd, &w_rc );
+			d_rc.right -= w_rc.right - w_rc.left;
+			d_rc.bottom -= w_rc.bottom - w_rc.top;
+			if ( MainWndInfo.PosX < d_rc.left ) MainWndInfo.PosX = d_rc.left;
+			if ( MainWndInfo.PosX > d_rc.right ) MainWndInfo.PosX = d_rc.right;
+			if ( MainWndInfo.PosY < d_rc.top ) MainWndInfo.PosY = d_rc.top;
+			if ( MainWndInfo.PosY > d_rc.bottom ) MainWndInfo.PosY = d_rc.bottom;
+			SetWindowPosSize(GetDesktopWindow(),hwnd,MainWndInfo.PosX, MainWndInfo.PosY );
+		}
 		return FALSE;
-	  HANDLE_MSG(hwnd,WM_COMMAND,MainCmdProc);
+	HANDLE_MSG(hwnd,WM_COMMAND,MainCmdProc);
 
-	  case WM_DESTROY:
+	case WM_DESTROY:
 		if(save_playlist_once_before_exit_flag) {
 			save_playlist_once_before_exit_flag = 0;
 			w32gSaveDefaultPlaylist();
@@ -629,7 +631,7 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		INISaveMainWnd();
 		PostQuitMessage(0);
 		break;
-	  case WM_CLOSE:
+	case WM_CLOSE:
 		if(save_playlist_once_before_exit_flag) {
 			save_playlist_once_before_exit_flag = 0;
 			w32gSaveDefaultPlaylist();
@@ -637,7 +639,7 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		DestroyWindow(hwnd);
 		break;
 
-      case WM_SIZE:
+	case WM_SIZE:
 		if(wParam == SIZE_MINIMIZED){
 			if ( IsVisiblePrefWnd () )
 				PrefWndShow = TRUE;
@@ -652,7 +654,7 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 			}
 		}
 		return FALSE;
-	  case WM_MOVE:
+	case WM_MOVE:
 		if ( ! IsIconic(hwnd) ) {
 			RECT rc;
 			GetWindowRect(hwnd,&rc);
@@ -660,57 +662,56 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 			MainWndInfo.PosY = rc.top;
 		}
 		break;
-      case WM_QUERYOPEN:
+	case WM_QUERYOPEN:
 		OnShow();
 		return FALSE;
-      case WM_DROPFILES:
+	case WM_DROPFILES:
 		w32g_send_rc(RC_EXT_DROP, (ptr_size_t)wParam);
 		return FALSE;
-      case WM_HSCROLL: {
-		  int nScrollCode = (int)LOWORD(wParam);
-		  int nPos = (int) HIWORD(wParam);
-		  HWND bar = (HWND)lParam;
+	case WM_HSCROLL: {
+		int nScrollCode = (int)LOWORD(wParam);
+		int nPos = (int) HIWORD(wParam);
+		HWND bar = (HWND)lParam;
 
-		  if(bar != hMainWndScrollbarProgressWnd)
-			  break;
+		if(bar != hMainWndScrollbarProgressWnd)
+			break;
 
-		  switch(nScrollCode)
-		  {
+		switch(nScrollCode)
+		{
 			case SB_THUMBTRACK:
 			case SB_THUMBPOSITION:
-			  progress_jump = nPos;
-			  break;
+				progress_jump = nPos;
+				break;
 			case SB_LINELEFT:
-			  progress_jump = GetScrollPos(bar, SB_CTL) - 1;
-			  if(progress_jump < 0)
-				  progress_jump = 0;
-			  break;
+				progress_jump = GetScrollPos(bar, SB_CTL) - 1;
+				if(progress_jump < 0)
+					progress_jump = 0;
+				break;
 			case SB_PAGELEFT:
-			  progress_jump = GetScrollPos(bar, SB_CTL) - 10;
-			  if(progress_jump < 0)
-				  progress_jump = 0;
-			  break;
+				progress_jump = GetScrollPos(bar, SB_CTL) - 10;
+				if(progress_jump < 0)
+					progress_jump = 0;
+				break;
 			case SB_LINERIGHT:
-			  progress_jump = GetScrollPos(bar, SB_CTL) + 1;
-			  break;
+				progress_jump = GetScrollPos(bar, SB_CTL) + 1;
+				break;
 			case SB_PAGERIGHT:
-			  progress_jump = GetScrollPos(bar, SB_CTL) + 10;
-			  break;
+				progress_jump = GetScrollPos(bar, SB_CTL) + 10;
+				break;
 			case SB_ENDSCROLL:
-			  if(progress_jump != -1)
-			  {
-				  w32g_send_rc(RC_JUMP, progress_jump * play_mode->rate);
-				  SetScrollPos(hMainWndScrollbarProgressWnd, SB_CTL,
-							   progress_jump, TRUE);
-				  progress_jump = -1;
-			  }
-			  break;
-		  }
-		  break;
+				if(progress_jump != -1)
+				{
+					w32g_send_rc(RC_JUMP, progress_jump * play_mode->rate);
+					SetScrollPos(hMainWndScrollbarProgressWnd, SB_CTL,
+					             progress_jump, TRUE);
+					progress_jump = -1;
+				}
+				break;
 		}
-	  break;
+		break;
+	}
 
-	  case WM_VSCROLL: {
+	case WM_VSCROLL: {
 		int nScrollCode = (int) LOWORD(wParam);
 		int nPos = (int) HIWORD(wParam);
 		HWND bar = (HWND) lParam;
@@ -721,102 +722,101 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 
 		switch(nScrollCode)
 		{
-		  case SB_THUMBTRACK:
-		  case SB_THUMBPOSITION:
-			pos = nPos;
-			break;
-		  case SB_LINEUP:
-		  case SB_PAGEUP:
-			pos = GetScrollPos(bar, SB_CTL) - 5;
-			if(pos < 0)
-				pos = 0;
-			break;
-		  case SB_LINEDOWN:
-		  case SB_PAGEDOWN:
-			pos = GetScrollPos(bar, SB_CTL) + 5;
-			if(pos > W32G_VOLUME_MAX)
-				pos = W32G_VOLUME_MAX;
-			break;
-		  case SB_ENDSCROLL:
-			if(pos != -1)
-			{
-				w32g_send_rc(RC_CHANGE_VOLUME,
-							 (W32G_VOLUME_MAX - pos) - amplification);
-				SetScrollPos(bar, SB_CTL, pos, TRUE);
-				pos = -1;
-			}
+			case SB_THUMBTRACK:
+			case SB_THUMBPOSITION:
+				pos = nPos;
+				break;
+			case SB_LINEUP:
+			case SB_PAGEUP:
+				pos = GetScrollPos(bar, SB_CTL) - 5;
+				if(pos < 0)
+					pos = 0;
+				break;
+			case SB_LINEDOWN:
+			case SB_PAGEDOWN:
+				pos = GetScrollPos(bar, SB_CTL) + 5;
+				if(pos > W32G_VOLUME_MAX)
+					pos = W32G_VOLUME_MAX;
+				break;
+			case SB_ENDSCROLL:
+				if(pos != -1)
+				{
+					w32g_send_rc(RC_CHANGE_VOLUME,
+					             (W32G_VOLUME_MAX - pos) - amplification);
+					SetScrollPos(bar, SB_CTL, pos, TRUE);
+					pos = -1;
+				}
 			break;
 		}
-	  }
-	  break;
+		break;
+	}
 
-	  case WM_SYSCOMMAND:
+	case WM_SYSCOMMAND:
 		switch(wParam){
-		  case IDM_STOP:
-		  case IDM_PAUSE:
-		  case IDM_PREV:
-		  case IDM_PLAY:
-		  case IDM_NEXT:
-		  case IDM_FOREWARD:
-		  case IDM_BACKWARD:
-			SendMessage(hwnd,WM_COMMAND,wParam,(LPARAM)NULL);
-			break;
-		  default:
-			break;
+			case IDM_STOP:
+			case IDM_PAUSE:
+			case IDM_PREV:
+			case IDM_PLAY:
+			case IDM_NEXT:
+			case IDM_FOREWARD:
+			case IDM_BACKWARD:
+				SendMessage(hwnd,WM_COMMAND,wParam,(LPARAM)NULL);
+				break;
+			default:
+				break;
 		}
 		return FALSE;
-      case WM_NOTIFY:
+	case WM_NOTIFY:
 		switch(wParam) {
-		  case IDC_TOOLBARWINDOW_MAIN:{
-			  LPTBNOTIFY TbNotify = (LPTBNOTIFY)lParam;
-			  switch(TbNotify->iItem){
-				case IDM_BACKWARD:
-				  if(TbNotify->hdr.code==TBN_BEGINDRAG){
+			case IDC_TOOLBARWINDOW_MAIN:{
+				LPTBNOTIFY TbNotify = (LPTBNOTIFY)lParam;
+				switch(TbNotify->iItem){
+					case IDM_BACKWARD:
+						if(TbNotify->hdr.code==TBN_BEGINDRAG){
 #ifdef W32GUI_DEBUG
-					  //PrintfDebugWnd("IDM_BACKWARD: BUTTON ON\n");
+							//PrintfDebugWnd("IDM_BACKWARD: BUTTON ON\n");
 #endif
-					  PlayerBackward(0,0,0,0,0);
-					  PlayerForwardAndBackwardEventID =
-						  timeSetEvent(100, 100, PlayerBackward, 0, TIME_PERIODIC);
-				  }
-				  if(PlayerForwardAndBackwardEventID != 0)
-					  if(TbNotify->hdr.code==TBN_ENDDRAG){
+							PlayerBackward(0,0,0,0,0);
+							PlayerForwardAndBackwardEventID =
+							timeSetEvent(100, 100, PlayerBackward, 0, TIME_PERIODIC);
+						}
+						if(PlayerForwardAndBackwardEventID != 0)
+							if(TbNotify->hdr.code==TBN_ENDDRAG){
 #ifdef W32GUI_DEBUG
-						  //PrintfDebugWnd("IDM_BACKWARD: BUTTON OFF\n");
+								//PrintfDebugWnd("IDM_BACKWARD: BUTTON OFF\n");
 #endif
-						  timeKillEvent(PlayerForwardAndBackwardEventID);
-						  PlayerForwardAndBackwardEventID = 0;
-					  }
-				  break;
-				case IDM_FOREWARD:
-				  if(TbNotify->hdr.code ==TBN_BEGINDRAG &&
-					 PlayerForwardAndBackwardEventID == 0){
+								timeKillEvent(PlayerForwardAndBackwardEventID);
+								PlayerForwardAndBackwardEventID = 0;
+							}
+						break;
+					case IDM_FOREWARD:
+						if(TbNotify->hdr.code ==TBN_BEGINDRAG &&
+						   PlayerForwardAndBackwardEventID == 0){
 #ifdef W32GUI_DEBUG
-					  //PrintfDebugWnd("IDM_FOREWARD: BUTTON ON\n");
+							//PrintfDebugWnd("IDM_FOREWARD: BUTTON ON\n");
 #endif
-					  PlayerForward(0,0,0,0,0);
-					  PlayerForwardAndBackwardEventID =
-						  timeSetEvent(100,300,PlayerForward,0,TIME_PERIODIC);
-				  }
-				  else if((TbNotify->hdr.code == TBN_ENDDRAG ||
-						   TbNotify->hdr.code == NM_CLICK ||
-						   TbNotify->hdr.code == NM_RCLICK) &&
-						  PlayerForwardAndBackwardEventID != 0)
-				  {
+							PlayerForward(0,0,0,0,0);
+							PlayerForwardAndBackwardEventID =
+							timeSetEvent(100,300,PlayerForward,0,TIME_PERIODIC);
+						} else if((TbNotify->hdr.code == TBN_ENDDRAG ||
+						           TbNotify->hdr.code == NM_CLICK ||
+						           TbNotify->hdr.code == NM_RCLICK) &&
+						           PlayerForwardAndBackwardEventID != 0)
+						{
 #ifdef W32GUI_DEBUG
-					  //PrintfDebugWnd("IDM_FOREWARD: BUTTON OFF\n");
+							//PrintfDebugWnd("IDM_FOREWARD: BUTTON OFF\n");
 #endif
-					  timeKillEvent(PlayerForwardAndBackwardEventID);
-					  PlayerForwardAndBackwardEventID = 0;
-				  }
-				  break;
-				default:
-				  break;
-			  }
-		    }
-			break; /* end of case IDC_TOOLBARWINDOW_MAIN */
-		  default:
-			break;
+							timeKillEvent(PlayerForwardAndBackwardEventID);
+							PlayerForwardAndBackwardEventID = 0;
+						}
+						break;
+					default:
+						break;
+				}
+				break; /* end of case IDC_TOOLBARWINDOW_MAIN */
+			}
+			default:
+				break;
 		}
 		return FALSE;
 	case WM_SHOWWINDOW:
@@ -837,219 +837,218 @@ MainProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
-		break;
-      default:
+	default:
 		if (uMess == RegisterWindowMessage("TaskbarCreated")) {
 			ShowWindow(hMainWnd, SW_HIDE);
 			ShowWindow(hMainWnd, SW_SHOWNOACTIVATE);
 			return 0;
 		}
 		return FALSE;
-    }
+	}
 	return FALSE;
 }
 
 void MainCmdProc(HWND hwnd, int wId, HWND hwndCtl, UINT wNotifyCode)
 {
-	 // PrintfDebugWnd("WM_COMMAND: ID%lx HWND%lx CODE%lx\n",wId,hwndCtl,wNotifyCode);
-    switch(wId)
-    {
-      case IDM_STOP:
-		  w32g_send_rc(RC_STOP, 0);
-		  break;
-      case IDM_PAUSE:
-		  SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_MAIN,
+	// PrintfDebugWnd("WM_COMMAND: ID%lx HWND%lx CODE%lx\n",wId,hwndCtl,wNotifyCode);
+	switch(wId)
+	{
+		case IDM_STOP:
+			w32g_send_rc(RC_STOP, 0);
+			break;
+		case IDM_PAUSE:
+			SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_MAIN,
 									TB_CHECKBUTTON, IDM_PAUSE,
 									(LPARAM)MAKELONG(!play_pause_flag, 0));
-		  w32g_send_rc(RC_TOGGLE_PAUSE, 0);
-		  break;
-      case IDM_PREV:
-		  w32g_send_rc(RC_REALLY_PREVIOUS, 0);
-		  break;
-      case IDM_BACKWARD:
-		  /* Do nothing here. See WM_NOTIFY in MainProc() */
-		  break;
-      case IDM_PLAY:
-		  if(play_pause_flag)
-		  {
+			w32g_send_rc(RC_TOGGLE_PAUSE, 0);
+			  break;
+		case IDM_PREV:
+			w32g_send_rc(RC_REALLY_PREVIOUS, 0);
+			break;
+		case IDM_BACKWARD:
+			/* Do nothing here. See WM_NOTIFY in MainProc() */
+			break;
+		case IDM_PLAY:
+			if(play_pause_flag)
+			{
 				SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_MAIN,
 										 TB_CHECKBUTTON, IDM_PAUSE,
 										 (LPARAM)MAKELONG(FALSE, 0));
 				w32g_send_rc(RC_TOGGLE_PAUSE, 0);
-		  }
-		  if(!w32g_play_active)
+			}
+			if(!w32g_play_active)
 				w32g_send_rc(RC_LOAD_FILE, 0);
-		  break;
-      case IDM_FOREWARD:
-		  /* Do nothing here. See WM_NOTIFY in MainProc() */
-		  break;
-      case IDM_NEXT:
-		  w32g_send_rc(RC_NEXT, 0);
-		  break;
-      case IDM_CONSOLE:
-      case IDM_MWCONSOLE:
-		  ToggleSubWindow(hConsoleWnd);
-		  break;
-      case IDM_TRACER:
-      case IDM_MWTRACER:
-		  ToggleSubWindow(hTracerWnd);
-//		  MainWndUpdateTracerButton();
-//		  MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
-		  break;
-      case IDM_LIST:
-      case IDM_MWPLAYLIST:
-		  ToggleSubWindow(hListWnd);
-		  if(IsWindowVisible(hListWnd))
-			w32g_send_rc(RC_EXT_UPDATE_PLAYLIST, 0);
-		  break;
-      case IDM_DOC:
-      case IDM_MWDOCUMENT:
-		  ToggleSubWindow(hDocWnd);
-//		  if(IsWindowVisible(hDocWnd))
-//			  w32g_send_rc(RC_EXT_DOC, 0);
-		  break;
-      case IDM_WRD:
-      case IDM_MWWRDTRACER:
-		  ToggleSubWindow(hWrdWnd);
-//		  MainWndUpdateWrdButton();
-//		  MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
-		  break;
-      case IDM_SOUNDSPEC:
-      case IDM_MWSOUNDSPEC:
-		  MainWndUpdateSoundSpecButton();
-		  MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
-		  break;
-      case IDOK:
-		  break;
-      case IDCANCEL:
-		  OnQuit();
-		  break;
-      case IDM_MFOPENFILE:
-		  DlgMidiFileOpen(hwnd);
-		  break;
-      case IDM_MFOPENDIR:
-		  DlgDirOpen(hwnd);
-		  break;
-      case IDM_MFLOADPLAYLIST:
-		  DlgPlaylistOpen(hwnd);
-		  break;
-      case IDM_MFSAVEPLAYLISTAS:
-		  DlgPlaylistSave(hwnd);
-		  break;
-      case IDM_MFEXIT:
-		  OnQuit();
-		  break;
+			break;
+		case IDM_FOREWARD:
+			/* Do nothing here. See WM_NOTIFY in MainProc() */
+			break;
+		case IDM_NEXT:
+			w32g_send_rc(RC_NEXT, 0);
+			break;
+		case IDM_CONSOLE:
+		case IDM_MWCONSOLE:
+			ToggleSubWindow(hConsoleWnd);
+			break;
+		case IDM_TRACER:
+		case IDM_MWTRACER:
+			ToggleSubWindow(hTracerWnd);
+//			MainWndUpdateTracerButton();
+//			MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
+			break;
+		case IDM_LIST:
+		case IDM_MWPLAYLIST:
+			ToggleSubWindow(hListWnd);
+			if(IsWindowVisible(hListWnd))
+				w32g_send_rc(RC_EXT_UPDATE_PLAYLIST, 0);
+			break;
+		case IDM_DOC:
+		case IDM_MWDOCUMENT:
+			ToggleSubWindow(hDocWnd);
+//			if(IsWindowVisible(hDocWnd))
+//				w32g_send_rc(RC_EXT_DOC, 0);
+			break;
+		case IDM_WRD:
+		case IDM_MWWRDTRACER:
+			ToggleSubWindow(hWrdWnd);
+//			MainWndUpdateWrdButton();
+//			MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
+			break;
+		case IDM_SOUNDSPEC:
+		case IDM_MWSOUNDSPEC:
+			MainWndUpdateSoundSpecButton();
+			MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
+			break;
+		case IDOK:
+			break;
+		case IDCANCEL:
+			OnQuit();
+			break;
+		case IDM_MFOPENFILE:
+			DlgMidiFileOpen(hwnd);
+			break;
+		case IDM_MFOPENDIR:
+			DlgDirOpen(hwnd);
+			break;
+		case IDM_MFLOADPLAYLIST:
+			DlgPlaylistOpen(hwnd);
+			break;
+		case IDM_MFSAVEPLAYLISTAS:
+			DlgPlaylistSave(hwnd);
+			break;
+		case IDM_MFEXIT:
+			OnQuit();
+			break;
 
-      case IDM_SETTING:
-		  PrefWndCreate(hMainWnd);
-		  break;
+		case IDM_SETTING:
+			PrefWndCreate(hMainWnd);
+			break;
 
-      case IDM_MCSAVEINIFILE:
-		  VOLATILE_TOUCH(PrefWndDoing);
-		  if(PrefWndDoing){
+		case IDM_MCSAVEINIFILE:
+			VOLATILE_TOUCH(PrefWndDoing);
+			if(PrefWndDoing){
 				MessageBox(hMainWnd, "Can't Save Ini file while preference dialog.",
 							  "Warning", MB_OK);
 				break;
-		  }
-		  SaveIniFile(sp_current, st_current);
-		  break;
-      case IDM_MCLOADINIFILE:
-		 if(!w32g_has_ini_file) {
-		     MessageBox(hMainWnd, "Can't load Ini file.",
-				"Warning", MB_OK);
-		     break;
-		 }
+			}
+			SaveIniFile(sp_current, st_current);
+			break;
+		case IDM_MCLOADINIFILE:
+			if(!w32g_has_ini_file) {
+				MessageBox(hMainWnd, "Can't load Ini file.",
+					"Warning", MB_OK);
+				break;
+			}
 
-		  VOLATILE_TOUCH(PrefWndDoing);
-		  if(PrefWndDoing){
+			VOLATILE_TOUCH(PrefWndDoing);
+			if(PrefWndDoing){
 				MessageBox(hMainWnd, "Can't load Ini file while preference dialog.",
 							  "Warning", MB_OK);
 				break;
-		  }
-		  LoadIniFile(sp_temp,st_temp);
-		  PrefWndCreate(hMainWnd);
-		  break;
-      case IDM_MWDEBUG:
+			}
+			LoadIniFile(sp_temp,st_temp);
+			PrefWndCreate(hMainWnd);
+			break;
+		case IDM_MWDEBUG:
 #ifdef W32GUI_DEBUG
-		  if(IsWindowVisible(hDebugWnd))
+			if(IsWindowVisible(hDebugWnd))
 				ShowWindow(hDebugWnd,SW_HIDE);
-		  else
+			else
 				ShowWindow(hDebugWnd,SW_SHOW);
 #endif
-		  break;
-      case IDM_MHTOPIC:
-		  MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
-		  break;
-      case IDM_MHHELP:
-		  MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
-		  break;
-      case IDM_MHONLINEHELP:
-		  if (PlayerLanguage == LANGUAGE_JAPANESE) {
-			  ShellExecute(HWND_DESKTOP, NULL, "http://timidity-docs.sourceforge.jp/", NULL, NULL, SW_SHOWNORMAL);
-		  } else {
-			  ShellExecute(HWND_DESKTOP, NULL, "http://timidity.sourceforge.net/index.html.en", NULL, NULL, SW_SHOWNORMAL);
-		  }
-		  break;
-      case IDM_MHBTS:
-		  if (PlayerLanguage == LANGUAGE_JAPANESE) {
-			  ShellExecute(HWND_DESKTOP, NULL, "http://timidity-docs.sourceforge.jp/cgi-bin/kagemai-ja/guest.cgi", NULL, NULL, SW_SHOWNORMAL);
-		  } else {
-			  ShellExecute(HWND_DESKTOP, NULL, "http://timidity-docs.sourceforge.jp/cgi-bin/kagemai-en/guest.cgi", NULL, NULL, SW_SHOWNORMAL);
-		  }
-		  break;
-      case IDM_MHONLINEHELPCFG:
-		  ShellExecute(HWND_DESKTOP, NULL, "http://timidity-docs.sourceforge.jp/cgi-bin/hiki/hiki.cgi?%28ja%29timidity.cfg", NULL, NULL, SW_SHOWNORMAL);
-		  break;
-      case IDM_MHVERSION:
-		  VersionWnd(hwnd);
-		  break;
-      case IDM_MHTIMIDITY:
-		  TiMidityWnd(hwnd);
-		  break;
-      case IDM_FORCE_RELOAD:
-		  if (!w32g_play_active) {reload_cfg();}
-		  break;
-      case IDM_MHSUPPLEMENT:
-		  SupplementWnd(hwnd);
-		  break;
-	  default:
-		  UpdateOutputMenu(hwnd, wId);
-		  break;
-    }
+			break;
+		case IDM_MHTOPIC:
+			MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
+			break;
+		case IDM_MHHELP:
+			MessageBox(hwnd, "Not Supported.","Warning!",MB_OK);
+			break;
+		case IDM_MHONLINEHELP:
+			if (PlayerLanguage == LANGUAGE_JAPANESE) {
+				ShellExecute(HWND_DESKTOP, NULL, "http://timidity-docs.sourceforge.jp/", NULL, NULL, SW_SHOWNORMAL);
+			} else {
+				ShellExecute(HWND_DESKTOP, NULL, "http://timidity.sourceforge.net/index.html.en", NULL, NULL, SW_SHOWNORMAL);
+			}
+			break;
+		case IDM_MHBTS:
+			if (PlayerLanguage == LANGUAGE_JAPANESE) {
+				ShellExecute(HWND_DESKTOP, NULL, "http://timidity-docs.sourceforge.jp/cgi-bin/kagemai-ja/guest.cgi", NULL, NULL, SW_SHOWNORMAL);
+			} else {
+				ShellExecute(HWND_DESKTOP, NULL, "http://timidity-docs.sourceforge.jp/cgi-bin/kagemai-en/guest.cgi", NULL, NULL, SW_SHOWNORMAL);
+			}
+			break;
+		case IDM_MHONLINEHELPCFG:
+			ShellExecute(HWND_DESKTOP, NULL, "http://timidity-docs.sourceforge.jp/cgi-bin/hiki/hiki.cgi?%28ja%29timidity.cfg", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case IDM_MHVERSION:
+			VersionWnd(hwnd);
+			break;
+		case IDM_MHTIMIDITY:
+			TiMidityWnd(hwnd);
+			break;
+		case IDM_FORCE_RELOAD:
+			if (!w32g_play_active) {reload_cfg();}
+			break;
+		case IDM_MHSUPPLEMENT:
+			SupplementWnd(hwnd);
+			break;
+		default:
+			UpdateOutputMenu(hwnd, wId);
+			break;
+	}
 }
 
 
 
 void update_subwindow(void)
 {
-  SUBWINDOW *s = subwindow;
-  int i;
-  for(i=0;s[i].hwnd!=NULL;i++){
+	SUBWINDOW *s = subwindow;
+	int i;
+	for(i=0;s[i].hwnd!=NULL;i++){
 		if(IsWindow(*(s[i].hwnd)))
-  		s[i].status |= SWS_EXIST;
+			s[i].status |= SWS_EXIST;
 		else {
-  		s[i].status = 0;
-    	continue;
-    }
+			s[i].status = 0;
+			continue;
+		}
 		if(IsIconic(*(s[i].hwnd)))
-  		s[i].status |= SWS_ICON;
+			s[i].status |= SWS_ICON;
 		else
-  		s[i].status &= ~ SWS_ICON;
+			s[i].status &= ~ SWS_ICON;
 		if(IsWindowVisible(*(s[i].hwnd)))
-  		s[i].status &= ~ SWS_HIDE;
+			s[i].status &= ~ SWS_HIDE;
 		else
-  		s[i].status |= SWS_HIDE;
+			s[i].status |= SWS_HIDE;
 	}
 }
 
 void MainWndSetPauseButton(int flag)
 {
 	if(flag)
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_MAIN,
-    	TB_CHECKBUTTON, IDM_PAUSE, (LPARAM)MAKELONG(TRUE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_MAIN,
+			TB_CHECKBUTTON, IDM_PAUSE, (LPARAM)MAKELONG(TRUE, 0));
 	else
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_MAIN,
-    	TB_CHECKBUTTON, IDM_PAUSE, (LPARAM)MAKELONG(FALSE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_MAIN,
+			TB_CHECKBUTTON, IDM_PAUSE, (LPARAM)MAKELONG(FALSE, 0));
 }
 
 void MainWndSetPlayButton(int flag)
@@ -1060,31 +1059,31 @@ void MainWndSetPlayButton(int flag)
 void MainWndUpdateConsoleButton(void)
 {
 	if(IsWindowVisible(hConsoleWnd))
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
-    	TB_CHECKBUTTON, IDM_CONSOLE, (LPARAM)MAKELONG(TRUE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+			TB_CHECKBUTTON, IDM_CONSOLE, (LPARAM)MAKELONG(TRUE, 0));
 	else
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
-    	TB_CHECKBUTTON, IDM_CONSOLE, (LPARAM)MAKELONG(FALSE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+			TB_CHECKBUTTON, IDM_CONSOLE, (LPARAM)MAKELONG(FALSE, 0));
 }
 
 void MainWndUpdateListButton(void)
 {
 	if(IsWindowVisible(hListWnd))
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
-    	TB_CHECKBUTTON, IDM_LIST, (LPARAM)MAKELONG(TRUE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+			TB_CHECKBUTTON, IDM_LIST, (LPARAM)MAKELONG(TRUE, 0));
 	else
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
-    	TB_CHECKBUTTON, IDM_LIST, (LPARAM)MAKELONG(FALSE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+			TB_CHECKBUTTON, IDM_LIST, (LPARAM)MAKELONG(FALSE, 0));
 }
 
 void MainWndUpdateDocButton(void)
 {
 	if(IsWindowVisible(hDocWnd))
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
-    	TB_CHECKBUTTON, IDM_DOC, (LPARAM)MAKELONG(TRUE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+			TB_CHECKBUTTON, IDM_DOC, (LPARAM)MAKELONG(TRUE, 0));
 	else
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
-    	TB_CHECKBUTTON, IDM_DOC, (LPARAM)MAKELONG(FALSE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+			TB_CHECKBUTTON, IDM_DOC, (LPARAM)MAKELONG(FALSE, 0));
 }
 
 void MainWndUpdateTracerButton(void)
@@ -1093,8 +1092,8 @@ void MainWndUpdateTracerButton(void)
 		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
 			TB_CHECKBUTTON, IDM_TRACER,
 			(LPARAM)MAKELONG(TRUE, 0));
-   else
-  		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+	else
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
 			TB_CHECKBUTTON, IDM_TRACER,
 			(LPARAM)MAKELONG(FALSE, 0));
 }
@@ -1102,11 +1101,11 @@ void MainWndUpdateTracerButton(void)
 void MainWndUpdateWrdButton(void)
 {
 	if(IsWindowVisible(hWrdWnd))
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
-    	TB_CHECKBUTTON, IDM_WRD, (LPARAM)MAKELONG(TRUE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+			TB_CHECKBUTTON, IDM_WRD, (LPARAM)MAKELONG(TRUE, 0));
 	else
-  	SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
-    	TB_CHECKBUTTON, IDM_WRD, (LPARAM)MAKELONG(FALSE, 0));
+		SendDlgItemMessage(hMainWnd, IDC_TOOLBARWINDOW_SUBWND,
+			TB_CHECKBUTTON, IDM_WRD, (LPARAM)MAKELONG(FALSE, 0));
 }
 
 void MainWndUpdateSoundSpecButton(void)
@@ -1124,20 +1123,20 @@ void ShowSubWindow(HWND hwnd,int showflag)
 	int max = 0;
 	if(showflag){
 		if(IsWindowVisible(hwnd))
-  		return;
+			return;
 		for(i=0;SubWindowHistory[i].hwnd!=NULL;i++)
-  		if(*(SubWindowHistory[i].hwnd)==hwnd)
-      	num = i;
+			if(*(SubWindowHistory[i].hwnd)==hwnd)
+				num = i;
 		for(i=0;SubWindowHistory[i].hwnd!=NULL;i++)
-  		if(*(SubWindowHistory[i].hwnd)!=hwnd){
-	  		if(SubWindowHistory[i].status > 0)
-					SubWindowHistory[i].status += 1;
-	  		if(SubWindowHistory[i].status>SubWindowMax){
+			if(*(SubWindowHistory[i].hwnd)!=hwnd){
+				if(SubWindowHistory[i].status > 0)
+						SubWindowHistory[i].status += 1;
+				if(SubWindowHistory[i].status>SubWindowMax){
 					if(SubWindowHistory[i].status>max){
-    				GetWindowRect(*(SubWindowHistory[i].hwnd), &rc);
+						GetWindowRect(*(SubWindowHistory[i].hwnd), &rc);
 						max = SubWindowHistory[i].status;
 					}
-      		ShowWindow(*(SubWindowHistory[i].hwnd),SW_HIDE);
+					ShowWindow(*(SubWindowHistory[i].hwnd),SW_HIDE);
 					SubWindowHistory[i].status = 0;
 				}
 			}
@@ -1152,15 +1151,15 @@ void ShowSubWindow(HWND hwnd,int showflag)
 		SubWindowHistory[num].status = 1;
 	} else {
 		if(!IsWindowVisible(hwnd))
-  		return;
+			return;
 		for(i=0;SubWindowHistory[i].hwnd!=NULL;i++)
-  		if(*(SubWindowHistory[i].hwnd)==hwnd)
-      	num = i;
+			if(*(SubWindowHistory[i].hwnd)==hwnd)
+				num = i;
 		for(i=0;SubWindowHistory[i].hwnd!=NULL;i++)
-    	if(i!=num)
-	  		if(SubWindowHistory[i].status>=SubWindowHistory[num].status)
-					SubWindowHistory[i].status -= 1;
-    ShowWindow(hwnd,SW_HIDE);
+		if(i!=num)
+			if(SubWindowHistory[i].status>=SubWindowHistory[num].status)
+				SubWindowHistory[i].status -= 1;
+		ShowWindow(hwnd,SW_HIDE);
 		SubWindowHistory[num].status = 0;
 	}
 	MainWndUpdateConsoleButton();
@@ -1175,31 +1174,31 @@ void ToggleSubWindow(HWND hwnd)
 {
 	if(IsWindowVisible(hwnd))
 		ShowSubWindow(hwnd,0);
-  else
+	else
 		ShowSubWindow(hwnd,1);
 }
 
 void OnShow(void)
 {
-  SUBWINDOW *s = subwindow;
+	SUBWINDOW *s = subwindow;
 	int i;
-  for(i=0;s[i].hwnd!=NULL;i++)
+	for(i=0;s[i].hwnd!=NULL;i++)
 		if(s[i].status & SWS_EXIST) {
 			if(s[i].status & SWS_HIDE)
-    		ShowWindow(*(s[i].hwnd),SW_HIDE);
+		ShowWindow(*(s[i].hwnd),SW_HIDE);
 			else
-    		ShowWindow(*(s[i].hwnd),SW_SHOW);
+		ShowWindow(*(s[i].hwnd),SW_SHOW);
 		}
 }
 
 void OnHide(void)
 {
-  SUBWINDOW *s = subwindow;
+	SUBWINDOW *s = subwindow;
 	int i;
-  for(i=0;s[i].hwnd!=NULL;i++){
+	for(i=0;s[i].hwnd!=NULL;i++){
 		if(s[i].status & SWS_EXIST)
-    	ShowWindow(*(s[i].hwnd),SW_HIDE);
-  }
+			ShowWindow(*(s[i].hwnd),SW_HIDE);
+	}
 }
 
 #ifdef W32GUI_DEBUG
@@ -1209,9 +1208,9 @@ void DebugThread(void *args)
 	DebugThreadExit = 0;
 	InitDebugWnd(NULL);
 	AttachThreadInput(GetWindowThreadProcessId(hDebugThread,NULL),
-   	GetWindowThreadProcessId(hWindowThread,NULL),TRUE);
+	GetWindowThreadProcessId(hWindowThread,NULL),TRUE);
 	AttachThreadInput(GetWindowThreadProcessId(hWindowThread,NULL),
-   	GetWindowThreadProcessId(hDebugThread,NULL),TRUE);
+	GetWindowThreadProcessId(hDebugThread,NULL),TRUE);
 	while( GetMessage(&msg,NULL,0,0) ){
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -1224,7 +1223,7 @@ void DebugThreadInit(void)
 {
 	DWORD dwThreadID;
 	if(!DebugThreadExit)
-   	return;
+	return;
 	hDebugThread = crt_beginthreadex(NULL,0,DebugThread,0,0,&dwThreadID);
 }
 #endif
@@ -1237,29 +1236,29 @@ void DebugThreadInit(void)
 // Toolbar Main
 
 static TBBUTTON MainTbb[] = {
-    {4, IDM_STOP, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0},
-    {3, IDM_PAUSE, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
-    {0, IDM_PREV, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0},
-    {1, IDM_BACKWARD, TBSTATE_ENABLED,TBSTYLE_BUTTON, 0, 0},
-    {2, IDM_PLAY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0},
-    {5, IDM_FOREWARD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0},
-    {6, IDM_NEXT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0}
+	{4, IDM_STOP, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0},
+	{3, IDM_PAUSE, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
+	{0, IDM_PREV, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0},
+	{1, IDM_BACKWARD, TBSTATE_ENABLED,TBSTYLE_BUTTON, 0, 0},
+	{2, IDM_PLAY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0},
+	{5, IDM_FOREWARD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0},
+	{6, IDM_NEXT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0}
 };
 
 static void InitMainToolbar(HWND hwnd)
 {
 	TBADDBITMAP MainTbab;
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
-  		TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
-  		TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(16,16));
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
+		TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
+		TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(16,16));
 	MainTbab.hInst = hInst;
 	MainTbab.nID =(int)IDB_BITMAP_MAIN_BUTTON;
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
-  	TB_ADDBITMAP, 7, (LPARAM)&MainTbab);
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
-  	TB_ADDBUTTONS, (WPARAM)7,(LPARAM)&MainTbb);
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
+		TB_ADDBITMAP, 7, (LPARAM)&MainTbab);
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
+		TB_ADDBUTTONS, (WPARAM)7,(LPARAM)&MainTbb);
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_MAIN,
 		TB_AUTOSIZE, 0, 0);
 }
 
@@ -1267,27 +1266,27 @@ static void InitMainToolbar(HWND hwnd)
 // Toolbar SubWnd
 
 static TBBUTTON SubWndTbb[] = {
-    {3, IDM_CONSOLE, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
-    {1, IDM_LIST, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
-    {2, IDM_TRACER, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
-    {0, IDM_DOC, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
-    {4, IDM_WRD, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
+	{3, IDM_CONSOLE, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
+	{1, IDM_LIST, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
+	{2, IDM_TRACER, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
+	{0, IDM_DOC, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
+	{4, IDM_WRD, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0},
 };
 
 static void InitSubWndToolbar(HWND hwnd)
 {
 	TBADDBITMAP SubWndTbab;
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
-  		TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
-  		TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(16,16));
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
+		TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
+		TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(16,16));
 	SubWndTbab.hInst = hInst;
 	SubWndTbab.nID =(int)IDB_BITMAP_SUBWND_BUTTON;
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
-  	TB_ADDBITMAP, 5, (LPARAM)&SubWndTbab);
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
-  	TB_ADDBUTTONS, (WPARAM)5,(LPARAM)&SubWndTbb);
-  SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
+		TB_ADDBITMAP, 5, (LPARAM)&SubWndTbab);
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
+		TB_ADDBUTTONS, (WPARAM)5,(LPARAM)&SubWndTbb);
+	SendDlgItemMessage(hwnd, IDC_TOOLBARWINDOW_SUBWND,
 		TB_AUTOSIZE, 0, 0);
 }
 
@@ -1338,36 +1337,36 @@ struct Canvas_ {
 	int MapMode;
 	int MapBarWidth;
 	int MapBarMax;
-   int MapCh;
-   int MapPan[CMAP_MAX_CHANNELS];
-   int MapPanOld[CMAP_MAX_CHANNELS];
-   int MapSustain[CMAP_MAX_CHANNELS];
-   int MapSustainOld[CMAP_MAX_CHANNELS];
-   int MapExpression[CMAP_MAX_CHANNELS];
-   int MapExpressionOld[CMAP_MAX_CHANNELS];
-   int MapVolume[CMAP_MAX_CHANNELS];
-   int MapVolumeOld[CMAP_MAX_CHANNELS];
-   int MapPitchbend[CMAP_MAX_CHANNELS];
-   int MapPitchbendOld[CMAP_MAX_CHANNELS];
-   int MapChChanged;
+	int MapCh;
+	int MapPan[CMAP_MAX_CHANNELS];
+	int MapPanOld[CMAP_MAX_CHANNELS];
+	int MapSustain[CMAP_MAX_CHANNELS];
+	int MapSustainOld[CMAP_MAX_CHANNELS];
+	int MapExpression[CMAP_MAX_CHANNELS];
+	int MapExpressionOld[CMAP_MAX_CHANNELS];
+	int MapVolume[CMAP_MAX_CHANNELS];
+	int MapVolumeOld[CMAP_MAX_CHANNELS];
+	int MapPitchbend[CMAP_MAX_CHANNELS];
+	int MapPitchbendOld[CMAP_MAX_CHANNELS];
+	int MapChChanged;
 	ChannelBitMask DrumChannel;
-   RECT rcMapMap;
-   RECT rcMapSub;
+	RECT rcMapMap;
+	RECT rcMapSub;
 // Keyboard mode
 	RECT rcKeyboard;
 	uint32 CKxnote[MAX_W32G_MIDI_CHANNELS][4];
 	uint32 CKxnote_old[MAX_W32G_MIDI_CHANNELS][4];
 	int CKNoteFrom;
-   int CKNoteTo;
+	int CKNoteTo;
 	int CKCh;
 	int CKPart;
 	RECT rcGSLCD;
 	int8 GSLCD[16][16];
 	int8 GSLCD_old[16][16];
 	int KeyboardUpdateFlag;
-  	int xnote_reset;
+	int xnote_reset;
 // misc
-   Channel channel[MAX_W32G_MIDI_CHANNELS];
+	Channel channel[MAX_W32G_MIDI_CHANNELS];
 } volatile Canvas;
 
 #define IDC_CANVAS 4242
@@ -1403,7 +1402,7 @@ static void InitCanvasWnd(HWND hwnd)
 	wndclass.lpszClassName = CanvasWndClassName;
 	RegisterClass(&wndclass);
    hCanvasWnd = CreateWindowEx(0,CanvasWndClassName,0,WS_CHILD,CW_USEDEFAULT,
-   	0,CANVAS_XMAX,CANVAS_YMAX,GetDlgItem(hwnd,IDC_RECT_CANVAS),0,hInst,0);
+	0,CANVAS_XMAX,CANVAS_YMAX,GetDlgItem(hwnd,IDC_RECT_CANVAS),0,hInst,0);
 	CanvasInit(hCanvasWnd);
 	CanvasReset();
 	CanvasClear();
@@ -1439,20 +1438,20 @@ CanvasWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 			break;
 		case WM_PAINT:
 			CanvasPaintDo();
-    		return 0;
+			return 0;
 		case WM_LBUTTONDBLCLK:
 			w32g_send_rc(RC_EXT_MODE_CHANGE, 0);
 			break;
-      case WM_RBUTTONDOWN:
-      {
-      	RECT rc;
-      	GetWindowRect(Canvas.hwnd,(RECT *)&rc);
-				SetForegroundWindow ( Canvas.hwnd );
+		case WM_RBUTTONDOWN:
+		{
+			RECT rc;
+			GetWindowRect(Canvas.hwnd,(RECT *)&rc);
+			SetForegroundWindow ( Canvas.hwnd );
 			TrackPopupMenu(Canvas.hPopupMenu,TPM_TOPALIGN|TPM_LEFTALIGN,
-         	rc.left+(int)LOWORD(lParam),rc.top+(int)HIWORD(lParam),
-            0,Canvas.hwnd,NULL);
-				PostMessage ( Canvas.hwnd, WM_NULL, 0, 0 );
-      }
+			rc.left+(int)LOWORD(lParam),rc.top+(int)HIWORD(lParam),
+				0,Canvas.hwnd,NULL);
+			PostMessage ( Canvas.hwnd, WM_NULL, 0, 0 );
+		}
 			break;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
@@ -1498,9 +1497,9 @@ CanvasWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 }
 
 // Color
-#define CCR_FORE	 	RGB(0x00,0x00,0x00)
-#define CCR_BACK 		RGB(0x00,0xf0,0x00)
-#define CCR_DFORE	 	RGB(0x70,0x00,0x00)
+#define CCR_FORE		RGB(0x00,0x00,0x00)
+#define CCR_BACK		RGB(0x00,0xf0,0x00)
+#define CCR_DFORE		RGB(0x70,0x00,0x00)
 #define CCR_DBACK		RGB(0x00,0xf0,0x00)
 #define CCR_LOW		RGB(0x80,0xd0,0x00)
 #define CCR_MIDDLE	RGB(0xb0,0xb0,0x00)
@@ -1534,34 +1533,34 @@ static COLORREF HalfColor15(COLORREF fc, COLORREF bc)
 #define CC_DFORE_WEAKHALF	24
 static COLORREF CanvasColor(int c)
 {
-  switch(c){
-  	case CC_BACK:
+	switch(c){
+	case CC_BACK:
 			return CCR_BACK;
-  	case CC_FORE:
+	case CC_FORE:
 			return CCR_FORE;
-  	case CC_FORE_HALF:
+	case CC_FORE_HALF:
 			return HalfColor15(CCR_FORE,CCR_BACK);
-  	case CC_FORE_WEAKHALF:
+	case CC_FORE_WEAKHALF:
 			return HalfColor23(CCR_FORE,CCR_BACK);
-  	case CC_DBACK:
+	case CC_DBACK:
 			return CCR_DBACK;
-  	case CC_DFORE:
+	case CC_DFORE:
 			return CCR_DFORE;
-  	case CC_DFORE_HALF:
+	case CC_DFORE_HALF:
 			return HalfColor15(CCR_DFORE,CCR_DBACK);
-  	case CC_DFORE_WEAKHALF:
+	case CC_DFORE_WEAKHALF:
 			return HalfColor23(CCR_DFORE,CCR_DBACK);
-  	case CC_LOW:
+	case CC_LOW:
 			return CCR_LOW;
-  	case CC_MIDDLE:
+	case CC_MIDDLE:
 			return CCR_MIDDLE;
-  	case CC_HIGH:
+	case CC_HIGH:
 			return CCR_HIGH;
-  	case CC_LOW_HALF:
+	case CC_LOW_HALF:
 			return HalfColor23(CCR_LOW,CCR_BACK);
-  	case CC_MIDDLE_HALF:
+	case CC_MIDDLE_HALF:
 			return HalfColor23(CCR_MIDDLE,CCR_BACK);
-  	case CC_HIGH_HALF:
+	case CC_HIGH_HALF:
 			return HalfColor23(CCR_HIGH,CCR_BACK);
 		default:
 			return CCR_BACK;
@@ -1590,23 +1589,23 @@ static void CanvasInit(HWND hwnd)
 	SetRect((RECT *)&(Canvas.rcMap),3,2+2,0,0);
 	SetRect((RECT *)&(Canvas.rcKeyboard),1,1,0,0);
 	SetRect((RECT *)&(Canvas.rcGSLCD),3,4,99,68);
-   Canvas.rcMapMap.left = Canvas.rcMap.left;
-   Canvas.rcMapMap.top = Canvas.rcMap.top;
-   Canvas.rcMapMap.right = Canvas.rcMapMap.left + 6*16 - 1;
-   Canvas.rcMapMap.bottom = Canvas.rcMapMap.top + 3*16 - 1;
-   Canvas.rcMapSub.left = Canvas.rcMapMap.left;
-   Canvas.rcMapSub.top = Canvas.rcMapMap.bottom + 2;
-   Canvas.rcMapSub.right = Canvas.rcMapSub.left + 6*16 - 1;
-   Canvas.rcMapSub.bottom = Canvas.rcMapSub.top +4+3+3+3+4 - 1;
+	Canvas.rcMapMap.left = Canvas.rcMap.left;
+	Canvas.rcMapMap.top = Canvas.rcMap.top;
+	Canvas.rcMapMap.right = Canvas.rcMapMap.left + 6*16 - 1;
+	Canvas.rcMapMap.bottom = Canvas.rcMapMap.top + 3*16 - 1;
+	Canvas.rcMapSub.left = Canvas.rcMapMap.left;
+	Canvas.rcMapSub.top = Canvas.rcMapMap.bottom + 2;
+	Canvas.rcMapSub.right = Canvas.rcMapSub.left + 6*16 - 1;
+	Canvas.rcMapSub.bottom = Canvas.rcMapSub.top +4+3+3+3+4 - 1;
 	Canvas.MapDelay = 1;
 	Canvas.MapResidual = 0;
 	Canvas.MapMode = (MainWndInfo.CanvasMode == CANVAS_MODE_MAP32)
 			? CMAP_MODE_32 : CMAP_MODE_16;
 	Canvas.MapBarMax = 16;
-	//	Canvas.CKNoteFrom = 24;
-	//   Canvas.CKNoteTo = 24 + 96;
+	// Canvas.CKNoteFrom = 24;
+	// Canvas.CKNoteTo = 24 + 96;
 	Canvas.CKNoteFrom = 12;
-   Canvas.CKNoteTo = Canvas.CKNoteFrom + 96 + 3;
+	Canvas.CKNoteTo = Canvas.CKNoteFrom + 96 + 3;
 	Canvas.CKCh = 16;
 	Canvas.CKPart = (MainWndInfo.CanvasMode == CANVAS_MODE_KBD_B) ? 2 : 1;
 	Canvas.UpdateAll = 0;
@@ -1627,14 +1626,14 @@ static void CanvasMapClear(void)
 	HBRUSH hBrush;
 	HGDIOBJ hgdiobj_hpen, hgdiobj_hbrush;
 	if(!CanvasOK)
-   	return;
+	return;
 	GDI_LOCK(); // gdi_lock
 	hPen = CreatePen(PS_SOLID,1,CanvasColor(CC_BACK));
 	hBrush = CreateSolidBrush(CanvasColor(CC_BACK));
 	hgdiobj_hpen = SelectObject(Canvas.hmdc, hPen);
 	hgdiobj_hbrush = SelectObject(Canvas.hmdc, hBrush);
 	Rectangle(Canvas.hmdc,
-   	Canvas.rcMe.left,Canvas.rcMe.top,Canvas.rcMe.right,Canvas.rcMe.bottom);
+	Canvas.rcMe.left,Canvas.rcMe.top,Canvas.rcMe.right,Canvas.rcMe.bottom);
 	SelectObject(Canvas.hmdc, hgdiobj_hpen);
 	DeleteObject(hPen);
 	SelectObject(Canvas.hmdc, hgdiobj_hbrush);
@@ -1647,22 +1646,22 @@ static void CanvasMapReset(void)
 {
 	int i,j,ch;
 	if(!CanvasOK)
-   	return;
+	return;
 	switch(Canvas.MapMode){
-   case CMAP_MODE_32:
+	case CMAP_MODE_32:
 		Canvas.MapCh = 32;
 #ifdef MAPBAR_LIKE_TMIDI
 		Canvas.MapBarWidth = 5;
 		Canvas.MapBarMax = 10+1;
 		Canvas.rcMapMap.bottom = Canvas.rcMapMap.top + 3*Canvas.MapBarMax*2 + 6 - 1;
 #else
-  		Canvas.MapBarWidth = 2;
+		Canvas.MapBarWidth = 2;
 		Canvas.MapBarMax = 16;
 		Canvas.rcMapMap.bottom = Canvas.rcMapMap.top + 3*Canvas.MapBarMax - 1;
 #endif
 		break;
-   default:
-   case CMAP_MODE_16:
+	default:
+	case CMAP_MODE_16:
 		Canvas.MapCh = 16;
 		Canvas.MapBarWidth = 5;
 		Canvas.MapBarMax = 16;
@@ -1671,11 +1670,11 @@ static void CanvasMapReset(void)
 	}
 	for(i=0;i<Canvas.MapCh;i++){
 		for(j=0;j<Canvas.MapBarMax;j++){
-    		Canvas.MapMap[i][j] = CC_FORE_HALF;
-    		Canvas.MapMapOld[i][j] = -1;
+		Canvas.MapMap[i][j] = CC_FORE_HALF;
+		Canvas.MapMapOld[i][j] = -1;
 		}
-   	Canvas.MapBar[i] = -1;
-    	Canvas.MapBarOld[i] = -1;
+	Canvas.MapBar[i] = -1;
+	Canvas.MapBarOld[i] = -1;
 	}
 	for(ch=0;ch<Canvas.MapCh;ch++){
 		Canvas.MapPan[ch] = Canvas.MapPanOld[ch] = 2;
@@ -1696,39 +1695,39 @@ static void CanvasMapReadPanelInfo(int flag)
 	if(!CanvasOK)
 		return;
 	if(!PInfoOK)
-    	return;
-   if(Canvas.UpdateAll)
-   	flag = 1;
+		return;
+	if(Canvas.UpdateAll)
+		flag = 1;
 	if(!Panel->changed && !flag)
-   	return;
+		return;
 	// Bar
 	Canvas.DrumChannel = drumchannels;
 	for(ch=0;ch<Canvas.MapCh;ch++){
 		Canvas.MapBarOld[ch] = Canvas.MapBar[ch];
 		if(Panel->v_flags[ch] == FLAG_NOTE_ON){
 #if 0
-  			v = Panel->ctotal[ch]/8;
+			v = Panel->ctotal[ch]/8;
 #else
 			v = (int) Panel->ctotal[ch] * Canvas.MapBarMax / 128;
 #endif
 		} else {
-      	v = 0;
+			v = 0;
 		}
 		if(v<0) v = 0; else if(v>Canvas.MapBarMax-1) v = Canvas.MapBarMax-1;
 		if(v != Canvas.MapBar[ch]){
 			// 遅延
-	    	if(Canvas.MapDelay){
-   	  		int old = Canvas.MapBar[ch];
+		if(Canvas.MapDelay){
+			int old = Canvas.MapBar[ch];
 				if(Canvas.MapBar[ch]<0)
 					Canvas.MapBar[ch] = v;
 				else
 					Canvas.MapBar[ch] = (old*10*1/3 + v*10*2/3)/10;
 				if(old == Canvas.MapBar[ch]){
-     				if(v>old)
+				if(v>old)
 						Canvas.MapBar[ch] = old + 1;
-     				else if(v<old)
+				else if(v<old)
 						Canvas.MapBar[ch] = old - 1;
-      		}
+		}
 			} else
 				Canvas.MapBar[ch] = v;
 		}
@@ -1746,7 +1745,7 @@ static void CanvasMapReadPanelInfo(int flag)
 			Canvas.MapVolumeOld[ch] = Canvas.MapVolume[ch];
 			Canvas.MapPitchbendOld[ch] = Canvas.MapPitchbend[ch];
 			if(Panel->channel[ch].panning==NO_PANNING)
-         	Canvas.MapPan[ch] = -1;
+				Canvas.MapPan[ch] = -1;
 			else {
 				Canvas.MapPan[ch] = ( Panel->channel[ch].panning - 64 ) * 3 /128;
 //				Canvas.MapPan[ch] = ( 64 - Panel->channel[ch].panning ) * 3 /128;
@@ -1754,13 +1753,13 @@ static void CanvasMapReadPanelInfo(int flag)
 			}
 			if(Panel->channel[ch].sustain)
 				Canvas.MapSustain[ch] = 5;
-         else
+			else
 				Canvas.MapSustain[ch] = 0;
 			//Canvas.MapSustain[ch] = SetValue(Canvas.MapSustain[ch],0,10);
 #if 0
 			Canvas.MapExpression[ch] = (Panel->channel[ch].expression * 11) >>8;
 #else
-		    Canvas.MapExpression[ch] = (Panel->channel[ch].expression * 11) >>7;
+			Canvas.MapExpression[ch] = (Panel->channel[ch].expression * 11) >>7;
 #endif
 			Canvas.MapExpression[ch] = SetValue(Canvas.MapExpression[ch],0,10);
 #if 0
@@ -1776,7 +1775,7 @@ static void CanvasMapReadPanelInfo(int flag)
 			if(Canvas.MapVolumeOld[ch]!=Canvas.MapVolume[ch]) changed = 1;
 			if(Canvas.MapPitchbendOld[ch]!=Canvas.MapPitchbend[ch]) changed = 1;
 			if(changed)
-  		    	Canvas.MapChChanged |= 1 << ch;
+			Canvas.MapChChanged |= 1 << ch;
 		}
 	}
 }
@@ -1787,23 +1786,23 @@ static void CanvasMapDrawMapBar(int flag)
 
 	if(!CanvasOK)
 		return;
-   if(Canvas.UpdateAll)
-   	flag = 1;
+	if(Canvas.UpdateAll)
+		flag = 1;
 	if(!Canvas.MapResidual && !flag)
-   	return;
+		return;
 	Canvas.MapResidual = 0;
 	for(ch=0;ch<Canvas.MapCh;ch++){
 		int drumflag = IS_SET_CHANNELMASK(Canvas.DrumChannel,ch);
- 		char color1,color2,color3;
+		char color1,color2,color3;
 		if(drumflag){
 			color1 = CC_DFORE;
 			color2 = CC_DFORE_WEAKHALF;
-         color3 = CC_DFORE_HALF;
-      } else {
+			color3 = CC_DFORE_HALF;
+		} else {
 			color1 = CC_FORE;
 			color2 = CC_FORE_WEAKHALF;
-         color3 = CC_FORE_HALF;
-      }
+			color3 = CC_FORE_HALF;
+		}
 		for(i=0;i<Canvas.MapBarMax;i++){
 			int y = Canvas.MapBarMax-1-i;
 			Canvas.MapMapOld[ch][y] = Canvas.MapMap[ch][y];
@@ -1815,7 +1814,7 @@ static void CanvasMapDrawMapBar(int flag)
 				Canvas.MapMap[ch][y] = color2;
 				Canvas.MapResidual = 1;
 #endif
-    		} else {
+		} else {
 				Canvas.MapMap[ch][y] = color3;
 			}
 		}
@@ -1831,145 +1830,125 @@ static void CanvasMapUpdate(int flag)
 	int i,j;
 	int change_flag = 0;
 	if(!CanvasOK)
-   	return;
+	return;
 	CanvasMapDrawMapBar(flag);
-   if(Canvas.UpdateAll)
-   	flag = 1;
+		if(Canvas.UpdateAll)
+			flag = 1;
 	if(PInfoOK && Canvas.MapMode==CMAP_MODE_16){
-   if(flag || Panel->changed){
-		int ch;
-		GDI_LOCK();
-		for(ch=0;ch<Canvas.MapCh;ch++){
-			int x,y;
-         COLORREF color;
-			COLORREF colorFG, colorBG;
-			int drumflag = IS_SET_CHANNELMASK(Canvas.DrumChannel,ch);
-			if(!flag && !(Canvas.MapChChanged & (1<<ch)))
-         	continue;
-			if(drumflag){
-				colorFG = CanvasColor(CC_DFORE);
-				colorBG = CanvasColor(CC_DFORE_HALF);
-      	} else {
-				colorFG = CanvasColor(CC_FORE);
-				colorBG = CanvasColor(CC_FORE_HALF);
-      	}
-         rc.left = Canvas.rcMapSub.left + (5 + 1) * ch;
-         rc.right = rc.left + 5 - 1;
-			// PAN
-         rc.top = Canvas.rcMapSub.top;
-         rc.bottom = rc.top + 3 - 1;
-				for(x=rc.left;x<=rc.right;x++){
-				for(y=rc.top;y<=rc.bottom;y++)
-        			SetPixelV(Canvas.hmdc,x,y,colorBG);
+		if(flag || Panel->changed){
+			int ch;
+			GDI_LOCK();
+			for(ch=0;ch<Canvas.MapCh;ch++){
+				int x,y;
+				COLORREF color;
+				COLORREF colorFG, colorBG;
+				int drumflag = IS_SET_CHANNELMASK(Canvas.DrumChannel,ch);
+				if(!flag && !(Canvas.MapChChanged & (1<<ch)))
+					continue;
+				if(drumflag){
+					colorFG = CanvasColor(CC_DFORE);
+					colorBG = CanvasColor(CC_DFORE_HALF);
+				} else {
+					colorFG = CanvasColor(CC_FORE);
+					colorBG = CanvasColor(CC_FORE_HALF);
 				}
-			if(Canvas.MapPan[ch]>=0){
-				x = rc.left + Canvas.MapPan[ch];
-				for(y=rc.top;y<=rc.bottom;y++)
-     				SetPixelV(Canvas.hmdc,x,y,colorFG);
-			}
-         // SUSTAIN
-         rc.top = rc.bottom + 2;
-         rc.bottom = rc.top + 2 - 1;
+				rc.left = Canvas.rcMapSub.left + (5 + 1) * ch;
+				rc.right = rc.left + 5 - 1;
+				// PAN
+				rc.top = Canvas.rcMapSub.top;
+				rc.bottom = rc.top + 3 - 1;
+				for(x=rc.left;x<=rc.right;x++){
+					for(y=rc.top;y<=rc.bottom;y++)
+						SetPixelV(Canvas.hmdc,x,y,colorBG);
+				}
+				if(Canvas.MapPan[ch]>=0){
+					x = rc.left + Canvas.MapPan[ch];
+					for(y=rc.top;y<=rc.bottom;y++)
+						SetPixelV(Canvas.hmdc,x,y,colorFG);
+				}
+				// SUSTAIN
+				rc.top = rc.bottom + 2;
+				rc.bottom = rc.top + 2 - 1;
 				if(Canvas.MapSustain[ch]){
 					for(x=rc.left;x<=rc.right;x++){
-					for(y=rc.top;y<=rc.bottom;y++)
-        				SetPixelV(Canvas.hmdc,x,y,colorFG);
+						for(y=rc.top;y<=rc.bottom;y++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
 					}
 				} else {
 					for(x=rc.left;x<=rc.right;x++){
-					for(y=rc.top;y<=rc.bottom;y++)
-        				SetPixelV(Canvas.hmdc,x,y,colorBG);
+						for(y=rc.top;y<=rc.bottom;y++)
+							SetPixelV(Canvas.hmdc,x,y,colorBG);
 					}
-         // EXPRESSION
-         rc.top = rc.bottom + 2;
-         rc.bottom = rc.top + 2 - 1;
-			for(i=1;i<=10;i++){
-         		if(i <= Canvas.MapExpression[ch])
-            	color = colorFG;
-            else
-            	color = colorBG;
-			x = rc.left + (i-1)/2;
-			y = rc.top + (i+1)%2;
-  				SetPixelV(Canvas.hmdc,x,y,color);
-			}
-         // VOLUME
-         rc.top = rc.bottom + 2;
-         rc.bottom = rc.top + 2 - 1;
-			for(i=1;i<=10;i++){
-        		if(i <= Canvas.MapVolume[ch])
-            	color = colorFG;
-            else
-            	color = colorBG;
-            x = rc.left + (i-1)/2;
-				y = rc.top + (i+1)%2;
-  				SetPixelV(Canvas.hmdc,x,y,color);
-			}
-         // PITCH_BEND
-         rc.top = rc.bottom + 2;
-         rc.bottom = rc.top + 3 - 1;
+					// EXPRESSION
+					rc.top = rc.bottom + 2;
+					rc.bottom = rc.top + 2 - 1;
+					for(i=1;i<=10;i++){
+						if(i <= Canvas.MapExpression[ch])
+							color = colorFG;
+						else
+							color = colorBG;
+						x = rc.left + (i-1)/2;
+						y = rc.top + (i+1)%2;
+						SetPixelV(Canvas.hmdc,x,y,color);
+					}
+					// VOLUME
+					rc.top = rc.bottom + 2;
+					rc.bottom = rc.top + 2 - 1;
+					for(i=1;i<=10;i++){
+						if(i <= Canvas.MapVolume[ch])
+							color = colorFG;
+						else
+							color = colorBG;
+						x = rc.left + (i-1)/2;
+						y = rc.top + (i+1)%2;
+						SetPixelV(Canvas.hmdc,x,y,color);
+					}
+					// PITCH_BEND
+					rc.top = rc.bottom + 2;
+					rc.bottom = rc.top + 3 - 1;
 					for(x=rc.left;x<=rc.right;x++){
-				for(y=rc.top;y<=rc.bottom;y++)
-        			SetPixelV(Canvas.hmdc,x,y,colorBG);
+						for(y=rc.top;y<=rc.bottom;y++)
+							SetPixelV(Canvas.hmdc,x,y,colorBG);
 					}
-         if(Canvas.MapPitchbend[ch]==-2){
-         	y = rc.top + 1;
-				for(x=rc.left;x<=rc.right;x++)
-  					SetPixelV(Canvas.hmdc,x,y,colorFG);
-				y++;
-				for(x=rc.left;x<=rc.right;x++)
-  					SetPixelV(Canvas.hmdc,x,y,colorFG);
-			} else if(Canvas.MapPitchbend[ch]>0x2000){
-         	y = rc.top;
-				for(x=rc.left;x<=rc.left;x++)
-  					SetPixelV(Canvas.hmdc,x,y,colorFG);
-				y++;
-				for(x=rc.left;x<=rc.left+2;x++)
-  					SetPixelV(Canvas.hmdc,x,y,colorFG);
-				y++;
-				for(x=rc.left;x<=rc.left+4;x++)
-		 			SetPixelV(Canvas.hmdc,x,y,colorFG);
-			} else if(Canvas.MapPitchbend[ch]<0x2000){
-         	y = rc.top;
-				for(x=rc.right;x<=rc.right;x++)
-  					SetPixelV(Canvas.hmdc,x,y,colorFG);
-				y++;
-				for(x=rc.right-2;x<=rc.right;x++)
-  					SetPixelV(Canvas.hmdc,x,y,colorFG);
-				y++;
-				for(x=rc.right-4;x<=rc.right;x++)
-		 			SetPixelV(Canvas.hmdc,x,y,colorFG);
-         }
-      }
-      }
-	 		InvalidateRect(hCanvasWnd,(RECT *)&(Canvas.rcMapSub),FALSE);
+					if(Canvas.MapPitchbend[ch]==-2){
+						y = rc.top + 1;
+						for(x=rc.left;x<=rc.right;x++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
+						y++;
+						for(x=rc.left;x<=rc.right;x++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
+					} else if(Canvas.MapPitchbend[ch]>0x2000){
+						y = rc.top;
+						for(x=rc.left;x<=rc.left;x++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
+						y++;
+						for(x=rc.left;x<=rc.left+2;x++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
+						y++;
+						for(x=rc.left;x<=rc.left+4;x++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
+					} else if(Canvas.MapPitchbend[ch]<0x2000){
+						y = rc.top;
+						for(x=rc.right;x<=rc.right;x++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
+						y++;
+						for(x=rc.right-2;x<=rc.right;x++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
+						y++;
+						for(x=rc.right-4;x<=rc.right;x++)
+							SetPixelV(Canvas.hmdc,x,y,colorFG);
+					}
+				}
+			}
+			InvalidateRect(hCanvasWnd,(RECT *)&(Canvas.rcMapSub),FALSE);
 			GDI_UNLOCK();
-   }
-   }
+		}
+	}
 	if(!Canvas.MapResidual && !flag)
-   	return;
+		return;
 	change_flag = 0;
 #ifndef MAPBAR_LIKE_TMIDI
 	GDI_LOCK();
-	for(i=0;i<Canvas.MapCh;i++){
-		for(j=0;j<Canvas.MapBarMax;j++){
-			if(Canvas.MapMap[i][j]!=Canvas.MapMapOld[i][j] || flag){
-				int x,y;
-				COLORREF color = CanvasColor(Canvas.MapMap[i][j]);
-            rc.left = Canvas.rcMap.left + (Canvas.MapBarWidth + 1) * i;
-            rc.right = rc.left -1 + Canvas.MapBarWidth;
-            rc.top = Canvas.rcMap.top + (2 + 1) * j;
-            rc.bottom = rc.top -1 + 2;
-				for(x=rc.left;x<=rc.right;x++)
-					for(y=rc.top;y<=rc.bottom;y++)
-          			SetPixelV(Canvas.hmdc,x,y,color);
-				change_flag = 1;
-    		}
-   	}
-	}
-	GDI_UNLOCK();
-#else
-	GDI_LOCK();
-	if(Canvas.MapMode==CMAP_MODE_16){
 	for(i=0;i<Canvas.MapCh;i++){
 		for(j=0;j<Canvas.MapBarMax;j++){
 			if(Canvas.MapMap[i][j]!=Canvas.MapMapOld[i][j] || flag){
@@ -1979,14 +1958,34 @@ static void CanvasMapUpdate(int flag)
 				rc.right = rc.left -1 + Canvas.MapBarWidth;
 				rc.top = Canvas.rcMap.top + (2 + 1) * j;
 				rc.bottom = rc.top -1 + 2;
-					for(x=rc.left;x<=rc.right;x++){
+				for(x=rc.left;x<=rc.right;x++)
 					for(y=rc.top;y<=rc.bottom;y++)
-          			SetPixelV(Canvas.hmdc,x,y,color);
-					}
+						SetPixelV(Canvas.hmdc,x,y,color);
 				change_flag = 1;
-    		}
-   		}
+		}
 	}
+	}
+	GDI_UNLOCK();
+#else
+	GDI_LOCK();
+	if(Canvas.MapMode==CMAP_MODE_16){
+		for(i=0;i<Canvas.MapCh;i++){
+			for(j=0;j<Canvas.MapBarMax;j++){
+				if(Canvas.MapMap[i][j]!=Canvas.MapMapOld[i][j] || flag){
+					int x,y;
+					COLORREF color = CanvasColor(Canvas.MapMap[i][j]);
+					rc.left = Canvas.rcMap.left + (Canvas.MapBarWidth + 1) * i;
+					rc.right = rc.left -1 + Canvas.MapBarWidth;
+					rc.top = Canvas.rcMap.top + (2 + 1) * j;
+					rc.bottom = rc.top -1 + 2;
+						for(x=rc.left;x<=rc.right;x++){
+							for(y=rc.top;y<=rc.bottom;y++)
+								SetPixelV(Canvas.hmdc,x,y,color);
+						}
+					change_flag = 1;
+				}
+			}
+		}
 	} else {
 	for(i=0;i<Canvas.MapCh;i++){
 		for(j=0;j<Canvas.MapBarMax;j++){
@@ -1996,20 +1995,20 @@ static void CanvasMapUpdate(int flag)
 				if(i<=15){
 					rc.left = Canvas.rcMap.left + (Canvas.MapBarWidth + 1) * i;
 					rc.right = rc.left -1 + Canvas.MapBarWidth;
-						rc.top = -1 + Canvas.rcMap.top + (2 + 1) * j;
+					rc.top = -1 + Canvas.rcMap.top + (2 + 1) * j;
 					rc.bottom = rc.top -1 + 2;
 				} else {
 					rc.left = Canvas.rcMap.left + (Canvas.MapBarWidth + 1) * (i-16);
 					rc.right = rc.left -1 + Canvas.MapBarWidth;
-						rc.top = -1 + Canvas.rcMap.top + (2 + 1) * j + Canvas.MapBarMax*(2+1) + 2 ;
+					rc.top = -1 + Canvas.rcMap.top + (2 + 1) * j + Canvas.MapBarMax*(2+1) + 2 ;
 					rc.bottom = rc.top -1 + 2;
 				}
 				for(x=rc.left;x<=rc.right;x++)
 					for(y=rc.top;y<=rc.bottom;y++)
-	          			SetPixelV(Canvas.hmdc,x,y,color);
+				SetPixelV(Canvas.hmdc,x,y,color);
 				change_flag = 1;
-    		}
-   		}
+			}
+		}
 	}
 	}
 	GDI_UNLOCK();
@@ -2065,7 +2064,7 @@ static void CanvasSleepUpdate(int flag)
 	int x,y;
 	CanvasSleepReset();
 	GDI_LOCK(); // gdi_lock
-   hdc = CreateCompatibleDC(Canvas.hmdc);
+	hdc = CreateCompatibleDC(Canvas.hmdc);
 	SelectObject(hdc,Canvas.hBitmapSleep);
 	GetClientRect(Canvas.hwnd, &rc);
 	x = (rc.right - rc.left - Canvas.rcSleep.right)/2;
@@ -2123,8 +2122,8 @@ static void CanvasGSLCDUpdate(int flag)
 	GDI_LOCK(); // gdi_lock
 	for (i = 0; i < 16; i++) {
 		for (j = 0; j < 16; j++) {
-     		x = Canvas.rcGSLCD.left + i * 6;
-   			y = Canvas.rcGSLCD.top + j * 4;
+		x = Canvas.rcGSLCD.left + i * 6;
+			y = Canvas.rcGSLCD.top + j * 4;
 			if (flag || Canvas.GSLCD[i][j] != Canvas.GSLCD_old[i][j]) {
 				changed = 1;
 				if (Canvas.GSLCD[i][j] == 1) {
@@ -2147,7 +2146,7 @@ static void CanvasGSLCDUpdate(int flag)
 	}
 	if (changed) {
 		GDI_UNLOCK();
-       	InvalidateRect(Canvas.hwnd, (RECT *)&Canvas.rcGSLCD, FALSE);
+		InvalidateRect(Canvas.hwnd, (RECT *)&Canvas.rcGSLCD, FALSE);
 		GDI_LOCK();
 	}
 	GDI_UNLOCK(); // gdi_lock
@@ -2161,15 +2160,15 @@ static void CanvasGSLCDClear(void)
 	HGDIOBJ hgdiobj_hpen, hgdiobj_hbrush;
 	COLORREF BGcolor;
 	if(!CanvasOK)
-   	return;
- 	GDI_LOCK(); // gdi_lock
+	return;
+	GDI_LOCK(); // gdi_lock
 	BGcolor = RGB(0,0,0);
 	hPen = CreatePen(PS_SOLID,1,BGcolor);
 	hBrush = CreateSolidBrush(BGcolor);
 	hgdiobj_hpen = SelectObject(Canvas.hmdc, hPen);
 	hgdiobj_hbrush = SelectObject(Canvas.hmdc, hBrush);
 	Rectangle(Canvas.hmdc,
-   	Canvas.rcMe.left,Canvas.rcMe.top,Canvas.rcMe.right,Canvas.rcMe.bottom);
+	Canvas.rcMe.left,Canvas.rcMe.top,Canvas.rcMe.right,Canvas.rcMe.bottom);
 	SelectObject(Canvas.hmdc, hgdiobj_hpen);
 	DeleteObject(hPen);
 	SelectObject(Canvas.hmdc, hgdiobj_hbrush);
@@ -2180,7 +2179,7 @@ static void CanvasGSLCDClear(void)
 	hgdiobj_hpen = SelectObject(Canvas.hmdc, hPen);
 	hgdiobj_hbrush = SelectObject(Canvas.hmdc, hBrush);
 	Rectangle(Canvas.hmdc,
-   	Canvas.rcMe.left + 1,Canvas.rcMe.top + 1,Canvas.rcMe.right - 1,Canvas.rcMe.bottom - 1);
+	Canvas.rcMe.left + 1,Canvas.rcMe.top + 1,Canvas.rcMe.right - 1,Canvas.rcMe.bottom - 1);
 	SelectObject(Canvas.hmdc, hgdiobj_hpen);
 	DeleteObject(hPen);
 	SelectObject(Canvas.hmdc, hgdiobj_hbrush);
@@ -2216,23 +2215,23 @@ static void CanvasKeyboardReadPanelInfo(int flag)
 	if(!CanvasOK)
 		return;
 	if(!PInfoOK)
-    	return;
+	return;
 	ChFrom = (Canvas.CKPart - 1) * Canvas.CKCh;
 	ChTo = Canvas.CKPart * Canvas.CKCh - 1;
-   if(Canvas.UpdateAll)
-   	flag = 1;
+	if(Canvas.UpdateAll)
+		flag = 1;
 	if(!Panel->changed && !flag)
-   	return;
+		return;
 	for(i=ChFrom;i<=ChTo;i++)
 		for(j=0;j<4;j++){
-      	Canvas.CKxnote_old[i][j] = Canvas.CKxnote[i][j];
+			Canvas.CKxnote_old[i][j] = Canvas.CKxnote[i][j];
 			Canvas.CKxnote[i][j] = Panel->xnote[i][j];
-      }
+		}
 }
 
 #define CK_KEY_BLACK	1
 #define CK_KEY_WHITE	2
-#define CK_ON RGB(0xff,0x00,0x00)
+#define /CK_ON RGB(0xff,0x00,0x00)
 #define CK_OFF_WHITE RGB(0xff,0xff,0xff)
 #define CK_OFF_BLACK RGB(0x00,0x00,0x00)
 #define CK_DOFF_WHITE RGB(0xcc,0xcc,0xcc)
@@ -2240,17 +2239,17 @@ static void CanvasKeyboardReadPanelInfo(int flag)
 static void CanvasKeyboardUpdate(int flag)
 {
 	int j,k,l;
-   int channel;
+	int channel;
 	int ChFrom, ChTo;
 
 	if(!PInfoOK)
 		return;
-   if(Canvas.UpdateAll)
-   	flag = 1;
+	if(Canvas.UpdateAll)
+		flag = 1;
 	if(!COMPARE_CHANNELMASK(Canvas.DrumChannel,drumchannels))
-   	flag = 1;
+		flag = 1;
 	if(!Panel->changed && !flag)
-   	return;
+		return;
 	ChFrom = (Canvas.CKPart - 1) * Canvas.CKCh;
 	ChTo = Canvas.CKPart * Canvas.CKCh - 1;
 	GDI_LOCK(); // gdi_lock
@@ -2260,74 +2259,74 @@ static void CanvasKeyboardUpdate(int flag)
 		COLORREF colorON, colorOFF_WHITE, colorOFF_BLACK;
 		if(drumflag){
 			colorON = CK_ON;
-         colorOFF_WHITE = CK_DOFF_WHITE;
-         colorOFF_BLACK = CK_OFF_BLACK;
-      } else {
+			colorOFF_WHITE = CK_DOFF_WHITE;
+			colorOFF_BLACK = CK_OFF_BLACK;
+		 else {
 			colorON = CK_ON;
-         colorOFF_WHITE = CK_OFF_WHITE;
-         colorOFF_BLACK = CK_OFF_BLACK;
-      }
+			colorOFF_WHITE = CK_OFF_WHITE;
+			colorOFF_BLACK = CK_OFF_BLACK;
+		}
 		for(j=0;j<4;j++){
 			int32 xnote, xnote_diff;
 			xnote = Canvas.CKxnote[channel][j];
-        	xnote_diff = Canvas.CKxnote[channel][j] ^ Canvas.CKxnote_old[channel][j];
+			xnote_diff = Canvas.CKxnote[channel][j] ^ Canvas.CKxnote_old[channel][j];
 			if(!flag && xnote_diff == 0)
-         	continue;
+				continue;
 			for(k=0;k<32;k++){
 				int key = 0;
 				int KeyOn = 0;
-  	   		int note = j*32+k;
-            int reff = (int32)1 << k;
+				int note = j*32+k;
+				int reff = (int32)1 << k;
 				int x,y;
 				if(note < Canvas.CKNoteFrom || note > Canvas.CKNoteTo)
-      			continue;
-            if(!flag && !(xnote_diff & reff))
-              	continue;
-            if(xnote & reff)
+					continue;
+				if(!flag && !(xnote_diff & reff))
+					continue;
+				if(xnote & reff)
 					KeyOn = 1;
 				note = note % 12;
-            if(note == 1 || note == 3 || note == 6 || note == 8 || note == 10)
-			 		key = CK_KEY_BLACK;
-            else
-			 		key = CK_KEY_WHITE;
-     			x = Canvas.rcKeyboard.left + j * 32 + k - Canvas.CKNoteFrom;
-   			y = Canvas.rcKeyboard.top + (channel - ChFrom) * 4;
+				if(note == 1 || note == 3 || note == 6 || note == 8 || note == 10)
+					key = CK_KEY_BLACK;
+				else
+					key = CK_KEY_WHITE;
+				x = Canvas.rcKeyboard.left + j * 32 + k - Canvas.CKNoteFrom;
+				y = Canvas.rcKeyboard.top + (channel - ChFrom) * 4;
 				switch(key){
-            case CK_KEY_BLACK:
-	            if(KeyOn){
-						for(l=0;l<2;l++)
-      	  				SetPixelV(Canvas.hmdc,x,y+l,colorON);
-  						SetPixelV(Canvas.hmdc,x,y+2,colorOFF_WHITE);
-	            } else {
-						for(l=0;l<2;l++)
-      	  				SetPixelV(Canvas.hmdc,x,y+l,colorOFF_BLACK);
-  						SetPixelV(Canvas.hmdc,x,y+2,colorOFF_WHITE);
-         	   }
-					break;
-            case CK_KEY_WHITE:
-	            if(KeyOn){
-  						SetPixelV(Canvas.hmdc,x,y,colorOFF_WHITE);
-						for(l=1;l<3;l++)
-      	  				SetPixelV(Canvas.hmdc,x,y+l,colorON);
-	            } else {
-  						SetPixelV(Canvas.hmdc,x,y,colorOFF_WHITE);
-						for(l=1;l<3;l++)
-      	  				SetPixelV(Canvas.hmdc,x,y+l,colorOFF_WHITE);
-         	   }
-					break;
-				default:
-            	break;
-	  			}
-            change_flag = 1;
-      	}
+					case CK_KEY_BLACK:
+						if(KeyOn){
+							for(l=0;l<2;l++)
+								SetPixelV(Canvas.hmdc,x,y+l,colorON);
+							SetPixelV(Canvas.hmdc,x,y+2,colorOFF_WHITE);
+						} else {
+							for(l=0;l<2;l++)
+								SetPixelV(Canvas.hmdc,x,y+l,colorOFF_BLACK);
+							SetPixelV(Canvas.hmdc,x,y+2,colorOFF_WHITE);
+						}
+						break;
+					case CK_KEY_WHITE:
+						if(KeyOn){
+							SetPixelV(Canvas.hmdc,x,y,colorOFF_WHITE);
+							for(l=1;l<3;l++)
+								SetPixelV(Canvas.hmdc,x,y+l,colorON);
+						} else {
+							SetPixelV(Canvas.hmdc,x,y,colorOFF_WHITE);
+							for(l=1;l<3;l++)
+								SetPixelV(Canvas.hmdc,x,y+l,colorOFF_WHITE);
+						}
+						break;
+					default:
+						break;
+				}
+				change_flag = 1;
+			}
 		}
 		if(change_flag){
-         RECT rc;
+			RECT rc;
 			GDI_UNLOCK();
 			GetClientRect(Canvas.hwnd,&rc);
-         rc.top = Canvas.rcKeyboard.top + (channel - ChFrom) * 4;
+			rc.top = Canvas.rcKeyboard.top + (channel - ChFrom) * 4;
 			rc.bottom = rc.top + 4;
-       	InvalidateRect(Canvas.hwnd, &rc, FALSE);
+			InvalidateRect(Canvas.hwnd, &rc, FALSE);
 			GDI_LOCK();
 		}
 	}
@@ -2345,25 +2344,25 @@ static void CanvasKeyboardClear(void)
 	HGDIOBJ hgdiobj_hpen, hgdiobj_hbrush;
 	COLORREF FGcolor, BGcolor;
 	HFONT hfont;
-   HGDIOBJ hgdiobj;
+	HGDIOBJ hgdiobj;
 	RECT rc;
 	char buffer[16];
 	if(!CanvasOK)
-   	return;
- 	GDI_LOCK(); // gdi_lock
+	return;
+	GDI_LOCK(); // gdi_lock
 #if 0
 	hPen = CreatePen(PS_SOLID,1,CanvasColor(CC_BACK));
 	hBrush = CreateSolidBrush(CanvasColor(CC_BACK));
 #else
 	FGcolor = RGB(0xff,0xff,0xff);
-   BGcolor = RGB(0x00,0x00,0x00);
+	BGcolor = RGB(0x00,0x00,0x00);
 	hPen = CreatePen(PS_SOLID,1,BGcolor);
 	hBrush = CreateSolidBrush(BGcolor);
 #endif
 	hgdiobj_hpen = SelectObject(Canvas.hmdc, hPen);
 	hgdiobj_hbrush = SelectObject(Canvas.hmdc, hBrush);
 	Rectangle(Canvas.hmdc,
-   	Canvas.rcMe.left,Canvas.rcMe.top,Canvas.rcMe.right,Canvas.rcMe.bottom);
+	Canvas.rcMe.left,Canvas.rcMe.top,Canvas.rcMe.right,Canvas.rcMe.bottom);
 	SelectObject(Canvas.hmdc, hgdiobj_hpen);
 	DeleteObject(hPen);
 	SelectObject(Canvas.hmdc, hgdiobj_hbrush);
@@ -2371,9 +2370,9 @@ static void CanvasKeyboardClear(void)
 
 	hfont = CreateFont(7,7,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 		DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-     	DEFAULT_PITCH | FF_DONTCARE,"Arial Bold");
+	DEFAULT_PITCH | FF_DONTCARE,"Arial Bold");
 	hgdiobj = SelectObject(Canvas.hmdc,hfont);
-   SetTextAlign(Canvas.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
+	SetTextAlign(Canvas.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 	rc.left =	Canvas.rcMe.left+1 ;
 	rc.top =		Canvas.rcMe.bottom-7;
 	rc.right =	Canvas.rcMe.left+1 + 40;
@@ -2381,26 +2380,26 @@ static void CanvasKeyboardClear(void)
 	SetTextColor(Canvas.hmdc,RGB(0xff,0xff,0xff));
 	SetBkColor(Canvas.hmdc,RGB(0x00,0x00,0x00));
 	strcpy(buffer," ");
- 	ExtTextOut(Canvas.hmdc,rc.left,rc.top,ETO_CLIPPED|ETO_OPAQUE,&rc,
- 		buffer,strlen(buffer),NULL);
+	ExtTextOut(Canvas.hmdc,rc.left,rc.top,ETO_CLIPPED|ETO_OPAQUE,&rc,
+		buffer,strlen(buffer),NULL);
 	for(i=1;i<=3;i++){
 		if(i==Canvas.CKPart){
-   		SetTextColor(Canvas.hmdc,RGB(0xff,0xff,0xff));
-   		SetBkColor(Canvas.hmdc,RGB(0x00,0x00,0x00));
-      } else {
-   		SetTextColor(Canvas.hmdc,RGB(0x80,0x80,0x80));
-   		SetBkColor(Canvas.hmdc,RGB(0x00,0x00,0x00));
+		SetTextColor(Canvas.hmdc,RGB(0xff,0xff,0xff));
+		SetBkColor(Canvas.hmdc,RGB(0x00,0x00,0x00));
+	} else {
+		SetTextColor(Canvas.hmdc,RGB(0x80,0x80,0x80));
+		SetBkColor(Canvas.hmdc,RGB(0x00,0x00,0x00));
 		}
 		rc.left =	Canvas.rcMe.left+1 + 0 + (i-1)*24;
-		rc.top =		Canvas.rcMe.bottom-7;
+		rc.top =	Canvas.rcMe.bottom-7;
 		rc.right =	Canvas.rcMe.left+1 + 0 + (i)*24 - 1;
 		rc.bottom =	Canvas.rcMe.bottom;
 		sprintf(buffer,"[%c]",i+'A'-1);
- 	 	ExtTextOut(Canvas.hmdc,rc.left,rc.top,ETO_CLIPPED|ETO_OPAQUE,&rc,
-   		buffer,strlen(buffer),NULL);
+		ExtTextOut(Canvas.hmdc,rc.left,rc.top,ETO_CLIPPED|ETO_OPAQUE,&rc,
+		buffer,strlen(buffer),NULL);
 	}
-   if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
-   	SelectObject(Canvas.hmdc,hgdiobj);
+	if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
+	SelectObject(Canvas.hmdc,hgdiobj);
 	DeleteObject(hfont);
 	GDI_UNLOCK(); // gdi_lock
 
@@ -2727,15 +2726,15 @@ static void InitPanelWnd(HWND hwnd)
 	wndclass.lpszMenuName  = NULL;
 	wndclass.lpszClassName = PanelWndClassName;
 	RegisterClass(&wndclass);
-  	hPanelWnd =
-  	CreateWindowEx(0,PanelWndClassName,0,WS_CHILD,
-    	CW_USEDEFAULT,0,MPANEL_XMAX,MPANEL_YMAX,
+	hPanelWnd =
+	CreateWindowEx(0,PanelWndClassName,0,WS_CHILD,
+	CW_USEDEFAULT,0,MPANEL_XMAX,MPANEL_YMAX,
       GetDlgItem(hwnd,IDC_RECT_PANEL),0,hInst,0);
 	MPanelInit(hPanelWnd);
 	MPanelReset();
 	MPanelReadPanelInfo(1);
 	MPanelUpdateAll();
-  	MPanelPaintAll();
+	MPanelPaintAll();
 	UpdateWindow(hPanelWnd);
 	ShowWindow(hPanelWnd,SW_SHOW);
 }
@@ -2749,13 +2748,13 @@ PanelWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		case WM_CREATE:
 			break;
 		case WM_PAINT:
-      	MPanelPaintDo();
-	    	return 0;
+	MPanelPaintDo();
+		return 0;
 		case WM_LBUTTONDBLCLK:
 //			MPanelReset();
-		  	MPanelReadPanelInfo(1);
+			MPanelReadPanelInfo(1);
 			MPanelUpdateAll();
-		  	MPanelPaintAll();
+			MPanelPaintAll();
 			break;
 		case WM_DESTROY:
 			if(MPanel.hFontTitle!=NULL)
@@ -2802,9 +2801,9 @@ static void MPanelInit(HWND hwnd)
 	MoveWindow(MPanel.hwnd,0,0,rc.right-rc.left,rc.bottom-rc.top,FALSE);
 	MPanel.hdc = GetDC(MPanel.hwnd);
 	MPanel.hbitmap =
-  		CreateCompatibleBitmap(MPanel.hdc,MPANEL_XMAX,MPANEL_YMAX);
+		CreateCompatibleBitmap(MPanel.hdc,MPANEL_XMAX,MPANEL_YMAX);
 	MPanel.hmdc =
-    	CreateCompatibleDC(MPanel.hdc);
+	CreateCompatibleDC(MPanel.hdc);
 	MPanel.hgdiobj_hmdcprev = SelectObject(MPanel.hmdc,MPanel.hbitmap);
 	ReleaseDC(MPanel.hwnd,MPanel.hdc);
 
@@ -2818,7 +2817,7 @@ static void MPanelInit(HWND hwnd)
 	SetRect(&(MPanel.rcTime),	rc.left+2,	rc.top+2+14+1+12+1,	rc.left+2+180,		rc.top+2+14+1+12+1+25);
 	SetRect(&(MPanel.rcVoices), rc.right-2-36-1-24-48,	rc.top+2+14+1+12+1,	rc.right-2-36-1-24,	rc.top+2+14+1+12+1+12);
 	SetRect(&(MPanel.rcMVolume),rc.right-2-36,			rc.top+2+14+1+12+1,	rc.right-2,				rc.top+2+14+1+12+1+12);
-	SetRect(&(MPanel.rcRate), 	rc.right-2-60-1-18-48,	rc.top+2+14+1+12+1+12+1,	rc.right-2-36-1,	rc.top+2+14+1+12+1+12+1+12);
+	SetRect(&(MPanel.rcRate),	rc.right-2-60-1-18-48,	rc.top+2+14+1+12+1+12+1,	rc.right-2-36-1,	rc.top+2+14+1+12+1+12+1+12);
 	SetRect(&(MPanel.rcList),	rc.right-2-60,				rc.top+2+14+1+12+1+12+1,	rc.right-2,				rc.top+2+14+1+12+1+12+1+12);
 	SetRect(&(MPanel.rcMisc),	rc.left+2,	rc.top+2+14+1+12+1+25+1,rc.right-2,rc.top+2+14+1+12+1+25+1+12);
 	SetRect(&(MPanel.rcMessage),rc.left,rc.top,rc.right,rc.bottom);
@@ -2890,7 +2889,7 @@ static void MPanelInit(HWND hwnd)
    case LANGUAGE_ENGLISH:
 		strcpy(MPanel.FontLang,"Times New Roman");
 		strcpy(MPanel.FontLangFixed,"Times New Roman");
-     	break;
+	break;
 	default:
 	case LANGUAGE_JAPANESE:
 		strcpy(MPanel.FontLang,"ＭＳ Ｐ明朝");
@@ -2901,32 +2900,32 @@ static void MPanelInit(HWND hwnd)
 	MPanel.hFontTitle =
 		CreateFont(rc.bottom-rc.top+1,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	DEFAULT_PITCH | FF_DONTCARE,MPanel.FontLang);
+	DEFAULT_PITCH | FF_DONTCARE,MPanel.FontLang);
 	rc = MPanel.rcFile;
 	MPanel.hFontFile =
 		CreateFont(rc.bottom-rc.top+1,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	DEFAULT_PITCH | FF_DONTCARE,MPanel.FontLang);
+	DEFAULT_PITCH | FF_DONTCARE,MPanel.FontLang);
 	rc = MPanel.rcTime;
 	MPanel.hFontTime =
 		CreateFont(24,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
+	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
 	rc = MPanel.rcVoices;
 	MPanel.hFontVoices =
 		CreateFont(rc.bottom-rc.top+1,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
+	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
 	rc = MPanel.rcMVolume;
 	MPanel.hFontMVolume =
 		CreateFont(rc.bottom-rc.top+1,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
+	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
 	rc = MPanel.rcRate;
 	MPanel.hFontRate =
 		CreateFont(rc.bottom-rc.top+1,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
+	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
 	rc = MPanel.rcMetronome;
 	MPanel.hFontMetronome =
 			CreateFont(rc.bottom - rc.top + 1, 0, 0, 0, FW_DONTCARE,
@@ -2951,19 +2950,19 @@ static void MPanelInit(HWND hwnd)
 	MPanel.hFontList =
 		CreateFont(rc.bottom-rc.top+1,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
+	DEFAULT_PITCH | FF_DONTCARE,MPanel.Font);
 	rc = MPanel.rcMisc;
 	tmp = (rc.bottom-rc.top+1)/2;
 	MPanel.hFontMisc =
 		CreateFont(tmp*2,tmp,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	FIXED_PITCH | FF_DONTCARE,MPanel.Font);
+	FIXED_PITCH | FF_DONTCARE,MPanel.Font);
 	rc = MPanel.rcMessage;
 	tmp = (rc.bottom-rc.top+1)/2;
-	MPanel.hFontMessage = 
+	MPanel.hFontMessage =
 		CreateFont(tmp*2,tmp,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
-      	FIXED_PITCH | FF_DONTCARE,MPanel.FontLangFixed);
+	FIXED_PITCH | FF_DONTCARE,MPanel.FontLangFixed);
 	MPanelOK = 1;
 	GDI_UNLOCK(); // gdi_lock
 	MPanelMessageInit();
@@ -3007,17 +3006,17 @@ void MPanelReset(void)
 	MPanel.BGBGColor = RGB(0x60,0x60,0x60);
 #if 0
 	if(MPanel.hFontTitle!=NULL)
-   	DeleteObject(MPanel.hFontTitle);
+	DeleteObject(MPanel.hFontTitle);
 	if(MPanel.hFontFile!=NULL)
-   	DeleteObject(MPanel.hFontFile);
+	DeleteObject(MPanel.hFontFile);
 	if(MPanel.hFontTime!=NULL)
-   	DeleteObject(MPanel.hFontTime);
+	DeleteObject(MPanel.hFontTime);
 	if(MPanel.hFontVoices!=NULL)
-   	DeleteObject(MPanel.hFontVoices);
+	DeleteObject(MPanel.hFontVoices);
 	if(MPanel.hFontMVolume!=NULL)
-   	DeleteObject(MPanel.hFontMVolume);
+	DeleteObject(MPanel.hFontMVolume);
 	if(MPanel.hFontRate!=NULL)
-   	DeleteObject(MPanel.hFontRate);
+	DeleteObject(MPanel.hFontRate);
 	if (MPanel.hFontMetronome != NULL)
 		DeleteObject(MPanel.hFontMetronome);
 	if (MPanel.hFontKeysig != NULL)
@@ -3025,7 +3024,7 @@ void MPanelReset(void)
 	if (MPanel.hFontTempo != NULL)
 		DeleteObject(MPanel.hFontTempo);
 	if(MPanel.hFontList!=NULL)
-   	DeleteObject(MPanel.hFontList);
+	DeleteObject(MPanel.hFontList);
 #endif
 	MPanel.play_system_mode = DEFAULT_SYSTEM_MODE;
 	MPanel.current_file_info_file_type = IS_OTHER_FILE;
@@ -3040,7 +3039,7 @@ void MPanelUpdate(void)
 		return;
 	MPanelMessageUpdate();
 	if(MPanel.UpdateFlag==MP_UPDATE_NONE)
-	   	return;
+		return;
 	if(MPanel.UpdateFlag & MP_UPDATE_BACKGROUND){
 		// ビットマップを貼り付けるが今は塗りつぶし。
 		HPEN hPen;
@@ -3070,8 +3069,8 @@ void MPanelUpdate(void)
 	//#include "w32g2_c.h"
 	SetTextAlign(MPanel.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 		ExtTextOut(MPanel.hmdc,MPanel.rcTitle.left,MPanel.rcTitle.top,
-    		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcTitle),
-    		MPanel.Title,strlen(MPanel.Title),NULL);
+		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcTitle),
+		MPanel.Title,strlen(MPanel.Title),NULL);
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
 		GDI_UNLOCK(); // gdi_lock
@@ -3085,8 +3084,8 @@ void MPanelUpdate(void)
 		SetBkColor(MPanel.hmdc,MPanel.BGColor);
 		SetTextAlign(MPanel.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 		ExtTextOut(MPanel.hmdc,MPanel.rcFile.left,MPanel.rcFile.top,
-    		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcFile),
-    		MPanel.File,strlen(MPanel.File),NULL);
+		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcFile),
+		MPanel.File,strlen(MPanel.File),NULL);
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
 		GDI_UNLOCK(); // gdi_lock
@@ -3097,15 +3096,15 @@ void MPanelUpdate(void)
 		HGDIOBJ hgdiobj;
 		GDI_LOCK(); // gdi_lock
 		hgdiobj = SelectObject(MPanel.hmdc,MPanel.hFontTime);
-   	sprintf(buffer," %02d:%02d:%02d/%02d:%02d:%02d",
+	sprintf(buffer," %02d:%02d:%02d/%02d:%02d:%02d",
 			MPanel.CurTime_h,MPanel.CurTime_m,MPanel.CurTime_s,
-    		MPanel.TotalTime_h,MPanel.TotalTime_m,MPanel.TotalTime_s);
+		MPanel.TotalTime_h,MPanel.TotalTime_m,MPanel.TotalTime_s);
 		SetTextColor(MPanel.hmdc,MPanel.FGColor);
 		SetBkColor(MPanel.hmdc,MPanel.BGColor);
 		SetTextAlign(MPanel.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 		ExtTextOut(MPanel.hmdc,MPanel.rcTime.left,MPanel.rcTime.top,
-    		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcTime),
-    		buffer,strlen(buffer),NULL);
+		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcTime),
+		buffer,strlen(buffer),NULL);
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
 		GDI_UNLOCK(); // gdi_lock
@@ -3116,13 +3115,13 @@ void MPanelUpdate(void)
 		HGDIOBJ hgdiobj;
 		GDI_LOCK(); // gdi_lock
 		hgdiobj = SelectObject(MPanel.hmdc,MPanel.hFontVoices);
-   	sprintf(buffer," %03d/%03d",MPanel.CurVoices,MPanel.MaxVoices);
+	sprintf(buffer," %03d/%03d",MPanel.CurVoices,MPanel.MaxVoices);
 		SetTextColor(MPanel.hmdc,MPanel.FGColor);
 		SetBkColor(MPanel.hmdc,MPanel.BGColor);
 		SetTextAlign(MPanel.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 		ExtTextOut(MPanel.hmdc,MPanel.rcVoices.left,MPanel.rcVoices.top,
-    		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcVoices),
-    		buffer,strlen(buffer),NULL);
+		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcVoices),
+		buffer,strlen(buffer),NULL);
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
 		GDI_UNLOCK(); // gdi_lock
@@ -3133,13 +3132,13 @@ void MPanelUpdate(void)
 		HGDIOBJ hgdiobj;
 		GDI_LOCK(); // gdi_lock
 		hgdiobj = SelectObject(MPanel.hmdc,MPanel.hFontVoices);
-   	sprintf(buffer," %03d%%",MPanel.MVolume);
+	sprintf(buffer," %03d%%",MPanel.MVolume);
 		SetTextColor(MPanel.hmdc,MPanel.FGColor);
 		SetBkColor(MPanel.hmdc,MPanel.BGColor);
 		SetTextAlign(MPanel.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 		ExtTextOut(MPanel.hmdc,MPanel.rcMVolume.left,MPanel.rcMVolume.top,
-    		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMVolume),
-    		buffer,strlen(buffer),NULL);
+		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMVolume),
+		buffer,strlen(buffer),NULL);
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
 		GDI_UNLOCK(); // gdi_lock
@@ -3150,13 +3149,13 @@ void MPanelUpdate(void)
 		HGDIOBJ hgdiobj;
 		GDI_LOCK(); // gdi_lock
 		hgdiobj = SelectObject(MPanel.hmdc,MPanel.hFontRate);
-   	sprintf(buffer," %05dHz",MPanel.Rate);
+	sprintf(buffer," %05dHz",MPanel.Rate);
 		SetTextColor(MPanel.hmdc,MPanel.FGColor);
 		SetBkColor(MPanel.hmdc,MPanel.BGColor);
 		SetTextAlign(MPanel.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 		ExtTextOut(MPanel.hmdc,MPanel.rcRate.left,MPanel.rcRate.top,
-    		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcRate),
-    		buffer,strlen(buffer),NULL);
+		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcRate),
+		buffer,strlen(buffer),NULL);
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
 		GDI_UNLOCK(); // gdi_lock
@@ -3165,7 +3164,7 @@ void MPanelUpdate(void)
 	if (MPanel.UpdateFlag & MP_UPDATE_METRONOME) {
 		char buffer[256];
 		HGDIOBJ hgdiobj;
-		
+
 		GDI_LOCK(); // gdi_lock
 		hgdiobj = SelectObject(MPanel.hmdc, MPanel.hFontMetronome);
 		sprintf(buffer, " %03d.%02d", MPanel.Meas, MPanel.Beat);
@@ -3185,7 +3184,7 @@ void MPanelUpdate(void)
 	if (MPanel.UpdateFlag & MP_UPDATE_KEYSIG) {
 		char buffer[256];
 		HGDIOBJ hgdiobj;
-		
+
 		GDI_LOCK(); // gdi_lock
 		hgdiobj = SelectObject(MPanel.hmdc, MPanel.hFontKeysig);
 		if (MPanel.Keysig[0] == '\0')
@@ -3207,7 +3206,7 @@ void MPanelUpdate(void)
 	if (MPanel.UpdateFlag & MP_UPDATE_TEMPO) {
 		char buffer[256];
 		HGDIOBJ hgdiobj;
-		
+
 		GDI_LOCK(); // gdi_lock
 		hgdiobj = SelectObject(MPanel.hmdc, MPanel.hFontTempo);
 		sprintf(buffer, "%3d (%03d %%)", MPanel.Tempo, MPanel.Tempo_ratio);
@@ -3229,13 +3228,13 @@ void MPanelUpdate(void)
 		HGDIOBJ hgdiobj;
 		GDI_LOCK(); // gdi_lock
 		hgdiobj = SelectObject(MPanel.hmdc,MPanel.hFontList);
-   	sprintf(buffer," %04d/%04d",MPanel.PlaylistNum,MPanel.PlaylistMax);
+	sprintf(buffer," %04d/%04d",MPanel.PlaylistNum,MPanel.PlaylistMax);
 		SetTextColor(MPanel.hmdc,MPanel.FGColor);
 		SetBkColor(MPanel.hmdc,MPanel.BGColor);
 		SetTextAlign(MPanel.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 		ExtTextOut(MPanel.hmdc,MPanel.rcList.left,MPanel.rcList.top,
-    		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcList),
-    		buffer,strlen(buffer),NULL);
+		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcList),
+		buffer,strlen(buffer),NULL);
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
 		GDI_UNLOCK(); // gdi_lock
@@ -3248,13 +3247,13 @@ void MPanelUpdate(void)
 		hgdiobj = SelectObject(MPanel.hmdc,MPanel.hFontMisc);
 		buffer[0] = '\0';
 		switch(MPanel.play_system_mode){
-    	case GM_SYSTEM_MODE:
+	case GM_SYSTEM_MODE:
 			strcat(buffer,"[GM]");
 			break;
-    	case GS_SYSTEM_MODE:
+	case GS_SYSTEM_MODE:
 			strcat(buffer,"[GS]");
 			break;
-    	case XG_SYSTEM_MODE:
+	case XG_SYSTEM_MODE:
 			strcat(buffer,"[XG]");
 			break;
 		default:
@@ -3347,7 +3346,7 @@ void MPanelUpdate(void)
 			break;
 		}
 		if(MPanel.current_file_info_max_channel>=0){
-      	char local[16];
+	char local[16];
          sprintf(local,"[%02dch]",MPanel.current_file_info_max_channel+1);
 			strcat(buffer,local);
       }else
@@ -3356,8 +3355,8 @@ void MPanelUpdate(void)
 		SetBkColor(MPanel.hmdc,MPanel.BGColor);
 		SetTextAlign(MPanel.hmdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 		ExtTextOut(MPanel.hmdc,MPanel.rcMisc.left,MPanel.rcMisc.top,
-    		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMisc),
-    		buffer,strlen(buffer),NULL);
+		ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMisc),
+		buffer,strlen(buffer),NULL);
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
 		GDI_UNLOCK(); // gdi_lock
@@ -3374,23 +3373,23 @@ void MPanelUpdate(void)
 		case 0:
 			ExtTextOut(MPanel.hmdc,MPanel.rcMessage.left,MPanel.rcMessage.top,
 				ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMessage),
-    			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
+			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
 		case 1:
 			ExtTextOut(MPanel.hmdc,MPanel.rcMessage.left,MPanel.rcMessage.top,
 				ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMessage),
-    			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
+			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
 //			ExtTextOut(MPanel.hmdc,MPanel.rcMessage.left-(MPanel.rcMessage.bottom-MPanel.rcMessage.top)*2,
 //				MPanel.rcMessage.top, ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMessage),
-//    			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
+//			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
 		case 2:
 			ExtTextOut(MPanel.hmdc,MPanel.rcMessage.left,MPanel.rcMessage.top,
 				ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMessage),
-    			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
+			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
 		case -1:
 		default:
 			ExtTextOut(MPanel.hmdc,MPanel.rcMessage.left,MPanel.rcMessage.top,
 				ETO_CLIPPED	| ETO_OPAQUE,&(MPanel.rcMessage),
-    			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
+			MPanelMessageData.buff,strlen(MPanelMessageData.buff),NULL);
 		}
 		if((HGDIOBJ)hgdiobj!=(HGDIOBJ)NULL && (HGDIOBJ)hgdiobj!=(HGDIOBJ)GDI_ERROR)
 			SelectObject(MPanel.hmdc,hgdiobj);
@@ -3447,13 +3446,13 @@ void MPanelReadPanelInfo(int flag)
 	if(!MPanelOK)
 		return;
 	if(!PInfoOK)
-    	return;
+	return;
 
 	if(!Panel->changed && !flag)
-   	return;
+	return;
 
 	if(flag
-   	||	MPanel.CurTime_s != Panel->cur_time_s
+	||	MPanel.CurTime_s != Panel->cur_time_s
 //    || MPanel.CurTime_ss != Panel->cur_time_ss
 		|| MPanel.CurTime_m != Panel->cur_time_m
 		|| MPanel.CurTime_h != Panel->cur_time_h
@@ -3472,23 +3471,23 @@ void MPanelReadPanelInfo(int flag)
 //		MPanel.TotalTime_ss = Panel->total_time_ss;
 		RANGE(MPanel.CurTime_h,0,99);
       RANGE(MPanel.TotalTime_h,0,99);
-     	MPanel.UpdateFlag |=	MP_UPDATE_TIME;
+	MPanel.UpdateFlag |=	MP_UPDATE_TIME;
 	}
 	if(flag || MPanel.MaxVoices != Panel->voices){
 		MPanel.MaxVoices = Panel->voices;
-     	MPanel.UpdateFlag |=	MP_UPDATE_VOICES;
+	MPanel.UpdateFlag |=	MP_UPDATE_VOICES;
    }
 	if(flag || MPanel.CurVoices != Panel->cur_voices){
 		MPanel.CurVoices = Panel->cur_voices;
-     	MPanel.UpdateFlag |=	MP_UPDATE_VOICES;
+	MPanel.UpdateFlag |=	MP_UPDATE_VOICES;
    }
 	if(flag || MPanel.MVolume != amplification){
 		MPanel.MVolume = amplification;
-     	MPanel.UpdateFlag |=	MP_UPDATE_MVOLUME;
+	MPanel.UpdateFlag |=	MP_UPDATE_MVOLUME;
    }
 	if(flag || MPanel.Rate != play_mode->rate){
 		MPanel.Rate = play_mode->rate;
-     	MPanel.UpdateFlag |=	MP_UPDATE_RATE;
+	MPanel.UpdateFlag |=	MP_UPDATE_RATE;
    }
 	if (flag || MPanel.Meas != Panel->meas) {
 		MPanel.Meas = Panel->meas;
@@ -3520,24 +3519,24 @@ void MPanelReadPanelInfo(int flag)
 		cur_pl_num++;
 	if(flag || MPanel.PlaylistNum != cur_pl_num){
 		MPanel.PlaylistNum = cur_pl_num;
-     	MPanel.UpdateFlag |=	MP_UPDATE_PLAYLIST;
+	MPanel.UpdateFlag |=	MP_UPDATE_PLAYLIST;
    }
 	if(flag || MPanel.PlaylistMax != playlist_num){
 		MPanel.PlaylistMax = playlist_num;
-     	MPanel.UpdateFlag |=	MP_UPDATE_PLAYLIST;
+	MPanel.UpdateFlag |=	MP_UPDATE_PLAYLIST;
    }
 	if(flag || MPanel.play_system_mode != play_system_mode){
 		MPanel.play_system_mode = play_system_mode;
-     	MPanel.UpdateFlag |=	MP_UPDATE_MISC;
+	MPanel.UpdateFlag |=	MP_UPDATE_MISC;
    }
 	if(current_file_info!=NULL){
 	if(flag || MPanel.current_file_info_file_type != current_file_info->file_type){
       MPanel.current_file_info_file_type = current_file_info->file_type;
-     	MPanel.UpdateFlag |=	MP_UPDATE_MISC;
+	MPanel.UpdateFlag |=	MP_UPDATE_MISC;
    }
 	if(flag || MPanel.current_file_info_max_channel != current_file_info->max_channel){
       MPanel.current_file_info_max_channel = current_file_info->max_channel;
-     	MPanel.UpdateFlag |=	MP_UPDATE_MISC;
+	MPanel.UpdateFlag |=	MP_UPDATE_MISC;
    }
    }
 }
@@ -3590,12 +3589,12 @@ void MPanelMessageClearAll(void)
 	MPanelMessageData.buff[0] = '\0';
 	MPanelMessageData.curmode = -1;
 	MPanelMessageData.nextmode = -1;
-   	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 }
 void MPanelMessageClear(void)
 {
 	MPanelMessageData.buff[0] = '\0';
-   	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 }
 void MPanelMessageNext(void)
 {
@@ -3612,16 +3611,16 @@ void MPanelMessageNext(void)
 		MPanelMessageData.curmode = -1;
 		MPanelMessageData.prevtime = -1;
 	}
-   	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 }
 void MPanelMessageUpdate(void)
 {
 //	DWORD curtime = GetCurrentTime();
 	DWORD curtime = 0;
-	int pointer; 
+	int pointer;
 
 	if ( MPanelMessageData.curmode >= 0 ) {
-		curtime += Panel->cur_time_h; 
+		curtime += Panel->cur_time_h;
 		curtime *= 24;
 		curtime += Panel->cur_time_m;
 		curtime *= 60;
@@ -3635,7 +3634,7 @@ void MPanelMessageUpdate(void)
 			strcpy( MPanelMessageData.buff, MPanelMessageData.curbuff );
 			MPanelMessageData.prevtime = curtime;
 			MPanelMessageData.msec = MPanelMessageData.curmsec;
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		} else {
 			MPanelMessageData.msec -= curtime - MPanelMessageData.prevtime;
 			MPanelMessageData.prevtime = curtime;
@@ -3643,7 +3642,7 @@ void MPanelMessageUpdate(void)
 		if ( MPanelMessageData.msec <= 0 || curtime < MPanelMessageData.prevtime ) {
 			MPanelMessageNext();
 			MPanelMessageUpdate();
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 			break;
 		}
 		break;
@@ -3651,7 +3650,7 @@ void MPanelMessageUpdate(void)
 		if ( MPanelMessageData.prevtime == -1 ){
 			MPanelMessageData.prevtime = curtime;
 			MPanelMessageData.msec = MPanelMessageData.curmsec;
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		} else {
 			MPanelMessageData.msec -= curtime - MPanelMessageData.prevtime;
 			MPanelMessageData.prevtime = curtime;
@@ -3659,7 +3658,7 @@ void MPanelMessageUpdate(void)
 		if ( MPanelMessageData.msec <= 0 || curtime < MPanelMessageData.prevtime ) {
 			MPanelMessageNext();
 			MPanelMessageUpdate();
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 			return;
 		}
 //		pointer = MPanelMessageData.len * 4 / 5 + ( MPanelMessageData.curmsec - MPanelMessageData.msec ) / 1000 * 2;
@@ -3673,12 +3672,12 @@ void MPanelMessageUpdate(void)
 				memset( MPanelMessageData.buff, 0x20, p );
 				MPanelMessageData.buff[p] = '\0';
 				strcat( MPanelMessageData.buff, MPanelMessageData.curbuff);
-			} else if ( MPanelMessageData.curbuffsize + p > 0 ) { 
+			} else if ( MPanelMessageData.curbuffsize + p > 0 ) {
 				strcpy( MPanelMessageData.buff, MPanelMessageData.curbuff - p);
 			} else {
 				MPanelMessageData.buff[0] = '\0';
 			}
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		}
 		break;
 	case 2:
@@ -3686,7 +3685,7 @@ void MPanelMessageUpdate(void)
 			strcpy( MPanelMessageData.buff, MPanelMessageData.curbuff );
 			MPanelMessageData.prevtime = curtime;
 			MPanelMessageData.msec = MPanelMessageData.curmsec;
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		} else {
 			MPanelMessageData.msec -= curtime - MPanelMessageData.prevtime;
 			MPanelMessageData.prevtime = curtime;
@@ -3694,19 +3693,19 @@ void MPanelMessageUpdate(void)
 		if ( MPanelMessageData.msec <= 0 || curtime < MPanelMessageData.prevtime ) {
 			MPanelMessageNext();
 			MPanelMessageUpdate();
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 			break;
 		}
 		pointer = ( MPanelMessageData.len + MPanelMessageData.curbuffsize ) * ( MPanelMessageData.curmsec - MPanelMessageData.msec ) / MPanelMessageData.curmsec;
 		if ( MPanelMessageData.pointer != pointer ) {
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		}
 		break;
 	case 3:
 		if ( MPanelMessageData.prevtime == -1 ){
 			MPanelMessageData.prevtime = curtime;
 			MPanelMessageData.msec = MPanelMessageData.curmsec;
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		} else {
 			MPanelMessageData.msec -= curtime - MPanelMessageData.prevtime;
 			MPanelMessageData.prevtime = curtime;
@@ -3714,7 +3713,7 @@ void MPanelMessageUpdate(void)
 		if ( MPanelMessageData.msec <= 0 || curtime < MPanelMessageData.prevtime ) {
 			MPanelMessageNext();
 			MPanelMessageUpdate();
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 			return;
 		}
 		pointer = MPanelMessageData.len * 3 / 4 + ( MPanelMessageData.len / 4 + MPanelMessageData.curbuffsize ) * ( MPanelMessageData.curmsec - MPanelMessageData.msec ) / MPanelMessageData.curmsec;
@@ -3727,12 +3726,12 @@ void MPanelMessageUpdate(void)
 				memset( MPanelMessageData.buff, 0x20, p );
 				MPanelMessageData.buff[p] = '\0';
 				strcat( MPanelMessageData.buff, MPanelMessageData.curbuff);
-			} else if ( MPanelMessageData.curbuffsize + p > 0 ) { 
+			} else if ( MPanelMessageData.curbuffsize + p > 0 ) {
 				strcpy( MPanelMessageData.buff, MPanelMessageData.curbuff - p);
 			} else {
 				MPanelMessageData.buff[0] = '\0';
 			}
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		}
 		break;
 	case 4:
@@ -3743,7 +3742,7 @@ void MPanelMessageUpdate(void)
 				MPanelMessageData.curmsec = MPANELMESSAGE_MODE2_SLEEPMSEC * 2;
 			}
 			MPanelMessageData.msec = MPanelMessageData.curmsec;
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		} else {
 			MPanelMessageData.msec -= curtime - MPanelMessageData.prevtime;
 			MPanelMessageData.prevtime = curtime;
@@ -3751,7 +3750,7 @@ void MPanelMessageUpdate(void)
 		if ( MPanelMessageData.msec <= 0 || curtime < MPanelMessageData.prevtime ) {
 			MPanelMessageNext();
 			MPanelMessageUpdate();
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 			return;
 		}
 		if ( MPanelMessageData.curmsec - MPanelMessageData.msec <= MPANELMESSAGE_MODE2_SLEEPMSEC ) {
@@ -3763,12 +3762,12 @@ void MPanelMessageUpdate(void)
 		if ( MPanelMessageData.pointer != pointer ) {
 			MPanelMessageData.buff[0] = '\0';
 			MPanelMessageData.pointer = pointer;
-			if ( pointer < MPanelMessageData.curbuffsize ) { 
+			if ( pointer < MPanelMessageData.curbuffsize ) {
 				strcpy( MPanelMessageData.buff, MPanelMessageData.curbuff + pointer );
 			} else {
 				MPanelMessageData.buff[0] = '\0';
 			}
-	     	MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
+		MPanel.UpdateFlag |= MP_UPDATE_MESSAGE;
 		}
 		break;
 	case -1:
@@ -3874,23 +3873,23 @@ void TiMidityHeapCheck(void)
    int i;
    PrintfDebugWnd("\n[Heaps Check Start]\n");
 	if(GetProcessHeap()!=NULL)
-   	if(HeapValidate(GetProcessHeap(),0,NULL)==TRUE)
-   		PrintfDebugWnd("Process Heap is Valid\n");
-     	else
-   		PrintfDebugWnd("Process Heap is Invalid\n");
+	if(HeapValidate(GetProcessHeap(),0,NULL)==TRUE)
+		PrintfDebugWnd("Process Heap is Valid\n");
+	else
+		PrintfDebugWnd("Process Heap is Invalid\n");
    ProcessHeaps = (HANDLE *)realloc(ProcessHeaps,sizeof(HANDLE)*dw);
    dwNumberOfHeaps = GetProcessHeaps(dw, ProcessHeaps);
    if(dw<dwNumberOfHeaps){
 		dw = dwNumberOfHeaps;
 	   ProcessHeaps = (HANDLE *)realloc(ProcessHeaps,sizeof(HANDLE)*dw);
-   	dwNumberOfHeaps = GetProcessHeaps(dw, ProcessHeaps);
+	dwNumberOfHeaps = GetProcessHeaps(dw, ProcessHeaps);
    }
    PrintfDebugWnd("NumberOfHeaps=%ld\n",(int)dwNumberOfHeaps);
 	for(i=0;i<(int)dwNumberOfHeaps;i++){
-     	if(HeapValidate(ProcessHeaps[i],0,NULL)==TRUE)
-    		PrintfDebugWnd("Heap %d is Valid\n",i+1);
+	if(HeapValidate(ProcessHeaps[i],0,NULL)==TRUE)
+		PrintfDebugWnd("Heap %d is Valid\n",i+1);
       else
-     		PrintfDebugWnd("Heap %d is Invalid\n",i+1);
+		PrintfDebugWnd("Heap %d is Invalid\n",i+1);
    }
    PrintfDebugWnd("[Heaps Check End]\n\n");
 	free(ProcessHeaps);
@@ -3956,7 +3955,7 @@ void InitDebugEditWnd(HWND hParentWnd);
 void InitDebugWnd(HWND hParentWnd)
 {
 	hDebugWnd = CreateDialog
-  			(hInst,MAKEINTRESOURCE(IDD_DIALOG_DEBUG),hParentWnd,DebugWndProc);
+			(hInst,MAKEINTRESOURCE(IDD_DIALOG_DEBUG),hParentWnd,DebugWndProc);
 	ShowWindow(hDebugWnd,SW_HIDE);
 	UpdateWindow(hDebugWnd);
 }
@@ -3975,12 +3974,12 @@ DebugWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		TiMidityHeapCheck();
 			return FALSE;
 		case WM_DESTROY:
-      	PostQuitMessage(0);
+	PostQuitMessage(0);
 			return 0;
     case WM_COMMAND:
-    	switch (LOWORD(wParam)) {
+	switch (LOWORD(wParam)) {
       case IDCLOSE:
-      	ShowWindow(hwnd, SW_HIDE);
+	ShowWindow(hwnd, SW_HIDE);
          break;
       case IDCLEAR:
 			ClearDebugWnd();
@@ -3992,28 +3991,28 @@ DebugWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 					DebugWndFlag = 0;
          break;
       case IDC_BUTTON_EXITPROCESS:
-        	ExitProcess(0);
+		ExitProcess(0);
 			return 0;
       case IDC_BUTTON_EXIT:
-        	return DestroyWindow(hwnd);
+		return DestroyWindow(hwnd);
       case IDC_BUTTON_HEAP_CHECK:
 			TiMidityHeapCheck();
-        	break;
+	break;
       case IDC_BUTTON_VARIABLES_CHECK:
 			TiMidityVariablesCheck();
-        	break;
+	break;
       default:
-        		break;
+		break;
       }
-   	switch (HIWORD(wParam)) {
+	switch (HIWORD(wParam)) {
 		case EN_ERRSPACE:
-      	ClearConsoleWnd();
-//      	PutsConsoleWnd("### EN_ERRSPACE -> Clear! ###\n");
+	ClearConsoleWnd();
+//	PutsConsoleWnd("### EN_ERRSPACE -> Clear! ###\n");
 			break;
 		default:
-      	break;
+	break;
       }
-    	break;
+	break;
     case WM_SIZE:
 //      GetClientRect(hDebugWnd, &rc);
 //      MoveWindow(hDebugEditWnd, rc.left, rc.top,rc.right, rc.bottom - 30,TRUE);
@@ -4022,7 +4021,7 @@ DebugWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 					ShowWindow(hDebugWnd, SW_HIDE);
           break;
     default:
-      	return FALSE;
+	return FALSE;
 	}
 	return FALSE;
 }
@@ -4033,17 +4032,17 @@ void InitDebugEditWnd(HWND hParentWnd)
   RECT rc;
 	GetClientRect(hParentWnd, &rc);
 	hDebugEditWnd = CreateWindowEx(
-  	WS_EX_CLIENTEDGE|WS_EX_TOOLWINDOW|WS_EX_DLGMODALFRAME,
-  	"EDIT","",
+	WS_EX_CLIENTEDGE|WS_EX_TOOLWINDOW|WS_EX_DLGMODALFRAME,
+	"EDIT","",
 		WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_AUTOHSCROLL | WS_HSCROLL
     |ES_READONLY | ES_WANTRETURN | ES_MULTILINE | ES_AUTOVSCROLL ,
-//      	0,0,rc.right, rc.bottom - 30,hParentWnd,NULL,hInst,NULL);
-      	0,0,100,100,hParentWnd,NULL,hInst,NULL);
+//	0,0,rc.right, rc.bottom - 30,hParentWnd,NULL,hInst,NULL);
+	0,0,100,100,hParentWnd,NULL,hInst,NULL);
 	SendMessage(hDebugEditWnd, EM_SETLIMITTEXT, (WPARAM)1024*640, 0);
 //  SendMessage(hDebugEditWnd, WM_PAINT, 0, 0);
 	GetClientRect(hParentWnd, &rc);
 	MoveWindow(hDebugEditWnd,rc.left,rc.top,rc.right,rc.bottom-30,TRUE);
- 	ClearDebugWnd();
+	ClearDebugWnd();
 	ShowWindow(hDebugEditWnd,SW_SHOW);
 	UpdateWindow(hDebugEditWnd);
 }
@@ -4137,7 +4136,7 @@ void WINAPI MainThread(void *arglist)
 //PrintfDebugWnd("H%lu M%lu WP%lu LP%lu T%lu x%d y%d\n",
 //	msg.hwnd, msg.message, msg.wParam, msg.lParam, msg.time, msg.pt.x, msg.pt.y);
 #if 1
-		// ESC で窓を閉じる。 
+		// ESC で窓を閉じる。
 		if ( msg.message == WM_KEYDOWN && (int)msg.wParam == VK_ESCAPE ) {
 			if ( msg.hwnd == hConsoleWnd || IsChild ( hConsoleWnd, msg.hwnd ) ) {
 				 ToggleSubWindow(hConsoleWnd);
@@ -4165,10 +4164,10 @@ void WINAPI MainThread(void *arglist)
 	if(hDebugWnd!=NULL)
 		for(;;){
 			if(!DebugThreadExit){
-   			SendMessage(hDebugWnd,WM_COMMAND,(WPARAM)IDC_BUTTON_EXIT,0);
+			SendMessage(hDebugWnd,WM_COMMAND,(WPARAM)IDC_BUTTON_EXIT,0);
 				Sleep(100);
          } else
-         	break;
+	break;
       }
 #endif
 	if(!w32g_restart_gui_flag)
@@ -4275,7 +4274,7 @@ static void DlgDirOpen(HWND hwnd)
 	bi.hwndOwner = NULL;
 	bi.pidlRoot = NULL;
     bi.pszDisplayName = biBuffer;
-	if ( PlayerLanguage == LANGUAGE_JAPANESE ) 
+	if ( PlayerLanguage == LANGUAGE_JAPANESE )
 		bi.lpszTitle = "MIDI ファイルのあるディレクトリを御選択なされますよう。";
 	else
 		bi.lpszTitle = "Select a directory with MIDI files.";
@@ -4447,9 +4446,9 @@ void PutsEditCtlWnd(HWND hwnd, char *str)
 			out[i] = '\0';
 			break;
     }
-  	if(*in=='\n'){
-    	out[i] = 13;
-    	out[i+1] = 10;
+	if(*in=='\n'){
+	out[i] = 13;
+	out[i+1] = 10;
 			in++;
       i += 2;
       continue;
@@ -4549,7 +4548,7 @@ int w32g_get_rc(ptr_size_t *value, int wait_if_empty)
 	if(w32g_empty_sem)
 		WaitForSingleObject(w32g_empty_sem, INFINITE);
 	VOLATILE_TOUCH(rc_queue_len);
-    } 
+    }
 
     w32g_lock();
     rc = rc_queue[rc_queue_beg].rc;
@@ -4682,7 +4681,7 @@ void MainWndScrollbarProgressUpdate(int sec)
 
     if(sec == -1)
     {
-  	EnableWindow(hMainWndScrollbarProgressWnd, FALSE);
+	EnableWindow(hMainWndScrollbarProgressWnd, FALSE);
 	enabled = 0;
 	progress_jump = -1;
     }
@@ -4715,7 +4714,7 @@ int gdi_lock_ex ( DWORD timeout )
 {
 // lock_num++;
 // ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
-// 		  "gdi_lock<%d %d>", GetCurrentThreadId(),lock_num );
+//		  "gdi_lock<%d %d>", GetCurrentThreadId(),lock_num );
 	if(hMutexGDI==NULL){
 		hMutexGDI = CreateMutex(NULL,FALSE,NULL);
 		if(hMutexGDI==NULL)

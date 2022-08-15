@@ -18,7 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-    sun_a.c - Functions to play sound on a Sun and NetBSD /dev/audio. 
+    sun_a.c - Functions to play sound on a Sun and NetBSD /dev/audio.
 				Written by Masanao Izumo <mo@goice.co.jp>
 */
 
@@ -221,7 +221,7 @@ static int open_output(void)
     }
 
     if(sun_audio_getinfo(&auinfo) < 0)
-    { 
+    {
 	/* from Francesco Zanichelli's */
 	/* If it doesn't give info, it probably won't take requests
 	    either. Assume it's an old device that does 8kHz uLaw only.

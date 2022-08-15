@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-	
+
     mac_util.h
 */
 
@@ -55,7 +55,7 @@ void	TEReadFile(char* filename, TEHandle te);
 #define ENOTDIR 9995
 #define ENOSPC  dskFulErr
 
-/*this function is very tricky. 
+/*this function is very tricky.
   Replace sys_errlist[errno] --> "error no.(errorno)"
   Because CodeWarrior does not support sys_errlist[].
   If your compiler supports, you need not applend this file.

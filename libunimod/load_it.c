@@ -230,7 +230,7 @@ IT_Cleanup (void)
 
    Returns 1 on error
  */
-static BOOL 
+static BOOL
 IT_GetNumChannels (UWORD patrows)
 {
   int row = 0, flag, ch;
@@ -346,7 +346,7 @@ IT_ConvertTrack (ITNOTE * tr, UWORD numrows)
   return UniDup ();
 }
 
-static BOOL 
+static BOOL
 IT_ReadPattern (UWORD patrows)
 {
   int row = 0, flag, ch, blah;
@@ -416,7 +416,7 @@ IT_ReadPattern (UWORD patrows)
   return 1;
 }
 
-static void 
+static void
 LoadMidiString (URL modreader, CHAR * dest)
 {
   CHAR *cur, *last;
@@ -434,7 +434,7 @@ LoadMidiString (URL modreader, CHAR * dest)
 }
 
 /* Load embedded midi information for resonant filters */
-static void 
+static void
 IT_LoadMidiConfiguration (URL modreader)
 {
   int i;
@@ -698,7 +698,7 @@ IT_Load (BOOL curious)
        * a sample. */
       if (!(s.flag & 80))
 	s.loopbeg = s.loopend = 0;
-      
+
       /* Generate an error if c5spd is > 512k, or samplelength > 256 megs
          (nothing would EVER be that high) */
 
@@ -822,7 +822,7 @@ IT_Load (BOOL curious)
 	  else
 	    {
 	      /* load IT 2xx volume, pan and pitch envelopes */
-#define IT_LoadEnvelope(name,type) 											\
+#define IT_LoadEnvelope(name,type)											\
 				ih.name##flg   =_mm_read_UBYTE(modreader);				\
 				ih.name##pts   =_mm_read_UBYTE(modreader);				\
 				if (ih. name##pts > ITENVCNT)						\
@@ -911,7 +911,7 @@ IT_Load (BOOL curious)
 		  d->rpanvar = ih.rpanvar;
 		}
 
-#define IT_ProcessEnvelope(name) 											\
+#define IT_ProcessEnvelope(name)											\
 				if(ih.name##flg&1) d->name##flg|=EF_ON;					\
 				if(ih.name##flg&2) d->name##flg|=EF_LOOP;				\
 				if(ih.name##flg&4) d->name##flg|=EF_SUSTAIN;			\

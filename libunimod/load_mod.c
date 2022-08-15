@@ -121,7 +121,7 @@ static int modtype = 0;
 
 /*========== Loader code */
 
-static BOOL 
+static BOOL
 MOD_Test (void)
 {
   UBYTE id[4];
@@ -138,7 +138,7 @@ MOD_Test (void)
   return 0;
 }
 
-static BOOL 
+static BOOL
 MOD_Init (void)
 {
   if (!(mh = (MODULEHEADER *) _mm_malloc (sizeof (MODULEHEADER))))
@@ -146,7 +146,7 @@ MOD_Init (void)
   return 1;
 }
 
-static void 
+static void
 MOD_Cleanup (void)
 {
   _mm_free (mh);
@@ -180,7 +180,7 @@ static UWORD npertab[7 * OCTAVE] =
 };
 
 
-static void 
+static void
 ConvertNote (MODNOTE * n)
 {
   UBYTE instrument, effect, effdat, note;
@@ -289,7 +289,7 @@ ConvertTrack (MODNOTE * n)
 }
 
 /* Loads all patterns of a modfile and converts them into the 3 byte format. */
-static BOOL 
+static BOOL
 ML_LoadPatterns (void)
 {
   int t, s, tracks = 0;
@@ -320,7 +320,7 @@ ML_LoadPatterns (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 MOD_Load (BOOL curious)
 {
   int t, scan;
@@ -346,7 +346,7 @@ MOD_Load (BOOL curious)
 
   mh->songlength = _mm_read_UBYTE (modreader);
 
-  /* this fixes mods which declare more than 128 positions. 
+  /* this fixes mods which declare more than 128 positions.
    * eg: beatwave.mod */
   if (mh->songlength > 128)
     {

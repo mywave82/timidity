@@ -596,11 +596,11 @@ static void reset_nrpn_controllers(int c)
 
   /* channel pressure & polyphonic key pressure control */
   init_midi_controller(&(channel[c].mod));
-  init_midi_controller(&(channel[c].bend)); 
-  init_midi_controller(&(channel[c].caf)); 
-  init_midi_controller(&(channel[c].paf)); 
-  init_midi_controller(&(channel[c].cc1)); 
-  init_midi_controller(&(channel[c].cc2)); 
+  init_midi_controller(&(channel[c].bend));
+  init_midi_controller(&(channel[c].caf));
+  init_midi_controller(&(channel[c].paf));
+  init_midi_controller(&(channel[c].cc1));
+  init_midi_controller(&(channel[c].cc2));
   channel[c].bend.pitch = 2;
 
   init_rx(c);
@@ -625,7 +625,7 @@ static void reset_controllers(int c)
 {
   int j;
     /* Some standard says, although the SCC docs say 0. */
-    
+
   if(play_system_mode == XG_SYSTEM_MODE)
       channel[c].volume = 100;
   else
@@ -674,7 +674,7 @@ static void redraw_controllers(int c)
     ctl_prog_event(c);
     ctl_mode_event(CTLE_TEMPER_TYPE, 1, c, channel[c].temper_type);
     ctl_mode_event(CTLE_MUTE, 1,
-    		c, (IS_SET_CHANNELMASK(channel_mute, c)) ? 1 : 0);
+		c, (IS_SET_CHANNELMASK(channel_mute, c)) ? 1 : 0);
     ctl_mode_event(CTLE_CHORUS_EFFECT, 1, c, get_chorus_level(c));
     ctl_mode_event(CTLE_REVERB_EFFECT, 1, c, get_reverb_level(c));
 }
@@ -682,11 +682,11 @@ static void redraw_controllers(int c)
 void reset_midi(int playing)
 {
 	int i, cnt;
-	
+
 	for (i = 0; i < MAX_CHANNELS; i++) {
 		reset_controllers(i);
 		reset_nrpn_controllers(i);
-     	reset_module_dependent_controllers(i);
+	reset_module_dependent_controllers(i);
 		/* The rest of these are unaffected
 		 * by the Reset All Controllers event
 		 */
@@ -792,11 +792,11 @@ void recompute_freq(int v)
 				vp->vibrato_depth = -vp->vibrato_depth;
 			}
 		}
-		
+
 		/* fill parameters for modulation wheel */
 		if (channel[ch].mod.val > 0) {
 			if(vp->vibrato_control_ratio == 0) {
-				vp->vibrato_control_ratio = 
+				vp->vibrato_control_ratio =
 					vp->orig_vibrato_control_ratio = (int)(cnv_Hz_to_vib_ratio(5.0) * channel[ch].vibrato_ratio);
 			}
 			vp->vibrato_delay = 0;
@@ -989,7 +989,7 @@ static void recompute_amp(int v)
 		  gm2_vol_table[calc_velocity(ch, voice[v].velocity)] *	/* velocity: not in GM2 standard */
 		  gm2_vol_table[channel[ch].volume] *
 		  gm2_vol_table[channel[ch].expression]; /* 21 bits */
-	} else if(play_system_mode == GS_SYSTEM_MODE) {	/* use measured curve */ 
+	} else if(play_system_mode == GS_SYSTEM_MODE) {	/* use measured curve */
 	tempamp = master_volume *
 		   voice[v].sample->volume *
 		   sc_vel_table[calc_velocity(ch, voice[v].velocity)] *
@@ -1039,8 +1039,8 @@ static void recompute_amp(int v)
 	 * require empirically determining the amount to scale for each
 	 * individual effect.
 	 */
-    	if (voice[v].chorus_link != v)
-    	    tempamp *= 0.7071067811865f;
+	if (voice[v].chorus_link != v)
+	    tempamp *= 0.7071067811865f;
 
 	/* NRPN - drum instrument tva level */
 	if(ISDRUMCHANNEL(ch)) {
@@ -1067,7 +1067,7 @@ static void recompute_amp(int v)
 
 	/* applying panning to amplitude */
 	if(!(play_mode->encoding & PE_MONO))
-    	{
+	{
 		if(voice[v].panning == 64)
 		{
 			voice[v].panned = PANNED_CENTER;
@@ -1103,12 +1103,12 @@ static void recompute_amp(int v)
 			voice[v].left_amp = TIM_FSCALENEG(tempamp * pan_table[128 - voice[v].panning], 27);
 			voice[v].right_amp = TIM_FSCALENEG(tempamp * pan_table[voice[v].panning], 27);
 		}
-    	}
-    	else
-    	{
+	}
+	else
+	{
 		voice[v].panned = PANNED_CENTER;
 		voice[v].left_amp = TIM_FSCALENEG(tempamp, 21);
-    	}
+	}
 }
 
 #define RESONANCE_COEFF 0.2393
@@ -1230,7 +1230,7 @@ void recompute_voice_filter(int v)
 
 	if(fc->type == 1) {	/* Chamberlin filter */
 		if(fc->freq > play_mode->rate / 6) {
-			if (fc->start_flag == 0) {fc->type = 0;}	/* turn off. */ 
+			if (fc->start_flag == 0) {fc->type = 0;}	/* turn off. */
 			else {fc->freq = play_mode->rate / 6;}
 		}
 		if(fc->reso_dB > CHAMBERLIN_RESONANCE_MAX) {fc->reso_dB = CHAMBERLIN_RESONANCE_MAX;}
@@ -1417,7 +1417,7 @@ static int reduce_voice_CPU(void)
 
     i = upper_voices;
     lv = 0x7FFFFFFF;
-    
+
     /* Look for the decaying note with the longest remaining decay time */
     /* Protect drum decays.  They do not take as much CPU (?) and truncating
        them early sounds bad, especially on snares and cymbals */
@@ -1434,8 +1434,8 @@ static int reduce_voice_CPU(void)
 	    /* This frees more CPU than choosing lowest volume */
 	    if (!voice[j].envelope_increment) duration = 0;
 	    else duration =
-	    	(voice[j].envelope_target - voice[j].envelope_volume) /
-	    	voice[j].envelope_increment;
+		(voice[j].envelope_target - voice[j].envelope_volume) /
+		voice[j].envelope_increment;
 	    v = -duration;
 	    if(v < lv)
 	    {
@@ -1555,9 +1555,9 @@ static int reduce_voice_CPU(void)
 
 	/* fix pan */
 	j = voice[lowest].chorus_link;
-    	voice[j].panning = channel[voice[lowest].channel].panning;
-    	recompute_amp(j);
-    	apply_envelope_to_amp(j);
+	voice[j].panning = channel[voice[lowest].channel].panning;
+	recompute_amp(j);
+	apply_envelope_to_amp(j);
 
 	return lowest;
     }
@@ -1630,7 +1630,7 @@ static int reduce_voice(void)
 
     i = upper_voices;
     lv = 0x7FFFFFFF;
-    
+
     /* Look for the decaying note with the smallest volume */
     /* Protect drum decays.  Truncating them early sounds bad, especially on
        snares and cymbals */
@@ -1639,13 +1639,13 @@ static int reduce_voice(void)
 	if(voice[j].status & VOICE_FREE ||
 	   (voice[j].sample->note_to_use && ISDRUMCHANNEL(voice[j].channel)))
 	    continue;
-	
+
 	if(voice[j].status & ~(VOICE_ON | VOICE_DIE | VOICE_SUSTAINED))
 	{
 	    /* find lowest volume */
 	    v = voice[j].left_mix;
 	    if(voice[j].panned == PANNED_MYSTERY && voice[j].right_mix > v)
-	    	v = voice[j].right_mix;
+		v = voice[j].right_mix;
 	    if(v < lv)
 	    {
 		lv = v;
@@ -1755,9 +1755,9 @@ static int reduce_voice(void)
 
 	/* fix pan */
 	j = voice[lowest].chorus_link;
-    	voice[j].panning = channel[voice[lowest].channel].panning;
-    	recompute_amp(j);
-    	apply_envelope_to_amp(j);
+	voice[j].panning = channel[voice[lowest].channel].panning;
+	recompute_amp(j);
+	apply_envelope_to_amp(j);
 
 	free_voice(lowest);
 	if(!prescanning_flag)
@@ -1774,7 +1774,7 @@ static int reduce_voice(void)
     {
         if(voice[j].status & VOICE_FREE ||
 	   (voice[j].sample->note_to_use && ISDRUMCHANNEL(voice[j].channel)))
-	   	continue;
+		continue;
 
 	/* find lowest volume */
 	v = voice[j].left_mix;
@@ -1886,7 +1886,7 @@ static int find_samples(MidiEvent *e, int *vlist)
 	int i, j, ch, bank, prog, note, nv;
 	SpecialPatch *s;
 	Instrument *ip;
-	
+
 	ch = e->channel;
 	if (channel[ch].special_sample > 0) {
 		if ((s = special_patch[channel[ch].special_sample]) == NULL) {
@@ -1957,7 +1957,7 @@ static int select_play_sample(Sample *splist,
 	int16 sf, sn;
 	double ratio;
 	int i, j, k, nv, nvc;
-	
+
 	if (ISDRUMCHANNEL(ch))
 		f = fs = freq_table[*note];
 	else {
@@ -2119,7 +2119,7 @@ static double get_play_note_ratio(int ch, int note)
 	int bank = channel[ch].bank;
 	ToneBank *dbank;
 	int def_play_note;
-	
+
 	if (play_note == -1)
 		return 1.0;
 	instrument_map(channel[ch].mapID, &bank, &note);
@@ -2140,7 +2140,7 @@ static int find_voice(MidiEvent *e)
 	int status_check, mono_check;
 	AlternateAssign *altassign;
 	int i, lowest = -1;
-	
+
 	status_check = (opt_overlap_voice_allow)
 			? (VOICE_OFF | VOICE_SUSTAINED) : 0xff;
 	mono_check = channel[ch].mono;
@@ -2178,7 +2178,7 @@ int32 get_note_freq(Sample *sp, int note)
 	int32 f;
 	int16 sf, sn;
 	double ratio;
-	
+
 	f = freq_table[note];
 	/* GUS/SF2 - Scale Tuning */
 	if ((sf = sp->scale_factor) != 1024) {
@@ -2219,7 +2219,7 @@ static void init_voice_vibrato(int v)
 	/* if NRPN vibrato is set, it's believed that there must be vibrato. */
 	nrpn_vib_flag = opt_nrpn_vibrato
 		&& (channel[ch].vibrato_ratio != 1.0 || channel[ch].vibrato_depth != 0);
-	
+
 	/* vibrato sweep */
 	vp->vibrato_sweep = vp->sample->vibrato_sweep_increment;
 	vp->vibrato_sweep_position = 0;
@@ -2236,7 +2236,7 @@ static void init_voice_vibrato(int v)
 	} else {
 		vp->vibrato_control_ratio = vp->sample->vibrato_control_ratio;
 	}
-	
+
 	/* vibrato depth */
 	if (nrpn_vib_flag) {
 		vp->vibrato_depth = vp->sample->vibrato_depth + channel[ch].vibrato_depth;
@@ -2248,10 +2248,10 @@ static void init_voice_vibrato(int v)
 	} else {
 		vp->vibrato_depth = vp->sample->vibrato_depth;
 	}
-	
+
 	/* vibrato delay */
 	vp->vibrato_delay = vp->sample->vibrato_delay + channel[ch].vibrato_delay;
-	
+
 	/* internal parameters */
 	vp->orig_vibrato_control_ratio = vp->vibrato_control_ratio;
 	vp->vibrato_control_counter = vp->vibrato_phase = 0;
@@ -2266,7 +2266,7 @@ static void init_voice_pan_delay(int v)
 #ifdef ENABLE_PAN_DELAY
 	Voice *vp = &(voice[v]);
 	int ch = vp->channel;
-	double pan_delay_diff; 
+	double pan_delay_diff;
 
 	if (vp->pan_delay_buf != NULL) {
 		free(vp->pan_delay_buf);
@@ -2526,9 +2526,9 @@ static void new_chorus_voice(int v1, int level)
     /* Choose lower voice index for base voice (v1) */
     if(v1 > v2)
     {
-    	v1 ^= v2;
-    	v2 ^= v1;
-    	v1 ^= v2;
+	v1 ^= v2;
+	v2 ^= v1;
+	v1 ^= v2;
     }
 
     /* v1: Base churos voice
@@ -2626,9 +2626,9 @@ static void new_chorus_voice_alternate(int v1, int level)
     /* Choose lower voice index for base voice (v1) */
     if(v1 > v2)
     {
-    	v1 ^= v2;
-    	v2 ^= v1;
-    	v1 ^= v2;
+	v1 ^= v2;
+	v2 ^= v1;
+	v1 ^= v2;
     }
 
     /* Make doubled link v1 and v2 */
@@ -2662,15 +2662,15 @@ static void new_chorus_voice_alternate(int v1, int level)
     /* force the delay away from 0.5 period */
     if (frac < 0.5 && frac > 0.40)
     {
-    	delay = (floor(delay) + 0.40) / freq;
-    	if (!(play_mode->encoding & PE_MONO))
-    	    delay += (0.5 - frac) * (1.0 - labs(64 - pan) / 63.0) / freq;
+	delay = (floor(delay) + 0.40) / freq;
+	if (!(play_mode->encoding & PE_MONO))
+	    delay += (0.5 - frac) * (1.0 - labs(64 - pan) / 63.0) / freq;
     }
     else if (frac >= 0.5 && frac < 0.60)
     {
-    	delay = (floor(delay) + 0.60) / freq;
-    	if (!(play_mode->encoding & PE_MONO))
-    	    delay += (0.5 - frac) * (1.0 - labs(64 - pan) / 63.0) / freq;
+	delay = (floor(delay) + 0.60) / freq;
+	if (!(play_mode->encoding & PE_MONO))
+	    delay += (0.5 - frac) * (1.0 - labs(64 - pan) / 63.0) / freq;
     }
     else
 	delay = 0.003;
@@ -2704,85 +2704,85 @@ static void new_chorus_voice_alternate(int v1, int level)
 
     /* check for similar drums playing simultaneously with center pans */
     if (!(play_mode->encoding & PE_MONO) &&
-    	ISDRUMCHANNEL(ch) && voice[v1].panned == PANNED_CENTER)
+	ISDRUMCHANNEL(ch) && voice[v1].panned == PANNED_CENTER)
     {
-    	int i, j;
-    
-    	/* force Rimshot (37), Snare1 (38), Snare2 (40), and XG #34 to have
-    	 * the same delay, otherwise there will be bad voice cancellation.
-    	 */
-    	if (voice[v1].note == 37 ||
-    	    voice[v1].note == 38 ||
-    	    voice[v1].note == 40 ||
-    	    (voice[v1].note == 34 && play_system_mode == XG_SYSTEM_MODE))
-    	{
-    	    for (i = 0; i < upper_voices; i++)
-    	    {
-    	    	if (voice[i].status & (VOICE_DIE | VOICE_FREE))
-    	    	    continue;
+	int i, j;
 
-    	    	if (!ISDRUMCHANNEL(voice[i].channel))
-    	    	    continue;
+	/* force Rimshot (37), Snare1 (38), Snare2 (40), and XG #34 to have
+	 * the same delay, otherwise there will be bad voice cancellation.
+	 */
+	if (voice[v1].note == 37 ||
+	    voice[v1].note == 38 ||
+	    voice[v1].note == 40 ||
+	    (voice[v1].note == 34 && play_system_mode == XG_SYSTEM_MODE))
+	{
+	    for (i = 0; i < upper_voices; i++)
+	    {
+		if (voice[i].status & (VOICE_DIE | VOICE_FREE))
+		    continue;
 
-	    	if (i == v1 || i == v2)
-	    	    continue;
+		if (!ISDRUMCHANNEL(voice[i].channel))
+		    continue;
 
-	    	if (voice[i].note == 37 ||
-	    	    voice[i].note == 38 ||
-	    	    voice[i].note == 40 ||
-	    	    (voice[i].note == 34 &&
-	    	     play_system_mode == XG_SYSTEM_MODE))
-	    	{
-	    	    j = voice[i].chorus_link;
+		if (i == v1 || i == v2)
+		    continue;
 
-	    	    if (voice[i].panned == PANNED_LEFT &&
-	    	        voice[j].panned == PANNED_RIGHT)
-	    	    {
-	    	    	voice[v1].delay = voice[i].delay;
-	    	    	voice[v2].delay = voice[j].delay;
+		if (voice[i].note == 37 ||
+		    voice[i].note == 38 ||
+		    voice[i].note == 40 ||
+		    (voice[i].note == 34 &&
+		     play_system_mode == XG_SYSTEM_MODE))
+		{
+		    j = voice[i].chorus_link;
 
-	    	    	break;
-	    	    }
-	    	}
-    	    }
-    	}
+		    if (voice[i].panned == PANNED_LEFT &&
+		        voice[j].panned == PANNED_RIGHT)
+		    {
+			voice[v1].delay = voice[i].delay;
+			voice[v2].delay = voice[j].delay;
 
-    	/* force Kick1 (35), Kick2 (36), and XG Kick #33 to have the same
-    	 * delay, otherwise there will be bad voice cancellation.
-    	 */
-    	if (voice[v1].note == 35 ||
-    	    voice[v1].note == 36 ||
-    	    (voice[v1].note == 33 && play_system_mode == XG_SYSTEM_MODE))
-    	{
-    	    for (i = 0; i < upper_voices; i++)
-    	    {
-    	    	if (voice[i].status & (VOICE_DIE | VOICE_FREE))
-    	    	    continue;
+			break;
+		    }
+		}
+	    }
+	}
 
-    	    	if (!ISDRUMCHANNEL(voice[i].channel))
-    	    	    continue;
+	/* force Kick1 (35), Kick2 (36), and XG Kick #33 to have the same
+	 * delay, otherwise there will be bad voice cancellation.
+	 */
+	if (voice[v1].note == 35 ||
+	    voice[v1].note == 36 ||
+	    (voice[v1].note == 33 && play_system_mode == XG_SYSTEM_MODE))
+	{
+	    for (i = 0; i < upper_voices; i++)
+	    {
+		if (voice[i].status & (VOICE_DIE | VOICE_FREE))
+		    continue;
 
-	    	if (i == v1 || i == v2)
-	    	    continue;
+		if (!ISDRUMCHANNEL(voice[i].channel))
+		    continue;
 
-	    	if (voice[i].note == 35 ||
-	    	    voice[i].note == 36 ||
-	    	    (voice[i].note == 33 &&
-	    	     play_system_mode == XG_SYSTEM_MODE))
-	    	{
-	    	    j = voice[i].chorus_link;
+		if (i == v1 || i == v2)
+		    continue;
 
-	    	    if (voice[i].panned == PANNED_LEFT &&
-	    	        voice[j].panned == PANNED_RIGHT)
-	    	    {
-	    	    	voice[v1].delay = voice[i].delay;
-	    	    	voice[v2].delay = voice[j].delay;
+		if (voice[i].note == 35 ||
+		    voice[i].note == 36 ||
+		    (voice[i].note == 33 &&
+		     play_system_mode == XG_SYSTEM_MODE))
+		{
+		    j = voice[i].chorus_link;
 
-	    	    	break;
-	    	    }
-	    	}
-    	    }
-    	}
+		    if (voice[i].panned == PANNED_LEFT &&
+		        voice[j].panned == PANNED_RIGHT)
+		    {
+			voice[v1].delay = voice[i].delay;
+			voice[v2].delay = voice[j].delay;
+
+			break;
+		    }
+		}
+	    }
+	}
     }
 
     init_voice_pan_delay(v1);
@@ -2845,7 +2845,7 @@ static void note_on(MidiEvent *e)
 
 	ch = e->channel;
 	note = MIDI_EVENT_NOTE(e);
-	
+
 	if(ISDRUMCHANNEL(ch) &&
 	   channel[ch].drums[note] != NULL &&
 	   !get_rx_drum(channel[ch].drums[note], RX_NOTE_ON)) {	/* Rx. Note On */
@@ -2962,14 +2962,14 @@ static void note_off(MidiEvent *e)
       nbank = channel[ch].bank;
       nprog = note;
       instrument_map(channel[ch].mapID, &nbank, &nprog);
-      
+
       if (channel[ch].drums[nprog] != NULL &&
           get_rx_drum(channel[ch].drums[nprog], RX_NOTE_OFF))
       {
           ToneBank *bank;
           bank = drumset[nbank];
           if(bank == NULL) bank = drumset[0];
-          
+
           /* uh oh, this drum doesn't have an instrument loaded yet */
           if (bank->tone[nprog].instrument == NULL)
               return;
@@ -3079,7 +3079,7 @@ static void adjust_channel_pressure(MidiEvent *e)
 	ch = e->channel;
 	channel[ch].caf.val = e->a;
 	if(channel[ch].caf.pitch != 0) {channel[ch].pitchfactor = 0;}
-	  
+
 	for(i = 0; i < uv; i++)
 	{
 	    if(voice[i].status == VOICE_ON && voice[i].channel == ch)
@@ -3194,7 +3194,7 @@ static void drop_sustain(int c)
 static void adjust_all_pitch(void)
 {
 	int ch, i, uv = upper_voices;
-	
+
 	for (ch = 0; ch < MAX_CHANNELS; ch++)
 		channel[ch].pitchfactor = 0;
 	for (i = 0; i < uv; i++)
@@ -3374,7 +3374,7 @@ void midi_program_change(int ch, int prog)
 {
 	int dr = ISDRUMCHANNEL(ch);
 	int newbank, b, p, map;
-	
+
 	switch (play_system_mode) {
 	case GS_SYSTEM_MODE:	/* GS */
 		if ((map = channel[ch].bank_lsb) == 0) {
@@ -3414,7 +3414,7 @@ void midi_program_change(int ch, int prog)
  * I don't have the original email from my archived inbox, but I found a
  * reply I made in my archived sent-mail from 1999.  A September 5th message
  * to Masanao Izumo is discussing a problem with a "reapxg.mid", a file which
- * I still have, and how it issues an MSB=0 with a program change on ch 9, 
+ * I still have, and how it issues an MSB=0 with a program change on ch 9,
  * thus turning it into a melodic channel.  The strange thing is, this doesn't
  * happen on XG hardware, nor on the XG softsynth.  It continues to play as a
  * normal drum.  The author of the midi file obviously intended it to be
@@ -3564,15 +3564,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x04:	/* CAf LFO1 Pitch Depth */
 			channel[ch].caf.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo1_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo1_pitch_depth);
 			break;
 		case 0x05:	/* CAf LFO1 Filter Depth */
 			channel[ch].caf.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo1_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo1_tvf_depth);
 			break;
 		case 0x06:	/* CAf LFO1 Amplitude Depth */
 			channel[ch].caf.lfo1_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].caf.lfo1_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].caf.lfo1_tva_depth);
 			break;
 		case 0x07:	/* CAf LFO2 Rate Control */
 			channel[ch].caf.lfo2_rate = (float)(val - 64) / 6.4f;
@@ -3580,15 +3580,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x08:	/* CAf LFO2 Pitch Depth */
 			channel[ch].caf.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo2_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo2_pitch_depth);
 			break;
 		case 0x09:	/* CAf LFO2 Filter Depth */
 			channel[ch].caf.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo2_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo2_tvf_depth);
 			break;
 		case 0x0A:	/* CAf LFO2 Amplitude Depth */
 			channel[ch].caf.lfo2_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].caf.lfo2_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].caf.lfo2_tva_depth);
 			break;
 		case 0x0B:	/* PAf Pitch Control */
 			if(val > 0x58) {val = 0x58;}
@@ -3610,15 +3610,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x0F:	/* PAf LFO1 Pitch Depth */
 			channel[ch].paf.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo1_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo1_pitch_depth);
 			break;
 		case 0x10:	/* PAf LFO1 Filter Depth */
 			channel[ch].paf.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo1_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo1_tvf_depth);
 			break;
 		case 0x11:	/* PAf LFO1 Amplitude Depth */
 			channel[ch].paf.lfo1_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].paf.lfo1_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].paf.lfo1_tva_depth);
 			break;
 		case 0x12:	/* PAf LFO2 Rate Control */
 			channel[ch].paf.lfo2_rate = (float)(val - 64) / 6.4f;
@@ -3626,15 +3626,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x13:	/* PAf LFO2 Pitch Depth */
 			channel[ch].paf.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo2_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo2_pitch_depth);
 			break;
 		case 0x14:	/* PAf LFO2 Filter Depth */
 			channel[ch].paf.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo2_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo2_tvf_depth);
 			break;
 		case 0x15:	/* PAf LFO2 Amplitude Depth */
 			channel[ch].paf.lfo2_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].paf.lfo2_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].paf.lfo2_tva_depth);
 			break;
 		case 0x16:	/* MOD Pitch Control */
 			if(val > 0x58) {val = 0x58;}
@@ -3656,15 +3656,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x1A:	/* MOD LFO1 Pitch Depth */
 			channel[ch].mod.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo1_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo1_pitch_depth);
 			break;
 		case 0x1B:	/* MOD LFO1 Filter Depth */
 			channel[ch].mod.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo1_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo1_tvf_depth);
 			break;
 		case 0x1C:	/* MOD LFO1 Amplitude Depth */
 			channel[ch].mod.lfo1_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].mod.lfo1_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].mod.lfo1_tva_depth);
 			break;
 		case 0x1D:	/* MOD LFO2 Rate Control */
 			channel[ch].mod.lfo2_rate = (float)(val - 64) / 6.4f;
@@ -3672,15 +3672,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x1E:	/* MOD LFO2 Pitch Depth */
 			channel[ch].mod.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo2_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo2_pitch_depth);
 			break;
 		case 0x1F:	/* MOD LFO2 Filter Depth */
 			channel[ch].mod.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo2_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo2_tvf_depth);
 			break;
 		case 0x20:	/* MOD LFO2 Amplitude Depth */
 			channel[ch].mod.lfo2_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].mod.lfo2_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].mod.lfo2_tva_depth);
 			break;
 		case 0x21:	/* BEND Pitch Control */
 			if(val > 0x58) {val = 0x58;}
@@ -3702,15 +3702,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x25:	/* BEND LFO1 Pitch Depth */
 			channel[ch].bend.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo1_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo1_pitch_depth);
 			break;
 		case 0x26:	/* BEND LFO1 Filter Depth */
 			channel[ch].bend.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo1_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo1_tvf_depth);
 			break;
 		case 0x27:	/* BEND LFO1 Amplitude Depth */
 			channel[ch].bend.lfo1_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].bend.lfo1_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].bend.lfo1_tva_depth);
 			break;
 		case 0x28:	/* BEND LFO2 Rate Control */
 			channel[ch].bend.lfo2_rate = (float)(val - 64) / 6.4f;
@@ -3718,15 +3718,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x29:	/* BEND LFO2 Pitch Depth */
 			channel[ch].bend.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo2_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo2_pitch_depth);
 			break;
 		case 0x2A:	/* BEND LFO2 Filter Depth */
 			channel[ch].bend.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo2_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo2_tvf_depth);
 			break;
 		case 0x2B:	/* BEND LFO2 Amplitude Depth */
 			channel[ch].bend.lfo2_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].bend.lfo2_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].bend.lfo2_tva_depth);
 			break;
 		case 0x2C:	/* CC1 Pitch Control */
 			if(val > 0x58) {val = 0x58;}
@@ -3748,15 +3748,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x30:	/* CC1 LFO1 Pitch Depth */
 			channel[ch].cc1.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo1_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo1_pitch_depth);
 			break;
 		case 0x31:	/* CC1 LFO1 Filter Depth */
 			channel[ch].cc1.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo1_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo1_tvf_depth);
 			break;
 		case 0x32:	/* CC1 LFO1 Amplitude Depth */
 			channel[ch].cc1.lfo1_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc1.lfo1_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc1.lfo1_tva_depth);
 			break;
 		case 0x33:	/* CC1 LFO2 Rate Control */
 			channel[ch].cc1.lfo2_rate = (float)(val - 64) / 6.4f;
@@ -3764,15 +3764,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x34:	/* CC1 LFO2 Pitch Depth */
 			channel[ch].cc1.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo2_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo2_pitch_depth);
 			break;
 		case 0x35:	/* CC1 LFO2 Filter Depth */
 			channel[ch].cc1.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo2_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo2_tvf_depth);
 			break;
 		case 0x36:	/* CC1 LFO2 Amplitude Depth */
 			channel[ch].cc1.lfo2_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc1.lfo2_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc1.lfo2_tva_depth);
 			break;
 		case 0x37:	/* CC2 Pitch Control */
 			if(val > 0x58) {val = 0x58;}
@@ -3794,15 +3794,15 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x3B:	/* CC2 LFO1 Pitch Depth */
 			channel[ch].cc2.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo1_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo1_pitch_depth);
 			break;
 		case 0x3C:	/* CC2 LFO1 Filter Depth */
 			channel[ch].cc2.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo1_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo1_tvf_depth);
 			break;
 		case 0x3D:	/* CC2 LFO1 Amplitude Depth */
 			channel[ch].cc2.lfo1_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc2.lfo1_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc2.lfo1_tva_depth);
 			break;
 		case 0x3E:	/* CC2 LFO2 Rate Control */
 			channel[ch].cc2.lfo2_rate = (float)(val - 64) / 6.4f;
@@ -3810,31 +3810,31 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x3F:	/* CC2 LFO2 Pitch Depth */
 			channel[ch].cc2.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo2_pitch_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo2_pitch_depth);
 			break;
 		case 0x40:	/* CC2 LFO2 Filter Depth */
 			channel[ch].cc2.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo2_tvf_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo2_tvf_depth);
 			break;
 		case 0x41:	/* CC2 LFO2 Amplitude Depth */
 			channel[ch].cc2.lfo2_tva_depth = (float)val / 127.0f;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc2.lfo2_tva_depth); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc2.lfo2_tva_depth);
 			break;
 		case 0x42:	/* Note Limit Low */
 			channel[ch].note_limit_low = val;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Note Limit Low (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Note Limit Low (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x43:	/* Note Limit High */
 			channel[ch].note_limit_high = val;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Note Limit High (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Note Limit High (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x44:	/* Velocity Limit Low */
 			channel[ch].vel_limit_low = val;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Velocity Limit Low (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Velocity Limit Low (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x45:	/* Velocity Limit High */
 			channel[ch].vel_limit_high = val;
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Velocity Limit High (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Velocity Limit High (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x46:	/* Rx. Note Off */
 			if (channel[ch].drums[note] == NULL)
@@ -3854,75 +3854,75 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x48:	/* Rx. Pitch Bend */
 			set_rx(ch, RX_PITCH_BEND, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Pitch Bend (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Pitch Bend (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x49:	/* Rx. Channel Pressure */
 			set_rx(ch, RX_CH_PRESSURE, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Channel Pressure (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Channel Pressure (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x4A:	/* Rx. Program Change */
 			set_rx(ch, RX_PROGRAM_CHANGE, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Program Change (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Program Change (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x4B:	/* Rx. Control Change */
 			set_rx(ch, RX_CONTROL_CHANGE, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Control Change (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Control Change (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x4C:	/* Rx. Poly Pressure */
 			set_rx(ch, RX_POLY_PRESSURE, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Poly Pressure (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Poly Pressure (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x4D:	/* Rx. Note Message */
 			set_rx(ch, RX_NOTE_MESSAGE, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Note Message (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Note Message (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x4E:	/* Rx. RPN */
 			set_rx(ch, RX_RPN, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. RPN (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. RPN (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x4F:	/* Rx. NRPN */
 			set_rx(ch, RX_NRPN, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. NRPN (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. NRPN (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x50:	/* Rx. Modulation */
 			set_rx(ch, RX_MODULATION, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Modulation (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Modulation (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x51:	/* Rx. Volume */
 			set_rx(ch, RX_VOLUME, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Volume (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Volume (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x52:	/* Rx. Panpot */
 			set_rx(ch, RX_PANPOT, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Panpot (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Panpot (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x53:	/* Rx. Expression */
 			set_rx(ch, RX_EXPRESSION, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Expression (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Expression (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x54:	/* Rx. Hold1 */
 			set_rx(ch, RX_HOLD1, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Hold1 (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Hold1 (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x55:	/* Rx. Portamento */
 			set_rx(ch, RX_PORTAMENTO, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Portamento (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Portamento (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x56:	/* Rx. Sostenuto */
 			set_rx(ch, RX_SOSTENUTO, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Sostenuto (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Sostenuto (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x57:	/* Rx. Soft */
 			set_rx(ch, RX_SOFT, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Soft (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Soft (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x58:	/* Rx. Bank Select */
 			set_rx(ch, RX_BANK_SELECT, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Bank Select (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Bank Select (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x59:	/* Rx. Bank Select LSB */
 			set_rx(ch, RX_BANK_SELECT_LSB, val);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Bank Select LSB (CH:%d VAL:%d)", ch, val); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Rx. Bank Select LSB (CH:%d VAL:%d)", ch, val);
 			break;
 		case 0x60:	/* Reverb Type (GM2) */
 			if (val > 8) {val = 8;}
@@ -5076,7 +5076,7 @@ static void process_sysex_event(int ev, int ch, int val, int b)
 static void play_midi_prescan(MidiEvent *ev)
 {
     int i, j, k, ch, orig_ch, port_ch, offset, layered;
-    
+
     if(opt_amp_compensation) {mainvolume_max = 0;}
     else {mainvolume_max = 0x7f;}
     compensation_ratio = 1.0;
@@ -5307,7 +5307,7 @@ static int last_rpn_addr(int ch)
 static void update_rpn_map(int ch, int addr, int update_now)
 {
 	int val, drumflag, i, note;
-	
+
 	val = channel[ch].rpnmap[addr];
 	drumflag = 0;
 	switch (addr) {
@@ -5464,7 +5464,7 @@ static void update_rpn_map(int ch, int addr, int update_now)
 				ch, note, channel[ch].drums[note]->fine);
 		channel[ch].pitchfactor = 0;
 		break;
-	case NRPN_ADDR_1A00:	/* Level of Drum */	 
+	case NRPN_ADDR_1A00:	/* Level of Drum */
 		drumflag = 1;
 		note = channel[ch].lastlrpn;
 		if (channel[ch].drums[note] == NULL)
@@ -5515,7 +5515,7 @@ static void update_rpn_map(int ch, int addr, int update_now)
 			channel[ch].drum_effect_flag = 0;
 		}
 		channel[ch].drums[note]->chorus_level = val;
-		
+
 		break;
 	case NRPN_ADDR_1F00:	/* Variation Send Level of Drum */
 		drumflag = 1;
@@ -5646,7 +5646,7 @@ static void seek_forward(int32 until_time)
 				}
 #endif
 	ch = current_event->channel;
-	
+
 	switch(current_event->type)
 	{
 	  case ME_PITCHWHEEL:
@@ -5853,12 +5853,12 @@ static void seek_forward(int32 until_time)
 	    break;
 
 	  case ME_ATTACK_TIME:
-	  	if(!opt_tva_attack) { break; }
+		if(!opt_tva_attack) { break; }
 		set_envelope_time(ch, current_event->a, EG_ATTACK);
 		break;
 
 	  case ME_RELEASE_TIME:
-	  	if(!opt_tva_release) { break; }
+		if(!opt_tva_release) { break; }
 		set_envelope_time(ch, current_event->a, EG_RELEASE);
 		break;
 
@@ -6310,7 +6310,7 @@ void restore_voices(int save_voices)
 	voice_decrement(voices - old_voices);
 #endif /* REDUCE_VOICE_TIME_TUNING */
 }
-	
+
 
 static int apply_controls(void)
 {
@@ -6465,7 +6465,7 @@ static int apply_controls(void)
 	    current_freq_table -= floor(current_freq_table / 12.0) * 12;
 	    current_temper_freq_table += val;
 	    current_temper_freq_table -=
-	    		floor(current_temper_freq_table / 12.0) * 12;
+			floor(current_temper_freq_table / 12.0) * 12;
 	    if(sync_restart(1) != -1)
 		jump_flag = 1;
 	    ctl_mode_event(CTLE_KEY_OFFSET, 0, note_key_offset, 0);
@@ -6660,7 +6660,7 @@ static void do_compute_data_midi(int32 count)
 	int channel_effect, channel_reverb, channel_chorus, channel_delay, channel_eq;
 	int32 cnt = count * 2, rev_max_delay_out;
 	struct DrumPartEffect *de;
-	
+
 	stereo = ! (play_mode->encoding & PE_MONO);
 	n = count * ((stereo) ? 8 : 4); /* in bytes */
 
@@ -6697,7 +6697,7 @@ static void do_compute_data_midi(int32 count)
 	/* appropriate buffers for channels */
 	if(channel_effect) {
 		int buf_index = 0;
-		
+
 		if(reverb_buffer == NULL) {	/* allocating buffer for channel effect */
 			reverb_buffer = (char *)safe_malloc(MAX_CHANNELS * AUDIO_BUFFER_SIZE * 8);
 		}
@@ -6734,7 +6734,7 @@ static void do_compute_data_midi(int32 count)
 		if (voice[i].status != VOICE_FREE) {
 			int32 *vpb = NULL;
 			int8 flag;
-			
+
 			if (channel_effect) {
 				flag = 0;
 				ch = voice[i].channel;
@@ -6773,7 +6773,7 @@ static void do_compute_data_midi(int32 count)
 	upper_voices = uv;
 
 	if(play_system_mode == XG_SYSTEM_MODE && channel_effect) {	/* XG */
-		if (opt_insertion_effect) { 	/* insertion effect */
+		if (opt_insertion_effect) {	/* insertion effect */
 			for (i = 0; i < XG_INSERTION_EFFECT_NUM; i++) {
 				if (insertion_effect_xg[i].part <= MAX_CHANNELS) {
 					do_insertion_effect_xg(vpblist[insertion_effect_xg[i].part], cnt, &insertion_effect_xg[i]);
@@ -6825,20 +6825,20 @@ static void do_compute_data_midi(int32 count)
 				}
 			}
 		}
-		
+
 		if(channel_reverb) {
 			set_ch_reverb(buffer_pointer, cnt, DEFAULT_REVERB_SEND_LEVEL);
 		}
 		set_dry_signal(buffer_pointer, cnt);
 
-		/* mixing signal and applying system effects */ 
+		/* mixing signal and applying system effects */
 		mix_dry_signal(buffer_pointer, cnt);
 		if(channel_delay) {do_variation_effect1_xg(buffer_pointer, cnt);}
 		if(channel_chorus) {do_ch_chorus_xg(buffer_pointer, cnt);}
 		if(channel_reverb) {do_ch_reverb(buffer_pointer, cnt);}
 		if(multi_eq_xg.valid) {do_multi_eq_xg(buffer_pointer, cnt);}
 	} else if(channel_effect) {	/* GM & GS */
-		if(opt_insertion_effect) { 	/* insertion effect */
+		if(opt_insertion_effect) {	/* insertion effect */
 			/* applying insertion effect */
 			do_insertion_effect_gs(insertion_effect_buffer, cnt);
 			/* sending insertion effect voice to channel effect */
@@ -6853,7 +6853,7 @@ static void do_compute_data_midi(int32 count)
 		}
 
 		for(i = 0; i < MAX_CHANNELS; i++) {	/* system effects */
-			int32 *p;	
+			int32 *p;
 			p = vpblist[i];
 			if(p != buffer_pointer && p != insertion_effect_buffer) {
 				if (opt_drum_effect && ISDRUMCHANNEL(i)) {
@@ -6889,13 +6889,13 @@ static void do_compute_data_midi(int32 count)
 				}
 			}
 		}
-		
+
 		if(channel_reverb) {
 			set_ch_reverb(buffer_pointer, cnt, DEFAULT_REVERB_SEND_LEVEL);
 		}
 		set_dry_signal(buffer_pointer, cnt);
 
-		/* mixing signal and applying system effects */ 
+		/* mixing signal and applying system effects */
 		mix_dry_signal(buffer_pointer, cnt);
 		if(channel_eq) {do_ch_eq_gs(buffer_pointer, cnt);}
 		if(channel_chorus) {do_ch_chorus(buffer_pointer, cnt);}
@@ -6916,7 +6916,7 @@ static void do_compute_data_midi(int32 count)
 	int channel_reverb;
 	int channel_effect;
 	int32 cnt = count * 2;
-	
+
 	stereo = ! (play_mode->encoding & PE_MONO);
 	n = count * ((stereo) ? 8 : 4); /* in bytes */
 	/* don't supported in mono */
@@ -6934,7 +6934,7 @@ static void do_compute_data_midi(int32 count)
 
 	if (channel_reverb) {
 		int chbufidx;
-		
+
 		if (! make_rvid_flag) {
 			make_rvid();
 			make_rvid_flag = 1;
@@ -6963,10 +6963,10 @@ static void do_compute_data_midi(int32 count)
 	for (i = 0; i < uv; i++)
 		if (voice[i].status != VOICE_FREE) {
 			int32 *vpb;
-			
+
 			if (channel_reverb) {
 				int ch = voice[i].channel;
-				
+
 				vpb = vpblist[ch];
 				vc[ch] = 1;
 			} else
@@ -6989,11 +6989,11 @@ static void do_compute_data_midi(int32 count)
 
 	if (channel_reverb) {
 		int k;
-		
+
 		k = count * 2; /* calclated buffer length in int32 */
 		for (i = 0; i < MAX_CHANNELS; i++) {
 			int32 *p;
-			
+
 			p = vpblist[i];
 			if (p != buffer_pointer && channel[i].reverb_id == i)
 				set_ch_reverb(p, k, channel[i].reverb_level);
@@ -7049,19 +7049,19 @@ static void do_compute_data(int32 count)
     switch(current_file_info->pcm_mode)
     {
       case PCM_MODE_NON:
-    	do_compute_data_midi(count);
-      	break;
+	do_compute_data_midi(count);
+	break;
       case PCM_MODE_WAV:
-    	do_compute_data_wav(count);
+	do_compute_data_wav(count);
         break;
       case PCM_MODE_AIFF:
-    	do_compute_data_aiff(count);
+	do_compute_data_aiff(count);
         break;
       case PCM_MODE_AU:
         break;
       case PCM_MODE_MP3:
         break;
-    }    
+    }
 }
 
 static int check_midi_play_end(MidiEvent *e, int len)
@@ -7260,7 +7260,7 @@ static int compute_data(int32 count)
 	     caused premature voice reduction under Linux, even if the queue
 	     was over 2000%, leading to major voice lossage. */
 	  rate = (int)(((double)(aq_filled() + aq_soft_filled()) /
-                  	aq_get_dev_queuesize()) * 100 + 0.5);
+	aq_get_dev_queuesize()) * 100 + 0.5);
 
           for(i = nv = 0; i < upper_voices; i++)
 	      if(voice[i].status != VOICE_FREE)
@@ -7273,20 +7273,20 @@ static int compute_data(int32 count)
 		/* average in current nv */
 	        if ((rate == old_rate && nv > min_bad_nv) ||
 	            (rate >= old_rate && rate < 20)) {
-	        	ok_nv_total += nv;
-	        	ok_nv_counts++;
+		ok_nv_total += nv;
+		ok_nv_counts++;
 	        }
 	        /* increase polyphony when it is too low */
 	        else if (nv == voices &&
 	                 (rate > old_rate && filled > last_filled)) {
-	          		ok_nv_total += nv + 1;
-	          		ok_nv_counts++;
+			ok_nv_total += nv + 1;
+			ok_nv_counts++;
 	        }
 	        /* reduce polyphony when loosing buffer */
 	        else if (rate < 75 &&
-	        	 (rate < old_rate && filled < last_filled)) {
-	        	ok_nv_total += min_bad_nv;
-	    		ok_nv_counts++;
+		 (rate < old_rate && filled < last_filled)) {
+		ok_nv_total += min_bad_nv;
+			ok_nv_counts++;
 	        }
 	        else goto NO_RESCALE_NV;
 
@@ -7314,9 +7314,9 @@ static int compute_data(int32 count)
 		  /* set bounds on "good" and "bad" nv */
 		  if (! opt_realtime_playing && rate > 20 &&
 		      nv < min_bad_nv) {
-		  	min_bad_nv = nv;
+			min_bad_nv = nv;
 	                if (max_good_nv < min_bad_nv)
-	                	max_good_nv = min_bad_nv;
+		max_good_nv = min_bad_nv;
 	          }
 
 		  /* EAW -- count number of !ON voices */
@@ -7324,8 +7324,8 @@ static int compute_data(int32 count)
 		  for(i = kill_nv = 0; i < upper_voices; i++) {
 		      if(voice[i].status & VOICE_FREE ||
 		         voice[i].cache != NULL)
-		      		continue;
-		      
+				continue;
+
 		      if((voice[i].status & ~(VOICE_ON|VOICE_SUSTAINED) &&
 			  !(voice[i].status & ~(VOICE_DIE) &&
 			    voice[i].sample->note_to_use)))
@@ -7364,17 +7364,17 @@ static int compute_data(int32 count)
 
 		  /* lower max # of allowed voices to let the buffer recover */
 		  if (auto_reduce_polyphony) {
-		  	temp_nv = nv - kill_nv;
-		  	ok_nv = ok_nv_total / ok_nv_counts;
+			temp_nv = nv - kill_nv;
+			ok_nv = ok_nv_total / ok_nv_counts;
 
-		  	/* decrease it to current nv left */
-		  	if (voices > temp_nv && temp_nv > ok_nv)
+			/* decrease it to current nv left */
+			if (voices > temp_nv && temp_nv > ok_nv)
 			    voice_decrement_conservative(voices - temp_nv);
 			/* decrease it to ok_nv */
-		  	else if (voices > ok_nv && temp_nv <= ok_nv)
+			else if (voices > ok_nv && temp_nv <= ok_nv)
 			    voice_decrement_conservative(voices - ok_nv);
-		  	/* increase the polyphony */
-		  	else if (voices < ok_nv)
+			/* increase the polyphony */
+			else if (voices < ok_nv)
 			    voice_increment(ok_nv - voices);
 		  }
 
@@ -7390,20 +7390,20 @@ static int compute_data(int32 count)
 
 		    /* set bounds on "good" and "bad" nv */
 		    if (rate > 85 && nv > max_good_nv) {
-		  	max_good_nv = nv;
-		  	if (min_bad_nv > max_good_nv)
-		  	    min_bad_nv = max_good_nv;
+			max_good_nv = nv;
+			if (min_bad_nv > max_good_nv)
+			    min_bad_nv = max_good_nv;
 		    }
 
 		    if (auto_reduce_polyphony) {
-		    	/* reset ok_nv stuff when out of danger */
-		    	ok_nv_total = max_good_nv * ok_nv_counts;
+			/* reset ok_nv stuff when out of danger */
+			ok_nv_total = max_good_nv * ok_nv_counts;
 			if (ok_nv_counts > 1) {
 			    ok_nv_total >>= 1;
 			    ok_nv_counts >>= 1;
 			}
 
-		    	/* restore max # of allowed voices to normal */
+			/* restore max # of allowed voices to normal */
 			restore_voices(0);
 		    }
 	      }
@@ -7804,12 +7804,12 @@ int play_event(MidiEvent *ev)
 	break;
 
 	  case ME_ATTACK_TIME:
-  	if(!opt_tva_attack) { break; }
+	if(!opt_tva_attack) { break; }
 	set_envelope_time(ch, ev->a, EG_ATTACK);
 	break;
 
 	  case ME_RELEASE_TIME:
-  	if(!opt_tva_release) { break; }
+	if(!opt_tva_release) { break; }
 	set_envelope_time(ch, ev->a, EG_RELEASE);
 	break;
 
@@ -8140,7 +8140,7 @@ static void set_single_note_tuning(int part, int a, int b, int rt)
 	static int st;	/* the nearest equal-tempered semitone */
 	double f, fst;	/* fraction of semitone */
 	int i;
-	
+
 	switch (part) {
 	case 0:
 		tp = a;
@@ -8177,7 +8177,7 @@ static void set_user_temper_entry(int part, int a, int b)
 	static double rf[11], rb[11];
 	int i, j, k, l, n, m;
 	double ratio[12], f, sc;
-	
+
 	switch (part) {
 	case 0:
 		for (i = 0; i < 11; i++)
@@ -8258,7 +8258,7 @@ static void set_user_temper_entry(int part, int a, int b)
 static void set_cuepoint(int part, int a, int b)
 {
 	static int a0 = 0, b0 = 0;
-	
+
 	if (part == 0) {
 		a0 = a, b0 = b;
 		return;
@@ -8346,18 +8346,18 @@ static int read_header_aiff(struct timidity_file* tf)
 {
     char buff[5]="    ";
     int i;
-    
+
     for( i=0; i<100; i++ ){
-    	buff[0]=buff[1]; buff[1]=buff[2]; buff[2]=buff[3];
-    	tf_read( &buff[3], 1, 1, tf);
-    	if( strcmp(buff,"SSND")==0 ){
+	buff[0]=buff[1]; buff[1]=buff[2]; buff[2]=buff[3];
+	tf_read( &buff[3], 1, 1, tf);
+	if( strcmp(buff,"SSND")==0 ){
             /*SSND chunk found */
-    	    tf_read( &buff[0], 1, 4, tf);
-    	    tf_read( &buff[0], 1, 4, tf);
+	    tf_read( &buff[0], 1, 4, tf);
+	    tf_read( &buff[0], 1, 4, tf);
 	    ctl->cmsg(CMSG_INFO, VERB_NOISY,
 		      "aiff header read OK.");
 	    return 0;
-    	}
+	}
     }
     /*SSND chunk not found */
     return -1;
@@ -8600,12 +8600,12 @@ int play_midi_file(char *fn)
 
   play_end:
     if(current_file_info->pcm_tf){
-    	close_file(current_file_info->pcm_tf);
-    	current_file_info->pcm_tf = NULL;
-    	free( current_file_info->pcm_filename );
-    	current_file_info->pcm_filename = NULL;
+	close_file(current_file_info->pcm_tf);
+	current_file_info->pcm_tf = NULL;
+	free( current_file_info->pcm_filename );
+	current_file_info->pcm_filename = NULL;
     }
-    
+
     if(wrdt->opened)
 	wrdt->end();
 
@@ -8812,7 +8812,7 @@ char *channel_instrum_name(int ch)
 	    comm = tonebank[0]->tone[prog].comment;
 		if (comm == NULL) {comm = tonebank[0]->tone[prog].name;}
 	}
-	
+
     return comm;
 }
 

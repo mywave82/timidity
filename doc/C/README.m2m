@@ -48,14 +48,14 @@ packaged sample at the requested pitch, assuming all samples are tuned to
 the same fixed frequency, whether they actually are or not.  Thus, if you
 were to do a direct mod->midi event conversion, you would wind up with midi
 instruments playing in the wrong keys, snare drums being treated as normal
-melodic instruments, and single notes where there should be chords. 
+melodic instruments, and single notes where there should be chords.
 Transposition, drum related channel movements, and chord emissions are the
 most noticable obstacles to overcome when performing an accurace mod->midi
 conversoin.
 
 Paolo Bonzini has already done half of my job for me.  He contributed a good
 amount of code that turns TiMidity++ into a first rate mod player.  This,
-alone, would not have helped me very much; it was how he implemented it.  
+alone, would not have helped me very much; it was how he implemented it.
 Rather than handle the events like every other mod player known to man,
 TiMidity++ converts them into standard midi events, loads the mod instruments
 in as special patches, and then renders them just like it would any normal
@@ -87,7 +87,7 @@ by white space.
 
 FIELD 1: Sample Number
 
-This is the number of the sample that you are defining information for. 
+This is the number of the sample that you are defining information for.
 The first sample in the mod file is 1 (not zero).
 
 
@@ -110,7 +110,7 @@ The bank portion of the field specifies an optional bank selection.  This is
 the number of the bank to use, followed by a / to separate it from the
 program number.
 
-The program number is the midi instrument you are assigning to the sample. 
+The program number is the midi instrument you are assigning to the sample.
 If the sample is a drum, this is the note that the drum is mapped to in the
 drum set.
 
@@ -141,7 +141,7 @@ Examples:
 
 FIELD 3: Transposition
 
-This is how much to transpose the original note specified in the mod file. 
+This is how much to transpose the original note specified in the mod file.
 If the sample is tuned at middle C (pitch 60), it will need to be transposed
 +24 semitones for the midi instrument to play on the correct pitch.  Samples
 marked as drums will not be transposed, since they are fixed to a single
@@ -175,7 +175,7 @@ were intended to tune the samples to begin with.  I plan to eventually
 implement insertion of new pitch bend events, so that this will be a true
 fine tuning feature.
 
- 
+
 
 FIELD 5: %Volume
 
@@ -209,7 +209,7 @@ pretty darn close.  And when it does miss a pitch or a chord, it always
 assigns it the correct LOOKING answer.  That is, if I were to visually
 inspect the FFT data, I would pick the same pitch the algorithm does.  I'm
 no expert at this, but after spending so many hours testing this on many
-different difficult to assign pitches, I think I'm pretty good at it now :) 
+different difficult to assign pitches, I think I'm pretty good at it now :)
 The only way I can see to improve it is to build in some sort of
 psychoacoustical model that takes into account how the human ear percieves
 the sound.  And I don't think I want to do that at the moment....  It does an
@@ -253,7 +253,7 @@ great, giving me a higher success rate on all my samples without inducing any
 new misassignments!  The only catch is that the weighting only works well for
 < 2 seconds of audio analysis.  Any larger than that and the FFT size gets
 so big that the pitch peaks are too diffused, so the maximum magnitudes for
-the pitches are too small, and the weighting starts to give wrong answers. 
+the pitches are too small, and the weighting starts to give wrong answers.
 If anyone wants to analyze >= 2 seconds of data, which isn't neccessary for
 assigning pitches to mod/midi instruments, it would be easy to implement a
 sliding window average that calls the existing frequency assignment

@@ -107,7 +107,7 @@ struct midi_file_info
     char *midi_data;
     int32 midi_data_size;
     int file_type;
-    
+
     int pcm_mode;
     char *pcm_filename;
     struct timidity_file *pcm_tf;

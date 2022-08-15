@@ -580,7 +580,7 @@ AS_IF([test "x$MSYS" = xyes], [
 		case `$our_gcc --version | sed -e 's,\..*,.,' -e q` in
 			2.)
 		AS_IF([$our_gcc -v --help 2>/dev/null | grep fnative-struct >/dev/null], [
-	  		msnative_struct='-fnative-struct'
+			msnative_struct='-fnative-struct'
 		])
 		;;
 			*)
@@ -802,8 +802,8 @@ AS_IF([test "x$MSYS" = xyes], [
   ], [
     AC_CHECK_FUNC(socket,,
      WAPI_CHECK_LIB(ws2_32,WSAStartup,
-  	   [#include <winsock.h>],
-  	   [WSAStartup(0,0);],
+	   [#include <winsock.h>],
+	   [WSAStartup(0,0);],
        [ EXTRALIBS="$EXTRALIBS -lws2_32"
         EXTRADEFS="$EXTRADEFS -DWINSOCK" ]
      )
@@ -1148,7 +1148,7 @@ AS_IF([test "x$au_enable_w32" = xyes], [
   esac
   SYSEXTRAS="$SYSEXTRAS w32_a.c"
   AS_IF([test "x$VCPP" = xyes || test "x$BORLANDC" = xyes || test "x$WATCOM_C" = xyes || test "x$DMC" = xyes || test "x$POCC" = xyes], [
-  	EXTRALIBS="$EXTRALIBS winmm.lib"
+	EXTRALIBS="$EXTRALIBS winmm.lib"
   ], [
     EXTRALIBS="$EXTRALIBS -lwinmm"
   ])
@@ -1328,12 +1328,12 @@ AS_IF([test "x$au_enable_portaudio" = xyes], [
   AC_MSG_RESULT(yes)
   AS_IF([test "x$MSYS" = xyes], [
 	SYSEXTRAS="$SYSEXTRAS portaudio_a.c w32_portaudio_dll.c"
-  	EXTRALIBS="$EXTRALIBS -lportaudio"
-  	EXTRADEFS="$EXTRADEFS -DAU_PORTAUDIO -DAU_PORTAUDIO_DLL"
+	EXTRALIBS="$EXTRALIBS -lportaudio"
+	EXTRADEFS="$EXTRADEFS -DAU_PORTAUDIO -DAU_PORTAUDIO_DLL"
   ], [
-  	SYSEXTRAS="$SYSEXTRAS portaudio_a.c"
-  	EXTRALIBS="$EXTRALIBS -lportaudio"
-  	EXTRADEFS="$EXTRADEFS -DAU_PORTAUDIO"
+	SYSEXTRAS="$SYSEXTRAS portaudio_a.c"
+	EXTRALIBS="$EXTRALIBS -lportaudio"
+	EXTRADEFS="$EXTRADEFS -DAU_PORTAUDIO"
   ])
 ], [
   AC_MSG_RESULT(no)
@@ -1343,8 +1343,8 @@ dnl npipe (windows named pipe)
 AC_MSG_CHECKING(enable_audio=npipe)
 AS_IF([test "x$au_enable_npipe" = xyes], [
   AC_MSG_RESULT(yes)
-  	SYSEXTRAS="$SYSEXTRAS npipe_a.c"
-  	EXTRADEFS="$EXTRADEFS -DAU_NPIPE"
+	SYSEXTRAS="$SYSEXTRAS npipe_a.c"
+	EXTRADEFS="$EXTRADEFS -DAU_NPIPE"
 ], [
   AC_MSG_RESULT(no)
 ])

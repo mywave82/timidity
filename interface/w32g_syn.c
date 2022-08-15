@@ -255,7 +255,7 @@ static BOOL UninstallService();
 typedef struct w32g_syn_message_t_ {
 	int cmd;
 } w32g_syn_message_t;
-static volatile enum { stop, run, quit, none } w32g_syn_status, w32g_syn_status_prev; 
+static volatile enum { stop, run, quit, none } w32g_syn_status, w32g_syn_status_prev;
 #ifndef MAX_PORT
 #define MAX_PORT 4
 #endif
@@ -324,7 +324,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 			ReleaseMutex ( w32g_syn.hMutex );
 			CloseHandle ( w32g_syn.hMutex );
-			
+
 			return 0;
 		}
 		else if (stricmp(w32g_syn.argv[i], "/UNINSTALL") == 0)
@@ -333,24 +333,24 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 			ReleaseMutex ( w32g_syn.hMutex );
 			CloseHandle ( w32g_syn.hMutex );
-			
+
 			return 0;
 		}
 	}
 #endif
 
 //	wrdt=wrdt_list[0];
-	
+
 	hInst = hInstance;
 	w32g_syn.gui_hThread = GetCurrentThread();
 	w32g_syn.gui_dwThreadId = GetCurrentThreadId();
 	w32g_syn.quit_state = 0;
 
 	w32g_syn_main ();
-	
+
 	ReleaseMutex ( w32g_syn.hMutex );
 	CloseHandle ( w32g_syn.hMutex );
-	
+
 	return 0;
 }
 
@@ -441,11 +441,11 @@ BOOL AddTasktrayIcon(HWND hwnd)
 	BOOL bRes;
 	NOTIFYICONDATA nid;
 	nid.cbSize = sizeof ( NOTIFYICONDATA );
-	nid.hWnd = w32g_syn.nid_hWnd = hwnd; 
-	nid.uID = w32g_syn.nid_uID; 
+	nid.hWnd = w32g_syn.nid_hWnd = hwnd;
+	nid.uID = w32g_syn.nid_uID;
 	nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-	nid.uCallbackMessage = MYWM_NOTIFYICON; 
-	nid.hIcon = w32g_syn.hIcon; 
+	nid.uCallbackMessage = MYWM_NOTIFYICON;
+	nid.hIcon = w32g_syn.hIcon;
 	strcpy ( nid.szTip, W32G_SYN_TIP );
 	bRes = Shell_NotifyIcon ( NIM_ADD, &nid );
 	return bRes;
@@ -458,8 +458,8 @@ void DeleteTasktrayIcon(HWND hwnd)
 	NOTIFYICONDATA nid;
 	int i;
 	nid.cbSize = sizeof ( NOTIFYICONDATA );
-	nid.hWnd = w32g_syn.nid_hWnd; 
-	nid.uID = w32g_syn.nid_uID; 
+	nid.hWnd = w32g_syn.nid_hWnd;
+	nid.uID = w32g_syn.nid_uID;
 	nid.uFlags = 0;
 	for ( i = 1; i <= 10; i ++ ) {
 		bRes = Shell_NotifyIcon ( NIM_DELETE, &nid );
@@ -500,7 +500,7 @@ SynWinProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 	case MYWM_NOTIFYICON:
 	{
 		if ( (UINT)wParam == w32g_syn.nid_uID ) {
-	    if ( (UINT)lParam == WM_RBUTTONDOWN || (UINT)lParam == WM_LBUTTONDOWN) { 
+	    if ( (UINT)lParam == WM_RBUTTONDOWN || (UINT)lParam == WM_LBUTTONDOWN) {
 				int priority_flag[2][6];
 				POINT point;
 				HMENU hMenu, hMenuReset, hMenuChange, hMenuProcessPriority, hMenuSynPriority;
@@ -514,7 +514,7 @@ SynWinProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 					priority_flag[0][0] = MF_CHECKED;
 				else
 					priority_flag[0][0] = 0;
-				
+
 				if ( processPriority == BELOW_NORMAL_PRIORITY_CLASS )
 					priority_flag[0][1] = MF_CHECKED;
 				else
@@ -550,22 +550,22 @@ SynWinProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 					priority_flag[1][1] = MF_CHECKED;
 				else
 					priority_flag[1][1] = 0;
-				
+
 				if ( syn_ThreadPriority == THREAD_PRIORITY_NORMAL )
 					priority_flag[1][2] = MF_CHECKED;
 				else
 					priority_flag[1][2] = 0;
-				
+
 				if ( syn_ThreadPriority == THREAD_PRIORITY_ABOVE_NORMAL )
 					priority_flag[1][3] = MF_CHECKED;
 				else
 					priority_flag[1][3] = 0;
-				
+
 				if ( syn_ThreadPriority == THREAD_PRIORITY_HIGHEST )
 					priority_flag[1][4] = MF_CHECKED;
 				else
 					priority_flag[1][4] = 0;
-				
+
 				if ( syn_ThreadPriority == THREAD_PRIORITY_TIME_CRITICAL )
 					priority_flag[1][5] = MF_CHECKED;
 				else
@@ -581,7 +581,7 @@ SynWinProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 						AppendMenu ( hMenu, MF_STRING, IDM_STOP, "シンセ停止(&S)");
 					} else if ( w32g_syn_status == stop ) {
 						AppendMenu ( hMenu, MF_STRING, IDM_START, "シンセ開始(&S)");
-					} else if ( w32g_syn_status == quit ) { 
+					} else if ( w32g_syn_status == quit ) {
 						AppendMenu ( hMenu, MF_STRING | MF_GRAYED, IDM_START, "終了中……");
 					}
 					AppendMenu ( hMenu, MF_STRING, IDM_SYSTEM_RESET, "システムリセット(&R)");
@@ -657,7 +657,7 @@ SynWinProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 						AppendMenu ( hMenu, MF_STRING, IDM_STOP, "&Stop synthesizer");
 					} else if ( w32g_syn_status == stop ) {
 						AppendMenu ( hMenu, MF_STRING, IDM_START, "&Start synthesizer");
-					} else if ( w32g_syn_status == quit ) { 
+					} else if ( w32g_syn_status == quit ) {
 						AppendMenu ( hMenu, MF_STRING | MF_GRAYED, IDM_START, "Quitting...");
 					}
 					AppendMenu ( hMenu, MF_STRING, IDM_SYSTEM_RESET, "System &Reset");
@@ -730,7 +730,7 @@ SynWinProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 					AppendMenu ( hMenu, MF_STRING, IDM_QUIT, "E&xit");
 				}
 				GetCursorPos ( &point );
-				// ポップアップメニューがきちんと消えるための操作。 
+				// ポップアップメニューがきちんと消えるための操作。
 				// http://support.microsoft.com/default.aspx?scid=KB;EN-US;Q135788& 参照
 #if 0		// Win 98/2000 以降用？
 				{
@@ -753,7 +753,7 @@ SynWinProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 				have_popupmenu = 0;
 				return 0;
 			}
-    } 
+    }
 	}
 		break;
 	case WM_COMMAND:
@@ -1058,9 +1058,9 @@ static BOOL PingStatusToSCM(DWORD checkPoint, DWORD waitHint)
 // Service control message from management interface (Callback from SCM)
 static void WINAPI ServiceCtrlHandler(DWORD state)
 {
- 	switch (state)
+	switch (state)
 	{
-	case SERVICE_CONTROL_STOP: 
+	case SERVICE_CONTROL_STOP:
 		ReportStatusToSCM(SERVICE_STOP_PENDING, 1, 0, NO_ERROR, NO_ERROR);
 		w32g_message_set(W32G_SYN_QUIT);
 		break;
@@ -1204,7 +1204,7 @@ static BOOL UninstallService()
 {
 	char serviceLongName[40];
 	SC_HANDLE scm, sv;
-	
+
 	scm = OpenSCManager(
 		NULL, SERVICES_ACTIVE_DATABASE, SC_MANAGER_CONNECT);
 	if (scm == NULL)
@@ -1489,7 +1489,7 @@ int w32g_syn_do_before_pref_apply ( void )
 		} else {
 			WaitForSingleObject ( msg_loopbuf_hMutex, INFINITE );
 		}
-		if ( w32g_syn_status_prev == none ) 
+		if ( w32g_syn_status_prev == none )
 			w32g_syn_status_prev = w32g_syn_status;
 		if ( w32g_syn_status == stop ) {
 			return 0;
@@ -1567,9 +1567,9 @@ void PutsEditCtlWnd(HWND hwnd, char *str)
 			out[i] = '\0';
 			break;
     }
-  	if(*in=='\n'){
-    	out[i] = 13;
-    	out[i+1] = 10;
+	if(*in=='\n'){
+	out[i] = 13;
+	out[i+1] = 10;
 			in++;
       i += 2;
       continue;
@@ -1688,14 +1688,14 @@ void InitConsoleWnd(HWND hParentWnd)
 		hConsoleWnd = NULL;
 	}
 	switch(PlayerLanguage){
-  	case LANGUAGE_ENGLISH:
+	case LANGUAGE_ENGLISH:
 		hConsoleWnd = CreateDialog
-  			(hInst,MAKEINTRESOURCE(IDD_DIALOG_CONSOLE_EN),hParentWnd,ConsoleWndProc);
+			(hInst,MAKEINTRESOURCE(IDD_DIALOG_CONSOLE_EN),hParentWnd,ConsoleWndProc);
 		break;
- 	default:
+	default:
 	case LANGUAGE_JAPANESE:
 		hConsoleWnd = CreateDialog
-  			(hInst,MAKEINTRESOURCE(IDD_DIALOG_CONSOLE),hParentWnd,ConsoleWndProc);
+			(hInst,MAKEINTRESOURCE(IDD_DIALOG_CONSOLE),hParentWnd,ConsoleWndProc);
 	break;
 	}
 	ShowWindow(hConsoleWnd,SW_HIDE);

@@ -161,7 +161,7 @@ static int speex_mode_preset()
       return 0;
     }
   }
- 
+
   if (rate != 8000 && rate != 16000 && rate != 32000)
     ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 	      "Speex is only optimized for 8, 16 and 32 kHz.\n"
@@ -515,7 +515,7 @@ static int output_data(char *buf, int32 nbytes)
     speex_bits_insert_terminator(&ctx->bits);
     /* Copy the bits to an array of char that can be written */
     nbBytes = speex_bits_write(&ctx->bits, cbits, MAX_FRAME_BYTES);
-    
+
     /* Flush all the bits in the struct so we can encode a new frame */
     speex_bits_reset(&ctx->bits);
 
@@ -540,7 +540,7 @@ static int output_data(char *buf, int32 nbytes)
 	ctx->out_bytes += ret;
     }
   }
-  
+
   return 0;
 }
 
@@ -587,7 +587,7 @@ static void close_output(void)
     speex_bits_insert_terminator(&ctx->bits);
     /* Copy the bits to an array of char that can be written */
     nbBytes = speex_bits_write(&ctx->bits, cbits, MAX_FRAME_BYTES);
-    
+
     /* Flush all the bits in the struct so we can encode a new frame */
     speex_bits_reset(&ctx->bits);
 

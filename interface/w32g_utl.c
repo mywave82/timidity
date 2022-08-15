@@ -387,8 +387,8 @@ ApplySettingPlayer(SETTING_PLAYER *sp)
   strncpy(DocFileExt,sp->DocFileExt,255);
   DocFileExt[255] = '\0';
   PlayerLanguage = sp->PlayerLanguage;
-  DocWndIndependent = sp->DocWndIndependent; 
-  DocWndAutoPopup = sp->DocWndAutoPopup; 
+  DocWndIndependent = sp->DocWndIndependent;
+  DocWndAutoPopup = sp->DocWndAutoPopup;
   SeachDirRecursive = sp->SeachDirRecursive;
   IniFileAutoSave = sp->IniFileAutoSave;
   SecondMode = sp->SecondMode;
@@ -454,8 +454,8 @@ SaveSettingPlayer(SETTING_PLAYER *sp)
   strncpy(sp->DocFileExt,DocFileExt,255);
   sp->DocFileExt[255] = '\0';
   sp->PlayerLanguage = PlayerLanguage;
-  sp->DocWndIndependent = DocWndIndependent; 
-  sp->DocWndAutoPopup = DocWndAutoPopup; 
+  sp->DocWndIndependent = DocWndIndependent;
+  sp->DocWndAutoPopup = DocWndAutoPopup;
   sp->SeachDirRecursive = SeachDirRecursive;
   sp->IniFileAutoSave = IniFileAutoSave;
   sp->SecondMode = SecondMode;
@@ -845,7 +845,7 @@ void w32g_initialize(void)
     char *p;
 
     hInst = GetModuleHandle(0);
-  
+
     IniFile = S_IniFile;
     ConfigFile = S_ConfigFile;
     PlaylistFile = S_PlaylistFile;
@@ -865,7 +865,7 @@ void w32g_initialize(void)
 	PlayerLanguage = LANGUAGE_ENGLISH;
 	break;
     }
-  
+
     IniFile[0] = '\0';
     ConfigFile[0] = '\0';
     PlaylistFile[0] = '\0';
@@ -954,8 +954,8 @@ void w32g_initialize(void)
 #ifdef AU_VORBIS
 			vorbis_ConfigDialogInfoLoadINI();
 #endif
- 		}
- 	}
+		}
+	}
 
     SaveSettingPlayer(sp_current);
     SaveSettingTiMidity(st_current);
@@ -1133,7 +1133,7 @@ void SettingCtlFlag(SETTING_TIMIDITY *st, int c, int onoff)
 {
     int n;
     char *opt;
-    
+
     opt = st->opt_ctl + 1;
     n = strlen(opt);
     if(onoff)

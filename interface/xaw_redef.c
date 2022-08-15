@@ -3,7 +3,7 @@
  * There is problem if both -lXm and -lXaw are linked.
  * This source code to re-define XAW vendorShell.
  * To change motif vendorShell to XAW vendorShell in runtime.
- * 
+ *
  * #define vendorShellClassRec xaw_vendorShellClassRec
  * #define vendorShellWidgetClass xaw_vendorShellWidgetClass
  * #include "xaw_redef.c"
@@ -14,7 +14,7 @@
  * static void xaw_vendor_setup(void)
  * {
  *     memcpy(&vendorShellClassRec, &xaw_vendorShellClassRec,
- * 	   sizeof(VendorShellClassRec));
+ *	   sizeof(VendorShellClassRec));
  *     vendorShellWidgetClass = (WidgetClass)&xaw_vendorShellWidgetClass;
  * }
  */
@@ -51,13 +51,13 @@ Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -130,12 +130,12 @@ extern void XmuRegisterExternalAgent(
  * ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
  * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE. 
+ * SOFTWARE.
  *
  *	Author:	Seiji Kuwari	OMRON Corporation
  *				kuwa@omron.co.jp
  *				kuwa%omron.co.jp@uunet.uu.net
- */				
+ */
 
 /*
 
@@ -188,12 +188,12 @@ in this Software without prior written authorization from the X Consortium.
  * ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
  * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE. 
+ * SOFTWARE.
  *
  *	Author:	Seiji Kuwari	OMRON Corporation
  *				kuwa@omron.co.jp
  *				kuwa%omron.co.jp@uunet.uu.net
- */				
+ */
 
 /*
 
@@ -295,50 +295,50 @@ typedef	struct _contextErrDataRec
     XIM			xim;
 } contextErrDataRec;
 
-void _XawImResizeVendorShell( 
+void _XawImResizeVendorShell(
 #if NeedFunctionPrototypes
     Widget /* w */
 #endif
 );
 
-Dimension _XawImGetShellHeight( 
+Dimension _XawImGetShellHeight(
 #if NeedFunctionPrototypes
     Widget /* w */
 #endif
 );
 
-void _XawImRealize( 
+void _XawImRealize(
 #if NeedFunctionPrototypes
     Widget /* w */
 #endif
 );
 
-void _XawImInitialize( 
+void _XawImInitialize(
 #if NeedFunctionPrototypes
     Widget, /* w */
     Widget  /* ext */
 #endif
 );
 
-void _XawImReconnect( 
+void _XawImReconnect(
 #if NeedFunctionPrototypes
     Widget  /* w */
 #endif
 );
 
-void _XawImRegister( 
+void _XawImRegister(
 #if NeedFunctionPrototypes
     Widget  /* w */
 #endif
 );
 
-void _XawImUnregister( 
+void _XawImUnregister(
 #if NeedFunctionPrototypes
     Widget  /* w */
 #endif
 );
 
-void _XawImSetValues( 
+void _XawImSetValues(
 #if NeedFunctionPrototypes
     Widget,  /* w */
     ArgList, /* args */
@@ -347,14 +347,14 @@ void _XawImSetValues(
 );
 
 /* DON'T USE THIS FUNCTION -- it's going away in the next release */
-void _XawImVASetValues( 
+void _XawImVASetValues(
 #if NeedVarargsPrototypes
     Widget,  /* w */
-    ... 
+    ...
 #endif
 );
 
-void _XawImSetFocusValues( 
+void _XawImSetFocusValues(
 #if NeedFunctionPrototypes
     Widget,  /* w */
     ArgList, /* args */
@@ -363,20 +363,20 @@ void _XawImSetFocusValues(
 );
 
 /* DON'T USE THIS FUNCTION -- it's going away in the next release */
-void _XawImVASetFocusValues( 
+void _XawImVASetFocusValues(
 #if NeedVarargsPrototypes
     Widget,  /* w */
-    ... 
+    ...
 #endif
 );
 
-void _XawImUnsetFocus( 
+void _XawImUnsetFocus(
 #if NeedFunctionPrototypes
     Widget  /* w */
 #endif
 );
 
-int  _XawImWcLookupString( 
+int  _XawImWcLookupString(
 #if NeedFunctionPrototypes
     Widget,   /* w */
     XKeyPressedEvent*, /* event */
@@ -387,19 +387,19 @@ int  _XawImWcLookupString(
 #endif
 );
 
-int  _XawImGetImAreaHeight( 
+int  _XawImGetImAreaHeight(
 #if NeedFunctionPrototypes
     Widget  /* w */
 #endif
 );
 
-void _XawImCallVendorShellExtResize( 
+void _XawImCallVendorShellExtResize(
 #if NeedFunctionPrototypes
     Widget  /* w */
 #endif
 );
 
-void _XawImDestroy( 
+void _XawImDestroy(
 #if NeedFunctionPrototypes
     Widget,  /* w */
     Widget   /* ext */
@@ -472,7 +472,7 @@ externaldef(vendorshellclassrec) VendorShellClassRec vendorShellClassRec = {
     /* class_part_init	  */	XawVendorShellClassPartInit,
     /* Class init'ed ?	  */	FALSE,
     /* initialize         */	XawVendorShellInitialize,
-    /* initialize_hook	  */	NULL,		
+    /* initialize_hook	  */	NULL,
     /* realize		  */	Realize,
     /* actions		  */	NULL,
     /* num_actions	  */	0,
@@ -487,8 +487,8 @@ externaldef(vendorshellclassrec) VendorShellClassRec vendorShellClassRec = {
     /* resize		  */	XawVendorShellExtResize,
     /* expose		  */	NULL,
     /* set_values	  */	XawVendorShellSetValues,
-    /* set_values_hook	  */	NULL,			
-    /* set_values_almost  */	XtInheritSetValuesAlmost,  
+    /* set_values_hook	  */	NULL,
+    /* set_values_almost  */	XtInheritSetValuesAlmost,
     /* get_values_hook	  */	NULL,
     /* accept_focus	  */	NULL,
     /* intrinsics version */	XtVersion,
@@ -552,7 +552,7 @@ externaldef(vendorshellextclassrec) XawVendorShellExtClassRec
     /* class_part_initialize*/	NULL,
     /* Class init'ed ?	  */	FALSE,
     /* initialize	  */	XawVendorShellExtInitialize,
-    /* initialize_hook	  */	NULL,		
+    /* initialize_hook	  */	NULL,
     /* pad		  */	NULL,
     /* pad		  */	NULL,
     /* pad		  */	0,
@@ -567,8 +567,8 @@ externaldef(vendorshellextclassrec) XawVendorShellExtClassRec
     /* pad		  */	NULL,
     /* pad		  */	NULL,
     /* set_values	  */	XawVendorShellExtSetValues,
-    /* set_values_hook	  */	NULL,			
-    /* pad		  */	NULL,  
+    /* set_values_hook	  */	NULL,
+    /* pad		  */	NULL,
     /* get_values_hook	  */	NULL,
     /* pad		  */	NULL,
     /* version		  */	XtVersion,
@@ -629,7 +629,7 @@ static void XawVendorShellClassInitialize()
 	     sizeof(Screen *)}
     };
 
-    XtAddConverter(XtRString, XtRCursor, XmuCvtStringToCursor,      
+    XtAddConverter(XtRString, XtRCursor, XmuCvtStringToCursor,
 		   screenConvertArg, XtNumber(screenConvertArg));
 
     XtAddConverter(XtRString, XtRBitmap, XmuCvtStringToBitmap,
@@ -645,9 +645,9 @@ static void XawVendorShellClassPartInit(class)
     CompositeClassExtension ext;
     VendorShellWidgetClass vsclass = (VendorShellWidgetClass) class;
 
-    if ((ext = (CompositeClassExtension) 
+    if ((ext = (CompositeClassExtension)
 	    XtGetClassExtension (class,
-				 XtOffsetOf(CompositeClassRec, 
+				 XtOffsetOf(CompositeClassRec,
 					    composite_class.extension),
 				 NULLQUARK, 1L, (Cardinal) 0)) == NULL) {
 	ext = (CompositeClassExtension) XtNew (CompositeClassExtensionRec);
@@ -788,14 +788,14 @@ static XtGeometryResult GeometryManager( wid, request, reply )
 	if (XtMakeGeometryRequest((Widget)shell, &my_request, NULL)
 		== XtGeometryYes) {
 	    /* assert: if (request->request_mode & CWWidth) then
-	     * 		  shell->core.width == request->width
+	     *		  shell->core.width == request->width
 	     * assert: if (request->request_mode & CWHeight) then
-	     * 		  shell->core.height == request->height
+	     *		  shell->core.height == request->height
 	     *
 	     * so, whatever the WM sized us to (if the Shell requested
 	     * only one of the two) is now the correct child size
 	     */
-	    
+
 	    wid->core.width = shell->core.width;
 	    wid->core.height = shell->core.height;
 	    if (request->request_mode & CWBorderWidth) {

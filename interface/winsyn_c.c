@@ -138,9 +138,9 @@ static void ctl_close(void)
 {
   fflush(outfp);
   if(seq_quit==0){
-  	rtsyn_synth_stop();
-  	rtsyn_close();
-  	seq_quit=~0;
+	rtsyn_synth_stop();
+	rtsyn_close();
+	seq_quit=~0;
   }
   ctl.opened=0;
 }
@@ -190,7 +190,7 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
     va_end(ap);
 
     if((type==CMSG_TEXT || type==CMSG_INFO || type==CMSG_WARNING) &&
-       ctl.verbosity<verbosity_level) 
+       ctl.verbosity<verbosity_level)
 	return 0;
 //    if(type == CMSG_FATAL)
 //	w32g_msg_box(buffer, "TiMidity Error", MB_OK);
@@ -297,7 +297,7 @@ rtsyn_get_port_list();
 					if(devnum==portID[port]) devok=1;
 				}
 			}while(devok==0);
-			printf("\n");			
+			printf("\n");
 		}
 	}
 #endif
@@ -322,7 +322,7 @@ rtsyn_get_port_list();
 
 #ifdef USE_GTK_GUI
 	twgtk_main();
-#else 
+#else
 #ifdef IA_W32G_SYN
 	if(0!=rtsyn_synth_start()){
 		seq_quit=0;
@@ -369,7 +369,7 @@ static void close_keybord(void){
 static int kbhit(void){
 	char ch;
 	int nread;
-	
+
 	if(peek_character != -1)
 		return 1;
 	new_settings.c_cc[VMIN]=0;
@@ -377,7 +377,7 @@ static int kbhit(void){
 	nread = read(0, &ch, 1);
 	new_settings.c_cc[VMIN]=1;
 	tcsetattr(0,TCSANOW, &new_settings);
-	
+
 	if(nread == 1) {
 		peek_character = ch;
 		return 1;
@@ -396,7 +396,7 @@ static char readch(void){
 	read(0,&ch,1);
 	return ch;
 }
-#endif		
+#endif
 
 
 static void doit(void)
@@ -409,7 +409,7 @@ static void doit(void)
 #ifdef __W32__
 		if(kbhit()){
 			switch(getch()){
-#else			
+#else
 		if(kbhit()){
 			switch(readch()){
 #endif
@@ -480,9 +480,9 @@ void winplaymidi(void){
 	} else if ( winplaymidi_sleep_level == 0 ) {
 		winplaymidi_active_start_time = 0;
 	}
-	
+
 	rtsyn_play_calculate();
-	
+
 	if ( winplaymidi_sleep_level >= 2) {
 		Sleep ( 100 );
 	} else if ( winplaymidi_sleep_level > 0 ) {
@@ -490,7 +490,7 @@ void winplaymidi(void){
 	}
 }
 #endif
-		
+
 
 /*
  * interface_<id>_loader();

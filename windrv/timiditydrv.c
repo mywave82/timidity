@@ -146,7 +146,7 @@ STDAPI_(LRESULT) DriverProc(DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg, LPARAM 
 	case DRV_REMOVE:
 		if (modm_closed == 0){
 			int maxloop=500;
-			
+
 			stop_thread = 1;    //why thread can't stop by this????
 			while( stop_thread != 0 && maxloop-- > 0) Sleep(10);
 			if(stop_thread != 0) TerminateThread(hRtsynThread, FALSE);
@@ -179,10 +179,10 @@ HRESULT modGetCaps(PVOID capsPtr, DWORD capsSize) {
 	MIDIOUTCAPSW * myCapsW;
 	MIDIOUTCAPS2A * myCaps2A;
 	MIDIOUTCAPS2W * myCaps2W;
-	
+
 	CHAR synthName[] = "Timidity++ Driver\0";
 	WCHAR synthNameW[] = L"Timidity++ Driver\0";
-	
+
 	switch (capsSize) {
 	case (sizeof(MIDIOUTCAPSA)):
 		myCapsA = (MIDIOUTCAPSA *)capsPtr;
@@ -334,7 +334,7 @@ static void modCallback(UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 
 STDAPI_(DWORD) modMessage(UINT uDeviceID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1, DWORD_PTR dwParam2){
 	MIDIHDR *IIMidiHdr;
-	
+
 	switch (uMsg) {
 	case MODM_OPEN:
 		OpenCount++;
@@ -344,13 +344,13 @@ STDAPI_(DWORD) modMessage(UINT uDeviceID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR
 			int argc = ARRAY_SIZE(argv_readOnly),i;
 			int opend=0;
 			char **argv = (char **)alloca(argc * sizeof(char *));
-			
+
 			ZeroMemory(&mid_desc, sizeof(MIDIOPENDESC));
 			if (dwParam1) {
 				CopyMemory(&mid_desc, (LPMIDIOPENDESC)dwParam1, sizeof(MIDIOPENDESC));
 			}
 			dwOpenFlags = (DWORD)dwParam2;
-			
+
 			processPriority = GetPriorityClass(GetCurrentProcess());
 			SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 			//AllocConsole();

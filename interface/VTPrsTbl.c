@@ -22,7 +22,7 @@
  */
 
 /*
- *This file is a part of "kterm" and partially preprocessed and modified 
+ *This file is a part of "kterm" and partially preprocessed and modified
  *to fit my purpose.
  * Takanori Watanabe
  */
@@ -120,7 +120,7 @@ CASE_PRINT,
 CASE_PRINT,
 CASE_PRINT,
 CASE_PRINT,
-CASE_PRINT, 
+CASE_PRINT,
 /*	@		A		B		C	*/
 CASE_PRINT,
 CASE_PRINT,
@@ -2037,7 +2037,7 @@ CASE_IGNORE,
 CASE_IGNORE,
 CASE_IGNORE,
 /*	CAN		EM		SUB		ESC	*/
-CASE_GROUND_STATE, 
+CASE_GROUND_STATE,
 CASE_IGNORE,
 CASE_GROUND_STATE,
 CASE_IGNORE_ESC,

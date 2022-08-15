@@ -95,7 +95,7 @@ case $foo0 in
   if ! wpp386 -zq $foo0; then exit -1; fi
   ;;
 *"-c "*|*" -c"*)
-  foo=`echo $foo0|perl -pe 's/-c / /' -|perl -pe 's/ -c$/ /' -`  
+  foo=`echo $foo0|perl -pe 's/-c / /' -|perl -pe 's/ -c$/ /' -`
   case $foo0 in
   *"-o "*)
     bar=`echo $foo|perl -pe 's/-o /-fo=/' -`
@@ -117,7 +117,7 @@ case $foo0 in
      for foo in $foo0 ;do
        case $foo in
        -o)
-	     found=yes 
+	     found=yes
          ;;
        *)
          if test "x$found" = xyes; then

@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -16,9 +16,9 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	
+
 	smplfile.c
-	
+
 	core and WAVE,AIFF/AIFF-C importer by Kentaro Sato	<kentaro@ranvis.com>
 */
 
@@ -83,7 +83,7 @@ Instrument *extract_sample_file(char *sample_file)
 	SampleImporter	*importers[10], *importer;
 	int				i, j, count, result;
 	Sample			*sample;
-	
+
 	if ((count = get_importers(sample_file, sizeof importers / sizeof importers[0], importers)) == 0)
 		return NULL;
 	inst = (Instrument *)safe_malloc(sizeof(Instrument));
@@ -122,7 +122,7 @@ Instrument *extract_sample_file(char *sample_file)
 	if (inst->instname == NULL)
 	{
 		const char			*name;
-		
+
 		name = pathsep_strrchr(sample_file);
 		if (name == NULL)
 			name = sample_file - 1;
@@ -155,7 +155,7 @@ static int get_importers(const char *sample_file, int limit, SampleImporter **im
 	SampleImporter	*importer;
 	int				count;
 	const char		*extension;
-	
+
 	count = 0;
 	importer = sample_importers;
 	while(importer->load != NULL && count < limit)
@@ -204,7 +204,7 @@ static int get_importers(const char *sample_file, int limit, SampleImporter **im
 static int get_next_importer(char *sample_file, int start, int count, SampleImporter **importers)
 {
 	int					i;
-	
+
 	for(i = start; i < count; i++)
 	{
 		if (importers[i]->discriminant != NULL)
@@ -297,7 +297,7 @@ static int import_wave_discriminant(char *sample_file)
 {
 	struct timidity_file	*tf;
 	char				buf[12];
-	
+
 	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
 	if (tf_read(buf, 12, 1, tf) != 1
@@ -328,7 +328,7 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 	WAVFormatChunk	format = {0,};
 	WAVSamplerChunk	samplerc = {0,};
 	GeneralInstrumentInfo	instc = {0,};
-	
+
 	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
 	if (tf_read(buf, 12, 1, tf) != 1
@@ -363,7 +363,7 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 		{
 			int				frames;
 			sample_t		*sdata[MAX_SAMPLE_CHANNELS];
-			
+
 			if (state != 1)
 				break;
 			frames = chunk_size / format.wBlockAlign;
@@ -405,21 +405,21 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 		uint8		modes;
 		int32		sample_rate, root_freq;
 		uint32		loopStart = 0, loopEnd = 0;
-		
+
 		sample_rate = samplerc.dwSamplePeriod == 0 ? 0 : 1000000000 / samplerc.dwSamplePeriod;
 		root_freq = freq_table[samplerc.dwMIDIUnityNote];
 		if (samplerc.dwMIDIPitchFraction != 0
 				&& samplerc.dwMIDIUnityNote != 127)	/* no table data */
 		{
 			int32		diff;
-			
+
 			diff = freq_table[samplerc.dwMIDIUnityNote + 1] - root_freq;
 			root_freq += (float)samplerc.dwMIDIPitchFraction * diff / (float)UINT32_MAX;
 		}
 		if (samplerc.hasLoop)
 		{
 			const uint8		loopModes[] = {MODES_LOOPING, MODES_LOOPING | MODES_PINGPONG, MODES_LOOPING | MODES_REVERSE};
-			
+
 			modes = loopModes[samplerc.loopType];
 			loopStart = samplerc.loop_dwStart << FRACTION_BITS;
 			loopEnd = samplerc.loop_dwEnd << FRACTION_BITS;
@@ -449,7 +449,7 @@ static int read_WAVFormatChunk(struct timidity_file *tf, WAVFormatChunk *fmt, in
 {
 	int32		tmplong;
 	int16		tmpshort;
-	
+
 	READ_SHORT_LE(fmt->wFormatTag);
 	READ_SHORT_LE(fmt->wChannels);
 	READ_LONG_LE(fmt->dwSamplesPerSec);
@@ -469,7 +469,7 @@ static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl,
 	int32		tmplong;
 	int			i, loopCount, cbSamplerData, dwPlayCount;
 	unsigned int	loopType;
-	
+
 	smpl->hasLoop = 0;
 	/* skip dwManufacturer, dwProduct */
 	if (tf_seek(tf, 4 + 4, SEEK_CUR) == -1)
@@ -520,7 +520,7 @@ static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl,
 static int read_WAVInstrumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, int psize)
 {
 	int8		tmpchar;
-	
+
 	if (psize != 7)
 		goto fail;
 	READ_CHAR(inst->baseNote);
@@ -575,7 +575,7 @@ static int import_aiff_discriminant(char *sample_file)
 {
 	struct timidity_file	*tf;
 	char				buf[12];
-	
+
 	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
 	if (tf_read(buf, 12, 1, tf) != 1
@@ -615,7 +615,7 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 	GeneralInstrumentInfo	inst_info = {0,};
 	AIFFLoopInfo	loop_info = {0,0,0};
 	AIFFMarkerData	*marker_data;
-	
+
 	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
 	if (tf_read(buf, 12, 1, tf) != 1
@@ -732,7 +732,7 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 			int				i;
 			uint32			loopStart, loopEnd;
 			uint8			loopMode;
-			
+
 			if (AIFFGetMarkerPosition(loop_info.beginID, marker_data, &loopStart)
 					&& AIFFGetMarkerPosition(loop_info.endID, marker_data, &loopEnd))
 			{
@@ -765,7 +765,7 @@ static int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm,
 	int8		tmpchar;
 	char		sampleRate[10];
 	uint32		compressionType;
-	
+
 	READ_SHORT_BE(comm->numChannels);
 	READ_LONG_BE(comm->numSampleFrames);
 	READ_SHORT_BE(comm->sampleSize);
@@ -782,7 +782,7 @@ static int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm,
 		{
 			char		compressionName[256];
 			uint8		compressionNameLength;
-			
+
 			READ_CHAR(compressionNameLength);
 			if (tf_read(compressionName, compressionNameLength, 1, tf) != 1)
 				goto fail;
@@ -805,7 +805,7 @@ static int read_AIFFSoundDataChunk(struct timidity_file *tf, AIFFSoundDataChunk 
 {
 	int32		tmplong;
 	uint32		offset, blockSize;
-	
+
 	if (mode == 0 || mode == 1)
 	{
 		READ_LONG_BE(offset);
@@ -839,7 +839,7 @@ static int read_AIFFSoundData(struct timidity_file *tf, Instrument *inst, AIFFCo
 	int				i, samples;
 	Sample			*sample;
 	sample_t		*sdata[MAX_SAMPLE_CHANNELS];
-	
+
 	if ((samples = common->numChannels) > MAX_SAMPLE_CHANNELS)
 		goto fail;
 	inst->samples = samples;
@@ -863,7 +863,7 @@ static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentIn
 {
 	int8		tmpchar;
 	int16		tmpshort;
-	
+
 	if (csize != 20)
 	{
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Bad instrument chunk length");
@@ -899,7 +899,7 @@ static int read_AIFFMarkerChunk(struct timidity_file *tf, AIFFMarkerData **marke
 	int16			markerCount;
 	int				i, dest;
 	AIFFMarkerData	*m;
-	
+
 	m = NULL;
 	READ_SHORT_BE(markerCount)
 	if (csize != 2 + markerCount * (2 + 4))
@@ -916,7 +916,7 @@ static int read_AIFFMarkerChunk(struct timidity_file *tf, AIFFMarkerData **marke
 		READ_SHORT_BE(m[dest].id);
 		READ_LONG_BE(m[dest].position);
 		if (m[dest].id > 0)
-			dest++; 
+			dest++;
 	}
 	m[dest].id = 0;
 	*markers = m;
@@ -931,7 +931,7 @@ static int read_AIFFMarkerChunk(struct timidity_file *tf, AIFFMarkerData **marke
 static int AIFFGetMarkerPosition(int16 id, const AIFFMarkerData *markers, uint32 *position)
 {
 	const AIFFMarkerData	*marker;
-	
+
 	marker = markers;
 	while(marker->id != 0)
 	{
@@ -968,7 +968,7 @@ static int AIFFGetMarkerPosition(int16 id, const AIFFMarkerData *markers, uint32
 static int read_sample_data(int32 flags, struct timidity_file *tf, int bits, int channels, int frames, sample_t **sdata)
 {
 	int				i, block_frame_count;
-	
+
 	i = 0;
 	if (bits == 16)
 	{
@@ -1078,7 +1078,7 @@ static void initialize_sample(Instrument *inst, int frames, int sample_bits, int
 	int				i, j, samples;
 	Sample			*sample;
 	const uint8		*panning;
-	
+
 	samples = inst->samples;
 	for(i = 0; i < samples; i++)
 	{
@@ -1099,7 +1099,7 @@ static void initialize_sample(Instrument *inst, int frames, int sample_bits, int
 		sample->tremolo_sweep_increment =
 			sample->tremolo_phase_increment = sample->tremolo_depth =
 			sample->vibrato_sweep_increment = sample->vibrato_control_ratio = sample->vibrato_depth = 0;
-		sample->cutoff_freq = sample->resonance = sample->tremolo_to_pitch = 
+		sample->cutoff_freq = sample->resonance = sample->tremolo_to_pitch =
 			sample->tremolo_to_fc = sample->modenv_to_pitch = sample->modenv_to_fc =
 			sample->vel_to_fc = sample->key_to_fc = sample->vel_to_resonance = 0;
 		sample->envelope_velf_bpo = sample->modenv_velf_bpo =
@@ -1128,7 +1128,7 @@ static void initialize_sample(Instrument *inst, int frames, int sample_bits, int
 	for(i = 0; i < 6; i++)
 	{
 		int32			envelope_rate, envelope_offset;
-	
+
 		envelope_rate = convert_envelope_rate(63);	/* wav2pat.c */
 		envelope_offset = convert_envelope_offset(240);	/* wav2pat.c */
 		for(j = 0; j < samples; j++)
@@ -1145,7 +1145,7 @@ static void apply_GeneralInstrumentInfo(int samples, Sample *sample, const Gener
 	int32		root_freq;
 	FLOAT_T		gain;
 	int			i;
-	
+
 	root_freq = freq_table[info->baseNote];
 	if (info->detune < 0)
 	{
@@ -1241,7 +1241,7 @@ static double ConvertFromIeeeExtended(const char *bytes)
 	double	f;
 	long	expon;
 	unsigned long hiMant, loMant;
-	
+
 	expon = ((bytes[0] & 0x7F) << 8) | (bytes[1] & 0xFF);
 	hiMant	=	((unsigned long)(bytes[2] & 0xFF) << 24)
 			|	((unsigned long)(bytes[3] & 0xFF) << 16)

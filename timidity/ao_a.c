@@ -145,7 +145,7 @@ static int open_output(void)
   devices  = ao_driver_info_list(&driver_count);
   if ((driver_count > 0) && (dpm.name != NULL)) {
     for(i = 0; i < driver_count; i++) {
-      if(  (devices[i]->type == AO_TYPE_LIVE) 
+      if(  (devices[i]->type == AO_TYPE_LIVE)
         && (strcmp(dpm.name, devices[i]->short_name) == 0)  ){
         opt_ao_device_id = ao_driver_id(dpm.name);
       }

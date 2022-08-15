@@ -32,7 +32,7 @@
 
 #ifndef REVERB_PRIVATE
 #define EXTERN extern
-#else 
+#else
 #define EXTERN
 #endif
 
@@ -202,7 +202,7 @@ enum {
 	EFFECT_OVERDRIVE1,
 	EFFECT_DISTORTION1,
 	EFFECT_OD1OD2,
-	EFFECT_CHORUS,	
+	EFFECT_CHORUS,
 	EFFECT_FLANGER,
 	EFFECT_SYMPHONIC,
 	EFFECT_CHORUS_EQ3,
@@ -528,7 +528,7 @@ extern void init_ch_delay(void);
 extern void init_eq_gs(void);
 extern void set_ch_eq_gs(int32 *, int32);
 extern void do_ch_eq_gs(int32 *, int32);
-extern void do_ch_eq_xg(int32 *, int32, struct part_eq_xg *); 
+extern void do_ch_eq_xg(int32 *, int32, struct part_eq_xg *);
 extern void do_multi_eq_xg(int32 *, int32);
 
 /* GS parameters of reverb effect */

@@ -326,7 +326,7 @@ struct timidity_file *try_to_open(char *name, int decompress)
 	}
     }
 #endif /* PATCH_CONVERTERS */
-    
+
     return tf;
 }
 
@@ -397,7 +397,7 @@ struct timidity_file *open_file(const char *name, int decompress, int noise_mode
 	struct timidity_file *tf;
 	const PathList *plp = pathlist;
 	int l;
-	
+
 	open_file_noise_mode = noise_mode;
 	if (!name || !(*name)) {
 		if (noise_mode)
@@ -473,7 +473,7 @@ struct timidity_file *open_file_r(const char *name, int decompress, int noise_mo
 	struct timidity_file *tf;
 	const PathList *plp = pathlist;
 	int l;
-	
+
 	open_file_noise_mode = noise_mode;
 	if (!name || !(*name)) {
 		if (noise_mode)
@@ -761,7 +761,7 @@ void free_ptr_list(void *ptr_list, int count)
 static int atoi_limited(const char *string, int v_min, int v_max)
 {
 	int value = atoi(string);
-	
+
 	if (value <= v_min)
 		value = v_min;
 	else if (value > v_max)
@@ -772,7 +772,7 @@ static int atoi_limited(const char *string, int v_min, int v_max)
 int string_to_7bit_range(const char *string_, int *start, int *end)
 {
 	const char *string = string_;
-	
+
 	if(isdigit(*string)) {
 		*start = atoi_limited(string, 0, 127);
 		while(isdigit(*++string)) ;
@@ -1148,12 +1148,12 @@ static char **expand_file_lists(char **files, int *nfiles_in_out)
 	    {
                 while(tf_gets(input_line, sizeof(input_line), list_file)
 		      != NULL) {
-            	    if(*input_line == '\n' || *input_line == '\r')
+		  if(*input_line == '\n' || *input_line == '\r')
 			continue;
 		    if((pfile = strchr(input_line, '\r')))
-		    	*pfile = '\0';
+			*pfile = '\0';
 		    if((pfile = strchr(input_line, '\n')))
-		    	*pfile = '\0';
+			*pfile = '\0';
 		    one_file[0] = input_line;
 		    one = 1;
 		    depth++;

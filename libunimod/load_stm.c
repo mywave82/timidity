@@ -117,14 +117,14 @@ STM_Init (void)
   return 1;
 }
 
-static void 
+static void
 STM_Cleanup (void)
 {
   _mm_free (mh);
   _mm_free (stmbuf);
 }
 
-static void 
+static void
 STM_ConvertNote (STMNOTE * n)
 {
   UBYTE note, ins, vol, cmd, inf;
@@ -139,7 +139,7 @@ STM_ConvertNote (STMNOTE * n)
   if ((ins) && (ins < 32))
     UniInstrument (ins - 1);
 
-  /* special values of [SBYTE0] are handled here 
+  /* special values of [SBYTE0] are handled here
      we have no idea if these strange values will ever be encountered.
      but it appears as those stms sound correct. */
   if ((note == 254) || (note == 252))
@@ -223,7 +223,7 @@ STM_ConvertTrack (STMNOTE * n)
   return UniDup ();
 }
 
-static BOOL 
+static BOOL
 STM_LoadPatterns (void)
 {
   int t, s, tracks = 0;

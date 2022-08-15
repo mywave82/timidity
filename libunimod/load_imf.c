@@ -156,7 +156,7 @@ IMF_Cleanup (void)
   _mm_free (mh);
 }
 
-static BOOL 
+static BOOL
 IMF_ReadPattern (SLONG size, UWORD rows)
 {
   int row = 0, flag, ch;
@@ -217,7 +217,7 @@ IMF_ReadPattern (SLONG size, UWORD rows)
   return 1;
 }
 
-static void 
+static void
 IMF_ProcessCmd (UBYTE eff, UBYTE inf)
 {
   if ((eff) && (eff != 255))
@@ -610,7 +610,7 @@ IMF_Load (BOOL curious)
 	d->samplenumber[u] = ih.what[u] > ih.numsmp ? 0xffff : ih.what[u] + of.numsmp;
       d->volfade = ih.volfade;
 
-#define IMF_ProcessEnvelope(name) 										\
+#define IMF_ProcessEnvelope(name)										\
 		for (u = 0; u < (IMFENVCNT >> 1); u++) {						\
 			d->name##env[u].pos = ih.name##env[u << 1];				\
 			d->name##env[u].val = ih.name##env[(u << 1)+ 1];		\

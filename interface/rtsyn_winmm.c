@@ -131,7 +131,7 @@ int rtsyn_synth_start(){
 	processPriority = GetPriorityClass(GetCurrentProcess());
 #endif
 
-	
+
 	port=0;
 	sleep(2);
 	for(port=0;port<rtsyn_portnumber;port++){
@@ -190,13 +190,13 @@ void rtsyn_synth_stop(){
 }
 void rtsyn_midiports_close(void){
 	UINT port;
-	
+
 	for(port=0;port<rtsyn_portnumber;port++){
 		if( MMSYSERR_NOERROR!=midiInStop(hMidiIn[port]) )
 			ctl->cmsg(  CMSG_ERROR, VERB_NORMAL,"MIDI Stop Error\n");
-		if( MMSYSERR_NOERROR!=midiInReset(hMidiIn[port]) ) 
+		if( MMSYSERR_NOERROR!=midiInReset(hMidiIn[port]) )
 			ctl->cmsg(  CMSG_ERROR, VERB_NORMAL,"MIDI Rest Error\n");
-		if( MMSYSERR_NOERROR!=midiInClose(hMidiIn[port]) ) 
+		if( MMSYSERR_NOERROR!=midiInClose(hMidiIn[port]) )
 			ctl->cmsg(  CMSG_ERROR, VERB_NORMAL,"MIDI Close Error\n");
 	}
 }
@@ -223,9 +223,9 @@ int rtsyn_play_some_data(void){
 	int exlen;
 	char *sysexbuffer;
 	int ne,i,j,chk,played;
-		
+
 	played=0;
-		if( !rtsyn_buf_check() ){ 
+		if( !rtsyn_buf_check() ){
 			played=~0;
 			return played;
 		}
@@ -240,7 +240,7 @@ int rtsyn_play_some_data(void){
 			dwParam1=evbuf[evbpoint].dwParam1;
 			dwParam2=evbuf[evbpoint].dwParam2;
 			LeaveCriticalSection(&mim_section);
-		    
+
 			port=(UINT)dwInstance;
 			switch (wMsg) {
 			case MIM_DATA:
@@ -262,7 +262,7 @@ int rtsyn_play_some_data(void){
 					ctl->cmsg(  CMSG_ERROR, VERB_NORMAL,"error6\n");
 				break;
 			}
-		}while(rtsyn_buf_check());	
+		}while(rtsyn_buf_check());
 	return played;
 }
 
@@ -271,7 +271,7 @@ void CALLBACK MidiInProc(HMIDIIN hMidiInL, UINT wMsg, DWORD dwInstance,
 {
 	UINT evbpoint;
 	UINT port;
-	
+
 	port=(UINT)dwInstance;
 	switch (wMsg) {
 	case MIM_DATA:

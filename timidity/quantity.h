@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -18,8 +18,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
     quantity.h
-    
-   	by Kentaro Sato	<kentaro@ranvis.com>
+
+	by Kentaro Sato	<kentaro@ranvis.com>
 */
 
 #ifndef ___QUANTITY_H_

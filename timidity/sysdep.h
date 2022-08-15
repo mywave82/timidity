@@ -124,7 +124,7 @@ typedef unsigned long uint32;
 typedef          long long  int64;
 typedef unsigned long long uint64;
 #define TIMIDITY_HAVE_INT64 1
-#elif defined(_MSC_VER) 
+#elif defined(_MSC_VER)
 /* VC++. or PellesC */
 # ifdef __POCC__
 typedef          __int64  int64;
@@ -135,7 +135,7 @@ typedef unsigned _int64 uint64;
 # endif
 #define TIMIDITY_HAVE_INT64 1
 #elif defined(__BORLANDC__) || defined(__WATCOMC__)
-typedef 	__int64 int64;
+typedef	__int64 int64;
 typedef unsigned __int64 uint64;
 #define TIMIDITY_HAVE_INT64 1
 #elif __MACOS__
@@ -148,13 +148,13 @@ typedef UInt64 uint64;
 #endif /* C99 */
 
 /*  pointer size is not long in   WIN64 */
-#if defined(WIN32)  && defined(_AMD64_) 
+#if defined(WIN32)  && defined(_AMD64_)
 typedef long long  ptr_size_t;
-typedef unsigned long long  u_ptr_size_t; 
+typedef unsigned long long  u_ptr_size_t;
 #else
-typedef long  ptr_size_t; 
-typedef unsigned long  u_ptr_size_t; 
-#endif 
+typedef long  ptr_size_t;
+typedef unsigned long  u_ptr_size_t;
+#endif
 
 
 /* Instrument files are little-endian, MIDI files big-endian, so we
@@ -270,7 +270,7 @@ typedef struct _ChannelBitMask
 #endif
 #define MIN_AMP_VALUE (MAX_AMP_VALUE >> 9)
 
-#if SAMPLE_LENGTH_BITS > 32 
+#if SAMPLE_LENGTH_BITS > 32
 #if TIMIDITY_HAVE_INT64
 typedef int64 splen_t;
 #define SPLEN_T_MAX (splen_t)((((uint64)1)<<63)-1)
@@ -386,7 +386,7 @@ int usleep(unsigned int useconds); /* shut gcc warning up */
 #if _MSC_VER < 1500    /* 1500(VC9)  */
 #define write _write
 #ifdef HAVE_VSNPRINTF
-#define vsnprintf _vsnprintf 
+#define vsnprintf _vsnprintf
 #endif
 #endif
 #pragma warning( 4 : 4305 4244 )

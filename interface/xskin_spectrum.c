@@ -113,12 +113,12 @@ int xskin_loadviscolor( Display *d, Window w, char *filename ) {
 
     fp = open_file( filename, 1, OF_SILENT );
     if ( fp == NULL ) return 0;
-    
+
     if ( (i = readrgb(d,fp))<0 ) goto end; /* spe_ana : background */
     background = i;
     if ( (i = readrgb(d,fp))<0 ) goto end; /* spe_ana : background */
     foreground = i;
-    
+
     for ( i=0 ; i<16 ; i++ ) {
       j = readrgb(d,fp);
       if ( j<0 ) goto end;
@@ -129,11 +129,11 @@ int xskin_loadviscolor( Display *d, Window w, char *filename ) {
       if ( j<0 ) goto end;
       wave_pixel[i] = j;
     }
-    
+
   end:
     close_file( fp );
   }
-  
+
   for ( y=0 ; y<SPE_H ; y++ ) {
     for ( x=0 ; x<SPE_W ; x++ ) {
       if ( (x%2)==0 && (y%2)==0 ) i=foreground;
@@ -197,7 +197,7 @@ static void xskin_spe_ana( unsigned char *buf ) {
   if ( buf != NULL ) {
     for ( x=0 ; x<SPE_W ; x++ ) {
       yt = 16 * buf[x] / 256;
-      
+
       for ( y=(SPE_H-yt),i=0 ; y<SPE_H ; y++,i++ ) {
 	if ( i>15 ) i=15;
 	XPutPixel( spe_line, x, y, spe_pixel[i] );

@@ -52,7 +52,7 @@ StringTableNode *put_string_table(StringTable *stab, const char *str, int len)
 	memcpy(p->string, str, len);
 	p->string[len] = '\0';
     }
-	
+
     if(stab->head == NULL)
     {
 	stab->head = stab->tail = p;

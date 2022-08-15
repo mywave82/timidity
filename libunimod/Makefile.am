@@ -54,7 +54,7 @@ libunimod_a_SOURCES = \
 	unimod_priv.h
 
 libunimod.a: $(libunimod_a_OBJECTS) $(libunimod_a_DEPENDENCIES)
-if VCPP	
+if VCPP
 	rm -f libunimod.a
 	rm -f unimod.lib
 	link -lib $(libunimod_a_OBJECTS) -out:unimod.lib

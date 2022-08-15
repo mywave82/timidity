@@ -363,10 +363,10 @@ extern void g_free_libFLAC_dll ( void );
 #endif
 /***************************************************************/
 
-	
+
 #else  /* defined(LEGACY_FLAC) */
-	
-	
+
+
 	 extern const char * const *  *g_FLAC__StreamEncoderInitStatusString;
 	 extern const char * const *  *g_FLAC__StreamEncoderStateString;
 	 extern const char * const *  *g_FLAC__StreamDecoderStateString;
@@ -401,8 +401,8 @@ extern void g_free_libFLAC_dll ( void );
 #define FLAC__StreamDecoderLengthStatusString *g_FLAC__StreamDecoderLengthStatusString
 #define FLAC__StreamDecoderReadStatusString *g_FLAC__StreamDecoderReadStatusString
 #define FLAC__StreamDecoderSeekStatusString *g_FLAC__StreamDecoderSeekStatusString
-#define FLAC__StreamDecoderTellStatusString  *g_FLAC__StreamDecoderTellStatusString 
-#define FLAC__StreamDecoderWriteStatusString  *g_FLAC__StreamDecoderWriteStatusString 
+#define FLAC__StreamDecoderTellStatusString  *g_FLAC__StreamDecoderTellStatusString
+#define FLAC__StreamDecoderWriteStatusString  *g_FLAC__StreamDecoderWriteStatusString
 #define FLAC__StreamEncoderSeekStatusString *g_FLAC__StreamEncoderSeekStatusString
 #define FLAC__StreamEncoderTellStatusString *g_FLAC__StreamEncoderTellStatusString
 #define FLAC__StreamEncoderWriteStatusString *g_FLAC__StreamEncoderWriteStatusString
@@ -412,11 +412,11 @@ extern void g_free_libFLAC_dll ( void );
 #define FLAC__EntropyCodingMethodTypeString *g_FLAC__EntropyCodingMethodTypeString
 #define FLAC__FrameNumberTypeString *g_FLAC__FrameNumberTypeString
 #define FLAC__MetadataTypeString *g_FLAC__MetadataTypeString
-#define FLAC__Metadata_ChainStatusString  *g_FLAC__Metadata_ChainStatusString 
-#define FLAC__Metadata_SimpleIteratorStatusString  *g_FLAC__Metadata_SimpleIteratorStatusString 
+#define FLAC__Metadata_ChainStatusString  *g_FLAC__Metadata_ChainStatusString
+#define FLAC__Metadata_SimpleIteratorStatusString  *g_FLAC__Metadata_SimpleIteratorStatusString
 #define FLAC__StreamMetadata_Picture_TypeString *g_FLAC__StreamMetadata_Picture_TypeString
 #define FLAC__SubframeTypeString *g_FLAC__SubframeTypeString
-	
+
 #endif  /* defined(LEGACY_FLAC) */
 #endif  /* __libFLAC_dll_g_h__ */
 

@@ -130,7 +130,7 @@ static int raw_output_open(const char *fname)
 
 static int auto_raw_output_open(const char *input_filename)
 {
-  
+
   char *output_filename = (char *)safe_malloc(strlen(input_filename) + 5);
   char *ext, *p;
 

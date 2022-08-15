@@ -2,7 +2,7 @@
 
  Interface modules that are specified with `-i' option can be
 loadable modules by using dynamic link module.
- Place the shared library 
+ Place the shared library
 
  if_<NAME>.so
 

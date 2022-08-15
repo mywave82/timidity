@@ -165,16 +165,16 @@ int assign_chord(double *pitchbins, int *chord,
     *chord = -1;
 
     if (root_pitch - 9 > min_guesspitch)
-    	min_guesspitch = root_pitch - 9;
+	min_guesspitch = root_pitch - 9;
 
     if (min_guesspitch <= LOWEST_PITCH)
-    	min_guesspitch = LOWEST_PITCH + 1;
+	min_guesspitch = LOWEST_PITCH + 1;
 
     if (root_pitch + 9 < max_guesspitch)
-    	max_guesspitch = root_pitch + 9;
+	max_guesspitch = root_pitch + 9;
 
     if (max_guesspitch >= HIGHEST_PITCH)
-    	max_guesspitch = HIGHEST_PITCH - 1;
+	max_guesspitch = HIGHEST_PITCH - 1;
 
     /* keep only local maxima */
     for (i = min_guesspitch, n = 0; i <= max_guesspitch; i++)
@@ -188,64 +188,64 @@ int assign_chord(double *pitchbins, int *chord,
     }
 
     if (n < 3)
-    	return -1;
+	return -1;
 
     /* find largest peak */
     max = -1;
     for (i = 0; i < n; i++)
     {
-    	val = pitchbins[pitches[i]];
-    	if (val > max)
-    	    max = val;
+	val = pitchbins[pitches[i]];
+	if (val > max)
+	    max = val;
     }
 
     /* discard any peaks below cutoff */
     cutoff = 0.2 * max;
     for (i = 0, n2 = 0, root_flag = 0; i < n; i++)
     {
-    	val = pitchbins[pitches[i]];
-    	if (val >= cutoff)
-    	{
-    	    prune_pitches[n2++] = pitches[i];
-    	    if (pitches[i] == root_pitch)
-    	    	root_flag = 1;
-    	}
+	val = pitchbins[pitches[i]];
+	if (val >= cutoff)
+	{
+	    prune_pitches[n2++] = pitches[i];
+	    if (pitches[i] == root_pitch)
+		root_flag = 1;
+	}
     }
-    
+
     if (!root_flag || n2 < 3)
-    	return -1;
+	return -1;
 
     /* search for a chord, must contain root pitch */
     for (i = 0; i < n2; i++)
     {
-    	for (subtype = 0; subtype < 3; subtype++)
-    	{
-    	    if (i + subtype >= n2)
-    	    	continue;
+	for (subtype = 0; subtype < 3; subtype++)
+	{
+	    if (i + subtype >= n2)
+		continue;
 
 	    for (type = 0; type < 4; type++)
 	    {
-    	    	for (j = 0, n = 0, root_flag = 0; j < 3; j++)
-    	    	{
+		for (j = 0, n = 0, root_flag = 0; j < 3; j++)
+		{
 		    k = i + j;
 
-    	    	    if (k >= n2)
-    	    	    	continue;
-    	    	    
-    	    	    if (prune_pitches[k] == root_pitch)
-    	    	    	root_flag = 1;
+		    if (k >= n2)
+			continue;
+
+		    if (prune_pitches[k] == root_pitch)
+			root_flag = 1;
 
 		    if (prune_pitches[k] - prune_pitches[i+subtype] ==
-		    	chord_table[type][subtype][j])
+			chord_table[type][subtype][j])
 			    n++;
-    	    	}
-	    	if (root_flag && n == 3)
-	    	{
+		}
+		if (root_flag && n == 3)
+		{
 		    *chord = 3 * type + subtype;
 		    return prune_pitches[i+subtype];
-	    	}
-    	    }
-    	}
+		}
+	    }
+	}
     }
 
     return -1;
@@ -287,7 +287,7 @@ int freq_initialize_fft_arrays(Sample *sp)
     if (length != oldfftsize)
     {
         float f0;
-    
+
         if (oldfftsize > 0)
         {
             free(magdata);
@@ -463,7 +463,7 @@ float freq_fourier(Sample *sp, int *chord)
 	if (pitch && mag > maxmag)
 	    maxmag = mag;
     }
-    
+
     /* Apply non-linear scaling to the magnitudes
      * I don't know why this improves the pitch detection, but it does
      * The best choice of power seems to be between 1.64 - 1.68
@@ -513,31 +513,31 @@ float freq_fourier(Sample *sp, int *chord)
     /* keep local maxima */
     for (i = LOWEST_PITCH + 1; i < HIGHEST_PITCH; i++)
     {
-    	double temp;
+	double temp;
 
 	temp = pitchbins[i];
-	    
-    	/* also keep significant bands to either side */
-    	if (temp && pitchbins[i-1] < temp && pitchbins[i+1] < temp)
-    	{
-    	    new_pitchbins[i] = temp;
 
-    	    temp *= 0.5;
-    	    if (pitchbins[i-1] >= temp)
-    	    	new_pitchbins[i-1] = pitchbins[i-1];
-    	    if (pitchbins[i+1] >= temp)
-    	    	new_pitchbins[i+1] = pitchbins[i-1];
-    	}
+	/* also keep significant bands to either side */
+	if (temp && pitchbins[i-1] < temp && pitchbins[i+1] < temp)
+	{
+	    new_pitchbins[i] = temp;
+
+	    temp *= 0.5;
+	    if (pitchbins[i-1] >= temp)
+		new_pitchbins[i-1] = pitchbins[i-1];
+	    if (pitchbins[i+1] >= temp)
+		new_pitchbins[i+1] = pitchbins[i-1];
+	}
     }
     memcpy(pitchbins, new_pitchbins, 129 * sizeof(double));
 
     /* find lowest and highest pitches */
     minpitch = LOWEST_PITCH;
     while (minpitch < HIGHEST_PITCH && !pitchbins[minpitch])
-    	minpitch++;
+	minpitch++;
     maxpitch = HIGHEST_PITCH;
     while (maxpitch > LOWEST_PITCH && !pitchbins[maxpitch])
-    	maxpitch--;
+	maxpitch--;
 
     /* uh oh, no pitches left...
      * best guess is middle C
@@ -546,19 +546,19 @@ float freq_fourier(Sample *sp, int *chord)
      */
     if (maxpitch < minpitch)
     {
-    	free(floatdata);
-    	return 260.0;
+	free(floatdata);
+	return 260.0;
     }
 
     /* pitch assignment bounds based on zero crossings and pitches kept */
     if (pitch_freq_lb_table[minpitch] > min_guessfreq)
-    	min_guessfreq = pitch_freq_lb_table[minpitch];
+	min_guessfreq = pitch_freq_lb_table[minpitch];
     if (pitch_freq_ub_table[maxpitch] < max_guessfreq)
-    	max_guessfreq = pitch_freq_ub_table[maxpitch];
+	max_guessfreq = pitch_freq_ub_table[maxpitch];
 
     minfreq = pitch_freq_lb_table[minpitch];
     if (minfreq >= (rate >> 1)) minfreq = (rate >> 1) - 1;
-    
+
     maxfreq = pitch_freq_ub_table[maxpitch];
     if (maxfreq >= (rate >> 1)) maxfreq = (rate >> 1) - 1;
 
@@ -567,7 +567,7 @@ float freq_fourier(Sample *sp, int *chord)
 	minbin = 1;
     maxbin = ceil(maxfreq / f0);
     if (maxbin >= (length >> 1))
-    	maxbin = (length >> 1) - 1;
+	maxbin = (length >> 1) - 1;
 
     /* filter out all "noise" from magnitude array */
     for (i = minbin, n = 0; i <= maxbin; i++)
@@ -587,7 +587,7 @@ float freq_fourier(Sample *sp, int *chord)
      */
     if (!n)
     {
-    	free(floatdata);
+	free(floatdata);
 	return 260.0;
     }
 
@@ -602,8 +602,8 @@ float freq_fourier(Sample *sp, int *chord)
     /* initial guess is first local maximum */
     bestfreq = pitch_freq_table[minpitch];
     if (minpitch < HIGHEST_PITCH &&
-    	pitchbins[minpitch+1] > pitchbins[minpitch])
-    	    bestfreq = pitch_freq_table[minpitch+1];
+	pitchbins[minpitch+1] > pitchbins[minpitch])
+	    bestfreq = pitch_freq_table[minpitch+1];
 
     /* find best fundamental */
     for (i = minpitch; i <= maxpitch2; i++)
@@ -611,64 +611,64 @@ float freq_fourier(Sample *sp, int *chord)
 	if (!pitchbins[i])
 	    continue;
 
-    	minfreq2 = pitch_freq_lb_table[i];
-    	maxfreq2 = pitch_freq_ub_table[i];
-    	freq_inc = (maxfreq2 - minfreq2) * 0.1;
-    	if (minfreq2 >= (rate >> 1)) minfreq2 = (rate >> 1) - 1;
-    	if (maxfreq2 >= (rate >> 1)) maxfreq2 = (rate >> 1) - 1;
+	minfreq2 = pitch_freq_lb_table[i];
+	maxfreq2 = pitch_freq_ub_table[i];
+	freq_inc = (maxfreq2 - minfreq2) * 0.1;
+	if (minfreq2 >= (rate >> 1)) minfreq2 = (rate >> 1) - 1;
+	if (maxfreq2 >= (rate >> 1)) maxfreq2 = (rate >> 1) - 1;
 
 	/* look for harmonics */
 	for (freq = minfreq2; freq <= maxfreq2; freq += freq_inc)
 	{
-    	    n = total = 0;
-    	    sum = weightsum = 0;
+	    n = total = 0;
+	    sum = weightsum = 0;
 
 	    for (j = 1; j <= 32 && (newfreq = j*freq) <= maxfreq; j++)
-    	    {
-    	    	pitch = assign_pitch_to_freq(newfreq);
+	    {
+		pitch = assign_pitch_to_freq(newfreq);
 
-    	    	if (pitchbins[pitch])
-    	    	{
-    	    	    sum += pitchbins[pitch];
-    	    	    n++;
-    	    	    total = j;
-    	  	}
-    	    }
+		if (pitchbins[pitch])
+		{
+		    sum += pitchbins[pitch];
+		    n++;
+		    total = j;
+		}
+	    }
 
 	    /* only pitches with good harmonics are assignment candidates */
 	    if (n > 1)
 	    {
-	    	double ratio;
-	    	
-	    	ratio = (double) n / total;
-	    	if (ratio >= 0.333333)
-	    	{
-	    	    weightsum = ratio * sum;
-	    	    pitch = assign_pitch_to_freq(freq);
+		double ratio;
+
+		ratio = (double) n / total;
+		if (ratio >= 0.333333)
+		{
+		    weightsum = ratio * sum;
+		    pitch = assign_pitch_to_freq(freq);
 
 		    /* use only these pitches for chord detection */
-	    	    if (pitch <= HIGHEST_PITCH && pitchbins[pitch])
-	    	    	new_pitchbins[pitch] = weightsum;
+		    if (pitch <= HIGHEST_PITCH && pitchbins[pitch])
+			new_pitchbins[pitch] = weightsum;
 
 		    if (pitch > maxpitch)
-		    	continue;
+			continue;
 
-    	    	    if (n < 2 || weightsum > maxsum)
-    	    	    {
-    	    	    	maxsum = weightsum;
-    	    	    	bestfreq = freq;
-    	    	    }
-    	    	}
-    	    }
-    	}
+		    if (n < 2 || weightsum > maxsum)
+		    {
+			maxsum = weightsum;
+			bestfreq = freq;
+		    }
+		}
+	    }
+	}
     }
 
     bestpitch = assign_pitch_to_freq(bestfreq);
 
     /* assign chords */
     if ((pitch = assign_chord(new_pitchbins, chord,
-    	bestpitch - 9, maxpitch2, bestpitch)) >= 0)
-    	    bestpitch = pitch;
+	bestpitch - 9, maxpitch2, bestpitch)) >= 0)
+	    bestpitch = pitch;
 
     bestfreq = pitch_freq_table[bestpitch];
 
@@ -696,14 +696,14 @@ float freq_fourier(Sample *sp, int *chord)
     }
 
     bestfreq = 13.75 * exp(((bestpitch + weightsum / sum) - 9) /
-    	       12 * log(2));
+	       12 * log(2));
 
     /* Since we are using exactly 260 Hz as an error code, fudge the freq
      * on the extremely unlikely chance that the detected pitch is exactly
      * 260 Hz.
      */
     if (bestfreq == 260.0)
-    	bestfreq += 1E-5;
+	bestfreq += 1E-5;
 
     free(floatdata);
 

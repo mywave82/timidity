@@ -40,7 +40,7 @@ extern int  xskin_pipe_read(char *,int);
 static int text_posx[] = {
 /*     !   ""   #   $   %   &   '   (   )   *   +   ,   -   .   /  */
   30, 17, 26, 30, 29, 26, 25, 16, 13, 14,  4, 19, 10, 15, 10, 21,
-/* 0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?  */ 
+/* 0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?  */
    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 12, 12, 30, 28, 30,  3,
   27,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
   15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 22, 20, 23, 24, 18
@@ -210,7 +210,7 @@ void ts_titlebar( int i ) {
 }
 
 void ts_exitbutton( int i ) {
-  
+
   XCopyArea( xskin_d, xskin_titlebar, xskin_w, xskin_gc,
 	     EXITBUTTON_SX(i), EXITBUTTON_SY(i),
 	     EXITBUTTON_W, EXITBUTTON_H, EXITBUTTON_DX, EXITBUTTON_DY );
@@ -467,7 +467,7 @@ void xskin_start_interface( int pipe_in ) {
   XMapWindow( xskin_d, xskin_w );
   while( 1 ) {
     XNextEvent( xskin_d, &xskin_e );
-    if ( xskin_e.type == Expose ) break; 
+    if ( xskin_e.type == Expose ) break;
   }
 
   fshuf=0;
@@ -564,7 +564,7 @@ static void xskin_jobs( int pipe_in ) {
 	last_current_time=0;
 	last_puttext_time=0;
 	break;
-	
+
       case 'T': /* current time */
 	{
 	  int min,sec;
@@ -637,7 +637,7 @@ static void xskin_jobs( int pipe_in ) {
       z=0;
       break;
       */
-   
+
     case Expose:
       repaint();
       break;
@@ -663,7 +663,7 @@ static void xskin_jobs( int pipe_in ) {
       x = e.xbutton.x;
       y = e.xbutton.y;
       switch( pr ) {
-	
+
 	/*
       case TS_POS:
 	play_val=ts_pos( ON, x );break;
@@ -683,7 +683,7 @@ static void xskin_jobs( int pipe_in ) {
       case TS_PAN:
 	pan_val=ts_pan( ON, x );break;
 	*/
-	
+
       default:
 	if ( x != last_window_x || y != last_window_y ) {
 	  window_x += x-last_window_x;
@@ -721,7 +721,7 @@ static void xskin_jobs( int pipe_in ) {
       } else if ( ISIN( x, y,164, 89, 47, 15 ) ) {  /* shuffle */
 	if ( fshuf==0 ) {
 	  ts_shuf(OFFON);pr=TS_SHUFON;
-	} else { 
+	} else {
 	  ts_shuf(ONOFF);pr=TS_SHUFOFF;
 	}
       } else if ( ISIN( x, y,210, 89, 28, 15 ) ) {  /* repeat */
@@ -788,7 +788,7 @@ static void xskin_jobs( int pipe_in ) {
       } else {
 	XRaiseWindow( xskin_d, xskin_w );
       }
-	     break;  
+	     break;
 
     case ButtonRelease:
 
@@ -966,52 +966,52 @@ static int load_skins( void ) {
 	     xskin_loadviscolor( xskin_d, xskin_w, files[i] );
 
     } else if ( strcasecmp( p, "main.bmp" )==0 ) {
-      xskin_back = 
+      xskin_back =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "titlebar.bmp" )==0 ) {
-      xskin_titlebar = 
+      xskin_titlebar =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "playpaus.bmp" )==0 ) {
-      xskin_playpaus = 
+      xskin_playpaus =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "cbuttons.bmp" )==0 ) {
-      xskin_cbuttons = 
+      xskin_cbuttons =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "monoster.bmp" )==0 ) {
-      xskin_monoster = 
+      xskin_monoster =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "posbar.bmp" )==0 ) {
-      xskin_posbar = 
+      xskin_posbar =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "shufrep.bmp" )==0 ) {
-      xskin_shufrep = 
+      xskin_shufrep =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "text.bmp" )==0 ) {
-      xskin_text = 
+      xskin_text =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "volume.bmp" )==0 ) {
-      xskin_volume = 
+      xskin_volume =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
     } else if ( strcasecmp( p, "numbers.bmp" )==0 ) {
-      xskin_numbers = 
+      xskin_numbers =
 	xskin_loadBMP( xskin_d, xskin_w, files[i], &width, &height );
       pixmaps++;
 
@@ -1060,7 +1060,7 @@ static void repaint( void ) {
 
   ts_pan(OFF,-50);
   ts_puttext( BITRATE_X, BITRATE_Y, "---" ); /* bit-rate */
-  
+
   sprintf( tmp, "%d", (int)play_mode->rate/1000 );
   ts_puttext( SAMPLE_X,  SAMPLE_Y,  tmp  ); /* sample-rate */
 
@@ -1105,11 +1105,11 @@ static void repaint( void ) {
   return;
 }
 
-/* signal handler calls are ported from xmasl 
+/* signal handler calls are ported from xmasl
    and thanks to takawata@shidahara1.planet.kobe-u.ac.jp */
 
 void delete_shm( void ) {
- 
+
   if ( speana_buf != NULL ) {
     shmdt( (char *)speana_buf );
     shmctl( shmid, IPC_RMID, 0 );

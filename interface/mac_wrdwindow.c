@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-		
+
     mac_wrdwindow.c
     Macintosh graphics driver for WRD
 */
@@ -36,7 +36,7 @@
 
 void dev_change_1_palette(int code, RGBColor color)
 {
-	(**(**dispWorld->portPixMap).pmTable).ctTable[code].rgb=color;	
+	(**(**dispWorld->portPixMap).pmTable).ctTable[code].rgb=color;
 	(**(**dispWorld->portPixMap).pmTable).ctSeed++;
 	//CTabChanged( (**dispWorld->portPixMap).pmTable );
 	dev_palette[0][code]=color;
@@ -44,7 +44,7 @@ void dev_change_1_palette(int code, RGBColor color)
 	//	SetEntryUsage(wrd_palette, code, pmAnimated, 0x0000);
 	//	//SetEntryColor(wrd_palette, code, &color);
 	//	AnimateEntry(wrd_palette, code, &color);
-	//	SetEntryUsage(wrd_palette, code, pmTolerant, 0x0000);		
+	//	SetEntryUsage(wrd_palette, code, pmTolerant, 0x0000);
 	//}
 	pallette_exist |= color.red;
 	pallette_exist |= color.green;
@@ -56,7 +56,7 @@ void dev_change_palette(RGBColor pal[16])
 	int i;
 	//RGBColor color;
 	pallette_exist=0;
-	
+
 	for( i=0; i<16; i++ ){
 		pallette_exist |= pal[i].red;
 		pallette_exist |= pal[i].green;
@@ -74,7 +74,7 @@ void dev_init_text_color()
 		//(**(**graphicWorld[0]->portPixMap).pmTable).ctTable[TCODE2INDEX(code)].rgb=textcolor[code];
 		//(**(**graphicWorld[1]->portPixMap).pmTable).ctTable[TCODE2INDEX(code)].rgb=textcolor[code];
 		(**(**dispWorld->portPixMap).pmTable).ctTable[TCOLOR_INDEX_SHIFT+code].rgb=textcolor[code];
-	
+
 		//(**(**graphicWorld[0]->portPixMap).pmTable).ctSeed++;
 		//(**(**graphicWorld[1]->portPixMap).pmTable).ctSeed++;
 		(**(**dispWorld->portPixMap).pmTable).ctSeed++;
@@ -86,7 +86,7 @@ static void expand_horizontality( PixMapHandle pixmap, int width, int height )
 	int	x,y;
 	Ptr	baseAdr= GetPixBaseAddr(pixmap), xbase;
 	int	rowBytes= (**pixmap).rowBytes & 0x1FFF;
-	
+
 	for( y=0; y<height; y++){
 		xbase= baseAdr+ rowBytes*y;
 		for( x=width-1; x>=0; x-- ){
@@ -103,7 +103,7 @@ void dev_draw_text_gmode(PixMapHandle pixmap, int x, int y, const char* s, int l
 	int		color, trans, width;
 	Rect		rect= {0,0,16,32},
 			destrect;
-	
+
 	GetGWorld(&oldGW, &oldGD);
 	LockPixels(charbufWorld->portPixMap);
 	SetGWorld(charbufWorld,0);
@@ -111,10 +111,10 @@ void dev_draw_text_gmode(PixMapHandle pixmap, int x, int y, const char* s, int l
 		if( fgcolor==trans ) trans++;
 		if( bgcolor==trans ) trans++;
 		if( fgcolor==trans ) trans++;
-		
+
 		color= ( (mode&2)? bgcolor:trans );
 		dev_box(charbufWorld->portPixMap, rect, color, 0xFF);
-		
+
 		color= ( (mode&1)? fgcolor:trans );
 		charbufWorld->fgColor= color;
 		TextMode(srcOr);
@@ -123,19 +123,19 @@ void dev_draw_text_gmode(PixMapHandle pixmap, int x, int y, const char* s, int l
 		if( ton_mode==2 ){
 			expand_horizontality(charbufWorld->portPixMap, len*8, 16);
 		}
-		
+
 		width= len*8;
 		if( ton_mode==2 ) width*=2;
-		
+
 		rect.right=width;
 		destrect.left=x; destrect.top=y;
 		destrect.right=x+width; destrect.bottom=destrect.top+16;
-		
+
 		MyCopyBits(charbufWorld->portPixMap, pixmap,
 			rect, destrect, 0x11/*trans*/, trans, pmask,
 			0, 0, NULL);
-		
-		
+
+
 	SetGWorld(oldGW, oldGD);
 	UnlockPixels(charbufWorld->portPixMap);
 }
@@ -144,7 +144,7 @@ static void BlockMoveData_transparent(const void* srcPtr, void *destPtr,
 				Size byteCount, int pmask, int trans)
 {
 	int i, tmp;
-	
+
 	if( srcPtr>destPtr ){
 		for( i=0; i<byteCount; i++){
 			if( ((char*)srcPtr)[i]!=trans ){
@@ -169,12 +169,12 @@ static void BlockMoveData_transparent(const void* srcPtr, void *destPtr,
 #define PMASK_COPY(s,d,pmask) ((d)=((d)&~(pmask))|((s)&(pmask)))
 
 static pascal void BlockMoveData_gmode(const void* srcPtr, void *destPtr,
-								 Size 	byteCount)
+								 Size	byteCount)
 {
 	int i;
 	const char*	src=srcPtr;
 	char*		dest=destPtr;
-	
+
 	if( srcPtr>destPtr ){
 		for( i=0; i<byteCount; i++){
 			PMASK_COPY(src[i],dest[i], gmode_mask);
@@ -187,7 +187,7 @@ static pascal void BlockMoveData_gmode(const void* srcPtr, void *destPtr,
 }
 
 static pascal void BlockMoveData_masktrans(const uint8*	srcPtr,	 uint8 *destPtr,
-			Size 	byteCount, int trans, int maskx, const uint8 maskdata[])
+			Size	byteCount, int trans, int maskx, const uint8 maskdata[])
 {
 #define  BITON(x, data) (data[(x)/8]&(0x80>>((x)%8)))
 	int i;
@@ -223,11 +223,11 @@ void MyCopyBits(PixMapHandle srcPixmap, PixMapHandle dstPixmap,
 		destRowBytes= (**dstPixmap).rowBytes & 0x1FFF,
 		y1, y2, width,hight, cut, dy, maskwidth;
 	Ptr	srcAdr= GetPixBaseAddr(srcPixmap),
-		dstAdr= GetPixBaseAddr(dstPixmap);	
+		dstAdr= GetPixBaseAddr(dstPixmap);
 	Rect	srcBounds=  (**srcPixmap).bounds,
 			dstBounds=  (**dstPixmap).bounds;
 
-	
+
 	//check params
 	//chech src top
 	if( srcRect.top<srcBounds.top ){
@@ -253,10 +253,10 @@ void MyCopyBits(PixMapHandle srcPixmap, PixMapHandle dstPixmap,
 		srcRect.right-= cut; srcBounds.right-= cut;
 	}
 	if( srcRect.right<srcBounds.left ) return;
-	
+
 	width=srcRect.right-srcRect.left;
 	hight=srcRect.bottom-srcRect.top;
-	
+
 	//check dest
 	//check top
 	if( dstRect.top  <dstBounds.top ){
@@ -265,7 +265,7 @@ void MyCopyBits(PixMapHandle srcPixmap, PixMapHandle dstPixmap,
 	}
 	if( dstRect.top>dstBounds.bottom ) return;
 	//check hight
-	if( dstRect.top+hight>dstBounds.bottom ){	
+	if( dstRect.top+hight>dstBounds.bottom ){
 		hight=dstBounds.bottom-dstRect.top;
 		srcRect.bottom=srcRect.top+hight;
 	}
@@ -278,7 +278,7 @@ void MyCopyBits(PixMapHandle srcPixmap, PixMapHandle dstPixmap,
 	//check width
 	if( dstRect.left+width>dstBounds.right )
 		width=dstBounds.right-dstRect.left;
-	
+
 	switch( mode ){
 	case 0://srcCopy
 	case 0x10:
@@ -346,11 +346,11 @@ void dev_line(int x1, int y1, int x2, int y2, int color, int style,
 
 #define DOT(x,y,col) {Ptr p=&baseAdr[y*rowBytes+x]; pt.h=x;pt.v=y;    \
 		if(PtInRect(pt,&bounds)){(*p)&=~pmask; (*p)|=col;} }
-	
+
 	color &= pmask;
 	step= ( (x1<x2)==(y1<y2) ) ? 1:-1;
 	dx= abs(x2-x1); dy=abs(y2-y1);
-	
+
 	if( dx>dy ){
 		if( x1>x2 ){ x1=x2; y1=y2; }
 		if(style & mask[style_count]){ DOT(x1,y1,color); }
@@ -386,7 +386,7 @@ void dev_box(PixMapHandle pixmap, Rect rect, int color, int pmask)
 			x, y1, width,hight, tmp;
 	Ptr		baseAdr= GetPixBaseAddr(pixmap);
 	Rect	bounds=  (**pixmap).bounds;
-	
+
 	//check params
 	//chech src top
 	if( rect.top<bounds.top ){
@@ -408,7 +408,7 @@ void dev_box(PixMapHandle pixmap, Rect rect, int color, int pmask)
 		rect.right= bounds.right;
 	}
 	if( rect.right<bounds.left ) return;
-	
+
 	width=rect.right-rect.left;
 	hight=rect.bottom-rect.top;
 	color &= pmask;
@@ -427,7 +427,7 @@ void mac_setfont(GWorldPtr world, Str255 fontname)
 {
 	GDHandle	oldGD;
 	GWorldPtr	oldGW;
-	
+
 	GetGWorld(&oldGW, &oldGD);
 	LockPixels(world->portPixMap);
 	{

@@ -147,7 +147,7 @@ S69_Cleanup (void)
   _mm_free (mh);
 }
 
-static BOOL 
+static BOOL
 S69_LoadPatterns (void)
 {
   int track, row, channel;
@@ -270,7 +270,7 @@ S69_LoadPatterns (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 S69_Load (BOOL curious)
 {
   int i;

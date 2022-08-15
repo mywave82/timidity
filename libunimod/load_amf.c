@@ -116,7 +116,7 @@ AMF_Cleanup (void)
   _mm_free (track);
 }
 
-static BOOL 
+static BOOL
 AMF_UnpackTrack (URL modreader)
 {
   ULONG tracksize;
@@ -143,7 +143,7 @@ AMF_UnpackTrack (URL modreader)
 		if ((row == 0xff) && (cmd == 0xff) && (arg == -1))
 		  break;
 		/* the last triplet should be FF FF FF, but this is not
-		   always the case... maybe a bug in m2amf ? 
+		   always the case... maybe a bug in m2amf ?
 		   else
 		   return 0;
 		 */

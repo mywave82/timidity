@@ -114,14 +114,14 @@ MERET	MPGE_initializeWork(void)
 			char	szPathName[ _MAX_PATH + 8];
 			dwKeySize = sizeof( szPathName );
 
-			// レジストリ項目の HEY_CURENT_USER\Software\MarineCat\GOGO_DLLキー以下の 
+			// レジストリ項目の HEY_CURENT_USER\Software\MarineCat\GOGO_DLLキー以下の
 			// INSTPATH (REG_SZ)を取得します。
 			if( RegOpenKeyEx(
 					Key,
 					SubKey,
 					0,
 					KEY_ALL_ACCESS,
-					&hKey ) == ERROR_SUCCESS 
+					&hKey ) == ERROR_SUCCESS
 			){
 				lResult = RegQueryValueEx(
 					hKey,
@@ -147,7 +147,7 @@ MERET	MPGE_initializeWork(void)
 //			fprintf( stderr,"DLLの読み込みを失敗しました。\nDLLをEXEファイルと同じディレクトリへ複写してください\n");
 //			exit( -1 );
 		}
-		
+
 		// エクスポート関数の取得
 		mpge_init = (me_init )GetProcAddress( hModule, "MPGE_initializeWork" );
 		mpge_setconf = (me_setconf )GetProcAddress( hModule, "MPGE_setConfigure" );

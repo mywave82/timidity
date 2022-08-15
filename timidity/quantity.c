@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -42,7 +42,7 @@
 
 /*
 	Guide To Add New Unit Types/Units
-	
+
 	append QUANTITY_UNIT_TYPE(<TYPE>)
 	           QUANTITY_UNIT_NAME(<UNIT>)
 	           ... to enum quantity_units (in quantity.h)
@@ -164,7 +164,7 @@ static FLOAT_T convert_VIBRATO_RATE_HZ(FLOAT_T value, int32 param)
 static int GetQuantityHints(uint16 type, QuantityHint *units)
 {
 	QuantityHint		*unit;
-	
+
 	unit = units;
 	#define QUANTITY_TYPE_INT(type)	\
 			case QUANTITY_UNIT_TYPE(type):		REGISTER_TYPE_INT("", type##_NUM)
@@ -210,7 +210,7 @@ static int GetQuantityHints(uint16 type, QuantityHint *units)
 static const char *number_to_quantity(int32 number_i, const char *suffix_i, FLOAT_T number_f, const char *suffix_f, Quantity *quantity, uint16 type)
 {
 	QuantityHint		units[MAX_QUANTITY_UNITS_PER_UNIT_TYPES], *unit;
-	
+
 	if (!GetQuantityHints(type, units))
 		return "Parameter error";
 	unit = units;
@@ -248,7 +248,7 @@ const char *string_to_quantity(const char *string, Quantity *quantity, uint16 ty
 	int32				number_i;
 	FLOAT_T				number_f;
 	char				*suffix_i, *suffix_f;
-	
+
 	number_i = strtol(string, &suffix_i, 10);	/* base == 10 for compatibility with atoi() */
 	if (string == suffix_i)	/* doesn't start with valid character */
 		return "Number expected";
@@ -281,7 +281,7 @@ void float_to_quantity(FLOAT_T number, Quantity *quantity, uint16 type)
 static int GetQuantityConvertProc(const Quantity *quantity, QuantityConvertProc *proc)
 {
 	QuantityHint		units[MAX_QUANTITY_UNITS_PER_UNIT_TYPES], *unit;
-	
+
 	if (!GetQuantityHints(quantity->type, units))
 		return -1;	/* already warned */
 	unit = units;
@@ -301,7 +301,7 @@ static int GetQuantityConvertProc(const Quantity *quantity, QuantityConvertProc 
 int32 quantity_to_int(const Quantity *quantity, int32 param)
 {
 	QuantityConvertProc	proc;
-	
+
 	switch (GetQuantityConvertProc(quantity, &proc))
 	{
 		case 0:
@@ -315,7 +315,7 @@ int32 quantity_to_int(const Quantity *quantity, int32 param)
 FLOAT_T quantity_to_float(const Quantity *quantity, int32 param)
 {
 	QuantityConvertProc	proc;
-	
+
 	switch (GetQuantityConvertProc(quantity, &proc))
 	{
 		case 0:

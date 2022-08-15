@@ -178,7 +178,7 @@ static void ctl_metronome(int meas, int beat)
 {
 	int mins, secs;
 	static int prev_meas = -1, prev_beat = -1;
-	
+
 #ifdef __W32__
 	if (wrdt->id == 'w')
 		return;

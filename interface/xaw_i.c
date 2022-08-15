@@ -158,7 +158,7 @@ typedef load_dialog *ldPointer;
 
 typedef struct {
  ldPointer ld;
- const char *name; 
+ const char *name;
  struct ldStore_t *next;
 } ldStore;
 
@@ -709,8 +709,8 @@ aboutACT(Widget w, XEvent *e, String *v, Cardinal *n) {
   for(i=0, p=info[0]; p; p=info[++i]) {
     snprintf(s, sizeof(s), "about_lbl%d", i);
     snprintf(lbuf, sizeof(lbuf), p,
-    		(strcmp(timidity_version, "current")) ? "version " : "",
-    		timidity_version);
+		(strcmp(timidity_version, "current")) ? "version " : "",
+		timidity_version);
     XtVaCreateManagedWidget(s,labelWidgetClass,popup_abox,
                                 XtNlabel,lbuf, XtNwidth,320, XtNresize,False,
                                 XtNfontSet,app_resources.label_font,
@@ -827,7 +827,7 @@ confirmCB(Widget w, const char *mesname, Boolean multiple) {
                     XtNresize,False, XtNfromVert,popup_message, NULL);
   popup_ccancel = XtVaCreateManagedWidget("Cancel",commandWidgetClass,
                     popup_cform, XtNbackground,buttonbgcolor,
-                    XtNresize,False, XtNfromVert,popup_message, 
+                    XtNresize,False, XtNfromVert,popup_message,
                     XtNfromHoriz,popup_cok, NULL);
   XtVaGetValues(popup_message, XtNwidth,&mw, NULL);
   XtVaGetValues(popup_cok, XtNwidth,&ow, NULL);
@@ -874,7 +874,7 @@ static void
 quitCB(Widget w, XtPointer client_data, XtPointer call_data) {
   if (Cfg.confirmexit == True) {
 #ifdef XAW3D
-      XtPopdown(file_sm); 
+      XtPopdown(file_sm);
      /* Otherwise, when selecting "Quit" from the file menu, the menu
       * may obscure the confirm dialog on XAW3D v1.5.
       */
@@ -1315,9 +1315,9 @@ createDialog(Widget w, ldPointer ld) {
   XtVaSetValues(load_l, XtNwidth,(int)(ldwidth/1.5), NULL);
 
   XtAddCallback(load_flist, XtNcallback,
-                 (XtCallbackProc)setFileLoadCB, (XtPointer)ld); 
+                 (XtCallbackProc)setFileLoadCB, (XtPointer)ld);
   XtAddCallback(load_dlist, XtNcallback,
-                 (XtCallbackProc)setDirLoadCB, (XtPointer)ld); 
+                 (XtCallbackProc)setDirLoadCB, (XtPointer)ld);
   XtAddCallback(load_f, XtNcallback,callFilterDirList, (XtPointer)ld);
   XtInstallAccelerators(load_t, load_f);
   XtAddEventHandler(popup_load, FocusChangeMask, False,
@@ -1498,7 +1498,7 @@ popdownSavePL(Widget w, XtPointer client_data, XtPointer call_data) {
   XtPopdown(popup_load);
 }
 
-static void 
+static void
 saveformatDialog(Widget parent) {
   Widget popup_sform, popup_sformat, popup_slabel, sbox_rbox, sbox_ratelabel,
          sbox_ratetext, popup_sbuttons, popup_sok, popup_scancel, lowBox;
@@ -1698,12 +1698,12 @@ filemenuCB(Widget w, XtPointer client_data, XtPointer call_data) {
       popupDialog(w, "dialog_sfile", NULL, popdownSavefile, ldSstart);
       break;
     case ID_LOAD_PLAYLIST:
-      popupDialog(w, LISTDIALOGBASENAME, 
+      popupDialog(w, LISTDIALOGBASENAME,
                 &app_resources.load_LISTDIALOGBASENAME_title,
                 popdownLoadPL, ldSstart);
       break;
     case ID_SAVE_PLAYLIST:
-      popupDialog(w, LISTDIALOGBASENAME, 
+      popupDialog(w, LISTDIALOGBASENAME,
                  &app_resources.save_LISTDIALOGBASENAME_title,
                  popdownSavePL, ldSstart);
       break;
@@ -1737,8 +1737,8 @@ filemenuCB(Widget w, XtPointer client_data, XtPointer call_data) {
         xawTipSet(Cfg.tooltips);
 #endif /* HAVE_TIP */
        /*
-        * In the case lyric_t is not managed, the maximum height has been 
-        * defined to curr_height by setSizeHints. We need to increase it 
+        * In the case lyric_t is not managed, the maximum height has been
+        * defined to curr_height by setSizeHints. We need to increase it
         * otherwise the trace may not be shown - the WM may cap
         * XConfigureEvent->height to
         * maximum_height - WINDOW_DECORATIONS_HEIGHT.
@@ -2176,8 +2176,8 @@ expandDir(char *path, const char *bpath) {
     strcpy(tmp, "/");
     strcpy(newfull, "/");
     return newfull;
-  } else 
-    if ((*p != '~') && ((tail = strrchr(path, '/')) == NULL) 
+  } else
+    if ((*p != '~') && ((tail = strrchr(path, '/')) == NULL)
          && (strcmp(p, ".")) && (strcmp(p, "..")) )
   {
     p = tmp;
@@ -2332,7 +2332,7 @@ setDirList(ldPointer ld, char *curr_dir) {
 
     init_string_table(&strftab); init_string_table(&strdtab);
     while (url_gets(dirp, filename, sizeof(filename)) != NULL) {
-      fullpath = (char *)new_segment(&pool, strlen(curr_dir) + 
+      fullpath = (char *)new_segment(&pool, strlen(curr_dir) +
                                      strlen(filename) + 2);
       sprintf(fullpath, "%s/%s", curr_dir, filename);
       if (filename[0] == '.') {
@@ -2577,7 +2577,7 @@ completeDirACT(Widget w, XEvent *e, String *v, Cardinal *n) {
         clearValue(XtParent(w));
 #endif /* CLEARVALUE */
         snprintf(filename, sizeof(filename), "%s/%s", dirname, matchstr);
-        XtVaSetValues(load_dialog_widget, XtNvalue,filename, NULL); 
+        XtVaSetValues(load_dialog_widget, XtNvalue,filename, NULL);
       }
     }
   }
@@ -2884,7 +2884,7 @@ flistMoveACT(Widget w, XEvent *e, String *v, Cardinal *n) {
       XawListHighlight(file_list, (i<0)?max_files-1:0);
       return;
   }
- 
+
   XtVaGetValues(file_list, XtNheight,&listheight, NULL);
   XtVaGetValues(file_vport, XtNheight,&vportheight, NULL);
   perpage = ceil((max_files * vportheight) / listheight - 0.5);
@@ -3034,7 +3034,7 @@ createOptions(void) {
   XtVaCreateManagedWidget("modul_lbl",labelWidgetClass,modul_bb,
                        XtNforeground,textcolor, XtNbackground,bgcolor, NULL);
   porta_bb = XtVaCreateManagedWidget("porta_box",boxWidgetClass,popup_optform,
-                       XtNfromVert,modul_bb, 
+                       XtNfromVert,modul_bb,
                        XtNorientation,XtorientHorizontal,
                        XtNbackground,bgcolor, NULL);
   porta_b = XtVaCreateManagedWidget("porta_button",toggleWidgetClass,porta_bb,
@@ -3043,7 +3043,7 @@ createOptions(void) {
   XtVaCreateManagedWidget("porta_lbl",labelWidgetClass,porta_bb,
                        XtNforeground,textcolor, XtNbackground,bgcolor, NULL);
   nrpnv_bb = XtVaCreateManagedWidget("nrpnv_box",boxWidgetClass,popup_optform,
-                       XtNfromVert,porta_bb, 
+                       XtNfromVert,porta_bb,
                        XtNorientation,XtorientHorizontal,
                        XtNbackground,bgcolor, NULL);
   nrpnv_b = XtVaCreateManagedWidget("nrpnv_button",toggleWidgetClass,nrpnv_bb,
@@ -3063,7 +3063,7 @@ createOptions(void) {
                        XtNforeground,textcolor, XtNbackground,bgcolor, NULL);
   chorus_bb = XtVaCreateManagedWidget("chorus_box",boxWidgetClass,
                        popup_optform, XtNorientation,XtorientHorizontal,
-                       XtNfromVert,reverb_bb, 
+                       XtNfromVert,reverb_bb,
                        XtNbackground,bgcolor, NULL);
   chorus_b = XtVaCreateManagedWidget("chorus_button",toggleWidgetClass,
                        chorus_bb, XtNbitmap,off_mark, XtNfromVert,reverb_b,
@@ -3073,7 +3073,7 @@ createOptions(void) {
                        XtNforeground,textcolor, XtNbackground,bgcolor, NULL);
   chpressure_bb = XtVaCreateManagedWidget("chpressure_box",boxWidgetClass,
                        popup_optform, XtNorientation,XtorientHorizontal,
-                       XtNfromVert,chorus_bb, 
+                       XtNfromVert,chorus_bb,
                        XtNbackground,bgcolor, NULL);
   chpressure_b = XtVaCreateManagedWidget("chpressure_button",
                        toggleWidgetClass,chpressure_bb, XtNbitmap,off_mark,
@@ -3084,10 +3084,10 @@ createOptions(void) {
                        XtNbackground,bgcolor, NULL);
   overlapv_bb = XtVaCreateManagedWidget("overlapvoice_box",boxWidgetClass,
                        popup_optform, XtNorientation,XtorientHorizontal,
-                       XtNfromVert,chpressure_bb, 
+                       XtNfromVert,chpressure_bb,
                        XtNbackground,bgcolor, NULL);
   overlapv_b = XtVaCreateManagedWidget("overlapvoice_button",
-                       toggleWidgetClass,overlapv_bb, XtNbitmap,off_mark, 
+                       toggleWidgetClass,overlapv_bb, XtNbitmap,off_mark,
                        XtNfromVert,chpressure_b, XtNforeground,togglecolor,
                        XtNbackground,buttonbgcolor, NULL);
   XtVaCreateManagedWidget("overlapv_lbl",labelWidgetClass,
@@ -3095,7 +3095,7 @@ createOptions(void) {
                        XtNbackground,bgcolor, NULL);
   txtmeta_bb = XtVaCreateManagedWidget("txtmeta_box",boxWidgetClass,
                        popup_optform, XtNorientation,XtorientHorizontal,
-                       XtNfromVert,overlapv_bb, 
+                       XtNfromVert,overlapv_bb,
                        XtNbackground,bgcolor, NULL);
   txtmeta_b = XtVaCreateManagedWidget("txtmeta_button",toggleWidgetClass,
                        txtmeta_bb, XtNbitmap,off_mark, XtNfromVert,overlapv_b,
@@ -3183,7 +3183,7 @@ fdeleteCB(Widget w, XtPointer client_data, XtPointer call_data) {
       current_n_displayed--;
     }
     if (p != NULL) XtVaSetValues(title_mb, XtNlabel,p+1, NULL);
-    else fprintf(stderr, "No space character in flist!\n"); 
+    else fprintf(stderr, "No space character in flist!\n");
          /* Should never happen */
   }
   a_pipe_write("%c%d", S_DEL_FROM_PLAYLIST, n);
@@ -3200,7 +3200,7 @@ fdeleteCB(Widget w, XtPointer client_data, XtPointer call_data) {
     if (n >= max_files) --n;
     XawListHighlight(file_list, n);
   }
-  if (psmenu != NULL) { 
+  if (psmenu != NULL) {
     free(psmenu);
     psmenu = NULL;
 #ifndef TimNmenu
@@ -3290,7 +3290,7 @@ deleteTextACT(Widget w, XEvent *e, String *v, Cardinal *n) {
 #ifdef CLEARVALUE
   Widget TextSrc;
 
-  XtVaGetValues(lyric_t, XtNtextSource,&TextSrc, NULL); 
+  XtVaGetValues(lyric_t, XtNtextSource,&TextSrc, NULL);
   XawAsciiSourceFreeString(TextSrc);
 #endif /* CLEARVALUE */
   XtVaSetValues(lyric_t, XtNstring,"<< TiMidity Messages >>\n", NULL);
@@ -3410,9 +3410,9 @@ a_dnd_init(void) {
 static void
 enable_dnd_for_widget(DndClass *dnd, Widget widget, dnd_callback_t cb) {
   make_window_dnd_aware(dnd, XtWindow(widget), cb);
-  XtAddEventHandler(widget, ClientMessage, True, 
+  XtAddEventHandler(widget, ClientMessage, True,
                      xdnd_listener, (XtPointer)dnd);
-  XtAddEventHandler(widget, SelectionNotify, True, 
+  XtAddEventHandler(widget, SelectionNotify, True,
                      xdnd_listener, (XtPointer)dnd);
 }
 
@@ -3420,7 +3420,7 @@ static void
 xdnd_listener(Widget w, XtPointer client_data, XEvent *ev, Boolean *dummy) {
   DndClass *dnd = (DndClass *)client_data;
   dnd->win = XtWindow(w);
-  process_client_dnd_message(dnd, ev); 
+  process_client_dnd_message(dnd, ev);
 }
 #endif /* XDND */
 
@@ -3756,13 +3756,13 @@ setNetWMIcon(void) {
     if ((!extra) || (count != (w/8 + 1))) bit_max = 256;
     else {
       count = 0;
-      /* Discard the extra bits if XBM width is not divisible by 8 and 
+      /* Discard the extra bits if XBM width is not divisible by 8 and
        * we're at the last byte of the row. */
       bit_max = extra;
     }
     for (bit = 1; bit != bit_max; bit <<= 1) {
       if ((timidity_bits[pos] & bit) == 0) {
-        *ip++ = 0xFFFFFFFF; /* White, no transparency */ 
+        *ip++ = 0xFFFFFFFF; /* White, no transparency */
       } else {
         *ip++ = 0xFF000000; /* Black, no transparency */
       }
@@ -4620,7 +4620,7 @@ static void
 clearValue(Widget w) {
   Widget TextSrc;
 
-  XtVaGetValues(XtNameToWidget(w, "value"), XtNtextSource, &TextSrc, NULL); 
+  XtVaGetValues(XtNameToWidget(w, "value"), XtNtextSource, &TextSrc, NULL);
   XawAsciiSourceFreeString(TextSrc);
 }
 #endif /* CLEARVALUE */

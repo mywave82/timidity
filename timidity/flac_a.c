@@ -688,7 +688,7 @@ static int auto_flac_output_open(const char *input_filename, const char *title)
 
 static int open_output(void)
 {
-  int include_enc, exclude_enc;  
+  int include_enc, exclude_enc;
 
 #ifdef AU_FLAC_DLL
 	if (g_load_libFLAC_dll("libFLAC.dll")) {

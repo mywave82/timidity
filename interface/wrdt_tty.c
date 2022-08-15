@@ -66,7 +66,7 @@ static int inkey_flag;
 
 static int wrdt_open(char *dummy)
 {
-  
+
     wrdt.opened = 1;
     inkey_flag = 0;
     return 0;
@@ -118,7 +118,7 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	len = strlen(p);
 	text = (char *)new_segment(&tmpbuffer, SAFE_CONVERT_LENGTH(len));
 
-	/*This must be not good thing,but as far as I know no wrd file 
+	/*This must be not good thing,but as far as I know no wrd file
 	  written in EUC-JP code found*/
 
 	code_convert(p, text, SAFE_CONVERT_LENGTH(len), "SJIS", (char *)-1);

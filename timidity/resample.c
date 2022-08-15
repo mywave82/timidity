@@ -320,7 +320,7 @@ static resample_t resample_newton(sample_t *src, splen_t ofs, resample_rec_t *re
 	newt_old_trunc_x = (ofs>>FRACTION_BITS);
     }
     return ((y > sample_bounds_max) ? sample_bounds_max :
-    	    ((y < sample_bounds_min) ? sample_bounds_min : y));
+	    ((y < sample_bounds_min) ? sample_bounds_min : y));
 }
 
 
@@ -430,34 +430,34 @@ void initialize_gauss_table(int n)
     float *gptr;
 
     for (i = 0; i <= n; i++)
-    	z[i] = i / (4*M_PI);
+	z[i] = i / (4*M_PI);
     zsin = &zsin_[34];
     for (i = -n; i <= n; i++)
-    	zsin[i] = sin(i / (4*M_PI));
+	zsin[i] = sin(i / (4*M_PI));
 
     x_inc = 1.0 / (1<<FRACTION_BITS);
     gptr = safe_realloc(gauss_table[0], (n+1)*sizeof(float)*(1<<FRACTION_BITS));
     for (m = 0, x = 0.0; m < (1<<FRACTION_BITS); m++, x += x_inc)
     {
-    	xz = (x + n_half) / (4*M_PI);
-    	for (i = 0; i <= n; i++)
+	xz = (x + n_half) / (4*M_PI);
+	for (i = 0; i <= n; i++)
 	    xzsin[i] = sin(xz - z[i]);
-    	gauss_table[m] = gptr;
+	gauss_table[m] = gptr;
 
-    	for (k = 0; k <= n; k++)
-    	{
-    	    ck = 1.0;
+	for (k = 0; k <= n; k++)
+	{
+	    ck = 1.0;
 
-    	    for (i = 0; i <= n; i++)
-    	    {
-    	    	if (i == k)
-    	    	    continue;
-    	
-    	    	ck *= xzsin[i] / zsin[k - i];
-    	    }
-    	    
-    	    *gptr++ = ck;
-    	}
+	    for (i = 0; i <= n; i++)
+	    {
+		if (i == k)
+		    continue;
+
+		ck *= xzsin[i] / zsin[k - i];
+	    }
+
+	    *gptr++ = ck;
+	}
     }
 }
 
@@ -478,8 +478,8 @@ static void initialize_newton_coeffs(void)
     newt_coeffs[0][0] = 1;
     for (i = 0; i <= n; i++)
     {
-    	newt_coeffs[i][0] = 1;
-    	newt_coeffs[i][i] = 1;
+	newt_coeffs[i][0] = 1;
+	newt_coeffs[i][i] = 1;
 
 	if (i > 1)
 	{
@@ -487,17 +487,17 @@ static void initialize_newton_coeffs(void)
 	    newt_coeffs[i][i] = newt_coeffs[i-1][0] / i;
 	}
 
-    	for (j = 1; j < i; j++)
-    	{
-    	    newt_coeffs[i][j] = newt_coeffs[i-1][j-1] + newt_coeffs[i-1][j];
+	for (j = 1; j < i; j++)
+	{
+	    newt_coeffs[i][j] = newt_coeffs[i-1][j-1] + newt_coeffs[i-1][j];
 
 	    if (i > 1)
-	    	newt_coeffs[i][j] /= i;
+		newt_coeffs[i][j] /= i;
 	}
     }
     for (i = 0; i <= n; i++)
-    	for (j = 0, sign = pow(-1, i); j <= i; j++, sign *= -1)
-    	    newt_coeffs[i][j] *= sign;
+	for (j = 0, sign = pow(-1, i); j <= i; j++, sign *= -1)
+	    newt_coeffs[i][j] *= sign;
 }
 #endif /* NOT USED */
 
@@ -512,13 +512,13 @@ void initialize_resampler_coeffs(void)
     /* this is as good a place as any to initialize them */
     if (play_mode->encoding & PE_24BIT)
     {
-    	sample_bounds_min = -8388608;
-    	sample_bounds_max = 8388607;
+	sample_bounds_min = -8388608;
+	sample_bounds_max = 8388607;
     }
     else /* 16-bit */
     {
-    	sample_bounds_min = -32768;
-    	sample_bounds_max = 32767;
+	sample_bounds_min = -32768;
+	sample_bounds_max = 32767;
     }
 }
 
@@ -948,7 +948,7 @@ static resample_t *rs_vib_plain(int v, int32 *countptr)
     le = vp->sample->data_length,
     ofs = vp->sample_offset;
   resample_rec_t resrc;
-    
+
   int32 count = *countptr, incr = vp->sample_increment;
   int cc = vp->vibrato_control_counter;
 

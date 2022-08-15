@@ -451,7 +451,7 @@ static int output_data(char *readbuffer, int32 bytes)
 
   /* expose the buffer to submit data */
   buffer = vorbis_analysis_buffer(&vd, nsamples);
-      
+
   /* uninterleave samples */
   for(j = 0; j < ch; j++)
     for(i = 0; i < nsamples; i++)
@@ -507,7 +507,7 @@ static void close_output(void)
     vorbis_analysis(&vb, NULL);
     vorbis_bitrate_addblock(&vb);
 
-    while(vorbis_bitrate_flushpacket(&vd,&op)) { 
+    while(vorbis_bitrate_flushpacket(&vd,&op)) {
 
     /* weld the packet into the bitstream */
     ogg_stream_packetin(&os, &op);

@@ -230,12 +230,12 @@ static int open_output(void)
     MMRESULT        Result;
     UINT            DeviceID;
 	int ret;
-	
+
 	if( dpm.name != NULL)
 		ret = sscanf(dpm.name, "%d", &opt_wmme_device_id);
 	if ( dpm.name == NULL || ret == 0 || ret == EOF)
 		opt_wmme_device_id = -2;
-	
+
 	if (opt_wmme_device_id == -1){
 		print_device_list();
 		return -1;
@@ -298,7 +298,7 @@ static int open_output(void)
 	if (opt_wmme_device_id == -2){
 		uDeviceID = WAVE_MAPPER;
     }else{
-    	uDeviceID= (UINT)opt_wmme_device_id;
+	uDeviceID= (UINT)opt_wmme_device_id;
 	}
 
     if (AllowSynchronousWaveforms)
@@ -531,7 +531,7 @@ static int acntl(int request, void *arg)
 
         case PM_REQ_PLAY_START: /* Called just before playing */
         case PM_REQ_PLAY_END: /* Called just after playing */
-    	    return 0;
+	    return 0;
     }
 
     return -1;
@@ -683,7 +683,7 @@ static struct MMBuffer * GetBuffer()
 
     if (FreeBuffers)
     {
-    	b           = (struct MMBuffer *)FreeBuffers;
+	b           = (struct MMBuffer *)FreeBuffers;
         FreeBuffers = FreeBuffers->Next;
         NumBuffersInUse++;
 
@@ -798,7 +798,7 @@ static void DebugPrint(const char *format, ...)
 #ifdef DEBUG
 	CHAR b[256];
 	va_list ap;
-	
+
 	va_begin(ap, format);
 	wvsprintf(b, format, ap);
 	va_end(ap);

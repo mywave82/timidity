@@ -270,7 +270,7 @@ static int aiff_output_open(const char *fname)
 
   /* sample rate */
   if(write_ieee_80bitfloat((double)dpm.rate) == -1) return -1;
-  
+
   /* compression type */
   if(compressed) {
     if(write_str((dpm.encoding & PE_ULAW) ? "ulaw" : "alaw") == -1) return -1;

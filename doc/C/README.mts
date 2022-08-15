@@ -396,10 +396,10 @@ I will explain more precisely.  The following table gives the lattice
 
 -----------------------------------------------------------------------------
 D--   A--   E--   B--   F#--  C#--  G#--  D#--  A#--  E#--  B#--  F##-- C##--
-Bb-   F-    C-    G-    D-    A-    E-    B-    F#-   C#-   G#-   D#-   A#-  
-Gb    Db    Ab    Eb    Bb    F     C     G     D     A     E     B     F#   
-Ebb+  Bbb+  Fb+   Cb+   Gb+   Db+   Ab+   Eb+   Bb+   F+    C+    G+    D+   
-Cbb++ Gbb++ Dbb++ Abb++ Ebb++ Bbb++ Fb++  Cb++  Gb++  Db++  Ab++  Eb++  Bb++ 
+Bb-   F-    C-    G-    D-    A-    E-    B-    F#-   C#-   G#-   D#-   A#-
+Gb    Db    Ab    Eb    Bb    F     C     G     D     A     E     B     F#
+Ebb+  Bbb+  Fb+   Cb+   Gb+   Db+   Ab+   Eb+   Bb+   F+    C+    G+    D+
+Cbb++ Gbb++ Dbb++ Abb++ Ebb++ Bbb++ Fb++  Cb++  Gb++  Db++  Ab++  Eb++  Bb++
 -----------------------------------------------------------------------------
 
 The notation "ABCDEFG" is according to Pythagoras tuning.  The
@@ -412,30 +412,30 @@ A- tuning and C+ tuning are given as following tables respectively:
 
 [C tuning (C major)]
 ----------------------
-A-    E-    B-    F#- 
-F     C     G     D   
-Db+   Ab+   Eb+   Bb+ 
+A-    E-    B-    F#-
+F     C     G     D
+Db+   Ab+   Eb+   Bb+
 ----------------------
 
 [A tuning (A minor)]
 ----------------------
-F#-   C#-   G#-   D#- 
-D     A     E     B   
-Bb+   F+    C+    G+  
+F#-   C#-   G#-   D#-
+D     A     E     B
+Bb+   F+    C+    G+
 ----------------------
 
 [C+ tuning (passing C major)]
 ----------------------
-A     E     B     F#  
-F+    C+    G+    D+  
+A     E     B     F#
+F+    C+    G+    D+
 Db++  Ab++  Eb++  Bb++
 ----------------------
 
 [A- tuning (passing A minor)]
 ----------------------
 F#--  C#--  G#--  D#--
-D-    A-    E-    B-  
-Bb    F     C     G   
+D-    A-    E-    B-
+Bb    F     C     G
 ----------------------
 
 I think it is nice to select the tuning combination whose pitch of

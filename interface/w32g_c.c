@@ -231,7 +231,7 @@ static void CanvasUpdateInterval(void)
 {
 	static double lasttime;
 	double t;
-	
+
 	if (CanvasGetMode() == CANVAS_MODE_MAP16
 			|| CanvasGetMode() == CANVAS_MODE_MAP32) {
 		t = get_current_calender_time();
@@ -341,7 +341,7 @@ static int ctl_load_files_and_play(argc_argv_t *argc_argv, int playflag)
 
 	if(argc_argv==NULL)
 	    return RC_NONE;
-    
+
 	w32g_get_playlist_index(NULL, &prevnfiles, NULL);
 
     init_string_table(&st);
@@ -653,7 +653,7 @@ static void ctl_metronome(int meas, int beat)
 {
 	static int lastmeas = CTL_STATUS_UPDATE;
 	static int lastbeat = CTL_STATUS_UPDATE;
-	
+
 	if (meas == CTL_STATUS_UPDATE)
 		meas = lastmeas;
 	else
@@ -679,7 +679,7 @@ static void ctl_keysig(int8 k, int ko)
 		"D#", "A#"
 	};
 	int i, j;
-	
+
 	if (k == CTL_STATUS_UPDATE)
 		k = lastkeysig;
 	else
@@ -705,7 +705,7 @@ static void ctl_tempo(int t, int tr)
 {
 	static int lasttempo = CTL_STATUS_UPDATE;
 	static int lastratio = CTL_STATUS_UPDATE;
-	
+
 	if (t == CTL_STATUS_UPDATE)
 		t = lasttempo;
 	else
@@ -977,13 +977,13 @@ static void ctl_channel_note(int ch, int note, int vel)
     if (vel == 0) {
 	if (note == Panel->cnote[ch])
 	    Panel->v_flags[ch] = FLAG_NOTE_OFF;
-   	Panel->cvel[ch] = 0;
+	Panel->cvel[ch] = 0;
     } else if (vel > Panel->cvel[ch]) {
 	Panel->cvel[ch] = vel;
 	Panel->cnote[ch] = note;
 	Panel->ctotal[ch] = ( vel * Panel->channel[ch].volume *
 			     Panel->channel[ch].expression ) >> 14;
-//	   	Panel->channel[ch].expression / (127*127);
+//		Panel->channel[ch].expression / (127*127);
 	Panel->v_flags[ch] = FLAG_NOTE_ON;
     }
     Panel->changed = 1;
@@ -1083,7 +1083,7 @@ static void display_aq_ratio(void)
 	rate = 1000;
     Panel->aq_ratio = rate;
     if(last_rate != rate) {
-   	last_rate = Panel->aq_ratio = rate;
+	last_rate = Panel->aq_ratio = rate;
 	Panel->changed = 1;
     }
 }

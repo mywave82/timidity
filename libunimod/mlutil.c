@@ -6,12 +6,12 @@
 	it under the terms of the GNU Library General Public License as
 	published by the Free Software Foundation; either version 2 of
 	the License, or (at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Library General Public License for more details.
- 
+
 	You should have received a copy of the GNU Library General Public
 	License along with this library; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -229,7 +229,7 @@ void FreeLinear(void)
 	noteindexcount=0;
 }
 
-static SWORD 
+static SWORD
 Interpolate (SWORD p, SWORD p1, SWORD p2, SWORD v1, SWORD v2)
 {
   if ((p1 == p2) || (p == p1))
@@ -238,7 +238,7 @@ Interpolate (SWORD p, SWORD p1, SWORD p2, SWORD v1, SWORD v2)
 }
 
 
-UWORD 
+UWORD
 getlinearperiod (UWORD note, ULONG fine)
 {
   UWORD t;
@@ -404,7 +404,7 @@ void S3MIT_ProcessCmd(UBYTE cmd,UBYTE inf,BOOL oldeffect)
 			case 9: /* Ixy tremor, ontime x, offtime y */
 				if(oldeffect&1)
 					UniEffect(UNI_S3MEFFECTI,inf);
-				else                     
+				else
 					UniEffect(UNI_ITEFFECTI,inf);
 				break;
 			case 0xa: /* Jxy arpeggio */
@@ -412,7 +412,7 @@ void S3MIT_ProcessCmd(UBYTE cmd,UBYTE inf,BOOL oldeffect)
 				break;
 			case 0xb: /* Kxy Dual command H00 & Dxy */
 				if(oldeffect&1)
-					UniPTEffect(0x4,0);    
+					UniPTEffect(0x4,0);
 				else
 					UniEffect(UNI_ITEFFECTH,0);
 				UniEffect(UNI_S3MEFFECTD,inf);
@@ -426,7 +426,7 @@ void S3MIT_ProcessCmd(UBYTE cmd,UBYTE inf,BOOL oldeffect)
 				break;
 			case 0xd: /* Mxx Set Channel Volume */
 				UniEffect(UNI_ITEFFECTM,inf);
-				break;       
+				break;
 			case 0xe: /* Nxy Slide Channel Volume */
 				UniEffect(UNI_ITEFFECTN,inf);
 				break;
@@ -441,7 +441,7 @@ void S3MIT_ProcessCmd(UBYTE cmd,UBYTE inf,BOOL oldeffect)
 				if(inf && !lo && !(oldeffect&1))
 					UniWriteByte(1);
 				else
-					UniWriteByte(inf); 
+					UniWriteByte(inf);
 				break;
 			case 0x12: /* Rxy tremolo speed x, depth y */
 				UniEffect(UNI_S3MEFFECTR,inf);

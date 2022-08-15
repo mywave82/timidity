@@ -17,7 +17,7 @@
 # define false ((bool)0)
 # define true (!false)
 # define __bool_true_false_are_defined true
-#endif 
+#endif
 /* C99 _Bool hack */
 
 #include "arc.h"
@@ -104,8 +104,8 @@ int timiwp_main_ini(int argc, char **argv)
     char **files;
     int main_ret;
     int longind;
-	
-	
+
+
     program_name=argv[0];
     timidity_start_initialize();
 
@@ -143,7 +143,7 @@ int timiwp_main_ini(int argc, char **argv)
 	return err;
 	}
 #endif
-	
+
 	err += timidity_post_load_configuration();
 
 	/* If there were problems, give up now */
@@ -180,7 +180,7 @@ int timiwp_main_ini(int argc, char **argv)
 	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		      "Try %s -h for help", program_name);
 	}
-    	
+
     }
 
 
@@ -269,7 +269,7 @@ static inline int set_default_program(int prog)
 {
 	int bank;
 	Instrument *ip;
-	
+
 	bank = (special_tonebank >= 0) ? special_tonebank : default_tonebank;
 	if ((ip = play_midi_load_instrument(0, bank, prog)) == NULL)
 		return 1;
@@ -291,7 +291,7 @@ int timiwp_play_main_ini(int nfiles, char **files)
 	return 3;
     }
 
-	
+
 	signal(SIGTERM, sigterm_exit);
 	SetConsoleCtrlHandler(handler, TRUE);
 
@@ -363,7 +363,7 @@ int timiwp_play_main_close (void)
 	ctl->close();
 	DeleteCriticalSection (&critSect);
     free_archive_files();
-	
+
     return 0;
 }
 

@@ -69,7 +69,7 @@ double get_current_calender_time(void)
 #include "timer.h"
 #ifdef IA_NPSYN
 #define GetTickCount() timeGetTime()
-#endif 
+#endif
 double get_current_calender_time(void)
 {
     static DWORD tick_start;

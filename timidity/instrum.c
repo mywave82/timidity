@@ -346,7 +346,7 @@ static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
 {
 	int i, j;
 	Sample *sp;
-	
+
 	if (tone->tunenum)
 		for (i = 0; i < ip->samples; i++) {
 			sp = &ip->sample[i];
@@ -624,7 +624,7 @@ static Instrument *load_gus_instrument(const char *name,
 	uint8 tmp[1024], fractions;
 	Sample *sp;
 	int i, j, noluck = 0;
-	
+
 	if (! name)
 		return 0;
 	if (infomsg != NULL)
@@ -667,7 +667,7 @@ static Instrument *load_gus_instrument(const char *name,
 		int name_len, ext_len;
 		static char *patch_ext[] = PATCH_EXT_LIST;
 #endif
-		
+
 		noluck = 1;
 #ifdef PATCH_EXT_LIST
 		name_len = strlen(name);
@@ -892,7 +892,7 @@ fail:
 			int32 i;
 			uint16 *tmp;
 			uint8 *cp = (uint8 *) sp->data;
-			
+
 			tmp = (uint16 *) safe_malloc(sp->data_length * 2 + 4);
 			for (i = 0; i < sp->data_length; i++)
 				tmp[i] = (uint16) cp[i] << 8;
@@ -906,7 +906,7 @@ fail:
 		else {	/* convert to machine byte order */
 			int32 i;
 			int16 *tmp = (int16 *) sp->data, s;
-			
+
 			for (i = 0; i < sp->data_length / 2; i++)
 				s = LE_SHORT(tmp[i]), tmp[i] = s;
 		}
@@ -914,7 +914,7 @@ fail:
 		if (sp->modes & MODES_UNSIGNED) {	/* convert to signed data */
 			int32 i = sp->data_length / 2;
 			int16 *tmp = (int16 *) sp->data;
-			
+
 			while (i--)
 				*tmp++ ^= 0x8000;
 		}
@@ -924,7 +924,7 @@ fail:
 			 * whole sample.  We do the same because the GUS does not SUCK.
 			 */
 			int32 t;
-			
+
 			reverse_data((int16 *) sp->data, 0, sp->data_length / 2);
 			t = sp->loop_start;
 			sp->loop_start = sp->data_length - sp->loop_end;
@@ -947,7 +947,7 @@ fail:
 			 */
 			int32 i, a, maxamp = 0;
 			int16 *tmp = (int16 *) sp->data;
-			
+
 			for (i = 0; i < sp->data_length / 2; i++)
 				if ((a = abs(tmp[i])) > maxamp)
 					maxamp = a;
@@ -1041,7 +1041,7 @@ Instrument *load_instrument(int dr, int b, int prog)
 	FLOAT_T volume_max;
 	int pan, panning;
 	char infomsg[256];
-	
+
 #ifndef CFG_FOR_SF
 	if (play_system_mode == GS_SYSTEM_MODE && (b == 64 || b == 65)) {
 		if (! dr)	/* User Instrument */
@@ -1256,7 +1256,7 @@ static void *safe_memdup(void *s, size_t size)
 void copy_tone_bank_element(ToneBankElement *elm, const ToneBankElement *src)
 {
 	int i;
-	
+
 	free_tone_bank_element(elm);
 	memcpy(elm, src, sizeof(ToneBankElement));
 	if (elm->name)
@@ -1368,7 +1368,7 @@ static void free_tone_bank_list(ToneBank *tb[])
 {
 	int i, j;
 	ToneBank *bank;
-	
+
 	for (i = 0; i < 128 + map_bank_counter; i++)
 	{
 		bank = tb[i];
@@ -1622,7 +1622,7 @@ int find_instrument_map_bank(int dr, int map, int bk)
 {
 	struct bank_map_elem *bm;
 	int i;
-	
+
 	if (map == INST_NO_MAP)
 		return 0;
 	bm = dr ? map_drumset : map_bank;
@@ -1641,7 +1641,7 @@ int alloc_instrument_map_bank(int dr, int map, int bk)
 {
 	struct bank_map_elem *bm;
 	int i;
-	
+
 	if (map == INST_NO_MAP)
 	{
 		alloc_instrument_bank(dr, bk);

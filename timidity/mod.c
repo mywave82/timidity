@@ -57,7 +57,7 @@ extern long int random (void);
 
 static BOOL mod_do_play (MODULE *);
 
-int 
+int
 load_module_file (struct timidity_file *tf, int mod_type)
 {
   MODULE *mf;
@@ -82,7 +82,7 @@ load_module_file (struct timidity_file *tf, int mod_type)
 }
 
 
-int 
+int
 get_module_type (const char *fn)
 {
   if (check_file_extension (fn, ".mod", 1))	/* Most common first */
@@ -344,7 +344,7 @@ static SBYTE PanbrelloTable[256] =
 };
 
 /* returns a random value between 0 and ceil-1, ceil must be a power of two */
-static int 
+static int
 getrandom (int ceil)
 {
 #ifdef HAVE_SRANDOM
@@ -360,7 +360,7 @@ getrandom (int ceil)
    2)   a looping sample is a bonus x2
    3)   a foreground channel is a bonus x4
    4)   an active envelope with keyoff is a handicap -x2                          */
-static int 
+static int
 MP_FindEmptyChannel (void)
 {
   MP_VOICE *a;
@@ -409,7 +409,7 @@ static UWORD GetPeriod (UWORD note, ULONG speed)
 }
 
 
-static SWORD 
+static SWORD
 Interpolate (SWORD p, SWORD p1, SWORD p2, SWORD v1, SWORD v2)
 {
   if ((p1 == p2) || (p == p1))
@@ -418,13 +418,13 @@ Interpolate (SWORD p, SWORD p1, SWORD p2, SWORD v1, SWORD v2)
 }
 
 
-static SWORD 
+static SWORD
 InterpolateEnv (SWORD p, ENVPT * a, ENVPT * b)
 {
   return (Interpolate (p, a->pos, b->pos, a->val, b->val));
 }
 
-static SWORD 
+static SWORD
 DoPan (SWORD envpan, SWORD pan)
 {
   int newpan;
@@ -434,7 +434,7 @@ DoPan (SWORD envpan, SWORD pan)
   return (newpan < PAN_LEFT) ? PAN_LEFT : (newpan > PAN_RIGHT ? PAN_RIGHT : newpan);
 }
 
-static void 
+static void
 StartEnvelope (ENVPR * t, UBYTE flg, UBYTE pts, UBYTE susbeg, UBYTE susend, UBYTE beg, UBYTE end, ENVPT * p, UBYTE keyoff)
 {
   t->flg = flg;
@@ -477,7 +477,7 @@ StartEnvelope (ENVPR * t, UBYTE flg, UBYTE pts, UBYTE susbeg, UBYTE susend, UBYT
    Misc:
    Sustain loops are loops that are only active as long as the keyoff flag is
    clear.  When a volume envelope terminates, so does the current fadeout.  */
-static SWORD 
+static SWORD
 ProcessEnvelope (ENVPR * t, SWORD v, UBYTE keyoff)
 {
   if (t->flg & EF_ON)
@@ -546,7 +546,7 @@ ProcessEnvelope (ENVPR * t, SWORD v, UBYTE keyoff)
 
 /*========== Protracker effects */
 
-static void 
+static void
 DoEEffects (UBYTE dat)
 {
   UBYTE nib = dat & 0xf;
@@ -684,7 +684,7 @@ DoEEffects (UBYTE dat)
     }
 }
 
-static void 
+static void
 DoVibrato (void)
 {
   UBYTE q;
@@ -724,7 +724,7 @@ DoVibrato (void)
     a->vibpos += a->vibspd;
 }
 
-static void 
+static void
 DoTremolo (void)
 {
   UBYTE q;
@@ -770,7 +770,7 @@ DoTremolo (void)
     a->trmpos += a->trmspd;
 }
 
-static void 
+static void
 DoVolSlide (UBYTE dat)
 {
   if (!mp.vbtick)
@@ -790,7 +790,7 @@ DoVolSlide (UBYTE dat)
     }
 }
 
-static void 
+static void
 DoToneSlide (void)
 {
   if (mp.vbtick)
@@ -820,7 +820,7 @@ DoToneSlide (void)
     a->tmpperiod = a->period;
 }
 
-static void 
+static void
 DoArpeggio (UBYTE dat)
 {
   UBYTE note = a->note;
@@ -843,7 +843,7 @@ DoArpeggio (UBYTE dat)
 
 /*========== Scream Tracker effects */
 
-static void 
+static void
 DoS3MVolSlide (UBYTE inf)
 {
   UBYTE lo, hi;
@@ -885,7 +885,7 @@ DoS3MVolSlide (UBYTE inf)
     a->tmpvolume = 64;
 }
 
-static void 
+static void
 DoS3MSlideDn (UBYTE inf)
 {
   UBYTE hi, lo;
@@ -915,7 +915,7 @@ DoS3MSlideDn (UBYTE inf)
     }
 }
 
-static void 
+static void
 DoS3MSlideUp (UBYTE inf)
 {
   UBYTE hi, lo;
@@ -945,7 +945,7 @@ DoS3MSlideUp (UBYTE inf)
     }
 }
 
-static void 
+static void
 DoS3MTremor (UBYTE inf)
 {
   UBYTE on, off;
@@ -969,7 +969,7 @@ DoS3MTremor (UBYTE inf)
   a->s3mtremor++;
 }
 
-static void 
+static void
 DoS3MRetrig (UBYTE inf)
 {
   if (inf)
@@ -1030,7 +1030,7 @@ DoS3MRetrig (UBYTE inf)
     }
 }
 
-static void 
+static void
 DoS3MSpeed (UBYTE speed)
 {
   if (mp.vbtick || mp.patdly2)
@@ -1045,7 +1045,7 @@ DoS3MSpeed (UBYTE speed)
     }
 }
 
-static void 
+static void
 DoS3MTempo (UBYTE tempo)
 {
   if (mp.vbtick || mp.patdly2)
@@ -1054,7 +1054,7 @@ DoS3MTempo (UBYTE tempo)
   mp.newbpm = (tempo < 32) ? 32 : tempo;
 }
 
-static void 
+static void
 DoS3MFineVibrato (void)
 {
   UBYTE q;
@@ -1092,7 +1092,7 @@ DoS3MFineVibrato (void)
   a->vibpos += a->vibspd;
 }
 
-static void 
+static void
 DoS3MTremolo (void)
 {
   UBYTE q;
@@ -1141,7 +1141,7 @@ DoS3MTremolo (void)
 
 /*========== Fast Tracker effects */
 
-static void 
+static void
 DoXMVolSlide (UBYTE inf)
 {
   UBYTE lo, hi;
@@ -1173,7 +1173,7 @@ DoXMVolSlide (UBYTE inf)
     }
 }
 
-static void 
+static void
 DoXMGlobalSlide (UBYTE inf)
 {
   if (mp.vbtick)
@@ -1193,7 +1193,7 @@ DoXMGlobalSlide (UBYTE inf)
     }
 }
 
-static void 
+static void
 DoXMPanSlide (UBYTE inf)
 {
   UBYTE lo, hi;
@@ -1219,7 +1219,7 @@ DoXMPanSlide (UBYTE inf)
   a->panning = (pan < PAN_LEFT) ? PAN_LEFT : (pan > PAN_RIGHT ? PAN_RIGHT : pan);
 }
 
-static void 
+static void
 DoXMExtraFineSlideUp (UBYTE inf)
 {
   if (!mp.vbtick)
@@ -1229,7 +1229,7 @@ DoXMExtraFineSlideUp (UBYTE inf)
     }
 }
 
-static void 
+static void
 DoXMExtraFineSlideDown (UBYTE inf)
 {
   if (!mp.vbtick)
@@ -1241,7 +1241,7 @@ DoXMExtraFineSlideDown (UBYTE inf)
 
 /*========== Impulse Tracker effects */
 
-static void 
+static void
 DoITChanVolSlide (UBYTE inf)
 {
   UBYTE lo, hi;
@@ -1276,7 +1276,7 @@ DoITChanVolSlide (UBYTE inf)
     a->chanvol = 64;
 }
 
-static void 
+static void
 DoITGlobalSlide (UBYTE inf)
 {
   UBYTE lo, hi;
@@ -1315,7 +1315,7 @@ DoITGlobalSlide (UBYTE inf)
     mp.volume = 128;
 }
 
-static void 
+static void
 DoITPanSlide (UBYTE inf)
 {
   UBYTE lo, hi;
@@ -1351,7 +1351,7 @@ DoITPanSlide (UBYTE inf)
     (pan < PAN_LEFT) ? PAN_LEFT : (pan > PAN_RIGHT ? PAN_RIGHT : pan);
 }
 
-static void 
+static void
 DoITTempo (UBYTE tempo)
 {
   SWORD temp = mp.newbpm;
@@ -1367,7 +1367,7 @@ DoITTempo (UBYTE tempo)
   mp.newbpm = (temp > 255) ? 255 : (temp < 1 ? 1 : temp);
 }
 
-static void 
+static void
 DoITVibrato (void)
 {
   UBYTE q;
@@ -1406,7 +1406,7 @@ DoITVibrato (void)
   a->vibpos += a->vibspd;
 }
 
-static void 
+static void
 DoITFineVibrato (void)
 {
   UBYTE q;
@@ -1444,7 +1444,7 @@ DoITFineVibrato (void)
   a->vibpos += a->vibspd;
 }
 
-static void 
+static void
 DoITTremor (UBYTE inf)
 {
   UBYTE on, off;
@@ -1469,7 +1469,7 @@ DoITTremor (UBYTE inf)
   a->s3mtremor++;
 }
 
-static void 
+static void
 DoITPanbrello (void)
 {
   UBYTE q;
@@ -1504,7 +1504,7 @@ DoITPanbrello (void)
   a->panbpos += a->panbspd;
 }
 
-static void 
+static void
 DoITToneSlide (void)
 {
   /* if we don't come from another note, ignore the slide and play the note
@@ -1542,7 +1542,7 @@ DoITToneSlide (void)
 static void DoNNAEffects (UBYTE dat);
 /* Impulse/Scream Tracker Sxx effects.
    All Sxx effects share the same memory space. */
-static void 
+static void
 DoSSEffects (UBYTE dat)
 {
   UBYTE inf, c;
@@ -1617,7 +1617,7 @@ DoSSEffects (UBYTE dat)
 
 /* Impulse Tracker Volume/Pan Column effects.
    All volume/pan column effects share the same memory space. */
-static void 
+static void
 DoVolEffects (UBYTE c)
 {
   UBYTE inf = UniGetByte ();
@@ -1692,7 +1692,7 @@ DoVolEffects (UBYTE c)
 
 /*========== UltraTracker effects */
 
-static void 
+static void
 DoULTSampleOffset (void)
 {
   UWORD offset = UniGetWord ();
@@ -1707,7 +1707,7 @@ DoULTSampleOffset (void)
 
 /*========== OctaMED effects */
 
-static void 
+static void
 DoMEDSpeed (void)
 {
   UWORD speed = UniGetWord ();
@@ -1717,7 +1717,7 @@ DoMEDSpeed (void)
 
 /*========== General player functions */
 
-static void 
+static void
 pt_playeffects (void)
 {
   UBYTE dat, c, oldc = 0;
@@ -1880,7 +1880,7 @@ pt_playeffects (void)
 	      /* if we were fading, adjust... */
 	      if (mp.sngpos == (pf->numpos - 1))
 		mp.volume = pf->initvolume > 128 ? 128 : pf->initvolume;
-	      
+
 	      mp.sngpos = dat;
 	      mp.posjmp = 2;
 	      mp.patpos = 0;
@@ -2234,7 +2234,7 @@ pt_playeffects (void)
     }
 }
 
-static void 
+static void
 DoNNAEffects (UBYTE dat)
 {
   int t;
@@ -2304,7 +2304,7 @@ DoNNAEffects (UBYTE dat)
     }
 }
 
-static void 
+static void
 pt_UpdateVoices ()
 {
   SWORD envpan, envvol, envpit;
@@ -2519,7 +2519,7 @@ pt_UpdateVoices ()
 }
 
 /* Handles new notes or instruments */
-static void 
+static void
 pt_Notes (void)
 {
   UBYTE c, inst;
@@ -2683,7 +2683,7 @@ pt_Notes (void)
 }
 
 /* Handles effects */
-static void 
+static void
 pt_EffectsPass1 (void)
 {
   MP_VOICE *aout;
@@ -2737,7 +2737,7 @@ pt_EffectsPass1 (void)
 }
 
 /* NNA management */
-static void 
+static void
 pt_NNA (void)
 {
   for (mp.channel = 0; mp.channel < pf->numchn; mp.channel++)
@@ -2824,7 +2824,7 @@ pt_NNA (void)
 }
 
 /* Setup module and NNA voices */
-static void 
+static void
 pt_SetupVoices (void)
 {
   MP_VOICE *aout;
@@ -2891,7 +2891,7 @@ pt_SetupVoices (void)
 }
 
 /* second effect pass */
-static void 
+static void
 pt_EffectsPass2 (void)
 {
   UBYTE c;
@@ -2916,7 +2916,7 @@ pt_EffectsPass2 (void)
     }
 }
 
-static BOOL 
+static BOOL
 HandleTick (void)
 {
   if ((!pf) || (mp.sngpos >= pf->numpos))

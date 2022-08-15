@@ -28,7 +28,7 @@ extern "C"
 
 #include "config.h"
 #include "sysdep.h"
-	
+
 int timiwp_main_ini(int argc, char **argv);
 int timiwp_main_close(void);
 
@@ -42,14 +42,14 @@ void rtsyn_reset(void);
 int rtsyn_play_one_data (int port, int32 dwParam1, double event_time);
 void rtsyn_play_one_sysex (char *sysexbuffer, int exlen, double event_time );
 void rtsyn_play_calculate(void);
-	
+
 double get_current_calender_time(void);
 
 #ifdef __cplusplus
 }
 #endif
 /* __cplusplus */
-	
+
 #endif
 /* __TIMIWP_TIMIDITY_H__ */
 

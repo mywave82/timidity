@@ -202,7 +202,7 @@ static int gogo_error(MERET rval)
   3: Replace directory separator characters ('/','\',':') with '_', then add output_dir.
  */
 extern char *create_auto_output_name(const char *input_filename, char *ext_str, char *output_dir, int mode);
- 
+
 volatile static int gogo_lock_flag = 0;
 static int gogo_lock()
 {
@@ -655,7 +655,7 @@ void free_argv(char **argv, int argc)
 		free(argv);
 	}
 }
-	
+
 volatile char *gogo_commandline_options = NULL;
 volatile int use_gogo_commandline_options = 0;
 void set_gogo_opts_use_commandline_options(char *commandline)
@@ -841,7 +841,7 @@ void set_gogo_opts_use_commandline_options(char *commandline)
 			num += 2;
 			continue;
 		}
-		// -d freq : output MP3 frequency(kHz) 
+		// -d freq : output MP3 frequency(kHz)
 		if(strcasecmp("-d",argv[num])==0){
 			if(num+1>=argc) break;
 			gogo_opts.optOUTFREQ = (int)(atof(argv[num+1])*1000);
@@ -983,7 +983,7 @@ void set_gogo_opts_use_commandline_options(char *commandline)
 // スレッド作成には CreateMPGEthread() を用いる。
 // そのスレッドは、gogo_buffer_termination が非 0 になったとき必ず終了する。
 // そのスレッドが終了したことは、IsTerminatedMPGEthread()により検知する。
-// スレッドが終了したことを確認してから close_output() は完了する。 
+// スレッドが終了したことを確認してから close_output() は完了する。
 // データの渡しは gogo_buffer にて行うが、バッファが一杯のときは、元スレッドが
 // 停止し、バッファの読み込み待機時は gogo 用スレッドが停止する。
 static int __stdcall MPGEthread(void)
@@ -1220,7 +1220,7 @@ static int auto_gogo_output_open(const char *input_filename, const char *title)
   return 0;
 }
 
-#ifdef AU_GOGO_DLL	
+#ifdef AU_GOGO_DLL
 extern int gogo_dll_check(void);
 #endif
 static int open_output(void)
@@ -1282,10 +1282,10 @@ static int output_data(char *readbuffer, int32 bytes)
 {
 	int32 rest_bytes = bytes;
 	int32 out_bytes = 0;
- 
+
 	if(dpm.fd<0)
 	  return 0;
- 
+
 	gogo_buffer_init();
 	if(bytes>gogo_buffer_size){
 		gogo_buffer_termination = -1;
@@ -1328,7 +1328,7 @@ static void close_output(void)
 {
   if (dpm.fd < 0)
     return;
- 
+
   gogo_buffer_termination = 1;
   for (;;) {
     if (IsTerminatedMPGEthread()) {

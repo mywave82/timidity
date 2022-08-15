@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -19,7 +19,7 @@
 
 	Macintosh interface for TiMidity
 	by T.Nogami	<t-nogami@happy.email.ne.jp>
-	
+
     mac_dlog.c
     Preference dialog
 */
@@ -49,12 +49,12 @@ void mac_DefaultOption()
 	play_mode->rate=DEFAULT_RATE;
 	play_mode->encoding &= ~PE_MONO;	/*stereo*/
 	/*play_mode->encoding |= PE_MONO;*/	/*mono*/
-	
+
 	antialiasing_allowed=0;
 	fast_decay=0;
 	adjust_panning_immediately=0;
 	free_instruments_afterwards=1;	/*option -U*/
-	
+
 	voices=DEFAULT_VOICES;
 	control_ratio = play_mode->rate/CONTROLS_PER_SECOND;
 	gSilentSec=3.0;
@@ -80,13 +80,13 @@ void mac_DefaultOption()
 	opt_channel_pressure = 0;
 	opt_trace_text_meta_event = 0;
 	opt_overlap_voice_allow = 1;
-	
+
 	effect_lr_mode=-1; //no effect
 	modify_release=0;
 	opt_default_mid=0x7e; //GM
-	
+
 	readmidi_wrd_mode=1;
-	
+
 	evil_level=EVIL_NORMAL;
 	do_initial_filling=0;
 	reduce_voice_threshold = 0;
@@ -100,28 +100,28 @@ enum{iOK=1, iCancel=2, iDefault=3, iRate=5, iMono=6, iStereo=7,
 			iModulation_wheel = 21,
 			iPortamento = 22,
 			iNrpn_vibrato = 23,
-			
+
 			iReverb = 24,
 			iReverb_setlevel = 38,
 			iReverb_level = 39,
 			iReverb_level_hint = 42,
-						
+
 			iChorus = 25,
 			iChorus_setlevel = 40,
 			iChorus_level = 41,
 			iChorus_level_hint = 43,
-			
+
 			iChannel_pressure = 26,
 			iText_meta_event = 27,
 			iOverlap_voice = 28,
 			/*iPReverb = 29,*/
-			
+
 			iModify_release=31,
 			iModify_release_ms=37,
-			iModify_release_ms_hint1=30,			
+			iModify_release_ms_hint1=30,
 			iModify_release_ms_hint2=44,
 			iModify_release_ms_hint3=45,
-			
+
 			iPresence_balance=32,
 			iManufacture=33,
 			iEvil_level=34,
@@ -144,10 +144,10 @@ static void mac_AdjustDialog( DialogRef dialog )
 	if( GetDialogItemValue(dialog, iReverb_setlevel) )
 	{
 		ShowDialogItem(dialog, iReverb_level);
-		ShowDialogItem(dialog, iReverb_level_hint);						
+		ShowDialogItem(dialog, iReverb_level_hint);
 	}else{
 		HideDialogItem(dialog, iReverb_level);
-		HideDialogItem(dialog, iReverb_level_hint);						
+		HideDialogItem(dialog, iReverb_level_hint);
 	}
 	//chorus
 	if( GetDialogItemValue(dialog, iChorus)==2 ){
@@ -162,7 +162,7 @@ static void mac_AdjustDialog( DialogRef dialog )
 		SetDialogItemHilite(dialog, iChorus_setlevel, kControlInactivePart);
 		SetDialogItemValue(dialog, iChorus_setlevel, 0);
 	}
-	
+
 	if( GetDialogItemValue(dialog, iChorus_setlevel) )
 	{
 		ShowDialogItem(dialog, iChorus_level);
@@ -171,7 +171,7 @@ static void mac_AdjustDialog( DialogRef dialog )
 		HideDialogItem(dialog, iChorus_level);
 		HideDialogItem(dialog, iChorus_level_hint);
 	}
-	
+
 	// modify release
 	if( GetDialogItemValue(dialog, iModify_release) )
 	{
@@ -195,7 +195,7 @@ static void SetDialogValue(DialogRef theDialog)
 	short	value;
 	char	buf[BUFSIZE];
 	Str255		s;
-	
+
 	SetDialogItemValue(theDialog, iStereo, !(play_mode->encoding & PE_MONO));
 	SetDialogItemValue(theDialog, iMono, play_mode->encoding & PE_MONO);
 	value=(play_mode->rate==11025? 1:(play_mode->rate==44100? 3:2));
@@ -220,14 +220,14 @@ static void SetDialogValue(DialogRef theDialog)
 	SetDialogItemValue(theDialog, iChannel_pressure, opt_channel_pressure);
 	SetDialogItemValue(theDialog, iText_meta_event, opt_trace_text_meta_event);
 	SetDialogItemValue(theDialog, iOverlap_voice, opt_overlap_voice_allow);
-	
+
 	/*-----reverb-----*/
 	if( opt_reverb_control<0 ){ //Enabel
 		SetDialogItemValue(theDialog, iReverb, 2);
 		SetDialogItemValue(theDialog, iReverb_setlevel, 1);
 		SetDialogItemHilite(theDialog, iReverb_setlevel, kControlNoPart);
 		SetDialogTEValue(theDialog, iReverb_level, -opt_reverb_control);
-		
+
 	}else if( opt_reverb_control==0 || opt_reverb_control==2 ){ //Non or global
 		SetDialogItemValue(theDialog, iReverb, opt_reverb_control+1);
 		SetDialogItemValue(theDialog, iReverb_setlevel, 1);
@@ -237,7 +237,7 @@ static void SetDialogValue(DialogRef theDialog)
 		SetDialogItemValue(theDialog, iReverb_setlevel, 0);
 		SetDialogItemHilite(theDialog, iReverb_setlevel, kControlNoPart);
 	}
-	
+
 	/*-----chorus-----*/
 	if( opt_surround_chorus ){
 		SetDialogItemValue(theDialog, iChorus, 3); //surround
@@ -248,7 +248,7 @@ static void SetDialogValue(DialogRef theDialog)
 		SetDialogItemValue(theDialog, iChorus, 1); //Non
 		SetDialogItemHilite(theDialog, iChorus_setlevel, kControlInactivePart);
 	}
-	
+
 	if( opt_chorus_control<0 ){
 		SetDialogItemHilite(theDialog, iChorus_setlevel, kControlNoPart);
 		SetDialogItemValue(theDialog, iChorus_setlevel, 1);
@@ -256,11 +256,11 @@ static void SetDialogValue(DialogRef theDialog)
 	}else{
 		SetDialogItemValue(theDialog, iChorus_setlevel, 0);
 	}
-	
+
 	/*-----modify_release-----*/
 	SetDialogItemValue(theDialog, iModify_release,  (modify_release!=0) );
 	SetDialogTEValue(theDialog, iModify_release_ms, modify_release);
-	
+
 	SetDialogItemValue(theDialog, iPresence_balance, effect_lr_mode+2);
 	value= (	opt_default_mid==0x41? 1:           //GS
 				opt_default_mid==0x43? 2:3	);		//XG:GM
@@ -268,7 +268,7 @@ static void SetDialogValue(DialogRef theDialog)
 	SetDialogItemValue(theDialog, iEvil_level, evil_level);
 	//SetDialogItemValue(theDialog, iDo_initial_filling, do_initial_filling);
 	SetDialogItemValue(theDialog, iShuffle, gShuffle);
-	
+
 	mac_AdjustDialog( theDialog );
 }
 
@@ -291,18 +291,18 @@ OSErr mac_SetPlayOption()
 	DialogRef	dialog, theDialog;
 	EventRecord	event;
 	Str255		s;
-	
+
 	theDialog=GetNewDialog(201,0,(WindowRef)-1);
-	
+
 	if( !theDialog ) return 1;
 	else
 	{
 		SetDialogDefaultItem(theDialog, iOK);
 		SetDialogCancelItem(theDialog, iCancel);
-		
+
 		SetDialogValue(theDialog);
 		ShowWindow(GetDialogWindow(theDialog));
-		
+
 		for(;;)
 		{
 			WaitNextEvent(everyEvent, &event, 1,0);
@@ -320,7 +320,7 @@ OSErr mac_SetPlayOption()
 			{
 				if( StdFilterProc(dialog, &event, &item) ) /**/;
 					else DialogSelect(&event, &dialog, &item);
-				
+
 				if( theDialog!=dialog ) continue;
 				switch(item)
 				{
@@ -331,27 +331,27 @@ OSErr mac_SetPlayOption()
 					max_voices=MAX_SAFE_MALLOC_SIZE / sizeof(Voice);
 					if ( i<max_voices ) max_voices=i;
 					voices=max_voices;
-						
+
 					myGetDialogItemText(dialog, iControlRaio, s);
 					StringToNum(s,&i);
 					if( i<=0 ) i=22; /*i=1 cause ploblem*/
 					if( MAX_CONTROL_RATIO<i ) i=MAX_CONTROL_RATIO;
 					control_ratio=i;
-					
+
 					myGetDialogItemText(dialog, iSilent, s);
 					gSilentSec=atof(p2cstr(s));
 					if( gSilentSec<0 ) gSilentSec=0;
 					if( gSilentSec>10 ) gSilentSec=10;
-					
+
 					if( GetDialogItemValue(dialog, iMono) )
 						play_mode->encoding |= PE_MONO;
 					else play_mode->encoding &= ~PE_MONO;
-					
+
 					if( (value=GetDialogItemValue(dialog, iRate))==1 )	play_mode->rate=11025;
 					else if( value==2 ) play_mode->rate=22050;
 					else if( value==3 ) play_mode->rate=44100;
 					else play_mode->rate=22050;
-					
+
 					free_instruments_afterwards=GetDialogItemValue(dialog, iFreeInstr)? 1:0;
 					antialiasing_allowed=		GetDialogItemValue(dialog, iAntiali)? 1:0;
 					fast_decay=					GetDialogItemValue(dialog, iFastDecay)? 1:0;
@@ -363,7 +363,7 @@ OSErr mac_SetPlayOption()
 					opt_channel_pressure=		GetDialogItemValue(dialog, iChannel_pressure)? 1:0;
 					opt_trace_text_meta_event=	GetDialogItemValue(dialog, iText_meta_event)? 1:0;
 					opt_overlap_voice_allow=	GetDialogItemValue(dialog, iOverlap_voice)? 1:0;
-					
+
 					/*-----reverb-----*/
 					switch(GetDialogItemValue(dialog, iReverb))
 					{
@@ -384,7 +384,7 @@ OSErr mac_SetPlayOption()
 					    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 						      "Invalid -EFreverb parameter.");*/
 					}
-					
+
 					/*-----chorus-----*/
 					opt_surround_chorus = 0;
 					switch(GetDialogItemValue(dialog, iChorus))
@@ -402,10 +402,10 @@ OSErr mac_SetPlayOption()
 					    break;
 					  case 3:
 						opt_surround_chorus = 1;
-					    	if( GetDialogItemValue(dialog, iChorus_setlevel) )
+						if( GetDialogItemValue(dialog, iChorus_setlevel) )
 							opt_chorus_control =
 								- (mac_limit_params( GetDialogTEValue(dialog,iChorus_level), 1,63));
-					  	else
+						else
 							opt_chorus_control = 1;
 						break;
 					  /*default:
@@ -413,7 +413,7 @@ OSErr mac_SetPlayOption()
 						      "Invalid -EFchorus parameter.");
 					    return 1;*/
 					}
-					
+
 					modify_release=0;
 					if( GetDialogItemValue(dialog, iModify_release) ){
 						modify_release=GetDialogTEValue(dialog, iModify_release_ms);
@@ -421,12 +421,12 @@ OSErr mac_SetPlayOption()
 					}
 					effect_lr_mode=	GetDialogItemValue(dialog, iPresence_balance)-2;
 					value=GetDialogItemValue(dialog, iManufacture);
-					opt_default_mid= 	(value==1? 0x41:		//GS
+					opt_default_mid=	(value==1? 0x41:		//GS
 										 value==2? 0x43:0x7e);	//XG:GM
-					evil_level= 		GetDialogItemValue(dialog, iEvil_level);
+					evil_level=		GetDialogItemValue(dialog, iEvil_level);
 					//do_initial_filling=	GetDialogItemValue(dialog, iDo_initial_filling)? 1:0;
 					gShuffle=			GetDialogItemValue(dialog, iShuffle)? 1:0;
-					
+
 					DisposeDialog(theDialog);
 					return noErr;
 				case iCancel:
@@ -547,19 +547,19 @@ OSErr mac_GetPreference()
 	short	vRefNum, refNum=0;
 	long	count, dirID;
 	FSSpec	spec;
-	
+
 	memset(&Preference, 0, sizeof(Preference) );
-	
+
 	err=FindFolder(kOnSystemDisk, kPreferencesFolderType, kCreateFolder,
 						&vRefNum, &dirID);
 	if( err ) return err;
-	
+
 	err=FSMakeFSSpec(vRefNum, dirID, PREF_FILENAME, &spec);
 	if( err )	return err;	//pref file not found
-	
+
 	err=FSpOpenDF(&spec, fsRdPerm, &refNum);
 	if( err )	return err;
-	
+
 	count=PREF_NUM;
 	err=FSRead(refNum, &count, (char*)&Preference);
 	FSClose(refNum);
@@ -568,8 +568,8 @@ OSErr mac_GetPreference()
 		StopAlertMessage("\pPreference file is invalid! Default Setting is applyed.");
 		return 1;
 	}
-	
-	
+
+
 	mac_PlayerWindow.X=	Preference.playerX;
 	mac_PlayerWindow.Y=	Preference.playerY;
 	mac_LogWindow.X=	Preference.logX;
@@ -580,12 +580,12 @@ OSErr mac_GetPreference()
 	mac_ListWindow.Y=		Preference.listY;
 	mac_ListWindow.width=	Preference.listW;
 	mac_ListWindow.hight=	Preference.listH;
-	
+
 	mac_DocWindow.X=		Preference.docX;
 	mac_DocWindow.Y=		Preference.docY;
 	mac_DocWindow.width=	Preference.docW;
 	mac_DocWindow.hight=	Preference.docH;
-	
+
 	mac_SpecWindow.X=	Preference.specX;
 	mac_SpecWindow.Y=	Preference.specY;
 	mac_TraceWindow.X=	Preference.traceX;
@@ -596,7 +596,7 @@ OSErr mac_GetPreference()
 	mac_WrdWindow.Y=	Preference.wrdY;
 	mac_SkinWindow.X=	Preference.skinX;
 	mac_SkinWindow.Y=	Preference.skinY;
-	
+
 	play_mode->rate=Preference.rate;
 	if( Preference.mono ){
 		play_mode->encoding |= PE_MONO;		/*mono*/
@@ -614,7 +614,7 @@ OSErr mac_GetPreference()
 	modify_release=					Preference.modify_release;
 	effect_lr_mode=					Preference.effect_lr_mode;
 	opt_default_mid=				Preference.opt_default_mid;
-	
+
 	mac_LogWindow.show=				Preference.showMsg;
 	mac_ListWindow.show=			Preference.showList;
 	mac_DocWindow.show=				Preference.showDoc;
@@ -628,7 +628,7 @@ OSErr mac_GetPreference()
 	opt_nrpn_vibrato =			Preference.nrpn_vibrato;
 	opt_reverb_control =		Preference.reverb_control;
 	opt_chorus_control =		Preference.chorus_control;
-	opt_surround_chorus = 		Preference.surround_chorus;
+	opt_surround_chorus =		Preference.surround_chorus;
 	opt_channel_pressure =		Preference.channel_pressure;
 	opt_trace_text_meta_event =	Preference.trace_text_meta_event;
 	opt_overlap_voice_allow =	Preference.overlap_voice_allow;
@@ -647,11 +647,11 @@ OSErr mac_SetPreference()
 	long	dirID;
 	Point p={0,0};
 	FSSpec	spec;
-	
+
 	err=FindFolder(kOnSystemDisk, kPreferencesFolderType, kCreateFolder,
 						&vRefNum, &dirID);
 	if( err ) return err;
-	
+
 	err=FSMakeFSSpec(vRefNum, dirID, PREF_FILENAME, &spec);
 	if( err==fnfErr )
 	{
@@ -659,10 +659,10 @@ OSErr mac_SetPreference()
 		if(err) return err;
 	}
 	else if( err!=noErr ) return err;
-	
+
 	err=FSpOpenDF(&spec, fsWrPerm, &refNum);
 	if( err )	return err;
-	
+
 	Preference.version=	PREF_VER;
 	Preference.playerX=	mac_PlayerWindow.X;
 	Preference.playerY=	mac_PlayerWindow.Y;
@@ -686,7 +686,7 @@ OSErr mac_SetPreference()
 	Preference.wrdY=	mac_WrdWindow.Y;
 	Preference.skinX=	mac_SkinWindow.X;
 	Preference.skinY=	mac_SkinWindow.Y;
-	
+
 	Preference.rate=	play_mode->rate;
 	Preference.mono=	(play_mode->encoding & PE_MONO);
 	Preference.freeinstrument=	free_instruments_afterwards;
@@ -723,7 +723,7 @@ OSErr mac_SetPreference()
 	count=PREF_NUM;
 	err=FSWrite(refNum, &count, &Preference);
 	FSClose(refNum);
-	
+
 	return noErr;
 }
 

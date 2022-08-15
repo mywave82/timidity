@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -291,7 +291,7 @@ void HandleSpecKeydownEvent(long message, short /*modifiers*/)
 			(int32)(0.01 * play_mode->rate);
 		break;
 	}
-	
+
 	if(nze)
 		initialize_exp_hz_table(soundspec_zoom - 4 * nze);
 }
@@ -455,7 +455,7 @@ void open_soundspec(void)
 	soundspec_update_interval = (int32)(DEFAULT_UPDATE * play_mode->rate);
 
 	disp=true;
-	
+
     if(!initflag)
     {
 	ring_buffer = (long*)safe_malloc(ring_buffer_len * sizeof(int32));

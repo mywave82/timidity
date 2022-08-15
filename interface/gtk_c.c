@@ -81,7 +81,7 @@ static void ctl_lyric(int);
 /* export the interface functions */
 
 #define ctl gtk_control_mode
-ControlMode ctl = 
+ControlMode ctl =
 {
     "gtk+ interface", 'g',
     "gtk",
@@ -241,7 +241,7 @@ static void
 ctl_note(int status, int channel, int note, int velocity)
 {
     /*   int xl;
-    if (!ctl.trace_playing) 
+    if (!ctl.trace_playing)
 	return;
     xl=voice[v].note%(COLS-24);
     wmove(dftwin, 8+voice[v].channel,xl+3);
@@ -250,12 +250,12 @@ ctl_note(int status, int channel, int note, int velocity)
 	case VOICE_DIE:
 	    waddch(dftwin, ',');
 	    break;
-	case VOICE_FREE: 
+	case VOICE_FREE:
 	    waddch(dftwin, '.');
 	    break;
 	case VOICE_ON:
 	    wattron(dftwin, A_BOLD);
-	    waddch(dftwin, '0'+(10*voice[v].velocity)/128); 
+	    waddch(dftwin, '0'+(10*voice[v].velocity)/128);
 	    wattroff(dftwin, A_BOLD);
 	    break;
 	case VOICE_OFF:
@@ -269,7 +269,7 @@ ctl_note(int status, int channel, int note, int velocity)
 static void
 ctl_program(int ch, int val, char *vp)
 {
-/*  if (!ctl.trace_playing) 
+/*  if (!ctl.trace_playing)
     return;
   wmove(dftwin, 8+ch, COLS-20);
   if (ISDRUMCHANNEL(ch))
@@ -287,7 +287,7 @@ static void
 ctl_volume(int channel, int val)
 {
     /*
-      if (!ctl.trace_playing) 
+      if (!ctl.trace_playing)
     return;
   wmove(dftwin, 8+channel, COLS-16);
   wprintw(dftwin, "%3d", (val*100)/127);
@@ -297,7 +297,7 @@ ctl_volume(int channel, int val)
 static void
 ctl_expression(int channel, int val)
 {
-/*  if (!ctl.trace_playing) 
+/*  if (!ctl.trace_playing)
     return;
   wmove(dftwin, 8+channel, COLS-12);
   wprintw(dftwin, "%3d", (val*100)/127);
@@ -307,9 +307,9 @@ ctl_expression(int channel, int val)
 static void
 ctl_panning(int channel, int val)
 {
-/*  if (!ctl.trace_playing) 
+/*  if (!ctl.trace_playing)
     return;
-  
+
   if (val==NO_PANNING)
     waddstr(dftwin, "   ");
   else if (val<5)
@@ -325,7 +325,7 @@ static void
 ctl_sustain(int channel, int val)
 {
 /*
-  if (!ctl.trace_playing) 
+  if (!ctl.trace_playing)
     return;
 
   if (val) waddch(dftwin, 'S');
@@ -336,7 +336,7 @@ ctl_sustain(int channel, int val)
 static void
 ctl_pitch_bend(int channel, int val)
 {
-/*  if (!ctl.trace_playing) 
+/*  if (!ctl.trace_playing)
     return;
 
   if (val>0x2000) waddch(dftwin, '+');
@@ -349,7 +349,7 @@ static void
 ctl_reset(void)
 {
 /*  int i,j;
-  if (!ctl.trace_playing) 
+  if (!ctl.trace_playing)
     return;
   for (i=0; i<16; i++)
     {
@@ -417,7 +417,7 @@ static int
 ctl_open(int using_stdin, int using_stdout)
 {
     ctl.opened=1;
-  
+
     /* The child process won't come back from this call  */
     gtk_pipe_open();
 
@@ -435,7 +435,7 @@ ctl_close(void)
 }
 
 
-/* 
+/*
  * Read information coming from the window in a BLOCKING way
  */
 static int
@@ -446,7 +446,7 @@ ctl_blocking_read(int32 *valp)
     int new_centiseconds;
 
     gtk_pipe_int_read(&command);
-  
+
     while (1)    /* Loop after pause sleeping to treat other buttons! */
     {
 
@@ -455,31 +455,31 @@ ctl_blocking_read(int32 *valp)
 	    gtk_pipe_int_read(&new_volume);
 	    *valp= new_volume - amplification ;
 	    return RC_CHANGE_VOLUME;
-		  
+
 	case GTK_CHANGE_LOCATOR:
 	    gtk_pipe_int_read(&new_centiseconds);
 	    *valp= new_centiseconds*(play_mode->rate / 100) ;
 	    return RC_JUMP;
-		  
+
 	case GTK_QUIT:
 	    return RC_QUIT;
-		
+
 	case GTK_PLAY_FILE:
-	    return RC_LOAD_FILE;		  
-		  
+	    return RC_LOAD_FILE;
+
 	case GTK_NEXT:
 	    return RC_NEXT;
-		  
+
 	case GTK_PREV:
 	    return RC_REALLY_PREVIOUS;
-		  
+
 	case GTK_RESTART:
 	    return RC_RESTART;
-		  
+
 	case GTK_FWD:
 	    *valp=play_mode->rate;
 	    return RC_FORWARD;
-		  
+
 	case GTK_RWD:
 	    *valp=play_mode->rate;
 	    return RC_BACK;
@@ -500,8 +500,8 @@ ctl_blocking_read(int32 *valp)
 	    *valp = 1;
 	    return RC_SPEEDUP;
 	}
-	  
-	  
+
+
 	if (command==GTK_PAUSE) {
 	    gtk_pipe_int_read(&command); /* Blocking reading => Sleep ! */
 	    if (command==GTK_PAUSE)
@@ -514,7 +514,7 @@ ctl_blocking_read(int32 *valp)
     }
 }
 
-/* 
+/*
  * Read information coming from the window in a non blocking way
  */
 static int
@@ -533,7 +533,7 @@ ctl_read(int32 *valp)
 
     if (num==0)
 	return RC_NONE;
-  
+
     return(ctl_blocking_read(valp));
 #if 0
     num = ctl_blocking_read(valp);
@@ -542,7 +542,7 @@ ctl_read(int32 *valp)
 #endif
 }
 
-static int 
+static int
 ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 {
     int i=0;
@@ -556,7 +556,7 @@ ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 	gtk_pipe_int_write(number_of_files);
 	for (i=0;i<number_of_files;i++)
 	    gtk_pipe_string_write(list_of_files[i]);
-    
+
 	/* Ask the interface for a filename to play -> begin to play automatically */
 	gtk_pipe_int_write(NEXT_FILE_MESSAGE);
     }
@@ -564,7 +564,7 @@ ctl_pass_playing_list(int number_of_files, char *list_of_files[])
     command = ctl_blocking_read(&val);
 
     /* Main Loop */
-    for (;;) { 
+    for (;;) {
 	if (command==RC_LOAD_FILE) {
 	    /* Read a LoadFile command */
 	    gtk_pipe_string_read(file_to_play);
@@ -575,7 +575,7 @@ ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 		return 0;
 	    if (command==RC_ERROR)
 		command=RC_TUNE_END; /* Launch next file */
-	    
+
 
 	    switch(command) {
 	    case RC_NEXT:
@@ -590,7 +590,7 @@ ctl_pass_playing_list(int number_of_files, char *list_of_files[])
 	    default:
 		printf("PANIC !!! OTHER COMMAND ERROR ?!?! %i\n",command);
 	    }
-		    
+
 	    command = ctl_blocking_read(&val);
 	}
     }

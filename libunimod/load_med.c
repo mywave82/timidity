@@ -200,7 +200,7 @@ MED_Cleanup (void)
   _mm_free (mmd1pat);
 }
 
-static void 
+static void
 EffectCvt (UBYTE eff, UBYTE dat)
 {
   switch (eff)
@@ -344,7 +344,7 @@ MED_Convert0 (int count, int col)
   return UniDup ();
 }
 
-static BOOL 
+static BOOL
 LoadMMD0Patterns (void)
 {
   int t, row, col;
@@ -398,7 +398,7 @@ LoadMMD0Patterns (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 LoadMMD1Patterns (void)
 {
   int t, row, col;

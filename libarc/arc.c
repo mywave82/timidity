@@ -181,7 +181,7 @@ int parse_gzip_header_bytes(char *gz, long maxparse, int *hdrsiz)
 }
 
 void (* arc_error_handler)(char *error_message) = NULL;
-    
+
 static void arc_cant_open(const char *s)
 {
     if(arc_error_handler != NULL)
@@ -734,7 +734,7 @@ URL url_arc_open(const char *name)
 	return NULL;
     }
     name += len + 1;
-    
+
     /* skip path separators right after '#' */
     for(;;)
     {
@@ -933,7 +933,7 @@ static void url_arc_close(URL url)
     void *decoder;
     int save_errno = errno;
 
-    /* 1. close decoder 
+    /* 1. close decoder
 	* 2. close decode_stream
 	    * 3. free url
 		*/

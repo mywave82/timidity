@@ -1045,7 +1045,7 @@ void Launch_Motif_Process(int pipe_number)
 	    strcmp(XtName(WList[1]),"Scrollbar"))
 	    fprintf(stderr,"PANIC: Scale has be redefined.. may cause bugs\n");
 
- 	XtAddEventHandler(WList[1],ButtonPressMask|ButtonReleaseMask,
+	XtAddEventHandler(WList[1],ButtonPressMask|ButtonReleaseMask,
 			  FALSE,Locator_btn,NULL);
     }
 

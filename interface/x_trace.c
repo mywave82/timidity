@@ -66,7 +66,7 @@ typedef struct {
 typedef struct {
   const int		col;	/* column number */
   const char		**cap;	/* caption strings array */
-  const int		*w;  	/* column width array */
+  const int		*w;	/* column width array */
   const int		*ofs;	/* column offset array */
 } Tplane;
 
@@ -85,7 +85,7 @@ typedef struct {
   int16 cnote[MAX_TRACE_CHANNELS];
   int16 ctotal[MAX_TRACE_CHANNELS];
   int16 cvel[MAX_TRACE_CHANNELS];
-  int16 reverb[MAX_TRACE_CHANNELS];  
+  int16 reverb[MAX_TRACE_CHANNELS];
   Channel channel[MAX_TRACE_CHANNELS];
   char *inst_name[MAX_TRACE_CHANNELS];
 
@@ -373,7 +373,7 @@ static void drawBar(int ch, int len, int xofs, int column, Pixel color) {
             (x_color.red - x_boxcolor.red) * i / BARH2_SPACE[column];
           g = x_boxcolor.green +
             (x_color.green - x_boxcolor.green) * i / BARH2_SPACE[column];
-          b = x_boxcolor.blue + 
+          b = x_boxcolor.blue +
             (x_color.blue - x_boxcolor.blue) * i / BARH2_SPACE[column];
           if (r<0) r = 0;
           if (g<0) g = 0;
@@ -727,7 +727,7 @@ static void drawFoot(Boolean PitchChanged) {
     /*
      * w is reliable enough to detect changes in width used on screen,
      * but can't be trusted enough to clear only w-Panel->foot_width width.
-     */ 
+     */
     XFillRectangle(disp, Panel->trace, gct, 0,
                    trace_height_nf+2, trace_width,
                    TRACE_FOOT-2);
@@ -1115,7 +1115,7 @@ void scrollTrace(int direction) {
       Panel->multi_part -= VISIBLE_CHANNELS;
     else if (Panel->multi_part > 0)
       Panel->multi_part = 0;
-    else 
+    else
       Panel->multi_part = MAX_TRACE_CHANNELS - VISIBLE_CHANNELS;
   }
   redrawTrace(True);
@@ -1341,7 +1341,7 @@ void uninitTrace(void) {
       XFreeGC(disp, gradient_gc[i]);
     }
   }
-  XFreeGC(disp, gcs); XFreeGC(disp, gct); XFreeGC(disp, gc_xcopy); 
+  XFreeGC(disp, gcs); XFreeGC(disp, gct); XFreeGC(disp, gc_xcopy);
 
   for (i=0; i<MAX_TRACE_CHANNELS; i++) free(Panel->inst_name[i]);
   free(Panel->grad); free(Panel); free(keyG);

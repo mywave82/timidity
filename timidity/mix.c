@@ -175,7 +175,7 @@ static inline int do_voice_filter(int v, resample_t *sp, mix_t *lp, int32 count)
 {
 	FilterCoefficients *fc = &(voice[v].fc);
 	int32 i, f, q, p, b0, b1, b2, b3, b4, t1, t2, x;
-	
+
 	if (fc->type == 1) {	/* copy with applying Chamberlin's lowpass filter. */
 		recalc_voice_resonance(v);
 		recalc_voice_fc(v);
@@ -215,7 +215,7 @@ static inline void recalc_voice_resonance(int v)
 {
 	double q;
 	FilterCoefficients *fc = &(voice[v].fc);
-	
+
 	if (fc->reso_dB != fc->last_reso_dB || fc->q == 0) {
 		fc->last_reso_dB = fc->reso_dB;
 		if(fc->type == 1) {
@@ -390,7 +390,7 @@ static inline void mix_mono_signal(
 #ifdef SMOOTH_MIXING
 	int32 linear_left;
 #endif
-	
+
 	if (! (cc = vp->control_counter)) {
 		cc = control_ratio;
 		if (update_signal(v))
@@ -487,7 +487,7 @@ static inline void mix_mono(mix_t *sp, int32 *lp, int v, int count)
 	Voice *vp = voice + v;
 	int32 linear_left;
 #endif
-	
+
 #ifdef SMOOTH_MIXING
 	compute_mix_smoothing(vp);
 	linear_left = FROM_FINAL_VOLUME(left);
@@ -1176,7 +1176,7 @@ static inline void mix_center_signal(
 #ifdef SMOOTH_MIXING
 	int32 linear_left;
 #endif
-	
+
 	if (! (cc = vp->control_counter)) {
 		cc = control_ratio;
 		if (update_signal(v))
@@ -1277,7 +1277,7 @@ static inline void mix_center(mix_t *sp, int32 *lp, int v, int count)
 	Voice *vp = voice + v;
 	int32 linear_left;
 #endif
-	
+
 #ifdef SMOOTH_MIXING
 	compute_mix_smoothing(vp);
 	linear_left = FROM_FINAL_VOLUME(left);
@@ -1326,7 +1326,7 @@ static inline void mix_single_signal(
 #ifdef SMOOTH_MIXING
 	int32 linear_left;
 #endif
-	
+
 	if (!(cc = vp->control_counter)) {
 		cc = control_ratio;
 		if (update_signal(v))
@@ -1427,7 +1427,7 @@ static inline void mix_single(mix_t *sp, int32 *lp, int v, int count)
 	Voice *vp = voice + v;
 	int32 linear_left;
 #endif
-	
+
 #ifdef SMOOTH_MIXING
 	compute_mix_smoothing(vp);
 	linear_left = FROM_FINAL_VOLUME(left);
@@ -1486,7 +1486,7 @@ static inline int update_envelope(int v)
 #endif
 {
 	Voice *vp = &voice[v];
-	
+
 	vp->envelope_volume += vp->envelope_increment;
 	if ((vp->envelope_increment < 0)
 			^ (vp->envelope_volume > vp->envelope_target)) {
@@ -1527,7 +1527,7 @@ int recompute_envelope(int v)
 	double sustain_time;
 	int32 envelope_width;
 	Voice *vp = &voice[v];
-	
+
 	stage = vp->envelope_stage;
 	if (stage > EG_GUS_RELEASE3) {
 		voice_ran_out(v);
@@ -1549,13 +1549,13 @@ int recompute_envelope(int v)
 	    && vp->status & (VOICE_ON | VOICE_SUSTAINED)) {
 
 		int32 new_rate;
-			
+
 		ch = vp->channel;
 
 		/* Don't adjust the current rate if VOICE_ON */
 		if (vp->status & VOICE_ON)
 			return 0;
-		
+
 		if (min_sustain_time > 0 || channel[ch].loop_timeout > 0) {
 			if (min_sustain_time == 1)
 				/* The sustain stage is ignored. */
@@ -1615,7 +1615,7 @@ static inline void voice_ran_out(int v)
 {
 	/* Already displayed as dead */
 	int died = (voice[v].status == VOICE_DIE);
-	
+
 	free_voice(v);
 	if (! died)
 		ctl_note_event(v);
@@ -1800,7 +1800,7 @@ int apply_envelope_to_amp(int v)
 	FLOAT_T lamp = vp->left_amp, ramp;
 	const FLOAT_T *v_table = vp->sample->inst_type == INST_SF2 ? sb_vol_table : vol_table;
 	int32 la, ra;
-	
+
 	if (vp->panned == PANNED_MYSTERY) {
 		ramp = vp->right_amp;
 		if (vp->tremolo_phase_increment) {
@@ -1925,7 +1925,7 @@ static inline int update_modulation_envelope(int v)
 	}
 
 	apply_modulation_envelope(v);
-	
+
 	return 0;
 }
 
@@ -1952,7 +1952,7 @@ static inline int modenv_next_stage(int v)
 	int32 offset, val;
 	FLOAT_T rate;
 	Voice *vp = &voice[v];
-	
+
 	stage = vp->modenv_stage++;
 	offset = vp->sample->modenv_offset[stage];
 	rate = vp->sample->modenv_rate[stage];
@@ -2012,7 +2012,7 @@ static inline int modenv_next_stage(int v)
 			rate = offset - vp->modenv_volume + 1;
 		} else if (rate < 1) {rate = 1;}	/* slowest attack */
 	}
-	
+
 	vp->modenv_increment = (int32)rate;
 	vp->modenv_target = offset;
 
@@ -2048,7 +2048,7 @@ int recompute_modulation_envelope(int v)
 		/* Don't adjust the current rate if VOICE_ON */
 		if (vp->status & VOICE_ON)
 			return 0;
-		
+
 		if (min_sustain_time > 0 || channel[ch].loop_timeout > 0) {
 			if (min_sustain_time == 1)
 				/* The sustain stage is ignored. */

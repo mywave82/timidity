@@ -294,12 +294,12 @@ void InitTracerWnd(HWND hParentWnd)
 	if (hIcon!=NULL) SendMessage(hTracerWnd,WM_SETICON,FALSE,(LPARAM)hIcon);
 	INILoadTracerWnd();
 
-	w32g_tracer_wnd.font_common_height = 14; 
+	w32g_tracer_wnd.font_common_height = 14;
 	w32g_tracer_wnd.font_common_width = 0;
 	SetRect ( &w32g_tracer_wnd.rc_head, 1, 2,  0, 0 );
 	SetRect ( &w32g_tracer_wnd.rc_all_channels, 1,  20 + 2,  0, 0 );
-	w32g_tracer_wnd.width = 2 + 880 + 2; 
-	w32g_tracer_wnd.height = 1 + 19 + 1 + (19 + 1) * 32 + 1; 
+	w32g_tracer_wnd.width = 2 + 880 + 2;
+	w32g_tracer_wnd.height = 1 + 19 + 1 + (19 + 1) * 32 + 1;
 
 	w32g_tracer_wnd.ch_height = 19;
 	w32g_tracer_wnd.ch_space = 1;
@@ -350,7 +350,7 @@ void InitTracerWnd(HWND hParentWnd)
 			strcpy(fontname,"‚l‚r ‚o–¾’©");
 		else {
 			strcpy(fontname,"Arial");
-			w32g_tracer_wnd.font_common_height = 16; 
+			w32g_tracer_wnd.font_common_height = 16;
 		}
 		w32g_tracer_wnd.hFontCommon = CreateFont(w32g_tracer_wnd.font_common_height,w32g_tracer_wnd.font_common_width,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,
 			DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,
@@ -840,9 +840,9 @@ static int get_ch_rc ( int ch, RECT *rc, RECT *rc_base )
 		ch = ch - 16;
 		break;
 	}
-	rc->top = w32g_tracer_wnd.rc_all_channels.top + 
+	rc->top = w32g_tracer_wnd.rc_all_channels.top +
 		rc_base->top + ( w32g_tracer_wnd.ch_height + w32g_tracer_wnd.ch_space ) * ( ch - 0 );
-	rc->bottom = w32g_tracer_wnd.rc_all_channels.top + 
+	rc->bottom = w32g_tracer_wnd.rc_all_channels.top +
 		rc_base->bottom + ( w32g_tracer_wnd.ch_height + w32g_tracer_wnd.ch_space ) * ( ch - 0 );
 	rc->left = w32g_tracer_wnd.rc_all_channels.left + rc_base->left;
 	rc->right = w32g_tracer_wnd.rc_all_channels.left + rc_base->right;
@@ -864,7 +864,7 @@ static int notes_view_draw ( RECT *lprc, int note, int vel, int back_draw, int l
 	rc1.bottom = lprc->top + 19 + 1;
 
 	if ( back_draw ) {
-  	if ( lockflag ) TRACER_LOCK ();
+	if ( lockflag ) TRACER_LOCK ();
 		BitBlt ( hdc, rc1.left, rc1.top, rc1.right - rc1.left, rc1.bottom - rc1.top,
 			tracer_bmp.hmdc, tracer_bmp.rc_notes.left, tracer_bmp.rc_notes.top, SRCCOPY );
 		if ( lockflag ) TRACER_UNLOCK ();
@@ -944,7 +944,7 @@ static int tracer_ch_number_draw(int ch, int mute, int lockflag)
 {
 	RECT rc;
 	char buff[3];
-	
+
 	if (mute != CTL_STATUS_UPDATE) {
 		if (((IS_SET_CHANNELMASK(
 				w32g_tracer_wnd.channel_mute, ch)) ? 1 : 0) == mute)
@@ -1130,7 +1130,7 @@ static int tracer_velocity_draw_ex ( RECT *lprc, int vol, int vol_old, int max, 
 	vol_old /= div;
 	if(vol >= view_max) {vol = view_max;}
 	if(vol_old >= view_max) {vol_old = view_max;}
-	
+
 	if ( lockflag ) TRACER_LOCK ();
 	// •K—v‚È‚¾‚¯ƒxƒƒVƒeƒBƒo[‚Ì”wŒi‚ð•`‰æ
 //	BitBlt ( hdc, lprc->left +  vol, lprc->top, lprc->right - lprc->left -  vol, lprc->bottom - lprc->top,
@@ -1152,14 +1152,14 @@ static int tracer_velocity_draw_ex ( RECT *lprc, int vol, int vol_old, int max, 
 static int tracer_volume_draw ( RECT *lprc, int vol, int max, int lockflag )
 {
 	HDC hdc;
- 	const int view_max = 20, div = 7;
+	const int view_max = 20, div = 7;
 	if ( !w32g_tracer_wnd.active )
 		return 0;
 	hdc = w32g_tracer_wnd.hmdc;
 
 	vol /= div;
 	if(vol >= view_max) {vol = view_max;}
-	
+
 	if ( lockflag ) TRACER_LOCK ();
 	// •K—v‚È‚¾‚¯”wŒi‚ð•`‰æ
 	BitBlt ( hdc, lprc->left +  vol, lprc->top, lprc->right - lprc->left -  vol, lprc->bottom - lprc->top,
@@ -1184,7 +1184,7 @@ static int tracer_expression_draw ( RECT *lprc, int vol, int max, int lockflag )
 
 	vol /= div;
 	if(vol >= view_max) {vol = view_max;}
-	
+
 	if ( lockflag ) TRACER_LOCK ();
 	// •K—v‚È‚¾‚¯”wŒi‚ð•`‰æ
 	BitBlt ( hdc, lprc->left +  vol, lprc->top, lprc->right - lprc->left -  vol, lprc->bottom - lprc->top,
@@ -1210,7 +1210,7 @@ static int tracer_pan_draw ( RECT *lprc, int vol, int max, int lockflag )
 	vol = (vol - 64) / div;
 	if(vol > view_max) {vol = view_max;}
 	else if(vol < -view_max) {vol = -view_max;}
-	
+
 	if ( lockflag ) TRACER_LOCK ();
 	// ”wŒi‚ð•`‰æ
 	BitBlt ( hdc, lprc->left, lprc->top, lprc->right - lprc->left, lprc->bottom - lprc->top,
@@ -1239,7 +1239,7 @@ static int tracer_sustain_draw ( RECT *lprc, int vol, int lockflag )
 
 	vol /= div;
 	if(vol >= view_max) {vol = view_max;}
-	
+
 	if ( lockflag ) TRACER_LOCK ();
 	// •K—v‚È‚¾‚¯”wŒi‚ð•`‰æ
 	BitBlt ( hdc, lprc->left +  vol, lprc->top, lprc->right - lprc->left -  vol, lprc->bottom - lprc->top,
@@ -1280,7 +1280,7 @@ static int tracer_pitch_bend_draw ( RECT *lprc, int vol, int max, int lockflag )
 	vol = (vol - max / 2) * view_max * 2 / max;
 	if(vol > view_max) {vol = view_max;}
 	else if(vol < -view_max) {vol = -view_max;}
-	
+
 	if ( lockflag ) TRACER_LOCK ();
 	// ”wŒi‚ð•`‰æ
 	BitBlt ( hdc, lprc->left, lprc->top, lprc->right - lprc->left, lprc->bottom - lprc->top,
@@ -1308,8 +1308,8 @@ static int tracer_mod_wheel_draw ( RECT *lprc, int vol, int max, int lockflag )
 	hdc = w32g_tracer_wnd.hmdc;
 
 	vol /= div;
- 	if(vol >= view_max) {vol = view_max;}
-	
+	if(vol >= view_max) {vol = view_max;}
+
 	if ( lockflag ) TRACER_LOCK ();
 	// •K—v‚È‚¾‚¯”wŒi‚ð•`‰æ
 	BitBlt ( hdc, lprc->left +  vol, lprc->top, lprc->right - lprc->left -  vol, lprc->bottom - lprc->top,
@@ -1334,7 +1334,7 @@ static int tracer_chorus_effect_draw ( RECT *lprc, int vol, int max, int lockfla
 
 	vol /= div;
 	if(vol >= view_max) {vol = view_max;}
-	
+
 	if ( lockflag ) TRACER_LOCK ();
 	// •K—v‚È‚¾‚¯”wŒi‚ð•`‰æ
 	BitBlt ( hdc, lprc->left +  vol, lprc->top, lprc->right - lprc->left -  vol, lprc->bottom - lprc->top,
@@ -1359,7 +1359,7 @@ static int tracer_reverb_effect_draw ( RECT *lprc, int vol, int max, int lockfla
 
 	vol /= div;
 	if(vol >= view_max) {vol = view_max;}
-	
+
 	if ( lockflag ) TRACER_LOCK ();
 	// •K—v‚È‚¾‚¯”wŒi‚ð•`‰æ
 	BitBlt ( hdc, lprc->left +  vol, lprc->top, lprc->right - lprc->left -  vol, lprc->bottom - lprc->top,
@@ -1380,7 +1380,7 @@ static int tracer_temper_keysig_draw(RECT *lprc, int8 tk, int ko, int lockflag)
 	static int lastoffset = CTL_STATUS_UPDATE;
 	int adj, i, j;
 	HDC hdc;
-	
+
 	if (tk == CTL_STATUS_UPDATE)
 		tk = lastkeysig;
 	else
@@ -1416,7 +1416,7 @@ static int tracer_temper_keysig_draw(RECT *lprc, int8 tk, int ko, int lockflag)
 static int tracer_temper_type_draw(RECT *lprc, int ch, int8 tt, int lockflag)
 {
 	HDC hdc;
-	
+
 	if (tt != CTL_STATUS_UPDATE) {
 		if (w32g_tracer_wnd.tt[ch] == tt)
 			return 0;
@@ -1667,13 +1667,13 @@ static int cheap_string_view_draw_font ( RECT *lprc, char *str, COLORREF fore, C
 		top = lprc->top;
 		bottom = lprc->bottom;
 	}
-	old_fore = SetTextColor ( hdc, fore ); 
-	old_back = SetBkColor ( hdc, back ); 
+	old_fore = SetTextColor ( hdc, fore );
+	old_back = SetBkColor ( hdc, back );
 	hgdiobj = SelectObject( hdc, hFont );
 //	ExtTextOut ( hdc, left, top, ETO_CLIPPED | ETO_OPAQUE, lprc, str, strlen(str), NULL);
 	ExtTextOut ( hdc, left, bottom - 2, ETO_CLIPPED | ETO_OPAQUE, lprc, str, strlen(str), NULL);
-	SetTextColor ( hdc, old_fore ); 
-	SetBkColor ( hdc, old_back ); 
+	SetTextColor ( hdc, old_fore );
+	SetBkColor ( hdc, old_back );
 	SelectObject( hdc, hgdiobj );
 	SetTextAlign(hdc, old_mode );
 
@@ -1715,12 +1715,12 @@ static int cheap_half_string_view_draw ( RECT *lprc, char *str, COLORREF fore, C
 		left = lprc->right;
 		top = lprc->top;
 	}
-	old_fore = SetTextColor ( hdc, fore ); 
-	old_back = SetBkColor ( hdc, back ); 
+	old_fore = SetTextColor ( hdc, fore );
+	old_back = SetBkColor ( hdc, back );
 	hgdiobj = SelectObject( hdc, hFont );
 	ExtTextOut ( hdc, left, top-3, ETO_CLIPPED | ETO_OPAQUE, lprc, str, strlen(str), NULL);
-	SetTextColor ( hdc, old_fore ); 
-	SetBkColor ( hdc, old_back ); 
+	SetTextColor ( hdc, old_fore );
+	SetBkColor ( hdc, old_back );
 	SelectObject( hdc, hgdiobj );
 	SetTextAlign(hdc, old_mode );
 
@@ -1885,8 +1885,8 @@ TracerCanvasWndProc(HWND hwnd, UINT uMess, WPARAM wParam, LPARAM lParam)
 		case WM_CREATE:
 			break;
 		case WM_PAINT:
-	      	TracerWndPaintDo(FALSE);
-	    	return 0;
+		TracerWndPaintDo(FALSE);
+		return 0;
 		case WM_DROPFILES:
 			SendMessage(hMainWnd,WM_DROPFILES,wParam,lParam);
 			return 0;
@@ -2160,10 +2160,10 @@ int INISaveTracerWnd(void)
 		}
 		sprintf(buffer,"%d",TracerWndInfo.PosX);
 		if ( TracerWndInfo.PosX >= 0 )
-		WritePrivateProfileString(section,"PosX",buffer,inifile);
+			WritePrivateProfileString(section,"PosX",buffer,inifile);
 		sprintf(buffer,"%d",TracerWndInfo.PosY);
 		if ( TracerWndInfo.PosY >= 0 )
-		WritePrivateProfileString(section,"PosY",buffer,inifile);
+			WritePrivateProfileString(section,"PosY",buffer,inifile);
 	}
 	sprintf(buffer,"%d",TracerWndInfo.mode);
 	WritePrivateProfileString(section,"mode",buffer,inifile);
@@ -2206,11 +2206,11 @@ static int change_tracer_wnd_mode ( int mode )
 	switch (mode) {
 	default:
 	case TWI_MODE_1_32CH:
-		w32g_tracer_wnd.height = 1 + 19 + 1 + (19 + 1) * 32 + 1; 
+		w32g_tracer_wnd.height = 1 + 19 + 1 + (19 + 1) * 32 + 1;
 		break;
 	case TWI_MODE_1_16CH:
 	case TWI_MODE_17_32CH:
-		w32g_tracer_wnd.height = 1 + 19 + 1 + (19 + 1) * 16 + 1; 
+		w32g_tracer_wnd.height = 1 + 19 + 1 + (19 + 1) * 16 + 1;
 		break;
 	}
 	GetWindowRect ( hTracerWnd, &rc );

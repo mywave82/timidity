@@ -25,6 +25,8 @@
 #define ___OUTPUT_H_
 #include "output.h"
 
+struct timiditycontext_t;
+
 /* Data format encoding bits */
 /* {PE_16BIT,PE_ULAW,PE_ALAW} is alternative flag */
 /* {PE_SIGNED,PE_ULAW,PE_ALAW} is alternative flag */
@@ -135,7 +137,7 @@ typedef struct {
     int (* open_output)(void); /* 0=success, 1=warning, -1=fatal error */
     void (* close_output)(void);
 
-    int (* output_data)(char *buf, int32 bytes);
+    int (* output_data)(struct timiditycontext_t *, char *buf, int32 bytes);
     /* return: -1=error, otherwise success */
 
     int (* acntl)(int request, void *arg); /* see PM_REQ_* above
@@ -146,8 +148,7 @@ typedef struct {
 
 extern PlayMode *play_mode_list[], *play_mode;
 extern PlayMode *target_play_mode;
-extern int audio_buffer_bits;
-#define audio_buffer_size	(1<<audio_buffer_bits)
+#define audio_buffer_size	(1<<(c->audio_buffer_bits))
 
 /* Conversion functions -- These overwrite the int32 data in *lp with
    data in another format */

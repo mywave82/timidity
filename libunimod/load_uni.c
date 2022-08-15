@@ -232,7 +232,7 @@ readtrack (void)
   return t;
 }
 
-static BOOL 
+static BOOL
 loadsmp6 (void)
 {
   int t;
@@ -317,7 +317,7 @@ loadsmp6 (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 loadinstr6 (void)
 {
   int t, w;
@@ -338,7 +338,7 @@ loadinstr6 (void)
       i->rpanvar = _mm_read_UBYTE (modreader);
       i->volfade = _mm_read_M_UWORD (modreader);
 
-#define UNI_LoadEnvelope6(name) 											\
+#define UNI_LoadEnvelope6(name)											\
 		i->name##flg=_mm_read_UBYTE(modreader);							\
 		i->name##pts=_mm_read_UBYTE(modreader);							\
 		i->name##susbeg=_mm_read_UBYTE(modreader);						\
@@ -373,7 +373,7 @@ loadinstr6 (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 loadinstr5 (void)
 {
   INSTRUMENT *i;
@@ -392,7 +392,7 @@ loadinstr5 (void)
       for (u = 0; u < 96; u++)
 	i->samplenumber[u] = of.numsmp + _mm_read_UBYTE (modreader);
 
-#define UNI_LoadEnvelope5(name) 										\
+#define UNI_LoadEnvelope5(name)										\
 		i->name##flg=_mm_read_UBYTE(modreader);						\
 		i->name##pts=_mm_read_UBYTE(modreader);						\
 		i->name##susbeg=_mm_read_UBYTE(modreader);					\
@@ -469,7 +469,7 @@ loadinstr5 (void)
   return 1;
 }
 
-static BOOL 
+static BOOL
 loadsmp5 (void)
 {
   int t, u;

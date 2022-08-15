@@ -137,9 +137,9 @@ static void ctl_close(void)
 {
   fflush(outfp);
   if(seq_quit==0){
-  	rtsyn_np_synth_stop();
-  	rtsyn_close();
-  	seq_quit=~0;
+	rtsyn_np_synth_stop();
+	rtsyn_close();
+	seq_quit=~0;
   }
   ctl.opened=0;
 }
@@ -189,7 +189,7 @@ static int cmsg(int type, int verbosity_level, char *fmt, ...)
     va_end(ap);
 
     if((type==CMSG_TEXT || type==CMSG_INFO || type==CMSG_WARNING) &&
-       ctl.verbosity<verbosity_level) 
+       ctl.verbosity<verbosity_level)
 	return 0;
 //    if(type == CMSG_FATAL)
 //	w32g_msg_box(buffer, "TiMidity Error", MB_OK);
@@ -225,12 +225,12 @@ static int ctl_pass_playing_list(int n, char *args[])
 // 0: OK, 2: Require to reset.
 int ctl_pass_playing_list2(int n, char *args[])
 #endif
-{ 
+{
 	if( (n < 1) || (n > 2) ){
 		ctl.cmsg(CMSG_WARNING, VERB_NORMAL, "Usage: timidity -iN [Named Pipe Name] SampeTimeMode(1 or 0) \n");
-	 	return 1;
+		return 1;
 	}
-	
+
 	rtsyn_np_set_pipe_name(args[0]);
 	if( n==1 ){
 		rtsyn_sample_time_mode = 0;
@@ -239,20 +239,20 @@ int ctl_pass_playing_list2(int n, char *args[])
 	}
 
 #if !defined(IA_W32G_SYN) && !defined(USE_GTK_GUI)
-	ctl.cmsg(CMSG_WARNING, VERB_NORMAL, 
+	ctl.cmsg(CMSG_WARNING, VERB_NORMAL,
 		"TiMidity starting in Windows Named Pipe Synthesizer mode\n");
-	ctl.cmsg(CMSG_WARNING, VERB_NORMAL, 
+	ctl.cmsg(CMSG_WARNING, VERB_NORMAL,
 		"Usage: timidity -iN [Named Pipe Name] SampeTimeMode(1 or 0) \n");
 	ctl.cmsg(CMSG_WARNING, VERB_NORMAL, "\n");
-	ctl.cmsg(CMSG_WARNING, VERB_NORMAL, 
+	ctl.cmsg(CMSG_WARNING, VERB_NORMAL,
 		"N (Normal mode) M(GM mode) S(GS mode) X(XG mode) \n");
-	ctl.cmsg(CMSG_WARNING, VERB_NORMAL, 
+	ctl.cmsg(CMSG_WARNING, VERB_NORMAL,
 		"(Only in Normal mode, Mode can be changed by MIDI data)\n");
-	ctl.cmsg(CMSG_WARNING, VERB_NORMAL, 
+	ctl.cmsg(CMSG_WARNING, VERB_NORMAL,
 		"m(GM reset) s(GS reset) x(XG reset)\n");
-	ctl.cmsg(CMSG_WARNING, VERB_NORMAL, 
+	ctl.cmsg(CMSG_WARNING, VERB_NORMAL,
 		"\n");
-	ctl.cmsg(CMSG_WARNING, VERB_NORMAL, 
+	ctl.cmsg(CMSG_WARNING, VERB_NORMAL,
 		"Press 'q' key to stop\n");
 
 #endif
@@ -261,7 +261,7 @@ int ctl_pass_playing_list2(int n, char *args[])
 
 #ifdef USE_GTK_GUI
 	twgtk_main();
-#else 
+#else
 #ifdef IA_W32G_SYN
 	if(0!=rtsyn_np_synth_start()){
 		seq_quit=0;
@@ -308,7 +308,7 @@ static void close_keybord(void){
 static int kbhit(void){
 	char ch;
 	int nread;
-	
+
 	if(peek_character != -1)
 		return 1;
 	new_settings.c_cc[VMIN]=0;
@@ -316,7 +316,7 @@ static int kbhit(void){
 	nread = read(0, &ch, 1);
 	new_settings.c_cc[VMIN]=1;
 	tcsetattr(0,TCSANOW, &new_settings);
-	
+
 	if(nread == 1) {
 		peek_character = ch;
 		return 1;
@@ -335,7 +335,7 @@ static char readch(void){
 	read(0,&ch,1);
 	return ch;
 }
-#endif		
+#endif
 
 
 static void doit(void)
@@ -348,7 +348,7 @@ static void doit(void)
 #ifdef __W32__
 		if(kbhit()){
 			switch(getch()){
-#else			
+#else
 		if(kbhit()){
 			switch(readch()){
 #endif
@@ -420,9 +420,9 @@ void winplaymidi(void){
 	} else if ( winplaymidi_sleep_level == 0 ) {
 		winplaymidi_active_start_time = 0;
 	}
-	
+
 	rtsyn_play_calculate();
-	
+
 	if ( winplaymidi_sleep_level >= 2) {
 		Sleep ( 100 );
 	} else if ( winplaymidi_sleep_level > 0 ) {
@@ -430,7 +430,7 @@ void winplaymidi(void){
 	}
 }
 #endif
-		
+
 
 /*
  * interface_<id>_loader();

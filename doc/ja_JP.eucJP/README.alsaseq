@@ -113,7 +113,7 @@ ALSAシーケンサ上のOSS MIDIエミュレーション経由でtimidityにアクセスする
 	...
 	midi 1: [TiMidity port 0] ALSA port 128:0
 	  capability write / opened none
-	
+
 	midi 2: [TiMidity port 1] ALSA port 128:1
 	  capability write / opened none
        ---------------------------------------

@@ -9,7 +9,7 @@ Private notes:
 timidity-io.c:
 http://www.mega-tokyo.com/cgi-bin/yabb/YaBB.pl?board=SIERRA_AGI_SCI&action=display&num=990734937
 
-SEQ_DEFINEBUF(128); 
+SEQ_DEFINEBUF(128);
 #define seqbuf_dump timidity_seqbuf_dump
 
 という行を挿入しなければならない？

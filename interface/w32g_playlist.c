@@ -211,14 +211,14 @@ int w32g_random_playlist(int skip_invalid_file)
 			if ( select < 0 )
 				select = 0;
 		}
-		playlist.selected = select; 
+		playlist.selected = select;
 		if(!skip_invalid_file ||
 			playlist.list[playlist.selected].info->file_type != IS_ERROR_FILE) {
 			w32g_update_playlist();
 			return 1;
 		}
 		if ( playlist.nfiles == 2 ) {
-			playlist.selected = old_selected_index; 
+			playlist.selected = old_selected_index;
 			if(!skip_invalid_file ||
 				playlist.list[playlist.selected].info->file_type != IS_ERROR_FILE) {
 				w32g_update_playlist();
@@ -313,18 +313,18 @@ int w32g_shuffle_playlist_next(int skip_invalid_file)
 static int w32g_shuffle_playlist_rotate(int dest, int i1, int i2)
 {
     int i, save;
-	
+
 	if ( i2 >= playlist_shuffle.max )
 		i2 = playlist_shuffle.max - 1;
     if(i1 >= i2)
 		return 1;
-	
+
     if(dest > 0) {
 		save = playlist_shuffle.list[i2];
 		for(i = i2; i > i1; i--) /* i: i2 -> i1 */
 			playlist_shuffle.list[i] = playlist_shuffle.list[i - 1];
 		playlist_shuffle.list[i] = save;
-		
+
 	} else {
 		save = playlist_shuffle.list[i1];
 		for(i = i1; i < i2; i++) /* i: i1 -> i2 */
@@ -826,7 +826,7 @@ void w32g_rotate_playlist(int dest)
 	    playlist.selected = i2;
 		w32g_update_playlist_pos(playlist.selected);
 	} else if(i1 < playlist.selected && playlist.selected <= i2){
-	    playlist.selected--;    
+	    playlist.selected--;
 		w32g_update_playlist_pos(playlist.selected);
 	}
     }
@@ -846,7 +846,7 @@ void w32g_free_playlist(void)
 {
 	PlayListEntry *entry;
 	int i;
-	
+
 	for(i=0; i < playlist.nfiles; i++){
 		entry = &playlist.list[i];
 		if(entry->filename != NULL) free(entry->filename);

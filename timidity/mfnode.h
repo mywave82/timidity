@@ -1,4 +1,4 @@
-/* 
+/*
     TiMidity++ -- MIDI to WAVE converter and player
     Copyright (C) 1999-2002 Masanao Izumo <mo@goice.co.jp>
     Copyright (C) 1995 Tuukka Toivonen <tt@cgs.fi>
@@ -60,7 +60,7 @@ typedef struct
 #if ENTITY
  #define EXTERN /*entitiy*/
 #else
- #define EXTERN  extern 
+ #define EXTERN  extern
 #endif
 EXTERN Instr_comment instr_comment[];
 EXTERN char *comment_indicator_buffer

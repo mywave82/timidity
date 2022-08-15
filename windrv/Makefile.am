@@ -55,13 +55,13 @@ libtimiditydrv_a_LIBADD = \
 	$(top_builddir)/interface/libinterface.a \
 	$(top_builddir)/libarc/libarc.a \
 	$(top_builddir)/libunimod/libunimod.a \
-	$(top_builddir)/utils/libutils.a 
+	$(top_builddir)/utils/libutils.a
 libtimiditydrv_a_dep = \
 	$(top_builddir)/timidity/timidity.exe \
 	$(top_builddir)/interface/libinterface.a \
 	$(top_builddir)/libarc/libarc.a \
 	$(top_builddir)/libunimod/libunimod.a \
-	$(top_builddir)/utils/libutils.a 
+	$(top_builddir)/utils/libutils.a
 else
 if DMC
 libtimiditydrv_a_LIBADD = \
@@ -165,7 +165,7 @@ WATCOM_LINK = link386.exe -dll -def:timiditydrv.def -implib:timiditydrv.lib -out
 timiditydrv.dll: libtimiditydrv.a $(libtimiditydrv_a_OBJECTS) $(libtimiditydrv_a_DEPENDENCIES) $(libtimiditydrv_a_dep)
 	@rm -f libtimi_p_dll.a
 	$(WATCOM_LINK) $(libtimiditydrv_a_OBJECTS) $(libtimiditydrv_a_LIBADD) $(LIBS)
-	
+
 #WATCOM_LINK = wlink
 #timiditydrv.dll: libtimiditydrv.a $(libtimiditydrv_a_OBJECTS) $(libtimiditydrv_a_DEPENDENCIES) $(libtimiditydrv_a_dep)
 #	@rm -f $@
@@ -193,10 +193,10 @@ endif
 #    VCPP
 
 libtimiditydrv.a: $(libtimiditydrv_a_OBJECTS)  $(libtimiditydrv_a_dep)
-	touch $@ 
+	touch $@
 
 
-objs: $(libtimiditydrv_a_OBJECTS) $(libtimiditydrv_a_DEPENDENCIES) 
+objs: $(libtimiditydrv_a_OBJECTS) $(libtimiditydrv_a_DEPENDENCIES)
 	@:
 
 
