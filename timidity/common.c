@@ -268,7 +268,7 @@ struct timidity_file *try_to_open(char *name, int decompress)
 #if defined(DECOMPRESSOR_LIST)
     if(decompress)
     {
-	static char *decompressor_list[] = DECOMPRESSOR_LIST, **dec;
+	static const char *decompressor_list[] = DECOMPRESSOR_LIST, **dec;
 	char tmp[1024];
 
 	/* Check if it's a compressed file */
@@ -299,7 +299,7 @@ struct timidity_file *try_to_open(char *name, int decompress)
 #if defined(PATCH_CONVERTERS)
     if(decompress == 2)
     {
-	static char *decompressor_list[] = PATCH_CONVERTERS, **dec;
+	static const char *decompressor_list[] = PATCH_CONVERTERS, **dec;
 	char tmp[1024];
 
 	/* Check if it's a compressed file */
@@ -1232,7 +1232,7 @@ int int_rand(int n)
 }
 #endif /* RAND_MAX */
 
-int check_file_extension(const char *filename, char *ext, int decompress)
+int check_file_extension(const char *filename, const char *ext, int decompress)
 {
     int len, elen, i;
 #if defined(DECOMPRESSOR_LIST)

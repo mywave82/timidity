@@ -66,7 +66,7 @@ extern long tf_read(void *buff, int32 size, int32 nitems,
 extern long tf_seek(struct timidity_file *tf, long offset, int whence);
 extern long tf_tell(struct timidity_file *tf);
 extern int int_rand(int n);	/* random [0..n-1] */
-extern int check_file_extension(const char *filename, char *ext, int decompress);
+extern int check_file_extension(const char *filename, const char *ext, int decompress);
 
 extern void *safe_malloc(size_t count);
 extern void *safe_realloc(void *old_ptr, size_t new_size);
