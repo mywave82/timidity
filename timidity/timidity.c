@@ -638,12 +638,6 @@ int effect_lr_mode = -1;
  */
 int effect_lr_delay_msec = 25;
 
-extern char* pcm_alternate_file;
-/* NULL, "none": disabled (default)
- * "auto":       automatically selected
- * filename:     use the one.
- */
-
 #ifndef atof
 extern double atof(const char *);
 #endif

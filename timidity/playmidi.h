@@ -607,4 +607,10 @@ extern int32 get_note_freq(Sample *, int);
 
 extern void free_drum_effect(int);
 
+extern char* pcm_alternate_file;
+/* NULL, "none": disabled (default)
+ * "auto":       automatically selected
+ * filename:     use the one.
+ */
+
 #endif /* ___PLAYMIDI_H_ */
