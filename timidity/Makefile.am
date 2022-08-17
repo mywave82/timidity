@@ -144,6 +144,7 @@ EXTRA_timidity_SOURCES = \
 	sun_a.c \
 	vorbis_a.c \
 	flac_a.c \
+	flac_a.h \
 	speex_a.c \
 	speex_a.h \
 	w32_a.c \

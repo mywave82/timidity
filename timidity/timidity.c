@@ -93,6 +93,9 @@
 #include "speex_a.h"
 #endif
 
+#ifdef AU_FLAC
+#include "flac_a.h"
+#endif
 
 #ifdef __BORLANDC__
 #undef inline
@@ -4750,10 +4753,6 @@ static inline int parse_opt_output_swab(const char *arg)
 }
 
 #ifdef AU_FLAC
-extern void flac_set_option_verify(int);
-extern void flac_set_option_padding(int);
-extern void flac_set_compression_level(int);
-
 static inline int parse_opt_flac_verify(const char *arg)
 {
 	flac_set_option_verify(1);

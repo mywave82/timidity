@@ -75,6 +75,7 @@
 #include "common.h"
 #include "output.h"
 #include "controls.h"
+#include "flac_a.h"
 #include "timer.h"
 #include "instrum.h"
 #include "playmidi.h"
