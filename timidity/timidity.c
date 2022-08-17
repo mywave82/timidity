@@ -390,12 +390,6 @@ char *opt_aq_max_buff = NULL,
 int opt_aq_fill_buff_free_needed = 1;
 void timidity_init_aq_buff(void);
 int opt_control_ratio = 0; /* Save -C option */
-#ifdef AU_PORTAUDIO
-extern int opt_pa_device_id;
-#endif
-#ifdef AU_W32
-extern int opt_wmme_device_id;
-#endif
 
 int set_extension_modes(char *);
 int set_ctl(char *);
