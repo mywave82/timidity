@@ -89,6 +89,11 @@
 #include "quantity.h"
 #include "rtsyn.h"
 
+#ifdef AU_SPEEX
+#include "speex_a.h"
+#endif
+
+
 #ifdef __BORLANDC__
 #undef inline
 #define inline
@@ -4779,13 +4784,6 @@ static inline int parse_opt_flac_oggflac(const char *arg)
 #endif /* AU_FLAC */
 
 #ifdef AU_SPEEX
-extern void speex_set_option_quality(int);
-extern void speex_set_option_vbr(int);
-extern void speex_set_option_abr(int);
-extern void speex_set_option_vad(int);
-extern void speex_set_option_dtx(int);
-extern void speex_set_option_complexity(int);
-extern void speex_set_option_nframes(int);
 
 static inline int parse_opt_speex_quality(const char *arg)
 {

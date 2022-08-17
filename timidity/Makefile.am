@@ -144,6 +144,7 @@ EXTRA_timidity_SOURCES = \
 	vorbis_a.c \
 	flac_a.c \
 	speex_a.c \
+	speex_a.h \
 	w32_a.c \
 	w32_gogo.c \
 	w32_gogo.h \
