@@ -5366,7 +5366,6 @@ static void sigterm_exit(int sig)
 
 static void timidity_arc_error_handler(char *error_message)
 {
-    extern int open_file_noise_mode;
     if(open_file_noise_mode)
 	ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "%s", error_message);
 }

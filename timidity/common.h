@@ -99,4 +99,6 @@ extern const char *timidity_version;
 extern MBlockList tmpbuffer;
 extern char *output_text_code;
 
+extern int open_file_noise_mode;
+
 #endif /* ___COMMON_H_ */
