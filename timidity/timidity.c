@@ -537,8 +537,6 @@ static inline void close_pager(FILE *);
 static void interesting_message(void);
 #endif
 
-extern int SecondMode;
-
 extern struct URL_module URL_module_file;
 #ifndef __MACOS__
 extern struct URL_module URL_module_dir;

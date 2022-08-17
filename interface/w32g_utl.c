@@ -74,7 +74,6 @@ extern int DocWndIndependent;
 extern int DocWndAutoPopup;
 extern int SeachDirRecursive;
 extern int IniFileAutoSave;
-extern int SecondMode;
 extern int AutoloadPlaylist;
 extern int AutosavePlaylist;
 char DefaultPlaylistName[] = "default.pls";

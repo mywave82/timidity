@@ -261,4 +261,6 @@ extern int directory_form(char *path_in_out);
 extern char *timidity_window_inifile;
 extern char *timidity_output_inifile;
 
+extern int SecondMode;
+
 #endif /* ___W32G_UTL_H_ */
