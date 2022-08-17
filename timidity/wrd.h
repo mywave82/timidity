@@ -153,6 +153,7 @@ static inline void print_ecmd(char*, int*, int);
 #include "mblock.h"
 #include "common.h"
 #include "controls.h"
+#include "strtab.h"
 
 #ifdef __BORLANDC__
 extern void pr_ecmd(char *cmd, int *args, int narg);
