@@ -95,6 +95,7 @@ timidity_SOURCES = \
 	smfconv.c \
 	smfconv.h \
 	smplfile.c \
+	smplfile.h \
 	sndfont.c \
 	sysdep.h \
 	tables.c \

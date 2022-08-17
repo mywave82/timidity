@@ -43,6 +43,7 @@
 #include "output.h"
 #include "controls.h"
 #include "resample.h"
+#include "smplfile.h"
 #include "tables.h"
 #include "filter.h"
 #include "quantity.h"
@@ -1037,7 +1038,6 @@ Instrument *load_instrument(int dr, int b, int prog)
 	ToneBank *bank = ((dr) ? drumset[b] : tonebank[b]);
 	Instrument *ip;
 	int i, font_bank, font_preset, font_keynote;
-	extern Instrument *extract_sample_file(char *);
 	FLOAT_T volume_max;
 	int pan, panning;
 	char infomsg[256];

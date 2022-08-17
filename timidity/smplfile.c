@@ -42,6 +42,7 @@
 #include "output.h"
 #include "playmidi.h"
 #include "resample.h"
+#include "smplfile.h"
 #include "tables.h"
 
 typedef int (*SampleImporterDiscriminateProc)(char *sample_file);
@@ -58,8 +59,6 @@ typedef struct {
 	/* either extension or discriminant may be NULL */
 	int					added;			/* for get_importers()'s internal use */
 } SampleImporter, *SampleImporterRef;
-
-Instrument *extract_sample_file(char *sample_file);
 
 static int get_importers(const char *sample_file, int limit, SampleImporter **importers);
 static int get_next_importer(char *sample_file, int start, int count, SampleImporter **importers);
