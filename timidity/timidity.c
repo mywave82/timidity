@@ -5487,7 +5487,6 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
     char local[1024];
 
 #if defined ( IA_W32GUI ) || defined ( IA_W32G_SYN )
-    extern char *ConfigFile;
     if(!ConfigFile[0]) {
       GetWindowsDirectory(ConfigFile, 1023 - 13);
       strcat(ConfigFile, "\\TIMIDITY.CFG");
@@ -6076,8 +6075,6 @@ int main(int argc, char **argv)
 			memset(config2, 0, sizeof(config2));
 #if defined(IA_W32GUI) || defined(IA_W32G_SYN)
 {
-			extern char *ConfigFile;
-
 			strncpy(config1, ConfigFile, sizeof(config1) - 1);
 }
 #else /* !IA_W32GUI && !IA_W32G_SYN */
