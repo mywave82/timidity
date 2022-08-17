@@ -193,4 +193,6 @@ static inline void print_ecmd(char *cmd, int *args, int narg)
 }
 #endif
 
+extern StringTable wrd_read_opts;
+
 #endif /* ___WRD_H_ */
