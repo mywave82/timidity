@@ -43,64 +43,11 @@
 #include "output.h"
 #include "controls.h"
 #include "resample.h"
-#include "smplfile.h"
 #include "tables.h"
 #include "filter.h"
 #include "quantity.h"
 #include "freq.h"
-
-#define INSTRUMENT_HASH_SIZE 128
-struct InstrumentCache
-{
-    const char *name;
-    int panning, amp, note_to_use, strip_loop, strip_envelope, strip_tail;
-    Instrument *ip;
-    struct InstrumentCache *next;
-};
-static struct InstrumentCache *instrument_cache[INSTRUMENT_HASH_SIZE];
-
-/* Some functions get aggravated if not even the standard banks are
-   available. */
-static ToneBank standard_tonebank, standard_drumset;
-ToneBank
-  *tonebank[128 + MAP_BANK_COUNT] = {&standard_tonebank},
-  *drumset[128 + MAP_BANK_COUNT] = {&standard_drumset};
-
-/* bank mapping (mapped bank) */
-struct bank_map_elem {
-	int16 used, mapid;
-	int bankno;
-};
-static struct bank_map_elem map_bank[MAP_BANK_COUNT], map_drumset[MAP_BANK_COUNT];
-static int map_bank_counter;
-
-/* This is a special instrument, used for all melodic programs */
-Instrument *default_instrument=0;
-SpecialPatch *special_patch[NSPECIAL_PATCH];
-int progbase = 0;
-struct inst_map_elem
-{
-    int set, elem, mapped;
-};
-
-static struct inst_map_elem *inst_map_table[NUM_INST_MAP][128];
-
-/* This is only used for tracks that don't specify a program */
-int default_program[MAX_CHANNELS];
-
-char *default_instrument_name = NULL;
-
-int antialiasing_allowed=0;
-#ifdef FAST_DECAY
-int fast_decay=1;
-#else
-int fast_decay=0;
-#endif
-
-/*Pseudo Reverb*/
-int32 modify_release;
-
-/** below three functinos are imported from sndfont.c **/
+#include "smplfile.h"
 
 /* convert from 8bit value to fractional offset (15.15) */
 static int32 to_offset(int offset)
@@ -111,7 +58,7 @@ static int32 to_offset(int offset)
 /* calculate ramp rate in fractional unit;
  * diff = 8bit, time = msec
  */
-static int32 calc_rate(int diff, double msec)
+static int32 calc_rate(struct timiditycontext_t *c ,int diff, double msec)
 {
     double rate;
 
@@ -120,8 +67,8 @@ static int32 calc_rate(int diff, double msec)
     if(diff == 0)
 	diff = 255;
     diff <<= (7+15);
-    rate = ((double)diff / play_mode->rate) * control_ratio * 1000.0 / msec;
-    if(fast_decay)
+    rate = ((double)diff / play_mode->rate) * c->control_ratio * 1000.0 / msec;
+    if(c->fast_decay)
 	rate *= 2;
     return (int32)rate;
 }
@@ -143,22 +90,22 @@ void free_instrument(Instrument *ip)
   free(ip);
 }
 
-void clear_magic_instruments(void)
+void clear_magic_instruments(struct timiditycontext_t *c)
 {
     int i, j;
 
-    for(j = 0; j < 128 + map_bank_counter; j++)
+    for(j = 0; j < 128 + c->map_bank_counter; j++)
     {
-	if(tonebank[j])
+	if(c->tonebank[j])
 	{
-	    ToneBank *bank = tonebank[j];
+	    ToneBank *bank = c->tonebank[j];
 	    for(i = 0; i < 128; i++)
 		if(IS_MAGIC_INSTRUMENT(bank->tone[i].instrument))
 		    bank->tone[i].instrument = NULL;
 	}
-	if(drumset[j])
+	if(c->drumset[j])
 	{
-	    ToneBank *bank = drumset[j];
+	    ToneBank *bank = c->drumset[j];
 	    for(i = 0; i < 128; i++)
 		if(IS_MAGIC_INSTRUMENT(bank->tone[i].instrument))
 		    bank->tone[i].instrument = NULL;
@@ -168,7 +115,7 @@ void clear_magic_instruments(void)
 
 #define GUS_ENVRATE_MAX (int32)(0x3FFFFFFF >> 9)
 
-static int32 convert_envelope_rate(uint8 rate)
+static int32 convert_envelope_rate(struct timiditycontext_t *c, uint8 rate)
 {
   int32 r;
 
@@ -177,7 +124,7 @@ static int32 convert_envelope_rate(uint8 rate)
   r = (int32)(rate & 0x3f) << r; /* 6.9 fixed point */
 
   /* 15.15 fixed point. */
-  r = r * 44100 / play_mode->rate * control_ratio * (1 << fast_decay);
+  r = r * 44100 / play_mode->rate * c->control_ratio * (1 << c->fast_decay);
   if(r > GUS_ENVRATE_MAX) {r = GUS_ENVRATE_MAX;}
   return (r << 9);
 }
@@ -191,13 +138,13 @@ static int32 convert_envelope_offset(uint8 offset)
   return offset << (7+15);
 }
 
-static int32 convert_tremolo_sweep(uint8 sweep)
+static int32 convert_tremolo_sweep(struct timiditycontext_t *c, uint8 sweep)
 {
   if (!sweep)
     return 0;
 
   return
-    ((control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) /
+    ((c->control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) /
       (play_mode->rate * sweep);
 }
 
@@ -216,10 +163,10 @@ static int32 convert_vibrato_sweep(uint8 sweep, int32 vib_control_ratio)
       (play_mode->rate * sweep); */
 }
 
-static int32 convert_tremolo_rate(uint8 rate)
+static int32 convert_tremolo_rate(struct timiditycontext_t *c, uint8 rate)
 {
   return
-    ((SINE_CYCLE_LENGTH * control_ratio * rate) << RATE_SHIFT) /
+    ((SINE_CYCLE_LENGTH * c->control_ratio * rate) << RATE_SHIFT) /
       (TREMOLO_RATE_TUNING * play_mode->rate);
 }
 
@@ -255,14 +202,14 @@ static int name_hash(const char *name)
     return addr % INSTRUMENT_HASH_SIZE;
 }
 
-static Instrument *search_instrument_cache(const char *name,
+static Instrument *search_instrument_cache(struct timiditycontext_t *c, const char *name,
 				int panning, int amp, int note_to_use,
 				int strip_loop, int strip_envelope,
 				int strip_tail)
 {
     struct InstrumentCache *p;
 
-    for(p = instrument_cache[name_hash(name)]; p != NULL; p = p->next)
+    for(p = c->instrument_cache[name_hash(name)]; p != NULL; p = p->next)
     {
 	if(strcmp(p->name, name) != 0)
 	    return NULL;
@@ -277,7 +224,7 @@ static Instrument *search_instrument_cache(const char *name,
     return NULL;
 }
 
-static void store_instrument_cache(Instrument *ip,
+static void store_instrument_cache(struct timiditycontext_t *c, Instrument *ip,
 				   const char *name,
 				   int panning, int amp, int note_to_use,
 				   int strip_loop, int strip_envelope,
@@ -288,8 +235,8 @@ static void store_instrument_cache(Instrument *ip,
 
     addr = name_hash(name);
     p = (struct InstrumentCache *)safe_malloc(sizeof(struct InstrumentCache));
-    p->next = instrument_cache[addr];
-    instrument_cache[addr] = p;
+    p->next = c->instrument_cache[addr];
+    c->instrument_cache[addr] = p;
     p->name = name;
     p->panning = panning;
     p->amp = amp;
@@ -330,10 +277,10 @@ static int16 adjust_reso(int16 val)
 	}
 }
 
-static int32 to_rate(int rate)
+static int32 to_rate(struct timiditycontext_t *c, int rate)
 {
 	return (rate) ? (int32) (0x200 * pow(2.0, rate / 17.0)
-			* 44100 / play_mode->rate * control_ratio) << fast_decay : 0;
+			* 44100 / play_mode->rate * c->control_ratio) << c->fast_decay : 0;
 }
 
 #if 0
@@ -343,7 +290,7 @@ static int32 to_control(int control)
 }
 #endif
 
-static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
+static void apply_bank_parameter(struct timiditycontext_t *c, Instrument *ip, ToneBankElement *tone)
 {
 	int i, j;
 	Sample *sp;
@@ -367,11 +314,11 @@ static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
 			if (tone->envratenum == 1) {
 				for (j = 0; j < 6; j++)
 					if (tone->envrate[0][j] >= 0)
-						sp->envelope_rate[j] = to_rate(tone->envrate[0][j]);
+						sp->envelope_rate[j] = to_rate(c, tone->envrate[0][j]);
 			} else if (i < tone->envratenum) {
 				for (j = 0; j < 6; j++)
 					if (tone->envrate[i][j] >= 0)
-						sp->envelope_rate[j] = to_rate(tone->envrate[i][j]);
+						sp->envelope_rate[j] = to_rate(c, tone->envrate[i][j]);
 			}
 		}
 	if (tone->envofsnum)
@@ -393,23 +340,23 @@ static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
 			if (tone->tremnum == 1) {
 				if (IS_QUANTITY_DEFINED(tone->trem[0][0]))
 					sp->tremolo_sweep_increment =
-							quantity_to_int(&tone->trem[0][0], 0);
+							quantity_to_int(c, &tone->trem[0][0], 0);
 				if (IS_QUANTITY_DEFINED(tone->trem[0][1]))
 					sp->tremolo_phase_increment =
-							quantity_to_int(&tone->trem[0][1], 0);
+							quantity_to_int(c, &tone->trem[0][1], 0);
 				if (IS_QUANTITY_DEFINED(tone->trem[0][2]))
 					sp->tremolo_depth =
-							quantity_to_int(&tone->trem[0][2], 0) << 1;
+							quantity_to_int(c, &tone->trem[0][2], 0) << 1;
 			} else if (i < tone->tremnum) {
 				if (IS_QUANTITY_DEFINED(tone->trem[i][0]))
 					sp->tremolo_sweep_increment =
-							quantity_to_int(&tone->trem[i][0], 0);
+							quantity_to_int(c, &tone->trem[i][0], 0);
 				if (IS_QUANTITY_DEFINED(tone->trem[i][1]))
 					sp->tremolo_phase_increment =
-							quantity_to_int(&tone->trem[i][1], 0);
+							quantity_to_int(c, &tone->trem[i][1], 0);
 				if (IS_QUANTITY_DEFINED(tone->trem[i][2]))
 					sp->tremolo_depth =
-							quantity_to_int(&tone->trem[i][2], 0) << 1;
+							quantity_to_int(c, &tone->trem[i][2], 0) << 1;
 			}
 		}
 	if (tone->vibnum)
@@ -418,23 +365,23 @@ static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
 			if (tone->vibnum == 1) {
 				if (IS_QUANTITY_DEFINED(tone->vib[0][1]))
 					sp->vibrato_control_ratio =
-							quantity_to_int(&tone->vib[0][1], 0);
+							quantity_to_int(c, &tone->vib[0][1], 0);
 				if (IS_QUANTITY_DEFINED(tone->vib[0][0]))
 					sp->vibrato_sweep_increment =
-							quantity_to_int(&tone->vib[0][0],
+							quantity_to_int(c, &tone->vib[0][0],
 							sp->vibrato_control_ratio);
 				if (IS_QUANTITY_DEFINED(tone->vib[0][2]))
-					sp->vibrato_depth = quantity_to_int(&tone->vib[0][2], 0);
+					sp->vibrato_depth = quantity_to_int(c, &tone->vib[0][2], 0);
 			} else if (i < tone->vibnum) {
 				if (IS_QUANTITY_DEFINED(tone->vib[i][1]))
 					sp->vibrato_control_ratio =
-							quantity_to_int(&tone->vib[i][1], 0);
+							quantity_to_int(c, &tone->vib[i][1], 0);
 				if (IS_QUANTITY_DEFINED(tone->vib[i][0]))
 					sp->vibrato_sweep_increment =
-							quantity_to_int(&tone->vib[i][0],
+							quantity_to_int(c, &tone->vib[i][0],
 							sp->vibrato_control_ratio);
 				if (IS_QUANTITY_DEFINED(tone->vib[i][2]))
-					sp->vibrato_depth = quantity_to_int(&tone->vib[i][2], 0);
+					sp->vibrato_depth = quantity_to_int(c, &tone->vib[i][2], 0);
 			}
 		}
 	if (tone->sclnotenum)
@@ -459,11 +406,11 @@ static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
 			if (tone->modenvratenum == 1) {
 				for (j = 0; j < 6; j++)
 					if (tone->modenvrate[0][j] >= 0)
-						sp->modenv_rate[j] = to_rate(tone->modenvrate[0][j]);
+						sp->modenv_rate[j] = to_rate(c, tone->modenvrate[0][j]);
 			} else if (i < tone->modenvratenum) {
 				for (j = 0; j < 6; j++)
 					if (tone->modenvrate[i][j] >= 0)
-						sp->modenv_rate[j] = to_rate(tone->modenvrate[i][j]);
+						sp->modenv_rate[j] = to_rate(c, tone->modenvrate[i][j]);
 			}
 		}
 	if (tone->modenvofsnum)
@@ -586,21 +533,21 @@ static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
 #define READ_CHAR(thing) { \
 		uint8 tmpchar; \
 		\
-		if (tf_read(&tmpchar, 1, 1, tf) != 1) \
+		if (tf_read(c, &tmpchar, 1, 1, tf) != 1) \
 			goto fail; \
 		thing = tmpchar; \
 }
 #define READ_SHORT(thing) { \
 		uint16 tmpshort; \
 		\
-		if (tf_read(&tmpshort, 2, 1, tf) != 1) \
+		if (tf_read(c, &tmpshort, 2, 1, tf) != 1) \
 			goto fail; \
 		thing = LE_SHORT(tmpshort); \
 }
 #define READ_LONG(thing) { \
 		int32 tmplong; \
 		\
-		if (tf_read(&tmplong, 4, 1, tf) != 1) \
+		if (tf_read(c, &tmplong, 4, 1, tf) != 1) \
 			goto fail; \
 		thing = LE_LONG(tmplong); \
 }
@@ -615,7 +562,7 @@ static void apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
  *
  * TODO: do reverse loops right
  */
-static Instrument *load_gus_instrument(const char *name,
+static Instrument *load_gus_instrument(struct timiditycontext_t *c, const char *name,
 		ToneBank *bank, int dr, int prog, char *infomsg)
 {
 	ToneBankElement *tone;
@@ -657,13 +604,13 @@ static Instrument *load_gus_instrument(const char *name,
 			&& tone->trempitchnum == 0 && tone->tremfcnum == 0
 			&& tone->modpitchnum == 0 && tone->modfcnum == 0
 			&& tone->fcnum == 0 && tone->resonum == 0)
-		if ((ip = search_instrument_cache(name, panning, amp, note_to_use,
+		if ((ip = search_instrument_cache(c, name, panning, amp, note_to_use,
 				strip_loop, strip_envelope, strip_tail)) != NULL) {
 			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * Cached");
 			return ip;
 		}
 	/* Open patch file */
-	if (! (tf = open_file_r(name, 2, OF_NORMAL))) {
+	if (! (tf = open_file_r(c, name, 2, OF_NORMAL))) {
 #ifdef PATCH_EXT_LIST
 		int name_len, ext_len;
 		static char *patch_ext[] = PATCH_EXT_LIST;
@@ -681,7 +628,7 @@ static Instrument *load_gus_instrument(const char *name,
 					continue;	/* duplicated ext. */
 				strcpy((char *) tmp, name);
 				strcat((char *) tmp, patch_ext[i]);
-				if ((tf = open_file_r((char *) tmp, 1, OF_NORMAL))) {
+				if ((tf = open_file_r(c, (char *) tmp, 1, OF_NORMAL))) {
 					noluck = 0;
 					break;
 				}
@@ -700,28 +647,28 @@ static Instrument *load_gus_instrument(const char *name,
 	tmp[0] = tf_getc(tf);
 	if (tmp[0] == '\0') {
 		/* for Mac binary */
-		skip(tf, 127);
+		skip(c, tf, 127);
 		tmp[0] = tf_getc(tf);
 	}
-	if ((tf_read(tmp + 1, 1, 238, tf) != 238)
+	if ((tf_read(c, tmp + 1, 1, 238, tf) != 238)
 			|| (memcmp(tmp, "GF1PATCH110\0ID#000002", 22)
 			&& memcmp(tmp, "GF1PATCH100\0ID#000002", 22))) {
 			/* don't know what the differences are */
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
-		close_file(tf);
+		close_file(c, tf);
 		return 0;
 	}
 	/* instruments.  To some patch makers, 0 means 1 */
 	if (tmp[82] != 1 && tmp[82] != 0) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				"Can't handle patches with %d instruments", tmp[82]);
-		close_file(tf);
+		close_file(c, tf);
 		return 0;
 	}
 	if (tmp[151] != 1 && tmp[151] != 0) {	/* layers.  What's a layer? */
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				"Can't handle instruments with %d layers", tmp[151]);
-		close_file(tf);
+		close_file(c, tf);
 		return 0;
 	}
 	ip = (Instrument *) safe_malloc(sizeof(Instrument));
@@ -730,15 +677,15 @@ static Instrument *load_gus_instrument(const char *name,
 	ip->sample = (Sample *) safe_malloc(sizeof(Sample) * ip->samples);
 	memset(ip->sample, 0, sizeof(Sample) * ip->samples);
 	for (i = 0; i < ip->samples; i++) {
-		skip(tf, 7);	/* Skip the wave name */
-		if (tf_read(&fractions, 1, 1, tf) != 1) {
+		skip(c, tf, 7);	/* Skip the wave name */
+		if (tf_read(c, &fractions, 1, 1, tf) != 1) {
 fail:
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
 			for (j = 0; j < i; j++)
 				free(ip->sample[j].data);
 			free(ip->sample);
 			free(ip);
-			close_file(tf);
+			close_file(c, tf);
 			return 0;
 		}
 		sp = &(ip->sample[i]);
@@ -770,7 +717,7 @@ fail:
 		READ_LONG(sp->low_freq);
 		READ_LONG(sp->high_freq);
 		READ_LONG(sp->root_freq);
-		skip(tf, 2);	/* Why have a "root frequency" and then "tuning"?? */
+		skip(c, tf, 2);	/* Why have a "root frequency" and then "tuning"?? */
 		READ_CHAR(tmp[0]);
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Rate/Low/Hi/Root = %d/%d/%d/%d",
 				sp->sample_rate, sp->low_freq, sp->high_freq, sp->root_freq);
@@ -780,15 +727,15 @@ fail:
 		else
 			sp->panning = (uint8) (panning & 0x7f);
 		/* envelope, tremolo, and vibrato */
-		if (tf_read(tmp, 1, 18, tf) != 18)
+		if (tf_read(c, tmp, 1, 18, tf) != 18)
 			goto fail;
 		if (! tmp[13] || ! tmp[14]) {
 			sp->tremolo_sweep_increment = sp->tremolo_phase_increment = 0;
 			sp->tremolo_depth = 0;
 			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * no tremolo");
 		} else {
-			sp->tremolo_sweep_increment = convert_tremolo_sweep(tmp[12]);
-			sp->tremolo_phase_increment = convert_tremolo_rate(tmp[13]);
+			sp->tremolo_sweep_increment = convert_tremolo_sweep(c, tmp[12]);
+			sp->tremolo_phase_increment = convert_tremolo_rate(c, tmp[13]);
 			sp->tremolo_depth = tmp[14];
 			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 					" * tremolo: sweep %d, phase %d, depth %d",
@@ -813,7 +760,7 @@ fail:
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * mode: 0x%02x", sp->modes);
 		READ_SHORT(sp->scale_freq);
 		READ_SHORT(sp->scale_factor);
-		skip(tf, 36);	/* skip reserved space */
+		skip(c, tf, 36);	/* skip reserved space */
 		/* Mark this as a fixed-pitch instrument if such a deed is desired. */
 		sp->note_to_use = (note_to_use != -1) ? (uint8) note_to_use : 0;
 		/* seashore.pat in the Midia patch set has no Sustain.  I don't
@@ -865,15 +812,15 @@ fail:
 			}
 		}
 		for (j = 0; j < 6; j++) {
-			sp->envelope_rate[j]= convert_envelope_rate(tmp[j]);
+			sp->envelope_rate[j]= convert_envelope_rate(c, tmp[j]);
 			sp->envelope_offset[j] = convert_envelope_offset(tmp[j + 6]);
 		}
 		/* this envelope seems to give reverb like effects to most patches
 		 * use the same method as soundfont
 		 */
-		if (modify_release) {
+		if (c->modify_release) {
 			sp->envelope_offset[3] = to_offset(5);
-			sp->envelope_rate[3] = calc_rate(255, modify_release);
+			sp->envelope_rate[3] = calc_rate(c, 255, c->modify_release);
 			sp->envelope_offset[4] = to_offset(4);
 			sp->envelope_rate[4] = to_offset(200);
 			sp->envelope_offset[5] = to_offset(4);
@@ -882,7 +829,7 @@ fail:
 		/* Then read the sample data */
 		sp->data = (sample_t *) safe_malloc(sp->data_length + 4);
 		sp->data_alloced = 1;
-		if ((j = tf_read(sp->data, 1, sp->data_length, tf))
+		if ((j = tf_read(c, sp->data, 1, sp->data_length, tf))
 				!= sp->data_length) {
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 					"Too small this patch length: %d < %d",
@@ -935,7 +882,7 @@ fail:
 			ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s", name);
 		}
 		/* If necessary do some anti-aliasing filtering */
-		if (antialiasing_allowed)
+		if (c->antialiasing_allowed)
 			antialiasing((int16 *) sp->data, sp->data_length / 2,
 					sp->sample_rate, play_mode->rate);
 #ifdef ADJUST_SAMPLE_VOLUMES
@@ -989,13 +936,13 @@ fail:
 		 * and it's not looped, we can resample it now.
 		 */
 		if (sp->note_to_use && ! (sp->modes & MODES_LOOPING))
-			pre_resample(sp);
+			pre_resample(c, sp);
 
 		/* do pitch detection on drums if surround chorus is used */
-		if (dr && opt_surround_chorus)
+		if (dr && c->opt_surround_chorus)
 		{
 		    sp->chord = -1;
-		    sp->root_freq_detected = freq_fourier(sp, &(sp->chord));
+		    sp->root_freq_detected = freq_fourier(c, sp, &(sp->chord));
 		    sp->transpose_detected =
 			assign_pitch_to_freq(sp->root_freq_detected) -
 			assign_pitch_to_freq(sp->root_freq / 1024.0);
@@ -1010,8 +957,8 @@ fail:
 			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Stripping tail");
 		}
 	}
-	close_file(tf);
-	store_instrument_cache(ip, name, panning, amp, note_to_use,
+	close_file(c, tf);
+	store_instrument_cache(c, ip, name, panning, amp, note_to_use,
 			strip_loop, strip_envelope, strip_tail);
 	return ip;
 }
@@ -1033,9 +980,9 @@ void squash_sample_16to8(Sample *sp)
 }
 #endif
 
-Instrument *load_instrument(int dr, int b, int prog)
+Instrument *load_instrument(struct timiditycontext_t *c, int dr, int b, int prog)
 {
-	ToneBank *bank = ((dr) ? drumset[b] : tonebank[b]);
+	ToneBank *bank = ((dr) ? c->drumset[b] : c->tonebank[b]);
 	Instrument *ip;
 	int i, font_bank, font_preset, font_keynote;
 	FLOAT_T volume_max;
@@ -1043,11 +990,11 @@ Instrument *load_instrument(int dr, int b, int prog)
 	char infomsg[256];
 
 #ifndef CFG_FOR_SF
-	if (play_system_mode == GS_SYSTEM_MODE && (b == 64 || b == 65)) {
+	if (c->play_system_mode == GS_SYSTEM_MODE && (b == 64 || b == 65)) {
 		if (! dr)	/* User Instrument */
-			recompute_userinst(b, prog);
+			recompute_userinst(c, b, prog);
 		else {		/* User Drumset */
-			ip = recompute_userdrum(b, prog);
+			ip = recompute_userdrum(c, b, prog);
 			if (ip != NULL) {
 				return ip;
 			}
@@ -1059,10 +1006,10 @@ Instrument *load_instrument(int dr, int b, int prog)
 			font_bank = bank->tone[prog].font_bank;
 			font_preset = bank->tone[prog].font_preset;
 			font_keynote = bank->tone[prog].font_keynote;
-			ip = extract_soundfont(bank->tone[prog].name,
+			ip = extract_soundfont(c, bank->tone[prog].name,
 					font_bank, font_preset, font_keynote);
 		} else	/* Sample extension */
-			ip = extract_sample_file(bank->tone[prog].name);
+			ip = extract_sample_file(c, bank->tone[prog].name);
 		/* amp tuning */
 		if (ip != NULL && bank->tone[prog].amp != -1) {
 			for (i = 0, volume_max = 0; i < ip->samples; i++)
@@ -1087,7 +1034,7 @@ Instrument *load_instrument(int dr, int b, int prog)
 		if (ip != NULL && bank->tone[prog].note != -1)
 			for (i = 0; i < ip->samples; i++)
 				ip->sample[i].root_freq =
-						freq_table[bank->tone[prog].note & 0x7f];
+						c->freq_table[bank->tone[prog].note & 0x7f];
 		/* filter key-follow */
 		if (ip != NULL && bank->tone[prog].key_to_fc != 0)
 			for (i = 0; i < ip->samples; i++)
@@ -1110,7 +1057,7 @@ Instrument *load_instrument(int dr, int b, int prog)
 			if (bank->tone[i].comment)
 				free(bank->tone[i].comment);
 			bank->tone[i].comment = safe_strdup(ip->instname);
-			apply_bank_parameter(ip, &bank->tone[prog]);
+			apply_bank_parameter(c, ip, &bank->tone[prog]);
 		}
 		return ip;
 	}
@@ -1124,7 +1071,7 @@ Instrument *load_instrument(int dr, int b, int prog)
 		font_keynote = prog;
 	}
 	/* preload soundfont */
-	ip = load_soundfont_inst(0, font_bank, font_preset, font_keynote);
+	ip = load_soundfont_inst(c, 0, font_bank, font_preset, font_keynote);
 	if (ip != NULL) {
 		if (bank->tone[prog].name == NULL) /* this should not be NULL to play the instrument */
 			bank->tone[prog].name = safe_strdup(DYNAMIC_INSTRUMENT_NAME);
@@ -1134,14 +1081,14 @@ Instrument *load_instrument(int dr, int b, int prog)
 	}
 	if (ip == NULL) {	/* load GUS/patch file */
 		if (! dr)
-			sprintf(infomsg, "Tonebank %d %d", b, prog + progbase);
+			sprintf(infomsg, "Tonebank %d %d", b, prog + c->progbase);
 		else
 			sprintf(infomsg, "Drumset %d %d(%s)",
-					b + progbase, prog, note_name[prog % 12]);
-		ip = load_gus_instrument(bank->tone[prog].name,
+					b + c->progbase, prog, note_name[prog % 12]);
+		ip = load_gus_instrument(c, bank->tone[prog].name,
 				bank, dr, prog, infomsg);
 		if (ip == NULL) {	/* no patch; search soundfont again */
-			ip = load_soundfont_inst(1, font_bank, font_preset, font_keynote);
+			ip = load_soundfont_inst(c, 1, font_bank, font_preset, font_keynote);
 			if (ip != NULL) {
 				if (bank->tone[0].comment)
 					free(bank->tone[0].comment);
@@ -1150,14 +1097,14 @@ Instrument *load_instrument(int dr, int b, int prog)
 		}
 	}
 	if (ip != NULL)
-		apply_bank_parameter(ip, &bank->tone[prog]);
+		apply_bank_parameter(c, ip, &bank->tone[prog]);
 	return ip;
 }
 
-static int fill_bank(int dr, int b, int *rc)
+static int fill_bank(struct timiditycontext_t *c, int dr, int b, int *rc)
 {
     int i, errors = 0;
-    ToneBank *bank=((dr) ? drumset[b] : tonebank[b]);
+    ToneBank *bank=((dr) ? c->drumset[b] : c->tonebank[b]);
 
     if(rc != NULL)
 	*rc = RC_NONE;
@@ -1168,15 +1115,15 @@ static int fill_bank(int dr, int b, int *rc)
 	{
 	    if(!(bank->tone[i].name))
 	    {
-		bank->tone[i].instrument = load_instrument(dr, b, i);
+		bank->tone[i].instrument = load_instrument(c, dr, b, i);
 		if(bank->tone[i].instrument == NULL)
 		{
 		    ctl->cmsg(CMSG_WARNING,
 			      (b != 0) ? VERB_VERBOSE : VERB_NORMAL,
 			      "No instrument mapped to %s %d, program %d%s",
 			      dr ? "drum set" : "tone bank",
-			      dr ? b+progbase : b,
-			      dr ? i : i+progbase,
+			      dr ? b+c->progbase : b,
+			      dr ? i : i+c->progbase,
 			      (b != 0) ? "" :
 			      " - this instrument will not be heard");
 		    if(b != 0)
@@ -1185,14 +1132,14 @@ static int fill_bank(int dr, int b, int *rc)
 			   bank / drumset for loading (if it isn't already) */
 			if(!dr)
 			{
-			    if(!(standard_tonebank.tone[i].instrument))
-				standard_tonebank.tone[i].instrument =
+			    if(!(c->standard_tonebank.tone[i].instrument))
+				c->standard_tonebank.tone[i].instrument =
 				    MAGIC_LOAD_INSTRUMENT;
 			}
 			else
 			{
-			    if(!(standard_drumset.tone[i].instrument))
-				standard_drumset.tone[i].instrument =
+			    if(!(c->standard_drumset.tone[i].instrument))
+				c->standard_drumset.tone[i].instrument =
 				    MAGIC_LOAD_INSTRUMENT;
 			}
 			bank->tone[i].instrument = 0;
@@ -1206,20 +1153,20 @@ static int fill_bank(int dr, int b, int *rc)
 	    {
 		if(rc != NULL)
 		{
-		    *rc = check_apply_control();
+		    *rc = check_apply_control(c);
 		    if(RC_IS_SKIP_FILE(*rc))
 			return errors;
 		}
 
-		bank->tone[i].instrument = load_instrument(dr, b, i);
+		bank->tone[i].instrument = load_instrument(c, dr, b, i);
 		if(!bank->tone[i].instrument)
 		{
 		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			      "Couldn't load instrument %s "
 			      "(%s %d, program %d)", bank->tone[i].name,
 			      dr ? "drum set" : "tone bank",
-			      dr ? b+progbase : b,
-			      dr ? i : i+progbase);
+			      dr ? b+c->progbase : b,
+			      dr ? i : i+c->progbase);
 		    errors++;
 		}
 	    }
@@ -1228,19 +1175,19 @@ static int fill_bank(int dr, int b, int *rc)
     return errors;
 }
 
-int load_missing_instruments(int *rc)
+int load_missing_instruments(struct timiditycontext_t *c, int *rc)
 {
-  int i = 128 + map_bank_counter, errors = 0;
+  int i = 128 + c->map_bank_counter, errors = 0;
   if(rc != NULL)
       *rc = RC_NONE;
   while (i--)
     {
-      if (tonebank[i])
-	errors+=fill_bank(0,i,rc);
+      if (c->tonebank[i])
+	errors+=fill_bank(c, 0,i,rc);
       if(rc != NULL && RC_IS_SKIP_FILE(*rc))
 	  return errors;
-      if (drumset[i])
-	errors+=fill_bank(1,i,rc);
+      if (c->drumset[i])
+	errors+=fill_bank(c, 1,i,rc);
       if(rc != NULL && RC_IS_SKIP_FILE(*rc))
 	  return errors;
     }
@@ -1364,12 +1311,12 @@ void copy_tone_bank_element(ToneBankElement *elm, const ToneBankElement *src)
 }
 
 /*! Release ToneBank[128 + MAP_BANK_COUNT] */
-static void free_tone_bank_list(ToneBank *tb[])
+static void free_tone_bank_list(struct timiditycontext_t *c, ToneBank *tb[])
 {
 	int i, j;
 	ToneBank *bank;
 
-	for (i = 0; i < 128 + map_bank_counter; i++)
+	for (i = 0; i < 128 + c->map_bank_counter; i++)
 	{
 		bank = tb[i];
 		if (!bank)
@@ -1390,10 +1337,10 @@ static void free_tone_bank_list(ToneBank *tb[])
 }
 
 /*! Release tonebank and drumset */
-void free_tone_bank(void)
+void free_tone_bank(struct timiditycontext_t *c)
 {
-	free_tone_bank_list(tonebank);
-	free_tone_bank_list(drumset);
+	free_tone_bank_list(c, c->tonebank);
+	free_tone_bank_list(c, c->drumset);
 }
 
 /*! Release ToneBankElement. */
@@ -1465,16 +1412,16 @@ void free_tone_bank_element(ToneBankElement *elm)
 	elm->reso = NULL, elm->resonum = 0;
 }
 
-void free_instruments(int reload_default_inst)
+void free_instruments(struct timiditycontext_t *c, int reload_default_inst)
 {
-    int i = 128 + map_bank_counter, j;
+    int i = 128 + c->map_bank_counter, j;
     struct InstrumentCache *p;
     ToneBank *bank;
     Instrument *ip;
     struct InstrumentCache *default_entry;
     int default_entry_addr;
 
-    clear_magic_instruments();
+    clear_magic_instruments(c);
 
     /* Free soundfont instruments */
     while(i--)
@@ -1483,12 +1430,12 @@ void free_instruments(int reload_default_inst)
 	   bank[0]->tone[j].instrument. See play_midi_load_instrument()
 	   at playmidi.c for the implementation */
 
-	if((bank = tonebank[i]) != NULL)
+	if((bank = c->tonebank[i]) != NULL)
 	    for(j = 127; j >= 0; j--)
 	    {
 		ip = bank->tone[j].instrument;
 		if(ip != NULL && ip->type == INST_SF2 &&
-		   (i == 0 || ip != tonebank[0]->tone[j].instrument))
+		   (i == 0 || ip != c->tonebank[0]->tone[j].instrument))
 		    free_instrument(ip);
 		bank->tone[j].instrument = NULL;
 		if(bank->tone[j].name && !bank->tone[j].name[0]) /* DYNAMIC_INSTRUMENT_NAME */
@@ -1497,12 +1444,12 @@ void free_instruments(int reload_default_inst)
 			bank->tone[j].name = NULL;
 		}
 	    }
-	if((bank = drumset[i]) != NULL)
+	if((bank = c->drumset[i]) != NULL)
 	    for(j = 127; j >= 0; j--)
 	    {
 		ip = bank->tone[j].instrument;
 		if(ip != NULL && ip->type == INST_SF2 &&
-		   (i == 0 || ip != drumset[0]->tone[j].instrument))
+		   (i == 0 || ip != c->drumset[0]->tone[j].instrument))
 		    free_instrument(ip);
 		bank->tone[j].instrument = NULL;
 		if(bank->tone[j].name && !bank->tone[j].name[0]) /* DYNAMIC_INSTRUMENT_NAME */
@@ -1512,9 +1459,9 @@ void free_instruments(int reload_default_inst)
 		}
 	    }
 #if 0
-		if ((drumset[i] != NULL) && (drumset[i]->alt != NULL)) {
-			free(drumset[i]->alt);
-			drumset[i]->alt = NULL;
+		if ((c->drumset[i] != NULL) && (c->drumset[i]->alt != NULL)) {
+			free(c->drumset[i]->alt);
+			c->drumset[i]->alt = NULL;
 		}
 #endif
     }
@@ -1524,10 +1471,10 @@ void free_instruments(int reload_default_inst)
     default_entry_addr = 0;
     for(i = 0; i < INSTRUMENT_HASH_SIZE; i++)
     {
-	p = instrument_cache[i];
+	p = c->instrument_cache[i];
 	while(p != NULL)
 	{
-	    if(!reload_default_inst && p->ip == default_instrument)
+	    if(!reload_default_inst && p->ip == c->default_instrument)
 	    {
 		default_entry = p;
 		default_entry_addr = i;
@@ -1543,19 +1490,19 @@ void free_instruments(int reload_default_inst)
 		free(tmp);
 	    }
 	}
-	instrument_cache[i] = NULL;
+	c->instrument_cache[i] = NULL;
     }
 
     if(reload_default_inst)
-	set_default_instrument(NULL);
+	set_default_instrument(c, NULL);
     else if(default_entry)
     {
 	default_entry->next = NULL;
-	instrument_cache[default_entry_addr] = default_entry;
+	c->instrument_cache[default_entry_addr] = default_entry;
     }
 }
 
-void free_special_patch(int id)
+void free_special_patch(struct timiditycontext_t *c, int id)
 {
     int i, j, start, end;
 
@@ -1568,16 +1515,16 @@ void free_special_patch(int id)
     }
 
     for(i = start; i <= end; i++)
-	if(special_patch[i] != NULL)
+	if(c->special_patch[i] != NULL)
 	{
 	    Sample *sp;
 	    int n;
 
-	    if(special_patch[i]->name != NULL)
-		free(special_patch[i]->name);
-			special_patch[i]->name = NULL;
-	    n = special_patch[i]->samples;
-	    sp = special_patch[i]->sample;
+	    if(c->special_patch[i]->name != NULL)
+		free(c->special_patch[i]->name);
+			c->special_patch[i]->name = NULL;
+	    n = c->special_patch[i]->samples;
+	    sp = c->special_patch[i]->sample;
 	    if(sp)
 	    {
 		for(j = 0; j < n; j++)
@@ -1585,16 +1532,16 @@ void free_special_patch(int id)
 			free(sp[j].data);
 		free(sp);
 	    }
-	    free(special_patch[i]);
-	    special_patch[i] = NULL;
+	    free(c->special_patch[i]);
+	    c->special_patch[i] = NULL;
 	}
 }
 
-int set_default_instrument(const char *name)
+#define last_name c->set_default_instrument_last_name
+int set_default_instrument(struct timiditycontext_t *c, const char *name)
 {
     Instrument *ip;
     int i;
-    static const char *last_name;
 
     if(name == NULL)
     {
@@ -1603,29 +1550,30 @@ int set_default_instrument(const char *name)
 	    return 0;
     }
 
-    if(!(ip = load_gus_instrument(name, NULL, 0, 0, NULL)))
+    if(!(ip = load_gus_instrument(c, name, NULL, 0, 0, NULL)))
 	return -1;
-    if(default_instrument)
-	free_instrument(default_instrument);
-    default_instrument = ip;
+    if(c->default_instrument)
+	free_instrument(c->default_instrument);
+    c->default_instrument = ip;
     for(i = 0; i < MAX_CHANNELS; i++)
-	default_program[i] = SPECIAL_PROGRAM;
+	c->default_program[i] = SPECIAL_PROGRAM;
     last_name = name;
 
     return 0;
 }
+#undef last_name
 
 /*! search mapped bank.
     returns negative value indicating free bank if not found,
     0 if no free bank was available */
-int find_instrument_map_bank(int dr, int map, int bk)
+int find_instrument_map_bank(struct timiditycontext_t *c, int dr, int map, int bk)
 {
 	struct bank_map_elem *bm;
 	int i;
 
 	if (map == INST_NO_MAP)
 		return 0;
-	bm = dr ? map_drumset : map_bank;
+	bm = dr ? c->map_drumset : c->map_bank;
 	for(i = 0; i < MAP_BANK_COUNT; i++)
 	{
 		if (!bm[i].used)
@@ -1637,51 +1585,51 @@ int find_instrument_map_bank(int dr, int map, int bk)
 }
 
 /*! allocate mapped bank if needed. returns -1 if allocation failed. */
-int alloc_instrument_map_bank(int dr, int map, int bk)
+int alloc_instrument_map_bank(struct timiditycontext_t *c, int dr, int map, int bk)
 {
 	struct bank_map_elem *bm;
 	int i;
 
 	if (map == INST_NO_MAP)
 	{
-		alloc_instrument_bank(dr, bk);
+		alloc_instrument_bank(c, dr, bk);
 		return bk;
 	}
-	i = find_instrument_map_bank(dr, map, bk);
+	i = find_instrument_map_bank(c, dr, map, bk);
 	if (i == 0)
 		return -1;
 	if (i < 0)
 	{
 		i = -i - 128;
-		bm = dr ? map_drumset : map_bank;
+		bm = dr ? c->map_drumset : c->map_bank;
 		bm[i].used = 1;
 		bm[i].mapid = map;
 		bm[i].bankno = bk;
-		if (map_bank_counter < i + 1)
-			map_bank_counter = i + 1;
+		if (c->map_bank_counter < i + 1)
+			c->map_bank_counter = i + 1;
 		i += 128;
-		alloc_instrument_bank(dr, i);
+		alloc_instrument_bank(c, dr, i);
 	}
 	return i;
 }
 
-void alloc_instrument_bank(int dr, int bk)
+void alloc_instrument_bank(struct timiditycontext_t *c, int dr, int bk)
 {
     ToneBank *b;
 
     if(dr)
     {
-	if((b = drumset[bk]) == NULL)
+	if((b = c->drumset[bk]) == NULL)
 	{
-	    b = drumset[bk] = (ToneBank *)safe_malloc(sizeof(ToneBank));
+	    b = c->drumset[bk] = (ToneBank *)safe_malloc(sizeof(ToneBank));
 	    memset(b, 0, sizeof(ToneBank));
 	}
     }
     else
     {
-	if((b = tonebank[bk]) == NULL)
+	if((b = c->tonebank[bk]) == NULL)
 	{
-	    b = tonebank[bk] = (ToneBank *)safe_malloc(sizeof(ToneBank));
+	    b = c->tonebank[bk] = (ToneBank *)safe_malloc(sizeof(ToneBank));
 	    memset(b, 0, sizeof(ToneBank));
 	}
     }
@@ -1690,7 +1638,7 @@ void alloc_instrument_bank(int dr, int bk)
 
 /* Instrument alias map - Written by Masanao Izumo */
 
-int instrument_map(int mapID, int *set, int *elem)
+int instrument_map(struct timiditycontext_t *c, int mapID, int *set, int *elem)
 {
     int s, e;
     struct inst_map_elem *p;
@@ -1700,7 +1648,7 @@ int instrument_map(int mapID, int *set, int *elem)
 
     s = *set;
     e = *elem;
-    p = inst_map_table[mapID][s];
+    p = c->inst_map_table[mapID][s];
     if(p != NULL && p[e].mapped)
     {
 	*set = p[e].set;
@@ -1710,7 +1658,7 @@ int instrument_map(int mapID, int *set, int *elem)
 
     if(s != 0)
     {
-	p = inst_map_table[mapID][0];
+	p = c->inst_map_table[mapID][0];
 	if(p != NULL && p[e].mapped)
 	{
 	    *set = p[e].set;
@@ -1721,39 +1669,39 @@ int instrument_map(int mapID, int *set, int *elem)
     return 0;
 }
 
-void set_instrument_map(int mapID,
+void set_instrument_map(struct timiditycontext_t *c, int mapID,
 			int set_from, int elem_from,
 			int set_to, int elem_to)
 {
     struct inst_map_elem *p;
 
-    p = inst_map_table[mapID][set_from];
+    p = c->inst_map_table[mapID][set_from];
     if(p == NULL)
     {
 		p = (struct inst_map_elem *)
 	    safe_malloc(128 * sizeof(struct inst_map_elem));
 	    memset(p, 0, 128 * sizeof(struct inst_map_elem));
-		inst_map_table[mapID][set_from] = p;
+		c->inst_map_table[mapID][set_from] = p;
     }
     p[elem_from].set = set_to;
     p[elem_from].elem = elem_to;
 	p[elem_from].mapped = 1;
 }
 
-void free_instrument_map(void)
+void free_instrument_map(struct timiditycontext_t *c)
 {
   int i, j;
 
-  for(i = 0; i < map_bank_counter; i++)
-    map_bank[i].used = map_drumset[i].used = 0;
-  /* map_bank_counter = 0; never shrinks rather than assuming tonebank was already freed */
+  for(i = 0; i < c->map_bank_counter; i++)
+    c->map_bank[i].used = c->map_drumset[i].used = 0;
+  /* c->map_bank_counter = 0; never shrinks rather than assuming tonebank was already freed */
   for (i = 0; i < NUM_INST_MAP; i++) {
     for (j = 0; j < 128; j++) {
       struct inst_map_elem *map;
-      map = inst_map_table[i][j];
+      map = c->inst_map_table[i][j];
       if (map) {
 	free(map);
-	inst_map_table[i][j] = NULL;
+	c->inst_map_table[i][j] = NULL;
       }
     }
   }

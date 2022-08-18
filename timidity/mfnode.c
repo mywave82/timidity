@@ -41,7 +41,7 @@
 
 Instr_comment instr_comment[MAX_CHANNELS];
 
-MFnode *make_new_MFnode_entry(char *file)
+MFnode *make_new_MFnode_entry(struct timiditycontext_t *c, char *file)
 {
     struct midi_file_info *infop;
 #ifdef MIDI_TITLE
@@ -69,13 +69,13 @@ MFnode *make_new_MFnode_entry(char *file)
 #ifdef MIDI_TITLE
 	mfp->title = title;
 #endif /* MIDI_TITLE */
-	mfp->file = safe_strdup(url_unexpand_home_dir(file));
+	mfp->file = safe_strdup(url_unexpand_home_dir(c, file));
 	mfp->infop = infop;
 	return mfp;
     }
 
     ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "%s: Not a midi file (Ignored)",
-	url_unexpand_home_dir(file));
+	url_unexpand_home_dir(c, file));
     return NULL;
 }
 
@@ -85,34 +85,3 @@ void indicator_set_prog(int ch, int val, char *comm)
     instr_comment[ch].prog = val;
     instr_comment[ch].last_note_on = 0.0;
 }
-
-/*char *channel_instrum_name(int ch)
-{
-    char *comm;
-    int bank;
-
-    if(ISDRUMCHANNEL(ch))
-		return "dram";
-    if(channel[ch].program == SPECIAL_PROGRAM)
-		return "Special Program";
-
-    if(IS_CURRENT_MOD_FILE)
-    {
-		int pr;
-		pr = channel[ch].special_sample;
-		if(pr > 0 &&
-			special_patch[pr] != NULL &&
-			special_patch[pr]->name != NULL)
-				return special_patch[pr]->name;
-		return "MOD";
-    }
-
-    bank = channel[ch].bank;
-    if(tonebank[bank] == NULL)
-		bank = 0;
-    comm = tonebank[bank]->tone[channel[ch].program].comment;
-    if(comm == NULL)
-		comm = tonebank[0]->tone[channel[ch].program].comment;
-    return comm;
-}
-*/

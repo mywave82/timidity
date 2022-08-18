@@ -45,7 +45,7 @@ static unsigned long get_long(char *s)
 	    (unsigned long)p[3]<<24);
 }
 
-ArchiveEntryNode *next_zip_entry(void)
+ArchiveEntryNode *next_zip_entry(struct timiditycontext_t *c)
 {
     unsigned long magic;
     unsigned short flen, elen, hdrsiz;
@@ -57,11 +57,11 @@ ArchiveEntryNode *next_zip_entry(void)
     unsigned short flags;
     int macbin_check;
 
-    url = arc_handler.url;
-    macbin_check = (arc_handler.counter == 0);
+    url = c->arc_handler.url;
+    macbin_check = (c->arc_handler.counter == 0);
 
   retry_read:
-    if(url_read(url, buff, 4) != 4)
+    if(url_read(c, url, buff, 4) != 4)
 	return NULL;
 
     hdrsiz = 4;
@@ -70,7 +70,7 @@ ArchiveEntryNode *next_zip_entry(void)
     if(magic == EXTLOCSIG)
     {
 	/* ignored */
-	if(url_read(url, buff, 20) != 20)
+	if(url_read(c, url, buff, 20) != 20)
 	    return NULL;
 	magic = get_long(buff + 16);
 	hdrsiz += 20;
@@ -78,9 +78,9 @@ ArchiveEntryNode *next_zip_entry(void)
     else if(macbin_check && buff[0] == '0')
     {
 	macbin_check = 0;
-	url_skip(url, 128-4);
-	if(arc_handler.isfile)
-	    arc_handler.pos += 128;
+	url_skip(c, url, 128-4);
+	if(c->arc_handler.isfile)
+	    c->arc_handler.pos += 128;
 	goto retry_read;
     }
 
@@ -88,17 +88,17 @@ ArchiveEntryNode *next_zip_entry(void)
 	return NULL;
 
     /* Version needed to extract */
-    url_skip(url, 2);
+    url_skip(c, url, 2);
     hdrsiz += 2;
 
     /* General purpose bit flag */
-    if(url_read(url, buff, 2) != 2)
+    if(url_read(c, url, buff, 2) != 2)
 	return NULL;
     flags = get_short(buff);
     hdrsiz += 2;
 
     /* Compression method */
-    if(url_read(url, buff, 2) != 2)
+    if(url_read(c, url, buff, 2) != 2)
 	return NULL;
     method = get_short(buff);
     hdrsiz += 2;
@@ -147,31 +147,31 @@ ArchiveEntryNode *next_zip_entry(void)
     }
 
     /* Last mod file time */
-    url_skip(url, 2);
+    url_skip(c, url, 2);
     hdrsiz += 2;
 
     /* Last mod file date */
-    url_skip(url, 2);
+    url_skip(c, url, 2);
     hdrsiz += 2;
 
     /* CRC-32 */
-    url_skip(url, 4);
+    url_skip(c, url, 4);
     hdrsiz += 4;
 
     /* Compressed size */
-    if(url_read(url, buff, 4) != 4)
+    if(url_read(c, url, buff, 4) != 4)
 	return NULL;
     hdrsiz += 4;
     compsize = (long)get_long(buff);
 
     /* Uncompressed size */
-    if(url_read(url, buff, 4) != 4)
+    if(url_read(c, url, buff, 4) != 4)
 	return NULL;
     hdrsiz += 4;
     origsize = (long)get_long(buff);
 
     /* Filename length */
-    if(url_read(url, buff, 2) != 2)
+    if(url_read(c, url, buff, 2) != 2)
 	return NULL;
     hdrsiz += 2;
     flen = get_short(buff);
@@ -179,13 +179,13 @@ ArchiveEntryNode *next_zip_entry(void)
 	return NULL;
 
     /* Extra field length */
-    if(url_read(url, buff, 2) != 2)
+    if(url_read(c, url, buff, 2) != 2)
 	return NULL;
     hdrsiz += 2;
     elen = get_short(buff);
 
     /* filename */
-    if(url_read(url, buff, flen) != flen)
+    if(url_read(c, url, buff, flen) != flen)
 	return NULL;
     hdrsiz += flen;
     buff[flen] = '\0';
@@ -193,10 +193,10 @@ ArchiveEntryNode *next_zip_entry(void)
     if(compsize == 0 && flen > 0 &&
        (buff[flen - 1] == '/' || buff[flen - 1] == '\\'))
     {
-	url_skip(url, elen);
+	url_skip(c, url, elen);
 	hdrsiz += elen;
-	if(arc_handler.isfile)
-	  arc_handler.pos += hdrsiz;
+	if(c->arc_handler.isfile)
+	  c->arc_handler.pos += hdrsiz;
 	goto retry_read;
     }
 
@@ -209,22 +209,22 @@ ArchiveEntryNode *next_zip_entry(void)
     entry->compsize = compsize;
 
     /* Extra field */
-    url_skip(url, elen);
+    url_skip(c, url, elen);
     hdrsiz += elen;
 
-    if(arc_handler.isfile)
+    if(c->arc_handler.isfile)
     {
-      arc_handler.pos += hdrsiz;
-	entry->start = arc_handler.pos;
+      c->arc_handler.pos += hdrsiz;
+	entry->start = c->arc_handler.pos;
 	entry->cache = NULL;
-	url_skip(url, compsize);
-	arc_handler.pos += compsize;
+	url_skip(c, url, compsize);
+	c->arc_handler.pos += compsize;
     }
     else
     {
       long n;
       entry->start = 0;
-      entry->cache = url_dump(url, compsize, &n);
+      entry->cache = url_dump(c, url, compsize, &n);
       if(n != compsize)
 	{
 	  free_entry_node(entry);

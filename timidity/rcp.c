@@ -67,37 +67,30 @@ struct RCPNoteTracer
 
 #define MIDIEVENT(at, t, ch, pa, pb) \
     { MidiEvent event; SETMIDIEVENT(event, at, t, ch, pa, pb); \
-      readmidi_add_event(&event); }
+      readmidi_add_event(c, &event); }
 
-static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt);
+static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf, int trackno, int gfmt);
 static int preprocess_sysex(uint8* ex, int ch, int gt, int vel);
 
 /* Note Tracer */
 static void ntr_init(struct RCPNoteTracer *ntr, int gfmt, int32 at);
-static void ntr_end(struct RCPNoteTracer *ntr);
-static void ntr_incr(struct RCPNoteTracer *ntr, int step);
-static void ntr_note_on(struct RCPNoteTracer *ntr,
+static void ntr_end(struct timiditycontext_t *c, struct RCPNoteTracer *ntr);
+static void ntr_incr(struct timiditycontext_t *c, struct RCPNoteTracer *ntr, int step);
+static void ntr_note_on(struct timiditycontext_t *c, struct RCPNoteTracer *ntr,
 			int ch, int note, int velo, int gate);
-static void ntr_wait_all_off(struct RCPNoteTracer *ntr);
+static void ntr_wait_all_off(struct timiditycontext_t *c, struct RCPNoteTracer *ntr);
 #define ntr_at(ntr) ((ntr).at)
-
-#define USER_EXCLUSIVE_LENGTH 24
-#define MAX_EXCLUSIVE_LENGTH 1024
-static uint8 user_exclusive_data[8][USER_EXCLUSIVE_LENGTH];
-static int32 init_tempo;
-static int32 init_keysig;
-static int play_bias;
 
 #define TEMPO_GRADATION_SKIP		2
 #define TEMPO_GRADATION_GRADE		600
 
-int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn)
+int read_rcp_file(struct timiditycontext_t *c, struct timidity_file *tf, char *magic0, char *fn)
 {
     char buff[361], *p;
     int ntrack, timebase1, timebase2, i, len, gfmt;
 
     strncpy(buff, magic0, 4);
-    if(tf_read(buff + 4, 1, 32-4, tf) != 32-4)
+    if(tf_read(c, buff + 4, 1, 32-4, tf) != 32-4)
 	return 1;
     len = strlen(fn);
     if(strncmp(buff, "RCM-PC98V2.0(C)COME ON MUSIC", 28) == 0)
@@ -105,26 +98,26 @@ int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn)
 	/* RCP or R36 */
 	gfmt = 0;
 	if(check_file_extension(fn, ".r36", 1))
-	    current_file_info->file_type = IS_R36_FILE;
+	    c->current_file_info->file_type = IS_R36_FILE;
 	else
-	    current_file_info->file_type = IS_RCP_FILE;
+	    c->current_file_info->file_type = IS_RCP_FILE;
     }
     else if(strncmp(buff, "COME ON MUSIC RECOMPOSER RCP3.0", 31) == 0)
     {
 	/* G36 or G18 */
 	gfmt = 1;
 	if(check_file_extension(fn, ".g18", 1))
-	    current_file_info->file_type = IS_G18_FILE;
+	    c->current_file_info->file_type = IS_G18_FILE;
 	else
-	    current_file_info->file_type = IS_G36_FILE;
+	    c->current_file_info->file_type = IS_G36_FILE;
     }
     else
 	return 1;
 
     /* title */
-    if(tf_read(buff, 1, 64, tf) != 64)
+    if(tf_read(c, buff, 1, 64, tf) != 64)
 	return 1;
-    if(current_file_info->seq_name == NULL)
+    if(c->current_file_info->seq_name == NULL)
     {
 	buff[64] = '\0';
 	for(len = 63; len >= 0; len--)
@@ -136,16 +129,16 @@ int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn)
 	}
 
 	len = SAFE_CONVERT_LENGTH(len + 1);
-	p = (char *)new_segment(&tmpbuffer, len);
-	code_convert(buff, p, len, NULL, NULL);
-	current_file_info->seq_name = (char *)safe_strdup(p);
-	reuse_mblock(&tmpbuffer);
+	p = (char *)new_segment(c, &c->tmpbuffer, len);
+	code_convert(c, buff, p, len, NULL, NULL);
+	c->current_file_info->seq_name = (char *)safe_strdup(p);
+	reuse_mblock(c, &c->tmpbuffer);
     }
-    current_file_info->format = 1;
+    c->current_file_info->format = 1;
 
     if(!gfmt) /* RCP or R36 */
     {
-	if(tf_read(buff, 1, 336, tf) != 336)
+	if(tf_read(c, buff, 1, 336, tf) != 336)
 	    return 1;
 #ifndef __BORLANDC__
 	buff[336] = '\0';
@@ -158,10 +151,10 @@ int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn)
 	}
 	len = SAFE_CONVERT_LENGTH(len + 1);
 
-	p = (char *)new_segment(&tmpbuffer, len);
-	code_convert(buff, p, len, NULL, NULL);
+	p = (char *)new_segment(c, &c->tmpbuffer, len);
+	code_convert(c, buff, p, len, NULL, NULL);
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 #else
 	buff[336] = '\0';
 	{
@@ -182,43 +175,43 @@ int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn)
 		continue;
 	len = SAFE_CONVERT_LENGTH(len + 1);
 
-	p = (char *)new_segment(&tmpbuffer, len);
-	code_convert(tmp, p, len, NULL, NULL);
+	p = (char *)new_segment(c, &c->tmpbuffer, len);
+	code_convert(c, tmp, p, len, NULL, NULL);
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	}
 	}
 #endif
 
-	skip(tf, 16);		/* 0x40 */
+	skip(c, tf, 16);		/* 0x40 */
 
 	timebase1 = tf_getc(tf);
-	init_tempo = tf_getc(tf); /* tempo */
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Tempo %d", init_tempo);
-	if(init_tempo < 8 || init_tempo > 250)
-	    init_tempo = 120;
+	c->init_tempo = tf_getc(tf); /* tempo */
+	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Tempo %d", c->init_tempo);
+	if(c->init_tempo < 8 || c->init_tempo > 250)
+	    c->init_tempo = 120;
 
 	/* Time Signature: numerator, denominator, Key Signature */
-	current_file_info->time_sig_n = tf_getc(tf);
+	c->current_file_info->time_sig_n = tf_getc(tf);
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
-		  current_file_info->time_sig_n);
-	current_file_info->time_sig_d = tf_getc(tf);
+		  c->current_file_info->time_sig_n);
+	c->current_file_info->time_sig_d = tf_getc(tf);
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time signature(d) %d",
-		  current_file_info->time_sig_d);
-	init_keysig = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Key signature %d", init_keysig);
-	if (init_keysig < 0 || init_keysig >= 32)
-		init_keysig = 0;
+		  c->current_file_info->time_sig_d);
+	c->init_keysig = tf_getc(tf);
+	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Key signature %d", c->init_keysig);
+	if (c->init_keysig < 0 || c->init_keysig >= 32)
+		c->init_keysig = 0;
 
-	play_bias = (int)(signed char)tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Play bias %d", play_bias);
-	if(play_bias < -36 || play_bias > 36)
-	    play_bias = 0;
+	c->play_bias = (int)(signed char)tf_getc(tf);
+	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Play bias %d", c->play_bias);
+	if(c->play_bias < -36 || c->play_bias > 36)
+	    c->play_bias = 0;
 
-	skip(tf, 12);		/* cm6 */
-	skip(tf, 4);		/* reserved */
-	skip(tf, 12);		/* gsd */
-	skip(tf, 4);		/* reserved */
+	skip(c, tf, 12);		/* cm6 */
+	skip(c, tf, 4);		/* reserved */
+	skip(c, tf, 12);		/* gsd */
+	skip(c, tf, 4);		/* reserved */
 
 	if((ntrack = tf_getc(tf)) == EOF)
 	    return 1;
@@ -226,17 +219,17 @@ int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn)
 	if(ntrack != 18 && ntrack != 36)
 	    ntrack = 18;
 	timebase2 = tf_getc(tf);
-	skip(tf, 14);		/* reserved */
-	skip(tf, 16);		/*  */
+	skip(c, tf, 14);		/* reserved */
+	skip(c, tf, 16);		/*  */
 
-	skip(tf, 32 * (14 + 2)); /* rhythm definition */
+	skip(c, tf, 32 * (14 + 2)); /* rhythm definition */
     }
     else /* G36 or G18 */
     {
-	skip(tf, 64);	/* reserved */
+	skip(c, tf, 64);	/* reserved */
 
 	/* memo */
-	if(tf_read(buff, 1, 360, tf) != 360)
+	if(tf_read(c, buff, 1, 360, tf) != 360)
 	    return 1;
 	buff[360] = '\0';
 	for(len = 359; len >= 0; len--)
@@ -247,87 +240,87 @@ int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn)
 		break;
 	}
 	len = SAFE_CONVERT_LENGTH(len + 1);
-	p = (char *)new_segment(&tmpbuffer, len);
-	code_convert(buff, p, len, NULL, NULL);
+	p = (char *)new_segment(c, &c->tmpbuffer, len);
+	code_convert(c, buff, p, len, NULL, NULL);
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 
 	/* Number of tracks */
 	ntrack = tf_getc(tf);
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Number of tracks %d", ntrack);
 	if(ntrack != 18 && ntrack != 36)
 	    ntrack = 18;
-	skip(tf, 1);
+	skip(c, tf, 1);
 	timebase1 = tf_getc(tf);
 	timebase2 = tf_getc(tf);
-	init_tempo = tf_getc(tf); /* tempo */
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Tempo %d", init_tempo);
-	if(init_tempo < 8 || init_tempo > 250)
-	    init_tempo = 120;
-	skip(tf, 1); /* ?? */
+	c->init_tempo = tf_getc(tf); /* tempo */
+	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Tempo %d", c->init_tempo);
+	if(c->init_tempo < 8 || c->init_tempo > 250)
+	    c->init_tempo = 120;
+	skip(c, tf, 1); /* ?? */
 
 	/* Time Signature: numerator, denominator, Key Signature */
-	current_file_info->time_sig_n = tf_getc(tf);
+	c->current_file_info->time_sig_n = tf_getc(tf);
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
-		  current_file_info->time_sig_n);
-	current_file_info->time_sig_d = tf_getc(tf);
+		  c->current_file_info->time_sig_n);
+	c->current_file_info->time_sig_d = tf_getc(tf);
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
-		  current_file_info->time_sig_d);
-	init_keysig = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Key signature %d", init_keysig);
-	if (init_keysig < 0 || init_keysig >= 32)
-		init_keysig = 0;
+		  c->current_file_info->time_sig_d);
+	c->init_keysig = tf_getc(tf);
+	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Key signature %d", c->init_keysig);
+	if (c->init_keysig < 0 || c->init_keysig >= 32)
+		c->init_keysig = 0;
 
-	play_bias = (int)(signed char)tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Play bias %d", play_bias);
-	if(play_bias < -36 || play_bias > 36)
-	    play_bias = 0;
-	skip(tf, 6 + 16 + 112);	/* reserved */
-	skip(tf, 12);		/* gsd */
-	skip(tf, 4);
-	skip(tf, 12);		/* gsd */
-	skip(tf, 4);
-	skip(tf, 12);		/* cm6 */
-	skip(tf, 4);
-	skip(tf, 80);		/* reserved */
-	skip(tf, 128 * (14 + 2)); /* rhythm definition */
+	c->play_bias = (int)(signed char)tf_getc(tf);
+	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Play bias %d", c->play_bias);
+	if(c->play_bias < -36 || c->play_bias > 36)
+	    c->play_bias = 0;
+	skip(c, tf, 6 + 16 + 112);	/* reserved */
+	skip(c, tf, 12);		/* gsd */
+	skip(c, tf, 4);
+	skip(c, tf, 12);		/* gsd */
+	skip(c, tf, 4);
+	skip(c, tf, 12);		/* cm6 */
+	skip(c, tf, 4);
+	skip(c, tf, 80);		/* reserved */
+	skip(c, tf, 128 * (14 + 2)); /* rhythm definition */
     }
 
     /* SysEx data */
     for(i = 0; i < 8; i++)
     {
 	int mid;
-	skip(tf, 24);	/* memo */
-	if(tf_read(user_exclusive_data[i], 1, USER_EXCLUSIVE_LENGTH, tf)
+	skip(c, tf, 24);	/* memo */
+	if(tf_read(c, c->user_exclusive_data[i], 1, USER_EXCLUSIVE_LENGTH, tf)
 	   != USER_EXCLUSIVE_LENGTH)
 	    return 1;
-	mid = user_exclusive_data[i][0];
+	mid = c->user_exclusive_data[i][0];
 	if(mid > 0 && mid < 0x7e &&
-	   (current_file_info->mid == 0 || current_file_info->mid >= 0x7e))
-	    current_file_info->mid = mid;
+	   (c->current_file_info->mid == 0 || c->current_file_info->mid >= 0x7e))
+	    c->current_file_info->mid = mid;
     }
 
-    current_file_info->divisions = (timebase1 | (timebase2 << 8));
+    c->current_file_info->divisions = (timebase1 | (timebase2 << 8));
     ctl->cmsg(CMSG_INFO, VERB_DEBUG, "divisions %d",
-	      current_file_info->divisions);
-    current_file_info->format = 1;
-    current_file_info->tracks = ntrack;
+	      c->current_file_info->divisions);
+    c->current_file_info->format = 1;
+    c->current_file_info->tracks = ntrack;
 
     if(!IS_URL_SEEK_SAFE(tf->url))
-	if((tf->url = url_cache_open(tf->url, 1)) == NULL)
+	if((tf->url = url_cache_open(c, tf->url, 1)) == NULL)
 	    return 1;
 
     for(i = 0; i < ntrack; i++)
-	if(read_rcp_track(tf, i, gfmt))
+	if(read_rcp_track(c, tf, i, gfmt))
 	{
-	    if(ignore_midi_error)
+	    if(c->ignore_midi_error)
 		return 0;
 	    return 1;
 	}
     return 0;
 }
 
-static void rcp_tempo_set(int32 at, int32 tempo)
+static void rcp_tempo_set(struct timiditycontext_t *c, int32 at, int32 tempo)
 {
     int lo, mid, hi;
 
@@ -337,11 +330,11 @@ static void rcp_tempo_set(int32 at, int32 tempo)
     MIDIEVENT(at, ME_TEMPO, lo, hi, mid);
 }
 
-static int32 rcp_tempo_change(struct RCPNoteTracer *ntr, int a, int b)
+static int32 rcp_tempo_change(struct timiditycontext_t *c, struct RCPNoteTracer *ntr, int a, int b)
 {
     int32 tempo;
 
-    tempo = (int32)((uint32)60000000 * 64 / (init_tempo * a));	/* 6*10^7 / (ini*a/64) */
+    tempo = (int32)((uint32)60000000 * 64 / (c->init_tempo * a));	/* 6*10^7 / (ini*a/64) */
     ntr->tempo_grade = b;
     if (b != 0)
     {
@@ -353,21 +346,21 @@ static int32 rcp_tempo_change(struct RCPNoteTracer *ntr, int a, int b)
     else
     {
 	ntr->tempo = tempo;
-	rcp_tempo_set(ntr_at(*ntr), tempo);
+	rcp_tempo_set(c, ntr_at(*ntr), tempo);
     }
     return tempo;
 }
 
-static void rcp_timesig_change(int32 at)
+static void rcp_timesig_change(struct timiditycontext_t *c, int32 at)
 {
 	int n, d;
 
-	n = current_file_info->time_sig_n;
-	d = current_file_info->time_sig_d;
+	n = c->current_file_info->time_sig_n;
+	d = c->current_file_info->time_sig_d;
 	MIDIEVENT(at, ME_TIMESIG, 0, n, d);
 }
 
-static void rcp_keysig_change(int32 at, int32 key)
+static void rcp_keysig_change(struct timiditycontext_t *c, int32 at, int32 key)
 {
 	int8 sf, mi;
 
@@ -382,13 +375,12 @@ static void rcp_keysig_change(int32 at, int32 key)
 	MIDIEVENT(at, ME_KEYSIG, 0, sf, mi);
 }
 
-static char *rcp_cmd_name(unsigned int cmd)
+static char *rcp_cmd_name(struct timiditycontext_t *c, unsigned int cmd)
 {
     if(cmd < 0x80)
     {
-	static char name[16];
-	sprintf(name, "NoteOn %d", cmd);
-	return name;
+	sprintf(c->rcp_cmd_name_name, "NoteOn %d", cmd);
+	return c->rcp_cmd_name_name;
     }
 
     switch(cmd)
@@ -447,29 +439,29 @@ static char *rcp_cmd_name(unsigned int cmd)
     return "Unknown";
 }
 
-static int rcp_parse_sysex_event(int32 at, uint8 *val, int32 len)
+static int rcp_parse_sysex_event(struct timiditycontext_t *c, int32 at, uint8 *val, int32 len)
 {
     MidiEvent ev, evm[260];
     int ne, i;
 
     if(len == 0) {return 0;}
 
-    if(parse_sysex_event(val, len, &ev))
+    if(parse_sysex_event(c, val, len, &ev))
     {
 	ev.time = at;
-	readmidi_add_event(&ev);
+	readmidi_add_event(c, &ev);
     }
-	if ((ne = parse_sysex_event_multi(val, len, evm)) > 0)
+	if ((ne = parse_sysex_event_multi(c, val, len, evm)) > 0)
 		for (i = 0; i < ne; i++) {
 			evm[i].time = at;
-			readmidi_add_event(&evm[i]);
+			readmidi_add_event(c, &evm[i]);
 		}
 
     return 0;
 }
 
 #define MAX_STACK_DEPTH 16
-static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
+static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf, int trackno, int gfmt)
 {
     int32 current_tempo;
     int size;
@@ -513,18 +505,18 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
      * Read Track Header
      */
 
-    track_top = tf_tell(tf);
+    track_top = tf_tell(c, tf);
     ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY, "Track top: %d", track_top);
 
     size = tf_getc(tf);
     size |= (tf_getc(tf) << 8);
 
     ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Track size %d", size);
-    last_point = size + tf_tell(tf) - 2;
+    last_point = size + tf_tell(c, tf) - 2;
 
     if(gfmt)
     {
-	skip(tf, 2);
+	skip(c, tf, 2);
 	cmdlen = 6;
     }
     else
@@ -532,11 +524,11 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 
     i = tf_getc(tf);		/* Track Number */
     ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Track number %d", i);
-    skip(tf, 1);		/* Rhythm */
+    skip(c, tf, 1);		/* Rhythm */
 
     if((ch = tf_getc(tf)) == 0xff) /* No playing */
     {
-	tf_seek(tf, last_point, SEEK_SET);
+	tf_seek(c, tf, last_point, SEEK_SET);
 	return 0;
     }
 
@@ -551,7 +543,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
     ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Key offset %d", key_offset);
     if(key_offset > 64)
 	key_offset -= 128;
-    key_offset += play_bias;
+    key_offset += c->play_bias;
 
     /* Time offset */
     time_offset = (int)(signed char)tf_getc(tf);
@@ -570,12 +562,12 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
     if(i == 1)
     {
 	/* Mute */
-	tf_seek(tf, last_point, SEEK_SET);
+	tf_seek(c, tf, last_point, SEEK_SET);
 	return 0;
     }
 
     /* Comment */
-    tf_read(buff, 1, 36, tf);
+    tf_read(c, buff, 1, 36, tf);
     buff[36] = '\0';
     for(len = 35; len >= 0; len--)
     {
@@ -585,34 +577,34 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    break;
     }
     len = SAFE_CONVERT_LENGTH(len+1);
-    p = (char *)new_segment(&tmpbuffer, len);
-    code_convert(buff, p, len, NULL, NULL);
+    p = (char *)new_segment(c, &c->tmpbuffer, len);
+    code_convert(c, buff, p, len, NULL, NULL);
     if(*p)
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "RCP Track name: %s", p);
-    reuse_mblock(&tmpbuffer);
+    reuse_mblock(c, &c->tmpbuffer);
 
     /*
      * End of Track Header
      */
 
     sp = 0;
-    ntr.tempo = current_tempo = 60000000 / init_tempo;
-    ntr_init(&ntr, gfmt, readmidi_set_track(trackno, 1));
-    if(trackno == 0 && init_tempo != 120)
-	ntr.tempo = current_tempo = rcp_tempo_change(&ntr, 64, 0);
+    ntr.tempo = current_tempo = 60000000 / c->init_tempo;
+    ntr_init(&ntr, gfmt, readmidi_set_track(c, trackno, 1));
+    if(trackno == 0 && c->init_tempo != 120)
+	ntr.tempo = current_tempo = rcp_tempo_change(c, &ntr, 64, 0);
     if (trackno == 0) {
-	rcp_timesig_change(ntr_at(ntr));
-	rcp_keysig_change(ntr_at(ntr), init_keysig);
+	rcp_timesig_change(c, ntr_at(ntr));
+	rcp_keysig_change(c, ntr_at(ntr), c->init_keysig);
     }
-    ntr_incr(&ntr, time_offset);
+    ntr_incr(c, &ntr, time_offset);
 
-    data_top = tf_tell(tf);
-    while(last_point >= tf_tell(tf) + cmdlen)
+    data_top = tf_tell(c, tf);
+    while(last_point >= tf_tell(c, tf) + cmdlen)
     {
 	int cmd, a, b, step, gate;
 	int st1, gt1, st2, gt2;
 
-	if(readmidi_error_flag)
+	if(c->readmidi_error_flag)
 	{
 	    ret = -1;
 	    break;
@@ -634,8 +626,8 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    {
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
 			  "[%d] %d %s: ch=%d step=%d a=%d b=%d sp=%d",
-			  tf_tell(tf) - 4 - track_top,
-			  ntr_at(ntr), rcp_cmd_name(cmd), ch, step, a, b, sp);
+			  tf_tell(c, tf) - 4 - track_top,
+			  ntr_at(ntr), rcp_cmd_name(c, cmd), ch, step, a, b, sp);
 	    }
 	}
 	else
@@ -658,8 +650,8 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    {
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
 			  "[%d] %d %s: ch=%d step=%d gate=%d a=%d b=%d sp=%d",
-			  tf_tell(tf) - 6 - track_top,
-			  ntr_at(ntr), rcp_cmd_name(cmd), ch,
+			  tf_tell(c, tf) - 6 - track_top,
+			  ntr_at(ntr), rcp_cmd_name(c, cmd), ch,
 			  step, gate, a, b, sp);
 	    }
 	}
@@ -669,9 +661,9 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    if(gate > 0)
 	    {
 		int note = cmd + key_offset;
-		ntr_note_on(&ntr, ch, note & 0x7f, b, gate);
+		ntr_note_on(c, &ntr, ch, note & 0x7f, b, gate);
 	    }
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    continue;
 	}
 
@@ -686,12 +678,12 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	  case 0x95:	/* User Exclusive 6 */
 	  case 0x96:	/* User Exclusive 7 */
 	  case 0x97:	/* User Exclusive 8 */
-	    memcpy(sysex, user_exclusive_data[cmd - 0x90],
+	    memcpy(sysex, c->user_exclusive_data[cmd - 0x90],
 		   USER_EXCLUSIVE_LENGTH);
 	    sysex[USER_EXCLUSIVE_LENGTH] = 0xf7;
 	    len = preprocess_sysex(sysex, ch, a, b);
-	    rcp_parse_sysex_event(ntr_at(ntr), sysex, len);
-	    ntr_incr(&ntr, step);
+	    rcp_parse_sysex_event(c, ntr_at(ntr), sysex, len);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0x98:	/* Channel Exclusive */
@@ -700,7 +692,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    {
 		if(gfmt)
 		{
-		    if(tf_read(sysex + len, 1, 5, tf) != 5)
+		    if(tf_read(c, sysex + len, 1, 5, tf) != 5)
 		    {
 			ret = -1;
 			goto end_of_track;
@@ -710,7 +702,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		else
 		{
 		    tf_getc(tf); /* 0x00 */
-		    if(tf_read(sysex + len, 1, 2, tf) != 2)
+		    if(tf_read(c, sysex + len, 1, 2, tf) != 2)
 		    {
 			ret = -1;
 			goto end_of_track;
@@ -718,11 +710,11 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		    len += 2;
 		}
 	    }
-	    tf_seek(tf, -1, SEEK_CUR);
+	    tf_seek(c, tf, -1, SEEK_CUR);
 	    sysex[len] = 0xf7;
 	    len = preprocess_sysex(sysex, ch, a, b);
-	    rcp_parse_sysex_event(ntr_at(ntr), sysex, len);
-	    ntr_incr(&ntr, step);
+	    rcp_parse_sysex_event(c, ntr_at(ntr), sysex, len);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xd0:	/* Yamaha base */
@@ -731,7 +723,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    yamaha_base_addr0 = a;
 	    yamaha_base_addr1 = b;
 	    yamaha_base_init = 1;
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xd1:	/* Yamaha para */
@@ -755,8 +747,8 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    cs += sysex[7] = b;
 	    sysex[8] = 128 - (cs & 0x7f);
 	    sysex[9] = 0xf7;
-		rcp_parse_sysex_event(ntr_at(ntr), sysex, 10);
-	    ntr_incr(&ntr, step);
+		rcp_parse_sysex_event(c, ntr_at(ntr), sysex, 10);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xd2:	/* Yamaha device */
@@ -765,7 +757,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    yamaha_device_id = a;
 	    yamaha_model_id = b;
 	    yamaha_dev_init = 1;
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xd3:	/* XG para */
@@ -783,8 +775,8 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    cs += sysex[7] = b;
 	    sysex[8] = 128 - (cs & 0x7f);
 	    sysex[9] = 0xf7;
-		rcp_parse_sysex_event(ntr_at(ntr), sysex, 10);
-	    ntr_incr(&ntr, step);
+		rcp_parse_sysex_event(c, ntr_at(ntr), sysex, 10);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xdd:	/* Roland base */
@@ -793,7 +785,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    roland_base_addr0 = a;
 	    roland_base_addr1 = b;
 	    roland_base_init = 1;
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xde:	/* Roland para */
@@ -817,8 +809,8 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    cs += sysex[7] = b;
 	    sysex[8] = 128 - (cs & 0x7f);
 	    sysex[9] = 0xf7;
-		rcp_parse_sysex_event(ntr_at(ntr), sysex, 10);
-	    ntr_incr(&ntr, step);
+		rcp_parse_sysex_event(c, ntr_at(ntr), sysex, 10);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xdf:	/* Roland device */
@@ -827,19 +819,19 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    roland_device_id = a;
 	    roland_model_id = b;
 	    roland_dev_init = 1;
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xe1:	/* BnkLPrg */
 	    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 		      "BnkLPrg is not supported: 0x%02x 0x%02x", a, b);
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xe2:	/* bank & program change */
-	    readmidi_add_ctl_event(ntr_at(ntr), ch, 0, b); /*Change MSB Bank*/
+	    readmidi_add_ctl_event(c, ntr_at(ntr), ch, 0, b); /*Change MSB Bank*/
 	    MIDIEVENT(ntr_at(ntr), ME_PROGRAM, ch, a & 0x7f, 0);
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xe5:	/* key scan */
@@ -874,7 +866,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 #endif
 	    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 		      "Key scan 0x%02x 0x%02x is not supported", a, b);
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xe6:	/* MIDI channel change */
@@ -884,7 +876,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    else if(ch >= RCP_MAXCHANNELS)
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 			  "RCP: Invalid channel: %d", ch);
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xe7:	/* tempo change */
@@ -894,39 +886,39 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 			  "Invalid tempo change\n");
 		a = 64;
 	    }
-	    current_tempo = rcp_tempo_change(&ntr, a, b);
-	    ntr_incr(&ntr, step);
+	    current_tempo = rcp_tempo_change(c, &ntr, a, b);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xea:	/* channel after touch (channel pressure) */
 	    a &= 0x7f;
 	    MIDIEVENT(ntr_at(ntr), ME_CHANNEL_PRESSURE, ch, a, 0);
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xeb:	/* control change */
-	    readmidi_add_ctl_event(ntr_at(ntr), ch, a, b);
-	    ntr_incr(&ntr, step);
+	    readmidi_add_ctl_event(c, ntr_at(ntr), ch, a, b);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xec:	/* program change */
 	    a &= 0x7f;
 	    MIDIEVENT(ntr_at(ntr), ME_PROGRAM, ch, a, 0);
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xed:	/* after touch polyphonic (polyphonic key pressure) */
 	    a &= 0x7f;
 	    b &= 0x7f;
 	    MIDIEVENT(ntr_at(ntr), ME_KEYPRESSURE, ch, a, b);
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	  case 0xee:	/* pitch bend */
 	    a &= 0x7f;
 	    b &= 0x7f;
 	    MIDIEVENT(ntr_at(ntr), ME_PITCHWHEEL, ch, a, b);
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 	    break;
 
 	case 0xf5:	/* key change */
@@ -934,7 +926,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid key change\n");
 			step = 0;
 		}
-		rcp_keysig_change(ntr_at(ntr), step);
+		rcp_keysig_change(c, ntr_at(ntr), step);
 		break;
 
 	  case 0xf6:	/* comment */
@@ -957,7 +949,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    {
 		if(gfmt)
 		{
-		    if(tf_read(buff + len, 1, 5, tf) != 5)
+		    if(tf_read(c, buff + len, 1, 5, tf) != 5)
 		    {
 			ret = -1;
 			goto end_of_track;
@@ -967,7 +959,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		else
 		{
 		    tf_getc(tf); /* 0x00 */
-		    if(tf_read(buff + len, 1, 2, tf) != 2)
+		    if(tf_read(c, buff + len, 1, 2, tf) != 2)
 		    {
 			ret = -1;
 			goto end_of_track;
@@ -975,9 +967,9 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		    len += 2;
 		}
 	    }
-	    tf_seek(tf, -1, SEEK_CUR);
+	    tf_seek(c, tf, -1, SEEK_CUR);
 
-	    if(ctl->verbosity >= VERB_VERBOSE || opt_trace_text_meta_event)
+	    if(ctl->verbosity >= VERB_VERBOSE || c->opt_trace_text_meta_event)
 	    {
 		buff[len] = '\0';
 		for(len--; len >= 0; len--)
@@ -988,23 +980,23 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 			break;
 		}
 
-		if(opt_trace_text_meta_event)
+		if(c->opt_trace_text_meta_event)
 		{
 		    MidiEvent ev;
-		    if(readmidi_make_string_event(ME_TEXT, buff, &ev, 1)
+		    if(readmidi_make_string_event(c, ME_TEXT, buff, &ev, 1)
 		       != NULL)
 		    {
 			ev.time = ntr_at(ntr);
-			readmidi_add_event(&ev);
+			readmidi_add_event(c, &ev);
 		    }
 		}
 		else if(ctl->verbosity >= VERB_VERBOSE)
 		{
 		    len = SAFE_CONVERT_LENGTH(len+1);
-		    p = (char *)new_segment(&tmpbuffer, len);
-		    code_convert(buff, p, len, NULL, NULL);
+		    p = (char *)new_segment(c, &c->tmpbuffer, len);
+		    code_convert(c, buff, p, len, NULL, NULL);
 		    ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Comment: %s", p);
-		    reuse_mblock(&tmpbuffer);
+		    reuse_mblock(c, &c->tmpbuffer);
 		}
 	    }
 	    break;
@@ -1018,7 +1010,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    if(ctl->verbosity >= VERB_DEBUG_SILLY)
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
 			  "Loop end at %d",
-			  tf_tell(tf) - track_top - cmdlen);
+			  tf_tell(c, tf) - track_top - cmdlen);
 	    if(sp == 0)
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 			  "Misplaced loop end (ch=%d)", ch);
@@ -1033,7 +1025,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		if(same_measure == top)
 		{
 		    sp = same_measure;
-		    tf_seek(tf, stack[sp].loop_start, SEEK_SET);
+		    tf_seek(c, tf, stack[sp].loop_start, SEEK_SET);
 		    same_measure = -1;
 		    goto break_loop_end;
 		}
@@ -1057,7 +1049,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 #ifdef RCP_LOOP_TIME_LIMIT
 		else if((current_tempo / 1000000.0) *
 			(ntr_at(ntr) - stack[top].start_at)
-			/ current_file_info->divisions
+			/ c->current_file_info->divisions
 			> RCP_LOOP_TIME_LIMIT)
 		{
 		    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
@@ -1072,7 +1064,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 			      "Jump to %d (cnt=%d)",
 			      stack[top].loop_start - track_top,
 			      stack[top].count);
-		    tf_seek(tf, stack[top].loop_start, SEEK_SET);
+		    tf_seek(c, tf, stack[top].loop_start, SEEK_SET);
 		}
 	    }
 	  break_loop_end:
@@ -1086,7 +1078,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    if(ctl->verbosity >= VERB_DEBUG_SILLY)
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
 			  "Loop start at %d",
-			  tf_tell(tf) - track_top - cmdlen);
+			  tf_tell(c, tf) - track_top - cmdlen);
 
 	    if(sp >= MAX_STACK_DEPTH)
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
@@ -1095,7 +1087,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    else
 	    {
 		stack[sp].start_at = ntr_at(ntr);
-		stack[sp].loop_start = tf_tell(tf);
+		stack[sp].loop_start = tf_tell(c, tf);
 		stack[sp].count = 1;
 	    }
 	    sp++;
@@ -1105,7 +1097,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    if(ctl->verbosity >= VERB_DEBUG_SILLY)
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
 			  "Same measure at %d",
-			  tf_tell(tf) - track_top - cmdlen);
+			  tf_tell(c, tf) - track_top - cmdlen);
 	    if(sp >= MAX_STACK_DEPTH)
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 			  "Too deeply nested %d (ch=%d)", sp, ch);
@@ -1116,7 +1108,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		if(same_measure >= 0)
 		{
 		    sp = same_measure;
-		    tf_seek(tf, stack[sp].loop_start, SEEK_SET);
+		    tf_seek(c, tf, stack[sp].loop_start, SEEK_SET);
 		    same_measure = -1;
 		    goto break_same_measure;
 		}
@@ -1147,7 +1139,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		    }
 #endif
 		    jmp = gate;
-		    if(current_file_info->file_type == IS_G36_FILE)
+		    if(c->current_file_info->file_type == IS_G36_FILE)
 			jmp = jmp * 6 - 242;
 		    else
 			jmp -= (jmp + 2) % 6; /* (jmp+2)%6==0 */
@@ -1164,13 +1156,13 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		if(nextflag == 0)
 		{
 		    stack[sp].start_at = ntr_at(ntr);
-		    stack[sp].loop_start = tf_tell(tf);
+		    stack[sp].loop_start = tf_tell(c, tf);
 		    same_measure = sp;
 		    sp++;
 		}
 
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY, "Jump to %d", jmp);
-		tf_seek(tf, track_top + jmp, SEEK_SET);
+		tf_seek(c, tf, track_top + jmp, SEEK_SET);
 
 		if(tf_getc(tf) == 0xfc)
 		{
@@ -1191,7 +1183,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		    }
 		    goto next_same_measure;
 		}
-		tf_seek(tf, -1, SEEK_CUR);
+		tf_seek(c, tf, -1, SEEK_CUR);
 	    }
 	  break_same_measure:
 	    break;
@@ -1200,7 +1192,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 	    if(same_measure >= 0)
 	    {
 		sp = same_measure;
-		tf_seek(tf, stack[sp].loop_start, SEEK_SET);
+		tf_seek(c, tf, stack[sp].loop_start, SEEK_SET);
 		same_measure = -1;
 	    }
 	    break;
@@ -1228,13 +1220,13 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 			  "RCP %s is not unsupported: "
 			  "0x%02x 0x%02x 0x%02x 0x%02x (ch=%d)",
-			  rcp_cmd_name(cmd), cmd, step, a, b, ch);
+			  rcp_cmd_name(c, cmd), cmd, step, a, b, ch);
 	    else
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
 			  "RCP %s is not unsupported: "
 			  "0x%02x 0x%02x 0x%02x 0x%02x 0x%02x (ch=%d)",
-			  rcp_cmd_name(cmd), cmd, b, st1, st2, gt1, gt2, ch);
-	    ntr_incr(&ntr, step);
+			  rcp_cmd_name(c, cmd), cmd, b, st1, st2, gt1, gt2, ch);
+	    ntr_incr(c, &ntr, step);
 	    break;
 	  default:
 	    if(!gfmt)
@@ -1257,7 +1249,7 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 			  "0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x (ch=%d)",
 			  cmd, b, st1, st2, gt1, gt2, ch);
 #if 0
-	    ntr_incr(&ntr, step);
+	    ntr_incr(c, &ntr, step);
 #endif
 	    break;
 	}
@@ -1265,9 +1257,9 @@ static int read_rcp_track(struct timidity_file *tf, int trackno, int gfmt)
 
   end_of_track:
     /* All note off */
-    ntr_wait_all_off(&ntr);
-    ntr_end(&ntr);
-    tf_seek(tf, last_point, SEEK_SET);
+    ntr_wait_all_off(c, &ntr);
+    ntr_end(c, &ntr);
+    tf_seek(c, tf, last_point, SEEK_SET);
     return ret;
 }
 
@@ -1280,12 +1272,12 @@ static void ntr_init(struct RCPNoteTracer *ntr, int gfmt, int32 at)
     ntr->tempo_grade = 0;
 }
 
-static void ntr_end(struct RCPNoteTracer *ntr)
+static void ntr_end(struct timiditycontext_t *c, struct RCPNoteTracer *ntr)
 {
-    reuse_mblock(&ntr->pool);
+    reuse_mblock(c, &ntr->pool);
 }
 
-static void ntr_add(struct RCPNoteTracer *ntr, int ch, int note, int gate)
+static void ntr_add(struct timiditycontext_t *c, struct RCPNoteTracer *ntr, int ch, int note, int gate)
 {
     struct NoteList *p;
 
@@ -1295,7 +1287,7 @@ static void ntr_add(struct RCPNoteTracer *ntr, int ch, int note, int gate)
 	ntr->freelist = ntr->freelist->next;
     }
     else
-	p = (struct NoteList *)new_segment(&ntr->pool,
+	p = (struct NoteList *)new_segment(c, &ntr->pool,
 					   sizeof(struct NoteList));
     p->gate = gate;
     p->ch = ch;
@@ -1304,7 +1296,7 @@ static void ntr_add(struct RCPNoteTracer *ntr, int ch, int note, int gate)
     ntr->notes = p;
 }
 
-static void ntr_note_on(struct RCPNoteTracer *ntr,
+static void ntr_note_on(struct timiditycontext_t *c, struct RCPNoteTracer *ntr,
 			int ch, int note, int velo, int gate)
 {
     struct NoteList *p;
@@ -1317,10 +1309,10 @@ static void ntr_note_on(struct RCPNoteTracer *ntr,
 	}
 
     MIDIEVENT(ntr->at, ME_NOTEON, ch, note, velo);
-    ntr_add(ntr, ch, note, gate);
+    ntr_add(c, ntr, ch, note, gate);
 }
 
-static void rcp_tempo_gradate(struct RCPNoteTracer *ntr, int step)
+static void rcp_tempo_gradate(struct timiditycontext_t *c, struct RCPNoteTracer *ntr, int step)
 {
     int tempo_grade, tempo_step, tempo, diff, sign, at;
 
@@ -1340,7 +1332,7 @@ static void rcp_tempo_gradate(struct RCPNoteTracer *ntr, int step)
 		tempo_grade = diff;
 	    tempo += sign * tempo_grade;
 	    diff -= tempo_grade;
-	    rcp_tempo_set(at, tempo);
+	    rcp_tempo_set(c, at, tempo);
 	    at += TEMPO_GRADATION_SKIP;
 	    tempo_step += TEMPO_GRADATION_SKIP;
 	}
@@ -1351,7 +1343,7 @@ static void rcp_tempo_gradate(struct RCPNoteTracer *ntr, int step)
     ntr->tempo_step = tempo_step;
 }
 
-static void ntr_incr(struct RCPNoteTracer *ntr, int step)
+static void ntr_incr(struct timiditycontext_t *c, struct RCPNoteTracer *ntr, int step)
 {
     if(step < 0) {
 	struct NoteList *p;
@@ -1361,7 +1353,7 @@ static void ntr_incr(struct RCPNoteTracer *ntr, int step)
 	return;
     }
 
-    rcp_tempo_gradate(ntr, step);
+    rcp_tempo_gradate(c, ntr, step);
 
     while(step >= 0)
     {
@@ -1413,7 +1405,7 @@ static void ntr_incr(struct RCPNoteTracer *ntr, int step)
     }
 }
 
-static void ntr_wait_all_off(struct RCPNoteTracer *ntr)
+static void ntr_wait_all_off(struct timiditycontext_t *c, struct RCPNoteTracer *ntr)
 {
     while(ntr->notes)
     {
@@ -1449,7 +1441,7 @@ static void ntr_wait_all_off(struct RCPNoteTracer *ntr)
 	ntr->notes = q;
 	for(p = ntr->notes; p != NULL; p = p->next)
 	    p->gate -= mingate;
-	rcp_tempo_gradate(ntr, mingate);
+	rcp_tempo_gradate(c, ntr, mingate);
 	ntr->at += mingate;
     }
 }

@@ -38,7 +38,7 @@
 #include "tables.h"
 #include "controls.h"
 
-int load_table(char *file)
+int load_table(struct timiditycontext_t *c, char *file)
 {
 	FILE *fp;
 	char tmp[1024], *value;
@@ -55,7 +55,7 @@ int load_table(char *file)
 		if (! (value = strtok(tmp, ", \n")))
 			continue;
 		do {
-			freq_table_zapped[i++] = atoi(value);
+			c->freq_table_zapped[i++] = atoi(value);
 			if (i == 128) {
 				fclose(fp);
 				return 0;

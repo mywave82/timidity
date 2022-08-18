@@ -23,8 +23,10 @@
 
 #define MOD_NUM_VOICES	MAX_CHANNELS
 
+struct timiditycontext_t;
+
 extern int get_module_type (const char *fn);
-extern int load_module_file (struct timidity_file *tf, int mod_type);
+extern int load_module_file (struct timiditycontext_t *c, struct timidity_file *tf, int mod_type);
 extern char *get_module_title (struct timidity_file *tf, int mod_type);
 
 #endif /* ___MOD_H_ */

@@ -43,11 +43,11 @@ typedef struct _MemBuffer
 } MemBuffer;
 
 extern void init_memb(MemBuffer *b);
-extern void push_memb(MemBuffer *b, char *buff, long buff_size);
+extern void push_memb(struct timiditycontext_t *c, MemBuffer *b, char *buff, long buff_size);
 extern long read_memb(MemBuffer *b, char *buff, long buff_size);
 extern long skip_read_memb(MemBuffer *b, long size);
 extern void rewind_memb(MemBuffer *b);
-extern void delete_memb(MemBuffer *b);
-extern URL memb_open_stream(MemBuffer *b, int autodelete);
+extern void delete_memb(struct timiditycontext_t *c, MemBuffer *b);
+extern URL memb_open_stream(struct timiditycontext_t *c, MemBuffer *b, int autodelete);
 
 #endif /* ___MEMB_H_ */

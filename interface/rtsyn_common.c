@@ -73,9 +73,6 @@
 
 #include "rtsyn.h"
 
-extern int32 current_sample;
-extern void reset_midi(int playing);
-
 //int seq_quit;
 
 int rtsyn_system_mode = DEFAULT_SYSTEM_MODE;

@@ -22,6 +22,8 @@
 #ifndef ___STRTAB_H_
 #define ___STRTAB_H_
 
+struct timiditycontext_t;
+
 #include "mblock.h"
 typedef struct _StringTableNode
 {
@@ -38,9 +40,9 @@ typedef struct _StringTable
 } StringTable;
 
 extern void init_string_table(StringTable *stab);
-extern StringTableNode *put_string_table(StringTable *stab,
+extern StringTableNode *put_string_table(struct timiditycontext_t *c, StringTable *stab,
 					 const char *str, int len);
-extern void delete_string_table(StringTable *stab);
-extern char **make_string_array(StringTable *stab);
+extern void delete_string_table(struct timiditycontext_t *c, StringTable *stab);
+extern char **make_string_array(struct timiditycontext_t *c, StringTable *stab);
 
 #endif /* ___STRTAB_H_ */

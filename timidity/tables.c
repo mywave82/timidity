@@ -37,39 +37,31 @@
 #include "mt19937ar.h"
 #include "tables.h"
 
-int32 freq_table[128];
-int32 freq_table_zapped[128];
-int32 freq_table_tuning[128][128];
-int32 freq_table_pytha[24][128];
-int32 freq_table_meantone[48][128];
-int32 freq_table_pureint[48][128];
-int32 freq_table_user[4][48][128];
-
-void init_freq_table(void)
+void init_freq_table(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < 128; i++) {
-		freq_table[i] = 440 * pow(2.0, (i - 69) / 12.0) * 1000 + 0.5;
-		freq_table_zapped[i] = freq_table[i];
+		c->freq_table[i] = 440 * pow(2.0, (i - 69) / 12.0) * 1000 + 0.5;
+		c->freq_table_zapped[i] = c->freq_table[i];
 	}
 }
 
-void init_freq_table_tuning(void)
+void init_freq_table_tuning(struct timiditycontext_t *c)
 {
 	int p, i;
 	double f;
 
 	for (i = 0; i < 128; i++)
-			freq_table_tuning[0][i] = freq_table_zapped[i];
+			c->freq_table_tuning[0][i] = c->freq_table_zapped[i];
 	for (i = 0; i < 128; i++) {
 		f = 440 * pow(2.0, (i - 69) / 12.0);
 		for (p = 1; p < 128; p++)
-			freq_table_tuning[p][i] = f * 1000 + 0.5;
+			c->freq_table_tuning[p][i] = f * 1000 + 0.5;
 	}
 }
 
-void init_freq_table_pytha(void)
+void init_freq_table_pytha(struct timiditycontext_t *c)
 {
 	int i, j, k, l;
 	double f;
@@ -91,17 +83,18 @@ void init_freq_table_pytha(void)
 				l = i + j * 12 + k;
 				if (l < 0 || l >= 128)
 					continue;
-				freq_table_pytha[i][l] = f * major_ratio[k] * 1000 + 0.5;
-				freq_table_pytha[i + 12][l] = f * minor_ratio[k] * 1000 + 0.5;
+				c->freq_table_pytha[i][l] = f * major_ratio[k] * 1000 + 0.5;
+				c->freq_table_pytha[i + 12][l] = f * minor_ratio[k] * 1000 + 0.5;
 			}
 		}
 }
 
-void init_freq_table_meantone(void)
+#define major_ratio c->init_freq_table_meantone_major_ratio
+#define minor_ratio c->init_freq_table_meantone_minor_ratio
+void init_freq_table_meantone(struct timiditycontext_t *c)
 {
 	int i, j, k, l;
 	double f;
-	static double major_ratio[12], minor_ratio[12];
 	static const double sc = 81.0 / 80;
 
 	major_ratio[0] = 1;
@@ -135,19 +128,21 @@ void init_freq_table_meantone(void)
 				l = i + j * 12 + k;
 				if (l < 0 || l >= 128)
 					continue;
-				freq_table_meantone[i][l] =
+				c->freq_table_meantone[i][l] =
 						f * major_ratio[k] * 1000 + 0.5;
-				freq_table_meantone[i + 12][l] =
+				c->freq_table_meantone[i + 12][l] =
 						f * minor_ratio[k] * sc * 1000 + 0.5;
-				freq_table_meantone[i + 24][l] =
+				c->freq_table_meantone[i + 24][l] =
 						f * minor_ratio[k] * 1000 + 0.5;
-				freq_table_meantone[i + 36][l] =
+				c->freq_table_meantone[i + 36][l] =
 						f * major_ratio[k] * sc * 1000 + 0.5;
 			}
 		}
 }
+#undef major_ratio
+#undef minor_ratio
 
-void init_freq_table_pureint(void)
+void init_freq_table_pureint(struct timiditycontext_t *c)
 {
 	int i, j, k, l;
 	double f;
@@ -168,19 +163,19 @@ void init_freq_table_pureint(void)
 				l = i + j * 12 + k;
 				if (l < 0 || l >= 128)
 					continue;
-				freq_table_pureint[i][l] =
+				c->freq_table_pureint[i][l] =
 						f * major_ratio[k] * 1000 + 0.5;
-				freq_table_pureint[i + 12][l] =
+				c->freq_table_pureint[i + 12][l] =
 						f * minor_ratio[k] * sc * 1000 + 0.5;
-				freq_table_pureint[i + 24][l] =
+				c->freq_table_pureint[i + 24][l] =
 						f * minor_ratio[k] * 1000 + 0.5;
-				freq_table_pureint[i + 36][l] =
+				c->freq_table_pureint[i + 36][l] =
 						f * major_ratio[k] * sc * 1000 + 0.5;
 			}
 		}
 }
 
-void init_freq_table_user(void)
+void init_freq_table_user(struct timiditycontext_t *c)
 {
 	int p, i, j, k, l;
 	double f;
@@ -193,56 +188,45 @@ void init_freq_table_user(void)
 					l = i + j * 12 + k;
 					if (l < 0 || l >= 128)
 						continue;
-					freq_table_user[p][i][l] = f * 1000 + 0.5;
-					freq_table_user[p][i + 12][l] = f * 1000 + 0.5;
-					freq_table_user[p][i + 24][l] = f * 1000 + 0.5;
-					freq_table_user[p][i + 36][l] = f * 1000 + 0.5;
+					c->freq_table_user[p][i][l] = f * 1000 + 0.5;
+					c->freq_table_user[p][i + 12][l] = f * 1000 + 0.5;
+					c->freq_table_user[p][i + 24][l] = f * 1000 + 0.5;
+					c->freq_table_user[p][i + 36][l] = f * 1000 + 0.5;
 				}
 			}
 }
 
-/* v=2.^((x/127-1) * 6) */
-FLOAT_T def_vol_table[1024];
-
-void init_def_vol_table(void)
+void init_def_vol_table(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < 1024; i++)
-		def_vol_table[i] = pow(2.0f,((double)i / 1023.0 - 1) * 6);
+		c->def_vol_table[i] = pow(2.0f,((double)i / 1023.0 - 1) * 6);
 }
 
-/* v=2.^((x/127-1) * 8) */
-FLOAT_T gs_vol_table[1024];
 
-void init_gs_vol_table(void)
+void init_gs_vol_table(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < 1024; i++)
-		gs_vol_table[i] = pow(2.0f,((double)i / 1023.0 - 1) * 8);
+		c->gs_vol_table[i] = pow(2.0f,((double)i / 1023.0 - 1) * 8);
 }
 
-FLOAT_T *xg_vol_table = gs_vol_table;
-FLOAT_T *vol_table = def_vol_table;
-
-FLOAT_T bend_fine[256];
-FLOAT_T bend_coarse[128];
-
-void init_bend_fine(void)
+void init_bend_fine(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < 256; i++)
-		bend_fine[i] = pow(2.0, i / 12.0 / 256);
+		c->bend_fine[i] = pow(2.0, i / 12.0 / 256);
 }
 
-void init_bend_coarse(void)
+void init_bend_coarse(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < 128; i++)
-		bend_coarse[i] = pow(2.0, i / 12.0);
+		c->bend_coarse[i] = pow(2.0, i / 12.0);
 }
 
 /*
@@ -384,37 +368,35 @@ FLOAT_T lookup_sine(int x)
 }
 #endif /* LOOKUP_SINE */
 
-static FLOAT_T triangular_table[257];
-
-void init_triangular_table(void)
+static void init_triangular_table(struct timiditycontext_t *c)
 {
 	int i;
 	unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;
-    init_by_array(init, length);
+    init_by_array(c, init, length);
 
 	for (i = 0; i < 257; i++) {
-		triangular_table[i] = (double)(i/* - (genrand_int32() % 1)*/) / 256.0;
-		if(triangular_table[i] < 0) {triangular_table[i] = 0;}
-		else if(triangular_table[i] > 1.0) {triangular_table[i] = 1.0;}
+		c->triangular_table[i] = (double)(i/* - (genrand_int32() % 1)*/) / 256.0;
+		if(c->triangular_table[i] < 0) {c->triangular_table[i] = 0;}
+		else if(c->triangular_table[i] > 1.0) {c->triangular_table[i] = 1.0;}
 	}
-	triangular_table[0] = 0.0;
-	triangular_table[256] = 1.0;
+	c->triangular_table[0] = 0.0;
+	c->triangular_table[256] = 1.0;
 }
 
-FLOAT_T lookup_triangular(int x)
+FLOAT_T lookup_triangular(struct timiditycontext_t *c, int x)
 {
   int xx = x & 0xFF;
   switch ((x>>8) & 0x03)
     {
     default:
     case 0:
-      return triangular_table[xx];
+      return c->triangular_table[xx];
     case 1:
-      return triangular_table[0x100 - xx];
+      return c->triangular_table[0x100 - xx];
     case 2:
-      return -triangular_table[xx];
+      return -c->triangular_table[xx];
     case 3:
-      return -triangular_table[0x100 - xx];
+      return -c->triangular_table[0x100 - xx];
     }
 }
 
@@ -455,39 +437,34 @@ const int16 _u2l[] =
  56, 48, 40, 32, 24, 16, 8, 0
 };
 
-int32 *mixup;
-#ifdef LOOKUP_INTERPOLATION
-int8 *iplookup;
 #endif
 
-#endif
-
-void init_tables(void)
+void init_tables(struct timiditycontext_t *c)
 {
 #ifdef LOOKUP_HACK
   int i,j,v;
-  mixup = (int32 *)safe_malloc(1<<(7+8+2)); /* Give your cache a workout! */
+  c->mixup = (int32 *)safe_malloc(1<<(7+8+2)); /* Give your cache a workout! */
 
   for (i=0; i<128; i++)
     {
       v=_u2l[255-i];
       for (j=-128; j<128; j++)
 	{
-	  mixup[ ((i & 0x7F)<<8) | (j & 0xFF)] =
+	  c->mixup[ ((i & 0x7F)<<8) | (j & 0xFF)] =
 	    (v * j) << MIXUP_SHIFT;
 	}
     }
 
 #ifdef LOOKUP_INTERPOLATION
-  iplookup = (int8 *)safe_malloc(1<<(9+5));
+  c->iplookup = (int8 *)safe_malloc(1<<(9+5));
   for (i=-256; i<256; i++)
     for(j=0; j<32; j++)
-      iplookup[((i<<5) & 0x3FE0) | j] = (i * j)>>5;
+      c->iplookup[((i<<5) & 0x3FE0) | j] = (i * j)>>5;
   /* I don't know. Quantum bits? Magick? */
 #endif
 
 #endif
-	init_triangular_table();
+	init_triangular_table(c);
 }
 
 #ifdef LOOKUP_HACK
@@ -1006,7 +983,6 @@ const uint8 _l2u_[] =
  0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
  0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
 };
-uint8 *_l2u = _l2u_ + 4096;
 #endif /* LOOKUP_HACK */
 
 const uint8 reverb_macro_presets[] =
@@ -1130,35 +1106,30 @@ const float rate1_table[] =
  *
  *       amplification = pow(volume, 1.66096404744)
  */
-FLOAT_T perceived_vol_table[128];
 
-void init_perceived_vol_table(void)
+void init_perceived_vol_table(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < 128; i++)
-		perceived_vol_table[i] =
+		c->perceived_vol_table[i] =
 				127.0 * pow((double)i / 127.0, 1.66096404744);
 }
 
-FLOAT_T gm2_vol_table[128];
-
-void init_gm2_vol_table(void)
+void init_gm2_vol_table(struct timiditycontext_t *c)
 {
 	int i;
 
 	for(i = 0; i < 128; i++)
-		gm2_vol_table[i] = (i * i) / 127.0;
+		c->gm2_vol_table[i] = (i * i) / 127.0;
 }
 
-FLOAT_T user_vol_table[128];
-
-void init_user_vol_table(FLOAT_T power)
+void init_user_vol_table(struct timiditycontext_t *c, FLOAT_T power)
 {
 	int i;
 
 	for (i = 0; i < 128; i++)
-		user_vol_table[i] = 127.0 * pow((double)i / 127.0, power);
+		c->user_vol_table[i] = 127.0 * pow((double)i / 127.0, power);
 }
 
 /* measured value from SC-88STPro.
@@ -1226,18 +1197,15 @@ const FLOAT_T sc_pan_table[129] =
 	128.000000,
 };
 
-FLOAT_T gm2_pan_table[129];
-const FLOAT_T *pan_table = sc_pan_table;
-
-void init_gm2_pan_table(void)
+void init_gm2_pan_table(struct timiditycontext_t *c)
 {
 	int i;
 
-	gm2_pan_table[0] = 0;
+	c->gm2_pan_table[0] = 0;
 	for(i = 0; i < 127; i++)
-		gm2_pan_table[i + 1] = sin(M_PI / 2 * i / 126) * 128;
+		c->gm2_pan_table[i + 1] = sin(M_PI / 2 * i / 126) * 128;
 								/* lookup_sine(i * SINE_CYCLE_LENGTH / 4 / 126) */
-	gm2_pan_table[128] = 128.0;
+	c->gm2_pan_table[128] = 128.0;
 }
 
 const FLOAT_T sc_drum_level_table[128] =
@@ -1260,14 +1228,12 @@ const FLOAT_T sc_drum_level_table[128] =
     113.385827, 115.283465, 117.196850, 119.125984, 121.070866, 123.031496, 125.007874, 127.000000,
 };
 
-FLOAT_T attack_vol_table[1024];
-
-void init_attack_vol_table(void)
+void init_attack_vol_table(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < 1024; i++)
-		attack_vol_table[i] = i / 1023.0;
+		c->attack_vol_table[i] = i / 1023.0;
 }
 
 const float sc_eg_decay_table[128] =
@@ -1330,30 +1296,26 @@ const float sc_eg_attack_table[128] =
     0.012084, 0.012084, 0.012084, 0.012084, 0.012084, 0.012084, 0.012084, 0.012084,
 };
 
-FLOAT_T sb_vol_table[1024];
-
-void init_sb_vol_table(void)
+void init_sb_vol_table(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < 1024; i++)
-		sb_vol_table[i] = pow(10.0, (double)(1023 - i) * 960.0 / (1023.0 * -200.0));
+		c->sb_vol_table[i] = pow(10.0, (double)(1023 - i) * 960.0 / (1023.0 * -200.0));
 }
 
-FLOAT_T modenv_vol_table[1024];
-
-void init_modenv_vol_table(void)
+void init_modenv_vol_table(struct timiditycontext_t *c)
 {
 	int i;
 	double x;
 
-	modenv_vol_table[0] = (float)0;
+	c->modenv_vol_table[0] = (float)0;
 	for (i = 1; i < 1023; i++) {
 		x = (1.0 - (-20.0 / 96.0 * log(((double)i * (double)i) / (1023.0 * 1023.0)) / log(10.0)));
 		if (x < 0) {x = 0;}
-		modenv_vol_table[i] = log(x + 1) / log(2);
+		c->modenv_vol_table[i] = log(x + 1) / log(2);
 	}
-	modenv_vol_table[1023] = (float)1.0;
+	c->modenv_vol_table[1023] = (float)1.0;
 }
 
 const float cb_to_amp_table[961] =

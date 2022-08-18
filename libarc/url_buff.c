@@ -56,7 +56,7 @@ static long url_buff_seek(URL url, long offset, int whence);
 static long url_buff_tell(URL url);
 static void url_buff_close(URL url);
 
-URL url_buff_open(URL url, int autoclose)
+URL url_buff_open(struct timiditycontext_t *c, URL url, int autoclose)
 {
     URL_buff *urlp;
 
@@ -81,7 +81,7 @@ URL url_buff_open(URL url, int autoclose)
     memset(urlp->buffer, 0, sizeof(urlp->buffer));
     urlp->wp = 0;
     urlp->rp = 0;
-    if((urlp->posofs = url_tell(url)) == -1)
+    if((urlp->posofs = url_tell(c, url)) == -1)
 	urlp->posofs = 0;
     urlp->pos = 0;
     urlp->eof = 0;
@@ -90,11 +90,11 @@ URL url_buff_open(URL url, int autoclose)
     return (URL)urlp;
 }
 
-static void prefetch(URL_buff *urlp)
+static void prefetch(struct timiditycontext_t *c, URL_buff *urlp)
 {
     long i, n;
 
-    n = url_safe_read(urlp->reader, urlp->buffer + urlp->wp, URL_BUFF_SIZE);
+    n = url_safe_read(c, urlp->reader, urlp->buffer + urlp->wp, URL_BUFF_SIZE);
     if(n <= 0)
 	return;
     urlp->wp += n;
@@ -112,7 +112,7 @@ static void prefetch(URL_buff *urlp)
     urlp->wp = i;
 }
 
-static int url_buff_fgetc(URL url)
+static int url_buff_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_buff *urlp = (URL_buff *)url;
     int c, r;
@@ -123,7 +123,7 @@ static int url_buff_fgetc(URL url)
     r = urlp->rp;
     if(r == urlp->wp)
     {
-	prefetch(urlp);
+	prefetch(c, urlp);
 	if(r == urlp->wp)
 	{
 	    urlp->eof = 1;
@@ -136,7 +136,7 @@ static int url_buff_fgetc(URL url)
     return c;
 }
 
-static long url_buff_read(URL url, void *buff, long n)
+static long url_buff_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     URL_buff *urlp = (URL_buff *)url;
     char *s = (char *)buff;
@@ -148,7 +148,7 @@ static long url_buff_read(URL url, void *buff, long n)
     r = urlp->rp;
     if(r == urlp->wp)
     {
-	prefetch(urlp);
+	prefetch(c, urlp);
 	if(r == urlp->wp)
 	{
 	    urlp->eof = 1;
@@ -192,7 +192,7 @@ static long url_buff_tell(URL url)
     return urlp->pos + urlp->posofs;
 }
 
-static char *url_buff_gets(URL url, char *buff, int maxsiz)
+static char *url_buff_gets(struct timiditycontext_t *c, URL url, char *buff, int maxsiz)
 {
     URL_buff *urlp = (URL_buff *)url;
     int c, r, w;
@@ -218,7 +218,7 @@ static char *url_buff_gets(URL url, char *buff, int maxsiz)
 	if(r == w)
 	{
 	    urlp->wp = w;
-	    prefetch(urlp);
+	    prefetch(c, urlp);
 	    w = urlp->wp;
 	    if(r == w)
 	    {
@@ -241,7 +241,7 @@ static char *url_buff_gets(URL url, char *buff, int maxsiz)
     return buff;
 }
 
-static long url_buff_seek(URL url, long offset, int whence)
+static long url_buff_seek(struct timiditycontext_t *c, URL url, long offset, int whence)
 {
     URL_buff *urlp = (URL_buff *)url;
     long ret, diff, n;
@@ -263,7 +263,7 @@ static long url_buff_seek(URL url, long offset, int whence)
 	diff = offset;
 	break;
       default:
-	url_errno = errno = EPERM;
+	c->url_errno = errno = EPERM;
 	return -1;
     }
 
@@ -284,7 +284,7 @@ static long url_buff_seek(URL url, long offset, int whence)
 	    if(r == w)
 	    {
 		urlp->wp = w;
-		prefetch(urlp);
+		prefetch(c, urlp);
 		w = urlp->wp;
 		if(r == w)
 		{
@@ -322,7 +322,7 @@ static long url_buff_seek(URL url, long offset, int whence)
 
     if(filled < diff)
     {
-	url_errno = errno = EPERM;
+	c->url_errno = errno = EPERM;
 	return -1;
     }
 

@@ -43,21 +43,21 @@ typedef struct _URL_qsdecode
     int autoclose;
 } URL_qsdecode;
 
-static long url_qsdecode_read(URL url, void *buff, long n);
-static int  url_qsdecode_fgetc(URL url);
-static long url_qsdecode_tell(URL url);
-static void url_qsdecode_close(URL url);
+static long url_qsdecode_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+static int  url_qsdecode_fgetc(struct timiditycontext_t *c, URL url);
+static long url_qsdecode_tell(struct timiditycontext_t *c, URL url);
+static void url_qsdecode_close(struct timiditycontext_t *c, URL url);
 
-URL url_qsdecode_open(URL reader, int autoclose)
+URL url_qsdecode_open(struct timiditycontext_t *c, URL reader, int autoclose)
 {
     URL_qsdecode *url;
 
-    url = (URL_qsdecode *)alloc_url(sizeof(URL_qsdecode));
+    url = (URL_qsdecode *)alloc_url(c, sizeof(URL_qsdecode));
     if(url == NULL)
     {
 	if(autoclose)
-	    url_close(reader);
-	url_errno = errno;
+	    url_close(c, reader);
+	c->url_errno = errno;
 	return NULL;
     }
 
@@ -82,7 +82,7 @@ URL url_qsdecode_open(URL reader, int autoclose)
     return (URL)url;
 }
 
-static int qsdecode(URL_qsdecode *urlp)
+static int qsdecode(struct timiditycontext_t *c, URL_qsdecode *urlp)
 {
     int n;
     unsigned char *p;
@@ -160,7 +160,7 @@ static int qsdecode(URL_qsdecode *urlp)
     return 0;
 }
 
-static long url_qsdecode_read(URL url, void *buff, long size)
+static long url_qsdecode_read(struct timiditycontext_t *c, URL url, void *buff, long size)
 {
     URL_qsdecode *urlp = (URL_qsdecode *)url;
     unsigned char *p = (unsigned char *)buff;
@@ -175,7 +175,7 @@ static long url_qsdecode_read(URL url, void *buff, long size)
 	int i;
 
 	if(urlp->beg == urlp->end)
-	    if(qsdecode(urlp))
+	    if(qsdecode(c, urlp))
 		break;
 	i = urlp->end - urlp->beg;
 	if(i > size - n)
@@ -187,32 +187,32 @@ static long url_qsdecode_read(URL url, void *buff, long size)
     return n;
 }
 
-static int url_qsdecode_fgetc(URL url)
+static int url_qsdecode_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_qsdecode *urlp = (URL_qsdecode *)url;
 
     if(urlp->eof)
 	return EOF;
     if(urlp->beg == urlp->end)
-	if(qsdecode(urlp))
+	if(qsdecode(c, urlp))
 	    return EOF;
 
     return (int)urlp->decodebuf[urlp->beg++];
 }
 
-static long url_qsdecode_tell(URL url)
+static long url_qsdecode_tell(struct timiditycontext_t *c, URL url)
 {
     URL_qsdecode *urlp = (URL_qsdecode *)url;
 
     return urlp->rpos + urlp->beg;
 }
 
-static void url_qsdecode_close(URL url)
+static void url_qsdecode_close(struct timiditycontext_t *c, URL url)
 {
     URL_qsdecode *urlp = (URL_qsdecode *)url;
 
     if(urlp->autoclose)
-	url_close(urlp->reader);
+	url_close(c, urlp->reader);
     free(url);
 }
 
@@ -230,19 +230,19 @@ void main(int argc, char** argv)
     }
     filename = argv[1];
 
-    if((qsdecoder = url_file_open(filename)) == NULL)
+    if((qsdecoder = url_file_open(c, filename)) == NULL)
     {
 	perror(argv[1]);
 	url_close(qsdecoder);
 	exit(1);
     }
 
-    qsdecoder = url_qsdecode_open(qsdecoder, 1);
+    qsdecoder = url_qsdecode_open(c, qsdecoder, 1);
 #if QSDECODE_MAIN
     while((c = url_getc(qsdecoder)) != EOF)
 	putchar(c);
 #else
-    while((c = url_read(qsdecoder, buff, sizeof(buff))) > 0)
+    while((c = url_read(c, qsdecoder, buff, sizeof(buff))) > 0)
 	write(1, buff, c);
 #endif
     url_close(qsdecoder);

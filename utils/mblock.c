@@ -42,7 +42,6 @@
 #include "common.h"
 #include "mblock.h"
 
-static MBlockNode *free_mblock_list = NULL;
 #define ADDRALIGN 8
 /* #define DEBUG */
 
@@ -52,7 +51,7 @@ void init_mblock(MBlockList *mblock)
     mblock->allocated = 0;
 }
 
-static MBlockNode *new_mblock_node(size_t n)
+static MBlockNode *new_mblock_node(struct timiditycontext_t *c, size_t n)
 {
     MBlockNode *p;
 
@@ -62,7 +61,7 @@ static MBlockNode *new_mblock_node(size_t n)
 	    return NULL;
 	p->block_size = n;
     }
-    else if(free_mblock_list == NULL)
+    else if(c->free_mblock_list == NULL)
     {
 	if((p = (MBlockNode *)safe_malloc(sizeof(MBlockNode)
 				     + MIN_MBLOCK_SIZE)) == NULL)
@@ -71,8 +70,8 @@ static MBlockNode *new_mblock_node(size_t n)
     }
     else
     {
-	p = free_mblock_list;
-	free_mblock_list = free_mblock_list->next;
+	p = c->free_mblock_list;
+	c->free_mblock_list = c->free_mblock_list->next;
     }
 
     p->offset = 0;
@@ -99,7 +98,7 @@ static int enough_block_memory(MBlockList *mblock, size_t n)
     return 1;
 }
 
-void *new_segment(MBlockList *mblock, size_t nbytes)
+void *new_segment(struct timiditycontext_t *c, MBlockList *mblock, size_t nbytes)
 {
     MBlockNode *p;
     void *addr;
@@ -108,7 +107,7 @@ void *new_segment(MBlockList *mblock, size_t nbytes)
     nbytes = ((nbytes + ADDRALIGN - 1) & ~(ADDRALIGN - 1));
     if(!enough_block_memory(mblock, nbytes))
     {
-	p = new_mblock_node(nbytes);
+	p = new_mblock_node(c, nbytes);
 	p->next = mblock->first;
 	mblock->first = p;
 	mblock->allocated += p->block_size;
@@ -130,18 +129,18 @@ void *new_segment(MBlockList *mblock, size_t nbytes)
     return addr;
 }
 
-static void reuse_mblock1(MBlockNode *p)
+static void reuse_mblock1(struct timiditycontext_t *c, MBlockNode *p)
 {
     if(p->block_size > MIN_MBLOCK_SIZE)
 	free(p);
     else /* p->block_size <= MIN_MBLOCK_SIZE */
     {
-	p->next = free_mblock_list;
-	free_mblock_list = p;
+	p->next = c->free_mblock_list;
+	c->free_mblock_list = p;
     }
 }
 
-void reuse_mblock(MBlockList *mblock)
+void reuse_mblock(struct timiditycontext_t *c, MBlockList *mblock)
 {
     MBlockNode *p;
 
@@ -154,33 +153,33 @@ void reuse_mblock(MBlockList *mblock)
 
 	tmp = p;
 	p = p->next;
-	reuse_mblock1(tmp);
+	reuse_mblock1(c, tmp);
     }
     init_mblock(mblock);
 }
 
-char *strdup_mblock(MBlockList *mblock, const char *str)
+char *strdup_mblock(struct timiditycontext_t *c, MBlockList *mblock, const char *str)
 {
     int len;
     char *p;
 
     len = strlen(str);
-    p = (char *)new_segment(mblock, len + 1); /* for '\0' */
+    p = (char *)new_segment(c, mblock, len + 1); /* for '\0' */
     memcpy(p, str, len + 1);
     return p;
 }
 
-int free_global_mblock(void)
+int free_global_mblock(struct timiditycontext_t *c)
 {
     int cnt;
 
     cnt = 0;
-    while(free_mblock_list)
+    while(c->free_mblock_list)
     {
 	MBlockNode *tmp;
 
-	tmp = free_mblock_list;
-	free_mblock_list = free_mblock_list->next;
+	tmp = c->free_mblock_list;
+	c->free_mblock_list = c->free_mblock_list->next;
 	free(tmp);
 	cnt++;
     }

@@ -49,22 +49,12 @@
 #include "wrd.h"
 #include "tables.h"
 #include "reverb.h"
+#include "rcp.h"
 #include <math.h>
-
-/* rcp.c */
-int read_rcp_file(struct timidity_file *tf, char *magic0, char *fn);
-
-/* mld.c */
-extern int read_mfi_file(struct timidity_file *tf);
-extern char *get_mfi_file_title(struct timidity_file *tf);
 
 #define MAX_MIDI_EVENT ((MAX_SAFE_MALLOC_SIZE / sizeof(MidiEvent)) - 1)
 #define MARKER_START_CHAR	'('
 #define MARKER_END_CHAR		')'
-
-static uint8 rhythm_part[2];	/* for GS */
-static uint8 drum_setup_xg[16] = { 9, 9, 9, 9, 9, 9, 9, 9,
-				   9, 9, 9, 9, 9, 9, 9, 9 };	/* for XG */
 
 enum
 {
@@ -72,51 +62,17 @@ enum
     CHORUS_ST_OK
 };
 
-#ifdef ALWAYS_TRACE_TEXT_META_EVENT
-int opt_trace_text_meta_event = 1;
-#else
-int opt_trace_text_meta_event = 0;
-#endif /* ALWAYS_TRACE_TEXT_META_EVENT */
-
-int opt_default_mid = 0;
-int opt_system_mid = 0;
-int ignore_midi_error = 1;
-ChannelBitMask quietchannels;
-struct midi_file_info *current_file_info = NULL;
-int readmidi_error_flag = 0;
-int readmidi_wrd_mode = 0;
-int play_system_mode = DEFAULT_SYSTEM_MODE;
-
 /* Mingw gcc3 and Borland C hack */
 /* If these are not NULL initialized cause Hang up */
 /* why ?  I dont know. (Keishi Suenaga) */
-static MidiEventList *evlist=NULL, *current_midi_point=NULL;
-static int32 event_count;
-static MBlockList mempool;
-static StringTable string_event_strtab = { 0 };
-static int current_read_track;
-static int karaoke_format, karaoke_title_flag;
-static struct midi_file_info *midi_file_info = NULL;
-static char **string_event_table = NULL;
-static int    string_event_table_size = 0;
-int    default_channel_program[256];
-static MidiEvent timesig[256];
-TimeSegment *time_segments = NULL;
 
-void init_delay_status_gs(void);
-void init_chorus_status_gs(void);
-void init_reverb_status_gs(void);
-void init_eq_status_gs(void);
-void init_insertion_effect_gs(void);
-void init_multi_eq_xg(void);
-static void init_all_effect_xg(void);
-
-/* MIDI ports will be merged in several channels in the future. */
-int midi_port_number;
-
-/* These would both fit into 32 bits, but they are often added in
-   large multiples, so it's simpler to have two roomy ints */
-static int32 sample_increment, sample_correction; /*samples per MIDI delta-t*/
+static void init_delay_status_gs(struct timiditycontext_t *c);
+static void init_chorus_status_gs(struct timiditycontext_t *c);
+static void init_reverb_status_gs(struct timiditycontext_t *c);
+static void init_eq_status_gs(struct timiditycontext_t *c);
+static void init_insertion_effect_gs(struct timiditycontext_t *c);
+static void init_multi_eq_xg(struct timiditycontext_t *c);
+static void init_all_effect_xg(struct timiditycontext_t *c);
 
 #define SETMIDIEVENT(e, at, t, ch, pa, pb) \
     { (e).time = (at); (e).type = (t); \
@@ -124,108 +80,65 @@ static int32 sample_increment, sample_correction; /*samples per MIDI delta-t*/
 
 #define MIDIEVENT(at, t, ch, pa, pb) \
     { MidiEvent event; SETMIDIEVENT(event, at, t, ch, pa, pb); \
-      readmidi_add_event(&event); }
+      readmidi_add_event(c, &event); }
 
 #if MAX_CHANNELS <= 16
 #define MERGE_CHANNEL_PORT(ch) ((int)(ch))
 #define MERGE_CHANNEL_PORT2(ch, port) ((int)(ch))
 #else
-#define MERGE_CHANNEL_PORT(ch) ((int)(ch) | (midi_port_number << 4))
+#define MERGE_CHANNEL_PORT(ch) ((int)(ch) | (c->midi_port_number << 4))
 #define MERGE_CHANNEL_PORT2(ch, port) ((int)(ch) | ((int)port << 4))
 #endif
 
 #define alloc_midi_event() \
-    (MidiEventList *)new_segment(&mempool, sizeof(MidiEventList))
+    (MidiEventList *)new_segment(c, &c->mempool, sizeof(MidiEventList))
 
-typedef struct _UserDrumset {
-	int8 bank;
-	int8 prog;
-	int8 play_note;
-	int8 level;
-	int8 assign_group;
-	int8 pan;
-	int8 reverb_send_level;
-	int8 chorus_send_level;
-	int8 rx_note_off;
-	int8 rx_note_on;
-	int8 delay_send_level;
-	int8 source_map;
-	int8 source_prog;
-	int8 source_note;
-	struct _UserDrumset *next;
-} UserDrumset;
+static void init_userdrum(struct timiditycontext_t *c);
+static UserDrumset *get_userdrum(struct timiditycontext_t *c, int bank, int prog);
+static void recompute_userdrum_altassign(struct timiditycontext_t *c, int bank,int group);
 
-UserDrumset *userdrum_first = (UserDrumset *)NULL;
-UserDrumset *userdrum_last = (UserDrumset *)NULL; 
+static void init_userinst(struct timiditycontext_t *c);
+static UserInstrument *get_userinst(struct timiditycontext_t *c, int bank, int prog);
 
-void init_userdrum();
-UserDrumset *get_userdrum(int bank, int prog);
-void recompute_userdrum_altassign(int bank,int group);
-
-typedef struct _UserInstrument {
-	int8 bank;
-	int8 prog;
-	int8 source_map;
-	int8 source_bank;
-	int8 source_prog;
-	int8 vibrato_rate;
-	int8 vibrato_depth;
-	int8 cutoff_freq;
-	int8 resonance;
-	int8 env_attack;
-	int8 env_decay;
-	int8 env_release;
-	int8 vibrato_delay;
-	struct _UserInstrument *next;
-} UserInstrument;
-
-UserInstrument *userinst_first = (UserInstrument *)NULL;
-UserInstrument *userinst_last = (UserInstrument *)NULL; 
-
-void init_userinst();
-UserInstrument *get_userinst(int bank, int prog);
-void recompute_userinst(int bank, int prog);
-void recompute_userinst_altassign(int bank,int group);
-
-int32 readmidi_set_track(int trackno, int rewindp)
+int32 readmidi_set_track(struct timiditycontext_t *c, int trackno, int rewindp)
 {
-    current_read_track = trackno;
-    memset(&chorus_status_gs.text, 0, sizeof(struct chorus_text_gs_t));
-    if(karaoke_format == 1 && current_read_track == 2)
-	karaoke_format = 2; /* Start karaoke lyric */
-    else if(karaoke_format == 2 && current_read_track == 3)
-	karaoke_format = 3; /* End karaoke lyric */
-    midi_port_number = 0;
+    c->current_read_track = trackno;
+    memset(&c->chorus_status_gs.text, 0, sizeof(struct chorus_text_gs_t));
+    if(c->karaoke_format == 1 && c->current_read_track == 2)
+	c->karaoke_format = 2; /* Start karaoke lyric */
+    else if(c->karaoke_format == 2 && c->current_read_track == 3)
+	c->karaoke_format = 3; /* End karaoke lyric */
+    c->midi_port_number = 0;
 
-    if(evlist == NULL)
+    if(c->evlist == NULL)
 	return 0;
     if(rewindp)
-	current_midi_point = evlist;
+	c->current_midi_point = c->evlist;
     else
     {
 	/* find the last event in the list */
-	while(current_midi_point->next != NULL)
-	    current_midi_point = current_midi_point->next;
+	while(c->current_midi_point->next != NULL)
+	    c->current_midi_point = c->current_midi_point->next;
     }
-    return current_midi_point->event.time;
+    return c->current_midi_point->event.time;
 }
 
-void readmidi_add_event(MidiEvent *a_event)
+void readmidi_add_event(struct timiditycontext_t *c, MidiEvent *a_event)
 {
     MidiEventList *newev;
     int32 at;
 
-    if(event_count == MAX_MIDI_EVENT)
+    if(c->event_count == MAX_MIDI_EVENT)
     {
-	if(!readmidi_error_flag)
+	if(!c->readmidi_error_flag)
 	{
-	    readmidi_error_flag = 1;
+	    c->readmidi_error_flag = 1;
 	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		      "Maxmum number of events is exceeded");
 	}
 	return;
     }
-    event_count++;
+    c->event_count++;
 
     at = a_event->time;
     newev = alloc_midi_event();
@@ -233,52 +146,52 @@ void readmidi_add_event(MidiEvent *a_event)
     if(at < 0)	/* for safety */
 	at = newev->event.time = 0;
 
-    if(at >= current_midi_point->event.time)
+    if(at >= c->current_midi_point->event.time)
     {
 	/* Forward scan */
-	MidiEventList *next = current_midi_point->next;
+	MidiEventList *next = c->current_midi_point->next;
 	while (next && (next->event.time <= at))
 	{
-	    current_midi_point = next;
-	    next = current_midi_point->next;
+	    c->current_midi_point = next;
+	    next = c->current_midi_point->next;
 	}
-	newev->prev = current_midi_point;
+	newev->prev = c->current_midi_point;
 	newev->next = next;
-	current_midi_point->next = newev;
+	c->current_midi_point->next = newev;
 	if (next)
 	    next->prev = newev;
     }
     else
     {
 	/* Backward scan -- symmetrical to the one above */
-	MidiEventList *prev = current_midi_point->prev;
+	MidiEventList *prev = c->current_midi_point->prev;
 	while (prev && (prev->event.time > at)) {
-	    current_midi_point = prev;
-	    prev = current_midi_point->prev;
+	    c->current_midi_point = prev;
+	    prev = c->current_midi_point->prev;
 	}
 	newev->prev = prev;
-	newev->next = current_midi_point;
-	current_midi_point->prev = newev;
+	newev->next = c->current_midi_point;
+	c->current_midi_point->prev = newev;
 	if (prev)
 	    prev->next = newev;
     }
-    current_midi_point = newev;
+    c->current_midi_point = newev;
 }
 
-void readmidi_add_ctl_event(int32 at, int ch, int a, int b)
+void readmidi_add_ctl_event(struct timiditycontext_t *c, int32 at, int ch, int a, int b)
 {
     MidiEvent ev;
 
     if(convert_midi_control_change(ch, a, b, &ev))
     {
 	ev.time = at;
-	readmidi_add_event(&ev);
+	readmidi_add_event(c, &ev);
     }
     else
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "(Control ch=%d %d: %d)", ch, a, b);
 }
 
-char *readmidi_make_string_event(int type, char *string, MidiEvent *ev,
+char *readmidi_make_string_event(struct timiditycontext_t *c, int type, char *string, MidiEvent *ev,
 				 int cnv)
 {
     char *text;
@@ -286,31 +199,31 @@ char *readmidi_make_string_event(int type, char *string, MidiEvent *ev,
     StringTableNode *st;
     int a, b;
 
-    if(string_event_strtab.nstring == 0)
-	put_string_table(&string_event_strtab, "", 0);
-    else if(string_event_strtab.nstring == 0x7FFE)
+    if(c->string_event_strtab.nstring == 0)
+	put_string_table(c, &c->string_event_strtab, "", 0);
+    else if(c->string_event_strtab.nstring == 0x7FFE)
     {
 	SETMIDIEVENT(*ev, 0, type, 0, 0, 0);
 	return NULL; /* Over flow */
     }
-    a = (string_event_strtab.nstring & 0xff);
-    b = ((string_event_strtab.nstring >> 8) & 0xff);
+    a = (c->string_event_strtab.nstring & 0xff);
+    b = ((c->string_event_strtab.nstring >> 8) & 0xff);
 
     len = strlen(string);
     if(cnv)
     {
-	text = (char *)new_segment(&tmpbuffer, SAFE_CONVERT_LENGTH(len) + 1);
-	code_convert(string, text + 1, SAFE_CONVERT_LENGTH(len), NULL, NULL);
+	text = (char *)new_segment(c, &c->tmpbuffer, SAFE_CONVERT_LENGTH(len) + 1);
+	code_convert(c, string, text + 1, SAFE_CONVERT_LENGTH(len), NULL, NULL);
     }
     else
     {
-	text = (char *)new_segment(&tmpbuffer, len + 1);
+	text = (char *)new_segment(c, &c->tmpbuffer, len + 1);
 	memcpy(text + 1, string, len);
 	text[len + 1] = '\0';
     }
 
-    st = put_string_table(&string_event_strtab, text, strlen(text + 1) + 1);
-    reuse_mblock(&tmpbuffer);
+    st = put_string_table(c, &c->string_event_strtab, text, strlen(text + 1) + 1);
+    reuse_mblock(c, &c->tmpbuffer);
 
     text = st->string;
     *text = type;
@@ -318,26 +231,26 @@ char *readmidi_make_string_event(int type, char *string, MidiEvent *ev,
     return text;
 }
 
-static char *readmidi_make_lcd_event(int type, const uint8 *data, MidiEvent *ev)
+static char *readmidi_make_lcd_event(struct timiditycontext_t *c, int type, const uint8 *data, MidiEvent *ev)
 {
     char *text;
     int len;
     StringTableNode *st;
     int a, b, i;
 
-    if(string_event_strtab.nstring == 0)
-	put_string_table(&string_event_strtab, "", 0);
-    else if(string_event_strtab.nstring == 0x7FFE)
+    if(c->string_event_strtab.nstring == 0)
+	put_string_table(c, &c->string_event_strtab, "", 0);
+    else if(c->string_event_strtab.nstring == 0x7FFE)
     {
 	SETMIDIEVENT(*ev, 0, type, 0, 0, 0);
 	return NULL; /* Over flow */
     }
-    a = (string_event_strtab.nstring & 0xff);
-    b = ((string_event_strtab.nstring >> 8) & 0xff);
+    a = (c->string_event_strtab.nstring & 0xff);
+    b = ((c->string_event_strtab.nstring >> 8) & 0xff);
 
     len = 128;
-    
-	text = (char *)new_segment(&tmpbuffer, len + 2);
+
+	text = (char *)new_segment(c, &c->tmpbuffer, len + 2);
 
     for( i=0; i<64; i++){
 	const char tbl[]= "0123456789ABCDEF";
@@ -345,10 +258,10 @@ static char *readmidi_make_lcd_event(int type, const uint8 *data, MidiEvent *ev)
 	text[1+i*2+1]=tbl[data[i]&0xF];
     }
     text[len + 1] = '\0';
-    
-    
-    st = put_string_table(&string_event_strtab, text, strlen(text + 1) + 1);
-    reuse_mblock(&tmpbuffer);
+
+
+    st = put_string_table(c, &c->string_event_strtab, text, strlen(text + 1) + 1);
+    reuse_mblock(c, &c->tmpbuffer);
 
     text = st->string;
     *text = type;
@@ -357,66 +270,66 @@ static char *readmidi_make_lcd_event(int type, const uint8 *data, MidiEvent *ev)
 }
 
 /* Computes how many (fractional) samples one MIDI delta-time unit contains */
-static void compute_sample_increment(int32 tempo, int32 divisions)
+static void compute_sample_increment(struct timiditycontext_t *c, int32 tempo, int32 divisions)
 {
   double a;
   a = (double) (tempo) * (double) (play_mode->rate) * (65536.0/1000000.0) /
     (double)(divisions);
 
-  sample_correction = (int32)(a) & 0xFFFF;
-  sample_increment = (int32)(a) >> 16;
+  c->sample_correction = (int32)(a) & 0xFFFF;
+  c->sample_increment = (int32)(a) >> 16;
 
   ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Samples per delta-t: %d (correction %d)",
-       sample_increment, sample_correction);
+       c->sample_increment, c->sample_correction);
 }
 
 /* Read variable-length number (7 bits per byte, MSB first) */
-static int32 getvl(struct timidity_file *tf)
+static int32 getvl(struct timiditycontext_t *c, struct timidity_file *tf)
 {
     int32 l;
-    int c;
+    int ch;
 
     errno = 0;
     l = 0;
 
     /* 1 */
-    if((c = tf_getc(tf)) == EOF)
+    if((ch = tf_getc(tf)) == EOF)
 	goto eof;
-    if(!(c & 0x80)) return l | c;
-    l = (l | (c & 0x7f)) << 7;
+    if(!(ch & 0x80)) return l | ch;
+    l = (l | (ch & 0x7f)) << 7;
 
     /* 2 */
-    if((c = tf_getc(tf)) == EOF)
+    if((ch = tf_getc(tf)) == EOF)
 	goto eof;
-    if(!(c & 0x80)) return l | c;
-    l = (l | (c & 0x7f)) << 7;
+    if(!(ch & 0x80)) return l | ch;
+    l = (l | (ch & 0x7f)) << 7;
 
     /* 3 */
-    if((c = tf_getc(tf)) == EOF)
+    if((ch = tf_getc(tf)) == EOF)
 	goto eof;
-    if(!(c & 0x80)) return l | c;
-    l = (l | (c & 0x7f)) << 7;
+    if(!(ch & 0x80)) return l | ch;
+    l = (l | (ch & 0x7f)) << 7;
 
     /* 4 */
-    if((c = tf_getc(tf)) == EOF)
+    if((ch = tf_getc(tf)) == EOF)
 	goto eof;
-    if(!(c & 0x80)) return l | c;
+    if(!(ch & 0x80)) return l | ch;
 
     /* Error */
     ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 	      "%s: Illigal Variable-length quantity format.",
-	      current_filename);
+	      c->current_filename);
     return -2;
 
   eof:
     if(errno)
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		  "%s: read_midi_event: %s",
-		  current_filename, strerror(errno));
+		  c->current_filename, strerror(errno));
     else
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		  "Warning: %s: Too shorten midi file.",
-		  current_filename);
+		  c->current_filename);
     return -1;
 }
 
@@ -445,8 +358,8 @@ static char *add_karaoke_title(char *s1, char *s2)
 
 /* Print a string from the file, followed by a newline. Any non-ASCII
    or unprintable characters will be converted to periods. */
-static char *dumpstring(int type, int32 len, char *label, int allocp,
-			struct timidity_file *tf)
+static char *dumpstring(struct timiditycontext_t *c, int type, int32 len, const char *label,
+                        int allocp, struct timidity_file *tf)
 {
     char *si, *so;
     int s_maxlen = SAFE_CONVERT_LENGTH(len);
@@ -458,23 +371,23 @@ static char *dumpstring(int type, int32 len, char *label, int allocp,
 	return NULL;
     }
 
-    si = (char *)new_segment(&tmpbuffer, len + 1);
-    so = (char *)new_segment(&tmpbuffer, s_maxlen);
+    si = (char *)new_segment(c, &c->tmpbuffer, len + 1);
+    so = (char *)new_segment(c, &c->tmpbuffer, s_maxlen);
 
-    if(len != tf_read(si, 1, len, tf))
+    if(len != tf_read(c, si, 1, len, tf))
     {
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	return NULL;
     }
     si[len]='\0';
 
     if(type == 1 &&
-       current_file_info->format == 1 &&
-       (strncmp(si, "@K", 2) == 0)) 
+       c->current_file_info->format == 1 &&
+       (strncmp(si, "@K", 2) == 0))
 /* Karaoke string should be "@KMIDI KARAOKE FILE" */
-	karaoke_format = 1;
+	c->karaoke_format = 1;
 
-    code_convert(si, so, s_maxlen, NULL, NULL);
+    code_convert(c, si, so, s_maxlen, NULL, NULL);
 
     llen = strlen(label);
     solen = strlen(so);
@@ -486,10 +399,10 @@ static char *dumpstring(int type, int32 len, char *label, int allocp,
     if(allocp)
     {
 	so = safe_strdup(so);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	return so;
     }
-    reuse_mblock(&tmpbuffer);
+    reuse_mblock(c, &c->tmpbuffer);
     return NULL;
 }
 
@@ -510,9 +423,9 @@ static uint16 gm_convert_master_vol(uint16 v1, uint16 v2)
     return (((v1 & 0x7f) | ((v2 & 0x7f) << 7)) << 2) | 3;
 }
 
-static void check_chorus_text_start(void)
+static void check_chorus_text_start(struct timiditycontext_t *c)
 {
-	struct chorus_text_gs_t *p = &(chorus_status_gs.text);
+	struct chorus_text_gs_t *p = &(c->chorus_status_gs.text);
     if(p->status != CHORUS_ST_OK && p->voice_reserve[17] &&
        p->macro[2] && p->pre_lpf[2] && p->level[2] &&
        p->feed_back[2] && p->delay[2] && p->rate[2] &&
@@ -526,7 +439,8 @@ static void check_chorus_text_start(void)
 struct ctl_chg_types {
     unsigned char mtype;
     int ttype;
-} ctl_chg_list[] = {
+};
+static const struct ctl_chg_types ctl_chg_list[] = {
       { 0, ME_TONE_BANK_MSB },
       { 1, ME_MODULATION_WHEEL },
       { 2, ME_BREATH },
@@ -752,16 +666,14 @@ static int set_xg_chorus_type(int msb, int lsb)
  * This function provides basic support for XG Bulk Dump and Parameter
  * Change SysEx events
  */
-int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
+int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, MidiEvent *evm)
 {
     int num_events = 0;				/* Number of events added */
     uint32 channel_tt;
     int i, j;
-    static uint8 xg_reverb_type_msb = 0x01, xg_reverb_type_lsb = 0x00;
-    static uint8 xg_chorus_type_msb = 0x41, xg_chorus_type_lsb = 0x00;
 
-    if(current_file_info->mid == 0 || current_file_info->mid >= 0x7e)
-	current_file_info->mid = val[0];
+    if(c->current_file_info->mid == 0 || c->current_file_info->mid >= 0x7e)
+	c->current_file_info->mid = val[0];
 
     /* Effect 1 or Multi EQ */
     if(len >= 8 &&
@@ -800,7 +712,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 	  if(addmid == 0x01) {	/* Effect 1 */
 	    switch(ent) {
 		case 0x00:	/* Reverb Type MSB */
-		    xg_reverb_type_msb = *body;
+		    c->xg_reverb_type_msb = *body;
 #if 0	/* XG specific reverb is not supported yet, use GS instead */
 		    SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_XG_LSB, 0, *body, ent);
 			num_events++;
@@ -808,12 +720,12 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		    break;
 
 		case 0x01:	/* Reverb Type LSB */
-		    xg_reverb_type_lsb = *body;
+		    c->xg_reverb_type_lsb = *body;
 #if 0	/* XG specific reverb is not supported yet, use GS instead */
 		    SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_XG_LSB, 0, *body, ent);
 			num_events++;
 #else
-		    v = set_xg_reverb_type(xg_reverb_type_msb, xg_reverb_type_lsb);
+		    v = set_xg_reverb_type(c->xg_reverb_type_msb, c->xg_reverb_type_lsb);
 		    if (v >= 0) {
 			SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_GS_LSB, 0, v, 0x05);
 			num_events++;
@@ -827,7 +739,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		    break;
 
 		case 0x20:	/* Chorus Type MSB */
-		    xg_chorus_type_msb = *body;
+		    c->xg_chorus_type_msb = *body;
 #if 0	/* XG specific chorus is not supported yet, use GS instead */
 		    SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_XG_LSB, 0, *body, ent);
 			num_events++;
@@ -835,12 +747,12 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		    break;
 
 		case 0x21:	/* Chorus Type LSB */
-		    xg_chorus_type_lsb = *body;
+		    c->xg_chorus_type_lsb = *body;
 #if 0	/* XG specific chorus is not supported yet, use GS instead */
 		    SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_XG_LSB, 0, *body, ent);
 			num_events++;
 #else
-		    v = set_xg_chorus_type(xg_chorus_type_msb, xg_chorus_type_lsb);
+		    v = set_xg_chorus_type(c->xg_chorus_type_msb, c->xg_chorus_type_lsb);
 		    if (v >= 0) {
 			SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_GS_LSB, 0, v, 0x0D);
 			num_events++;
@@ -952,7 +864,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 			break;
 
 		default:
-		    	break;
+			break;
 	    }
 	  }
 	}
@@ -1072,7 +984,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		    break;
 
 		case 0x07:	/* Part Mode */
-			drum_setup_xg[*body] = p;
+			c->drum_setup_xg[*body] = p;
 			SETMIDIEVENT(evm[num_events], 0, ME_DRUMPART, p, *body, SYSEX_TAG);
 			num_events++;
 		    break;
@@ -1083,11 +995,11 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		    break;
 
 		case 0x09:	/* Detune 1st bit */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Detune 1st bit is not supported. (CH:%d VAL:%d)", p, *body); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Detune 1st bit is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x0A:	/* Detune 2nd bit */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Detune 2nd bit is not supported. (CH:%d VAL:%d)", p, *body); 
+		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Detune 2nd bit is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x0B:	/* volume */
@@ -1425,9 +1337,9 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 			SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_LSB, p, *body, 0x11);
 			num_events++;
 			break;
-		
+
 		case 0x59:	/* AC1 Controller Number */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "AC1 Controller Number is not supported. (CH:%d VAL:%d)", p, *body); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "AC1 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
 			break;
 
 		case 0x5A:	/* AC1 Pitch Control */
@@ -1461,7 +1373,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 			break;
 
 		case 0x60:	/* AC2 Controller Number */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "AC2 Controller Number is not supported. (CH:%d VAL:%d)", p, *body); 
+			ctl->cmsg(CMSG_INFO, VERB_NOISY, "AC2 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
 			break;
 
 		case 0x61:	/* AC2 Pitch Control */
@@ -1503,19 +1415,19 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		    num_events++;
 
 		case 0x69:	/* Pitch EG Initial Level */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Initial Level is not supported. (CH:%d VAL:%d)", p, *body); 
+		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Initial Level is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x6A:	/* Pitch EG Attack Time */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Attack Time is not supported. (CH:%d VAL:%d)", p, *body); 
+		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Attack Time is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x6B:	/* Pitch EG Release Level */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Release Level is not supported. (CH:%d VAL:%d)", p, *body); 
+		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Release Level is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x6C:	/* Pitch EG Release Time */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Release Time is not supported. (CH:%d VAL:%d)", p, *body); 
+		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Release Time is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x6D:	/* Velocity Limit Low */
@@ -1529,11 +1441,11 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		    break;
 
 		case 0x70:	/* Bend Pitch Low Control */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Bend Pitch Low Control is not supported. (CH:%d VAL:%d)", p, *body); 
+		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Bend Pitch Low Control is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x71:	/* Filter EG Depth */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Filter EG Depth is not supported. (CH:%d VAL:%d)", p, *body); 
+		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Filter EG Depth is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x72:	/* EQ BASS */
@@ -1602,7 +1514,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 	    body_end = val + len - 2;
 	}
 
-	dp = drum_setup_xg[(addhigh & 0x0F) + 1];
+	dp = c->drum_setup_xg[(addhigh & 0x0F) + 1];
 	note = addmid;
 
 	/* set the SYSEX_XG_MSB info */
@@ -1741,7 +1653,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
      * val[5] == Parameter Address(Middle)
      * val[6] == Parameter Address(Low)
      * val[7]... == Data...
-     * val[last] == Checksum(== 128 - (sum of addresses&data bytes % 128)) 
+     * val[last] == Checksum(== 128 - (sum of addresses&data bytes % 128))
      */
     else if(len >= 9 &&
        val[0] == 0x41 && /* Roland ID */
@@ -1751,7 +1663,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
     {
 		uint8 p, dp, udn, gslen, port = 0;
 		int i, addr, addr_h, addr_m, addr_l, checksum;
-		p = block_to_part(val[5], midi_port_number);
+		p = block_to_part(val[5], c->midi_port_number);
 
 		/* calculate checksum */
 		checksum = 0;
@@ -1767,7 +1679,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		}
 
 		/* drum channel */
-		dp = rhythm_part[(val[5] & 0xF0) >> 4];
+		dp = c->rhythm_part[(val[5] & 0xF0) >> 4];
 
 		/* calculate user drumset number */
 		udn = (val[5] & 0xF0) >> 4;
@@ -1799,13 +1711,13 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 					if (val[7] == 0x10) {
 						SETMIDIEVENT(evm[0], 0, ME_SYSEX_GS_LSB,
 								block_to_part(val[5],
-								midi_port_number ^ port), 0x80, 0x45);
+								c->midi_port_number ^ port), 0x80, 0x45);
 					} else {
 						SETMIDIEVENT(evm[0], 0, ME_SYSEX_GS_LSB,
 								block_to_part(val[5],
-								midi_port_number ^ port),
+								c->midi_port_number ^ port),
 								MERGE_CHANNEL_PORT2(val[7],
-								midi_port_number ^ port), 0x45);
+								c->midi_port_number ^ port), 0x45);
 					}
 					num_events++;
 					break;
@@ -1884,7 +1796,7 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 					break;
 				case 0x15:	/* Use for Rhythm Part */
 					if(val[7]) {
-						rhythm_part[val[7] - 1] = p;
+						c->rhythm_part[val[7] - 1] = p;
 					}
 					break;
 				case 0x16:	/* Pitch Key Shift (dummy. see parse_sysex_event()) */
@@ -2630,14 +2542,14 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		case 0x20:	/* User Instrument */
 			switch(addr & 0xF00) {
 				case 0x000:	/* Source Map */
-					get_userinst(64 + udn, val[6])->source_map = val[7];
+					get_userinst(c, 64 + udn, val[6])->source_map = val[7];
 					break;
 				case 0x100:	/* Source Bank */
-					get_userinst(64 + udn, val[6])->source_bank = val[7];
+					get_userinst(c, 64 + udn, val[6])->source_bank = val[7];
 					break;
 #if !defined(TIMIDITY_TOOLS)
 				case 0x200:	/* Source Prog */
-					get_userinst(64 + udn, val[6])->source_prog = val[7];
+					get_userinst(c, 64 + udn, val[6])->source_prog = val[7];
 					break;
 #endif
 				default:
@@ -2649,71 +2561,71 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
 		case 0x21:	/* User Drumset */
 			switch(addr & 0xF00) {
 				case 0x100:	/* Play Note */
-					get_userdrum(64 + udn, val[6])->play_note = val[7];
+					get_userdrum(c, 64 + udn, val[6])->play_note = val[7];
 					SETMIDIEVENT(evm[0], 0, ME_SYSEX_GS_MSB, dp, val[6], 0);
 					SETMIDIEVENT(evm[1], 0, ME_SYSEX_GS_LSB, dp, val[7], 0x47);
 					num_events += 2;
 					break;
 				case 0x200:	/* Level */
-					get_userdrum(64 + udn, val[6])->level = val[7];
+					get_userdrum(c, 64 + udn, val[6])->level = val[7];
 					SETMIDIEVENT(evm[0], 0, ME_NRPN_MSB, dp, 0x1A, SYSEX_TAG);
 					SETMIDIEVENT(evm[1], 0, ME_NRPN_LSB, dp, val[6], SYSEX_TAG);
 					SETMIDIEVENT(evm[2], 0, ME_DATA_ENTRY_MSB, dp, val[7], SYSEX_TAG);
 					num_events += 3;
 					break;
 				case 0x300:	/* Assign Group */
-					get_userdrum(64 + udn, val[6])->assign_group = val[7];
-					if(val[7] != 0) {recompute_userdrum_altassign(udn + 64, val[7]);}
+					get_userdrum(c, 64 + udn, val[6])->assign_group = val[7];
+					if(val[7] != 0) {recompute_userdrum_altassign(c, udn + 64, val[7]);}
 					break;
 				case 0x400:	/* Panpot */
-					get_userdrum(64 + udn, val[6])->pan = val[7];
+					get_userdrum(c, 64 + udn, val[6])->pan = val[7];
 					SETMIDIEVENT(evm[0], 0, ME_NRPN_MSB, dp, 0x1C, SYSEX_TAG);
 					SETMIDIEVENT(evm[1], 0, ME_NRPN_LSB, dp, val[6], SYSEX_TAG);
 					SETMIDIEVENT(evm[2], 0, ME_DATA_ENTRY_MSB, dp, val[7], SYSEX_TAG);
 					num_events += 3;
 					break;
 				case 0x500:	/* Reverb Send Level */
-					get_userdrum(64 + udn, val[6])->reverb_send_level = val[7];
+					get_userdrum(c, 64 + udn, val[6])->reverb_send_level = val[7];
 					SETMIDIEVENT(evm[0], 0, ME_NRPN_MSB, dp, 0x1D, SYSEX_TAG);
 					SETMIDIEVENT(evm[1], 0, ME_NRPN_LSB, dp, val[6], SYSEX_TAG);
 					SETMIDIEVENT(evm[2], 0, ME_DATA_ENTRY_MSB, dp, val[7], SYSEX_TAG);
 					num_events += 3;
 					break;
 				case 0x600:	/* Chorus Send Level */
-					get_userdrum(64 + udn, val[6])->chorus_send_level = val[7];
+					get_userdrum(c, 64 + udn, val[6])->chorus_send_level = val[7];
 					SETMIDIEVENT(evm[0], 0, ME_NRPN_MSB, dp, 0x1E, SYSEX_TAG);
 					SETMIDIEVENT(evm[1], 0, ME_NRPN_LSB, dp, val[6], SYSEX_TAG);
 					SETMIDIEVENT(evm[2], 0, ME_DATA_ENTRY_MSB, dp, val[7], SYSEX_TAG);
 					num_events += 3;
 					break;
 				case 0x700:	/* Rx. Note Off */
-					get_userdrum(64 + udn, val[6])->rx_note_off = val[7];
+					get_userdrum(c, 64 + udn, val[6])->rx_note_off = val[7];
 					SETMIDIEVENT(evm[0], 0, ME_SYSEX_MSB, dp, val[6], 0);
 					SETMIDIEVENT(evm[1], 0, ME_SYSEX_LSB, dp, val[7], 0x46);
-					num_events += 2; 
+					num_events += 2;
 					break;
 				case 0x800:	/* Rx. Note On */
-					get_userdrum(64 + udn, val[6])->rx_note_on = val[7];
+					get_userdrum(c, 64 + udn, val[6])->rx_note_on = val[7];
 					SETMIDIEVENT(evm[0], 0, ME_SYSEX_MSB, dp, val[6], 0);
 					SETMIDIEVENT(evm[1], 0, ME_SYSEX_LSB, dp, val[7], 0x47);
-					num_events += 2; 
+					num_events += 2;
 					break;
 				case 0x900:	/* Delay Send Level */
-					get_userdrum(64 + udn, val[6])->delay_send_level = val[7];
+					get_userdrum(c, 64 + udn, val[6])->delay_send_level = val[7];
 					SETMIDIEVENT(evm[0], 0, ME_NRPN_MSB, dp, 0x1F, SYSEX_TAG);
 					SETMIDIEVENT(evm[1], 0, ME_NRPN_LSB, dp, val[6], SYSEX_TAG);
 					SETMIDIEVENT(evm[2], 0, ME_DATA_ENTRY_MSB, dp, val[7], SYSEX_TAG);
 					num_events += 3;
 					break;
 				case 0xA00:	/* Source Map */
-					get_userdrum(64 + udn, val[6])->source_map = val[7];
+					get_userdrum(c, 64 + udn, val[6])->source_map = val[7];
 					break;
 				case 0xB00:	/* Source Prog */
-					get_userdrum(64 + udn, val[6])->source_prog = val[7];
+					get_userdrum(c, 64 + udn, val[6])->source_prog = val[7];
 					break;
 #if !defined(TIMIDITY_TOOLS)
 				case 0xC00:	/* Source Note */
-					get_userdrum(64 + udn, val[6])->source_note = val[7];
+					get_userdrum(c, 64 + udn, val[6])->source_note = val[7];
 					break;
 #endif
 				default:
@@ -2908,12 +2820,12 @@ int parse_sysex_event_multi(uint8 *val, int32 len, MidiEvent *evm)
     return(num_events);
 }
 
-int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
+int parse_sysex_event(struct timiditycontext_t *c, uint8 *val, int32 len, MidiEvent *ev)
 {
 	uint16 vol;
-	
-    if(current_file_info->mid == 0 || current_file_info->mid >= 0x7e)
-	current_file_info->mid = val[0];
+
+    if(c->current_file_info->mid == 0 || c->current_file_info->mid >= 0x7e)
+	c->current_file_info->mid = val[0];
 
     if(len >= 10 &&
        val[0] == 0x41 && /* Roland ID */
@@ -2989,7 +2901,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 	if(addr == 0x400000) /* Master Tune, not for SMF */
 	{
 		uint16 tune = ((body[1] & 0xF) << 8) | ((body[2] & 0xF) << 4) | (body[3] & 0xF);
-		
+
 		if (tune < 0x18)
 			tune = 0x18;
 		else if (tune > 0x7E8)
@@ -3030,7 +2942,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 
 	if((addr & 0xFFFFF0) == 0x400130) /* Changing Effects */
 	{
-		struct chorus_text_gs_t *chorus_text = &(chorus_status_gs.text);
+		struct chorus_text_gs_t *chorus_text = &(c->chorus_status_gs.text);
 	    switch(addr & 0xF)
 	    {
 	      case 0x8: /* macro */
@@ -3060,7 +2972,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 		  default: break;
 	    }
 
-	    check_chorus_text_start();
+	    check_chorus_text_start(c);
 	    return 0;
 	}
 
@@ -3070,8 +2982,8 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 	if(addr == 0x400110) /* Voice Reserve */
 	{
 	    if(len >= 25)
-		memcpy(chorus_status_gs.text.voice_reserve, body, 18);
-	    check_chorus_text_start();
+		memcpy(c->chorus_status_gs.text.voice_reserve, body, 18);
+	    check_chorus_text_start(c);
 	    return 0;
 	}
 
@@ -3087,10 +2999,10 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
     if(len > 9 &&
        val[0] == 0x41 && /* Roland ID */
        val[1] == 0x10 && /* Device ID */
-       val[2] == 0x45 && 
-       val[3] == 0x12 && 
-       val[4] == 0x10 && 
-       val[5] == 0x00 && 
+       val[2] == 0x45 &&
+       val[3] == 0x12 &&
+       val[4] == 0x10 &&
+       val[5] == 0x00 &&
        val[6] == 0x00)
     {
 	/* Text Insert for SC */
@@ -3099,7 +3011,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 	len -= 2;
 	save = val[len];
 	val[len] = '\0';
-	if(readmidi_make_string_event(ME_INSERT_TEXT, (char *)val + 7, ev, 1))
+	if(readmidi_make_string_event(c, ME_INSERT_TEXT, (char *)val + 7, ev, 1))
 	{
 	    val[len] = save;
 	    return 1;
@@ -3111,10 +3023,10 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
     if(len > 9 &&                     /* GS lcd event. by T.Nogami*/
        val[0] == 0x41 && /* Roland ID */
        val[1] == 0x10 && /* Device ID */
-       val[2] == 0x45 && 
-       val[3] == 0x12 && 
-       val[4] == 0x10 && 
-       val[5] == 0x01 && 
+       val[2] == 0x45 &&
+       val[3] == 0x12 &&
+       val[4] == 0x10 &&
+       val[5] == 0x01 &&
        val[6] == 0x00)
     {
 	/* Text Insert for SC */
@@ -3123,7 +3035,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 	len -= 2;
 	save = val[len];
 	val[len] = '\0';
-	if(readmidi_make_lcd_event(ME_GSLCD, (uint8 *)val + 7, ev))
+	if(readmidi_make_lcd_event(c, ME_GSLCD, (uint8 *)val + 7, ev))
 	{
 	    val[len] = save;
 	    return 1;
@@ -3131,7 +3043,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 	val[len] = save;
 	return 0;
     }
-    
+
     /* val[1] can have values other than 0x10 for the XG ON event, which
      * work on real XG hardware.  I have several midi that use 0x1f instead
      * of 0x10.  playmidi.h lists 0x10 - 0x13 as MU50/80/90/100.  I don't
@@ -3150,7 +3062,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
        val[2] == 0x4C)
     {
 	int addr = (val[3] << 16) | (val[4] << 8) | val[5];
-	
+
 	if (addr == 0x00007E)	/* XG SYSTEM ON */
 	{
 		SETMIDIEVENT(*ev, 0, ME_RESET, 0, XG_SYSTEM_MODE, SYSEX_TAG);
@@ -3159,7 +3071,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 	else if (addr == 0x000000 && len >= 12)	/* XG Master Tune */
 	{
 		uint16 tune = ((val[7] & 0xF) << 8) | ((val[8] & 0xF) << 4) | (val[9] & 0xF);
-		
+
 		if (tune > 0x7FF)
 			tune = 0x7FF;
 		SETMIDIEVENT(*ev, 0, ME_MASTER_TUNING, 0, tune & 0xFF, (tune >> 8) & 0x7F);
@@ -3172,14 +3084,14 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 	if (val[2] == 0x04 && val[3] == 0x03)	/* GM2 Master Fine Tune */
 	{
 		uint16 tune = (val[4] & 0x7F) | (val[5] << 7) | 0x4000;
-		
+
 		SETMIDIEVENT(*ev, 0, ME_MASTER_TUNING, 0, tune & 0xFF, (tune >> 8) & 0x7F);
 		return 1;
 	}
 	if (val[2] == 0x04 && val[3] == 0x04)	/* GM2 Master Coarse Tune */
 	{
 		uint8 tune = val[5];
-		
+
 		if (tune < 0x28)
 			tune = 0x28;
 		else if (tune > 0x58)
@@ -3188,7 +3100,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
 		return 1;
 	}
     }
-    
+
 	/* Non-RealTime / RealTime Universal SysEx messages
 	 * 0 0x7e(Non-RealTime) / 0x7f(RealTime)
 	 * 1 SysEx device ID.  Could be from 0x00 to 0x7f.
@@ -3254,7 +3166,7 @@ int parse_sysex_event(uint8 *val, int32 len, MidiEvent *ev)
     return 0;
 }
 
-static int read_sysex_event(int32 at, int me, int32 len,
+static int read_sysex_event(struct timiditycontext_t *c, int32 at, int me, int32 len,
 			    struct timidity_file *tf)
 {
     uint8 *val;
@@ -3265,30 +3177,30 @@ static int read_sysex_event(int32 at, int me, int32 len,
 	return 0;
     if(me != 0xF0)
     {
-	skip(tf, len);
+	skip(c, tf, len);
 	return 0;
     }
 
-    val = (uint8 *)new_segment(&tmpbuffer, len);
-    if(tf_read(val, 1, len, tf) != len)
+    val = (uint8 *)new_segment(c, &c->tmpbuffer, len);
+    if(tf_read(c, val, 1, len, tf) != len)
     {
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	return -1;
     }
-    if(parse_sysex_event(val, len, &ev))
+    if(parse_sysex_event(c, val, len, &ev))
     {
 	ev.time = at;
-	readmidi_add_event(&ev);
+	readmidi_add_event(c, &ev);
     }
-    if ((ne = parse_sysex_event_multi(val, len, evm)))
+    if ((ne = parse_sysex_event_multi(c, val, len, evm)))
     {
 	for (i = 0; i < ne; i++) {
 	    evm[i].time = at;
-	    readmidi_add_event(&evm[i]);
+	    readmidi_add_event(c, &evm[i]);
 	}
     }
-    
-    reuse_mblock(&tmpbuffer);
+
+    reuse_mblock(c, &c->tmpbuffer);
 
     return 0;
 }
@@ -3326,9 +3238,9 @@ static char *fix_string(char *s)
     return s;
 }
 
-static void smf_time_signature(int32 at, struct timidity_file *tf, int len)
+static void smf_time_signature(struct timiditycontext_t *c, int32 at, struct timidity_file *tf, int len)
 {
-    int n, d, c, b;
+    int n, d, C, b;
 
     /* Time Signature (nn dd cc bb)
      * [0]: numerator
@@ -3341,13 +3253,13 @@ static void smf_time_signature(int32 at, struct timidity_file *tf, int len)
     if(len != 4)
     {
 	ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid time signature");
-	skip(tf, len);
+	skip(c, tf, len);
 	return;
     }
 
     n = tf_getc(tf);
     d = (1<<tf_getc(tf));
-    c = tf_getc(tf);
+    C = tf_getc(tf);
     b = tf_getc(tf);
 
     if(n == 0 || (uint8) d == 0)
@@ -3357,19 +3269,19 @@ static void smf_time_signature(int32 at, struct timidity_file *tf, int len)
     }
 
     MIDIEVENT(at, ME_TIMESIG, 0, n, d);
-    MIDIEVENT(at, ME_TIMESIG, 1, c, b);
+    MIDIEVENT(at, ME_TIMESIG, 1, C, b);
     ctl->cmsg(CMSG_INFO, VERB_NOISY,
-	      "Time signature: %d/%d %d clock %d q.n.", n, d, c, b);
-    if(current_file_info->time_sig_n == -1)
+	      "Time signature: %d/%d %d clock %d q.n.", n, d, C, b);
+    if(c->current_file_info->time_sig_n == -1)
     {
-	current_file_info->time_sig_n = n;
-	current_file_info->time_sig_d = d;
-	current_file_info->time_sig_c = c;
-	current_file_info->time_sig_b = b;
+	c->current_file_info->time_sig_n = n;
+	c->current_file_info->time_sig_d = d;
+	c->current_file_info->time_sig_c = C;
+	c->current_file_info->time_sig_b = b;
     }
 }
 
-static void smf_key_signature(int32 at, struct timidity_file *tf, int len)
+static void smf_key_signature(struct timiditycontext_t *c, int32 at, struct timidity_file *tf, int len)
 {
 	int8 sf, mi;
 	/* Key Signature (sf mi)
@@ -3381,10 +3293,10 @@ static void smf_key_signature(int32 at, struct timidity_file *tf, int len)
 	 * mi = 0:  major key
 	 * mi = 1:  minor key
 	 */
-	
+
 	if (len != 2) {
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid key signature");
-		skip(tf, len);
+		skip(c, tf, len);
 		return;
 	}
 	sf = tf_getc(tf);
@@ -3404,15 +3316,15 @@ static void smf_key_signature(int32 at, struct timidity_file *tf, int len)
 }
 
 /* Used for WRD reader */
-int dump_current_timesig(MidiEvent *codes, int maxlen)
+int dump_current_timesig(struct timiditycontext_t *c, MidiEvent *codes, int maxlen)
 {
     int i, n;
     MidiEventList *e;
 
-    if(maxlen <= 0 || evlist == NULL)
+    if(maxlen <= 0 || c->evlist == NULL)
 	return 0;
     n = 0;
-    for(i = 0, e = evlist; i < event_count; i++, e = e->next)
+    for(i = 0, e = c->evlist; i < c->event_count; i++, e = e->next)
 	if(e->event.type == ME_TIMESIG && e->event.channel == 0)
 	{
 	    if(n == 0 && e->event.time > 0)
@@ -3440,31 +3352,32 @@ int dump_current_timesig(MidiEvent *codes, int maxlen)
 }
 
 /* Read a SMF track */
-static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
+static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
+                          int trackno, int rewindp)
 {
     int32 len, next_pos, pos;
     char tmp[4];
     int lastchan, laststatus;
-    int me, type, a, b, c;
+    int me, type, a, b, C;
     int i;
     int32 smf_at_time;
-    int note_seen = (! opt_preserve_silence);
+    int note_seen = (! c->opt_preserve_silence);
 
-    smf_at_time = readmidi_set_track(trackno, rewindp);
+    smf_at_time = readmidi_set_track(c, trackno, rewindp);
 
     /* Check the formalities */
-    if((tf_read(tmp, 1, 4, tf) != 4) || (tf_read(&len, 4, 1, tf) != 1))
+    if((tf_read(c, tmp, 1, 4, tf) != 4) || (tf_read(c, &len, 4, 1, tf) != 1))
     {
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-		  "%s: Can't read track header.", current_filename);
+		  "%s: Can't read track header.", c->current_filename);
 	return -1;
     }
     len = BE_LONG(len);
-    next_pos = tf_tell(tf) + len;
+    next_pos = tf_tell(c, tf) + len;
     if(strncmp(tmp, "MTrk", 4))
     {
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-		  "%s: Corrupt MIDI file.", current_filename);
+		  "%s: Corrupt MIDI file.", c->current_filename);
 	return -2;
     }
 
@@ -3472,9 +3385,9 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 
     for(;;)
     {
-	if(readmidi_error_flag)
+	if(c->readmidi_error_flag)
 	    return -1;
-	if((len = getvl(tf)) < 0)
+	if((len = getvl(c, tf)) < 0)
 	    return -1;
 	smf_at_time += len;
 	errno = 0;
@@ -3483,55 +3396,55 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 	    if(errno)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			  "%s: read_midi_event: %s",
-			  current_filename, strerror(errno));
+			  c->current_filename, strerror(errno));
 	    else
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			  "Warning: %s: Too shorten midi file.",
-			  current_filename);
+			  c->current_filename);
 	    return -1;
 	}
 
 	me = (uint8)i;
 	if(me == 0xF0 || me == 0xF7) /* SysEx event */
 	{
-	    if((len = getvl(tf)) < 0)
+	    if((len = getvl(c, tf)) < 0)
 		return -1;
-	    if((i = read_sysex_event(smf_at_time, me, len, tf)) != 0)
+	    if((i = read_sysex_event(c, smf_at_time, me, len, tf)) != 0)
 		return i;
 	}
 	else if(me == 0xFF) /* Meta event */
 	{
 	    type = tf_getc(tf);
-	    if((len = getvl(tf)) < 0)
+	    if((len = getvl(c, tf)) < 0)
 		return -1;
 	    if(type > 0 && type < 16)
 	    {
-		static char *label[] =
+		static const char *label[] =
 		{
 		    "Text event: ", "Text: ", "Copyright: ", "Track name: ",
 		    "Instrument: ", "Lyric: ", "Marker: ", "Cue point: "
 		};
 
 		if(type == 5 || /* Lyric */
-		   (type == 1 && (opt_trace_text_meta_event ||
-				  karaoke_format == 2 ||
-				  chorus_status_gs.text.status == CHORUS_ST_OK)) ||
-		   (type == 6 &&  (current_file_info->format == 0 ||
-				   (current_file_info->format == 1 &&
-				    current_read_track == 0))))
+		   (type == 1 && (c->opt_trace_text_meta_event ||
+				  c->karaoke_format == 2 ||
+				  c->chorus_status_gs.text.status == CHORUS_ST_OK)) ||
+		   (type == 6 &&  (c->current_file_info->format == 0 ||
+				   (c->current_file_info->format == 1 &&
+				    c->current_read_track == 0))))
 		{
 		    char *str, *text;
 		    MidiEvent ev;
 
-		    str = (char *)new_segment(&tmpbuffer, len + 3);
+		    str = (char *)new_segment(c, &c->tmpbuffer, len + 3);
 		    if(type != 6)
 		    {
-			i = tf_read(str, 1, len, tf);
+			i = tf_read(c, str, 1, len, tf);
 			str[len] = '\0';
 		    }
 		    else
 		    {
-			i = tf_read(str + 1, 1, len, tf);
+			i = tf_read(c, str + 1, 1, len, tf);
 			str[0] = MARKER_START_CHAR;
 			str[len + 1] = MARKER_END_CHAR;
 			str[len + 2] = '\0';
@@ -3541,15 +3454,15 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 		    {
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				  "Warning: %s: Too shorten midi file.",
-				  current_filename);
-			reuse_mblock(&tmpbuffer);
+				  c->current_filename);
+			reuse_mblock(c, &c->tmpbuffer);
 			return -1;
 		    }
 
-		    if((text = readmidi_make_string_event(1, str, &ev, 1))
+		    if((text = readmidi_make_string_event(c, 1, str, &ev, 1))
 		       == NULL)
 		    {
-			reuse_mblock(&tmpbuffer);
+			reuse_mblock(c, &c->tmpbuffer);
 			continue;
 		    }
 		    ev.time = smf_at_time;
@@ -3558,7 +3471,7 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 		    {
 			if(strlen(fix_string(text + 1)) == 2)
 			{
-			    reuse_mblock(&tmpbuffer);
+			    reuse_mblock(c, &c->tmpbuffer);
 			    continue; /* Empty Marker */
 			}
 		    }
@@ -3566,66 +3479,66 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 		    switch(type)
 		    {
 		      case 1:
-			if(karaoke_format == 2)
+			if(c->karaoke_format == 2)
 			{
 			    *text = ME_KARAOKE_LYRIC;
-			    if(karaoke_title_flag == 0 &&
+			    if(c->karaoke_title_flag == 0 &&
 			       strncmp(str, "@T", 2) == 0)
-				current_file_info->karaoke_title =
-				    add_karaoke_title(current_file_info->
+				c->current_file_info->karaoke_title =
+				    add_karaoke_title(c->current_file_info->
 						      karaoke_title, str + 2);
 			    ev.type = ME_KARAOKE_LYRIC;
-			    readmidi_add_event(&ev);
+			    readmidi_add_event(c, &ev);
 			    continue;
 			}
-			if(chorus_status_gs.text.status == CHORUS_ST_OK)
+			if(c->chorus_status_gs.text.status == CHORUS_ST_OK)
 			{
 			    *text = ME_CHORUS_TEXT;
 			    ev.type = ME_CHORUS_TEXT;
-			    readmidi_add_event(&ev);
+			    readmidi_add_event(c, &ev);
 			    continue;
 			}
 			*text = ME_TEXT;
 			ev.type = ME_TEXT;
-			readmidi_add_event(&ev);
+			readmidi_add_event(c, &ev);
 			continue;
 		      case 5:
 			*text = ME_LYRIC;
 			ev.type = ME_LYRIC;
-			readmidi_add_event(&ev);
+			readmidi_add_event(c, &ev);
 			continue;
 		      case 6:
 			*text = ME_MARKER;
 			ev.type = ME_MARKER;
-			readmidi_add_event(&ev);
+			readmidi_add_event(c, &ev);
 			continue;
 		    }
 		}
 
 		if(type == 3 && /* Sequence or Track Name */
-		   (current_file_info->format == 0 ||
-		    (current_file_info->format == 1 &&
-		     current_read_track == 0)))
+		   (c->current_file_info->format == 0 ||
+		    (c->current_file_info->format == 1 &&
+		     c->current_read_track == 0)))
 		{
-		  if(current_file_info->seq_name == NULL) {
-		    char *name = dumpstring(3, len, "Sequence: ", 1, tf);
-		    current_file_info->seq_name = safe_strdup(fix_string(name));
+		  if(c->current_file_info->seq_name == NULL) {
+		    char *name = dumpstring(c, 3, len, "Sequence: ", 1, tf);
+		    c->current_file_info->seq_name = safe_strdup(fix_string(name));
 		    free(name);
 		  }
 		    else
-			dumpstring(3, len, "Sequence: ", 0, tf);
+			dumpstring(c, 3, len, "Sequence: ", 0, tf);
 		}
 		else if(type == 1 &&
-			current_file_info->first_text == NULL &&
-			(current_file_info->format == 0 ||
-			 (current_file_info->format == 1 &&
-			  current_read_track == 0))) {
-		  char *name = dumpstring(1, len, "Text: ", 1, tf);
-		  current_file_info->first_text = safe_strdup(fix_string(name));
+			c->current_file_info->first_text == NULL &&
+			(c->current_file_info->format == 0 ||
+			 (c->current_file_info->format == 1 &&
+			  c->current_read_track == 0))) {
+		  char *name = dumpstring(c, 1, len, "Text: ", 1, tf);
+		  c->current_file_info->first_text = safe_strdup(fix_string(name));
 		  free(name);
 		}
 		else
-		    dumpstring(type, len, label[(type>7) ? 0 : type], 0, tf);
+		    dumpstring(c, type, len, label[(type>7) ? 0 : type], 0, tf);
 	    }
 	    else
 	    {
@@ -3645,16 +3558,16 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 		    break;
 
 		  case 0x2F: /* End of Track */
-		    pos = tf_tell(tf);
+		    pos = tf_tell(c, tf);
 		    if(pos < next_pos)
-			tf_seek(tf, next_pos - pos, SEEK_CUR);
+			tf_seek(c, tf, next_pos - pos, SEEK_CUR);
 		    return 0;
 
 		  case 0x51: /* Tempo */
 		    a = tf_getc(tf);
 		    b = tf_getc(tf);
-		    c = tf_getc(tf);
-		    MIDIEVENT(smf_at_time, ME_TEMPO, c, a, b);
+		    C = tf_getc(tf);
+		    MIDIEVENT(smf_at_time, ME_TEMPO, C, a, b);
 		    break;
 
 		  case 0x54:
@@ -3673,22 +3586,22 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 		     */
 		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 			      "(SMPTE Offset meta event)");
-		    skip(tf, len);
+		    skip(c, tf, len);
 		    break;
 
 		  case 0x58: /* Time Signature */
-		    smf_time_signature(smf_at_time, tf, len);
+		    smf_time_signature(c, smf_at_time, tf, len);
 		    break;
 
 		  case 0x59: /* Key Signature */
-		    smf_key_signature(smf_at_time, tf, len);
+		    smf_key_signature(c, smf_at_time, tf, len);
 		    break;
 
 		  case 0x7f: /* Sequencer-Specific Meta-Event */
 		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 			      "(Sequencer-Specific meta event, length %ld)",
 			      len);
-		    skip(tf, len);
+		    skip(c, tf, len);
 		    break;
 
 		  case 0x20: /* MIDI channel prefix (SMF v1.0) */
@@ -3700,33 +3613,33 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 				  midi_channel_prefix);
 		    }
 		    else
-			skip(tf, len);
+			skip(c, tf, len);
 		    break;
 
 		  case 0x21: /* MIDI port number */
 		    if(len == 1)
 		    {
-			if((midi_port_number = tf_getc(tf))
+			if((c->midi_port_number = tf_getc(tf))
 			   == EOF)
 			{
 			    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				      "Warning: %s: Too shorten midi file.",
-				      current_filename);
+				      c->current_filename);
 			    return -1;
 			}
-			midi_port_number &= 0xF;
+			c->midi_port_number &= 0xF;
 			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
-				  "(MIDI port number %d)", midi_port_number);
+				  "(MIDI port number %d)", c->midi_port_number);
 		    }
 		    else
-			skip(tf, len);
+			skip(c, tf, len);
 		    break;
 
 		  default:
 		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 			      "(Meta event type 0x%02x, length %ld)",
 			      type, len);
-		    skip(tf, len);
+		    skip(c, tf, len);
 		    break;
 		}
 	    }
@@ -3773,7 +3686,7 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 
 	      case 3: /* Control change */
 		b = tf_getc(tf);
-		readmidi_add_ctl_event(smf_at_time, lastchan, a, b);
+		readmidi_add_ctl_event(c, smf_at_time, lastchan, a, b);
 		break;
 
 	      case 4: /* Program change */
@@ -3848,24 +3761,24 @@ static int read_smf_track(struct timidity_file *tf, int trackno, int rewindp)
 }
 
 /* Free the linked event list from memory. */
-static void free_midi_list(void)
+static void free_midi_list(struct timiditycontext_t *c)
 {
-    if(evlist != NULL)
+    if(c->evlist != NULL)
     {
-	reuse_mblock(&mempool);
-	evlist = NULL;
+	reuse_mblock(c, &c->mempool);
+	c->evlist = NULL;
     }
 }
 
-static void move_channels(int *chidx)
+static void move_channels(struct timiditycontext_t *c, int *chidx)
 {
 	int i, ch, maxch, newch;
 	MidiEventList *e;
-	
+
 	for (i = 0; i < 256; i++)
 		chidx[i] = -1;
 	/* check channels */
-	for (i = maxch = 0, e = evlist; i < event_count; i++, e = e->next)
+	for (i = maxch = 0, e = c->evlist; i < c->event_count; i++, e = e->next)
 		if (! GLOBAL_CHANNEL_EVENT_TYPE(e->event.type)) {
 			if ((ch = e->event.channel) < REDUCE_CHANNELS)
 				chidx[ch] = ch;
@@ -3874,7 +3787,7 @@ static void move_channels(int *chidx)
 		}
 	if (maxch >= REDUCE_CHANNELS)
 		/* Move channel if enable */
-		for (i = maxch = 0, e = evlist; i < event_count; i++, e = e->next)
+		for (i = maxch = 0, e = c->evlist; i < c->event_count; i++, e = e->next)
 			if (! GLOBAL_CHANNEL_EVENT_TYPE(e->event.type)) {
 				if (chidx[ch = e->event.channel] != -1)
 					ch = e->event.channel = chidx[ch];
@@ -3905,7 +3818,7 @@ static void move_channels(int *chidx)
 				if (maxch < ch)
 					maxch = ch;
 			}
-	for (i = 0, e = evlist; i < event_count; i++, e = e->next)
+	for (i = 0, e = c->evlist; i < c->event_count; i++, e = e->next)
 		if (e->event.type == ME_SYSEX_GS_LSB) {
 			if (e->event.b == 0x45 || e->event.b == 0x46)
 				if (maxch < e->event.channel)
@@ -3915,81 +3828,81 @@ static void move_channels(int *chidx)
 				if (maxch < e->event.channel)
 					maxch = e->event.channel;
 		}
-	current_file_info->max_channel = maxch;
+	c->current_file_info->max_channel = maxch;
 }
 
-void change_system_mode(int mode)
+void change_system_mode(struct timiditycontext_t *c, int mode)
 {
     int mid;
 
-    if(opt_system_mid)
+    if(c->opt_system_mid)
     {
-	mid = opt_system_mid;
+	mid = c->opt_system_mid;
 	mode = -1; /* Always use opt_system_mid */
     }
     else
-	mid = current_file_info->mid;
-    pan_table = sc_pan_table;
+	mid = c->current_file_info->mid;
+    c->pan_table = sc_pan_table;
     switch(mode)
     {
       case GM_SYSTEM_MODE:
-	if(play_system_mode == DEFAULT_SYSTEM_MODE)
+	if(c->play_system_mode == DEFAULT_SYSTEM_MODE)
 	{
-	    play_system_mode = GM_SYSTEM_MODE;
-	    vol_table = def_vol_table;
+	   c-> play_system_mode = GM_SYSTEM_MODE;
+	    c->vol_table = c->def_vol_table;
 	}
 	break;
       case GM2_SYSTEM_MODE:
-	play_system_mode = GM2_SYSTEM_MODE;
-	vol_table = def_vol_table;
-	pan_table = gm2_pan_table;
+	c->play_system_mode = GM2_SYSTEM_MODE;
+	c->vol_table = c->def_vol_table;
+	c->pan_table = c->gm2_pan_table;
 	break;
       case GS_SYSTEM_MODE:
-	play_system_mode = GS_SYSTEM_MODE;
-	vol_table = gs_vol_table;
+	c->play_system_mode = GS_SYSTEM_MODE;
+	c->vol_table = c->gs_vol_table;
 	break;
       case XG_SYSTEM_MODE:
-    if (play_system_mode != XG_SYSTEM_MODE) {init_all_effect_xg();}
-	play_system_mode = XG_SYSTEM_MODE;
-	vol_table = xg_vol_table;
+    if (c->play_system_mode != XG_SYSTEM_MODE) {init_all_effect_xg(c);}
+	c->play_system_mode = XG_SYSTEM_MODE;
+	c->vol_table = c->xg_vol_table;
 	break;
       default:
 	/* --module option */
-	if (is_gs_module()) {
-		play_system_mode = GS_SYSTEM_MODE;
+	if (is_gs_module(c)) {
+		c->play_system_mode = GS_SYSTEM_MODE;
 		break;
-	} else if (is_xg_module()) {
-		if (play_system_mode != XG_SYSTEM_MODE) {init_all_effect_xg();}
-		play_system_mode = XG_SYSTEM_MODE;
+	} else if (is_xg_module(c)) {
+		if (c->play_system_mode != XG_SYSTEM_MODE) {init_all_effect_xg(c);}
+		c->play_system_mode = XG_SYSTEM_MODE;
 		break;
 	}
 	switch(mid)
 	{
 	  case 0x41:
-	    play_system_mode = GS_SYSTEM_MODE;
-	    vol_table = gs_vol_table;
+	    c->play_system_mode = GS_SYSTEM_MODE;
+	    c->vol_table = c->gs_vol_table;
 	    break;
 	  case 0x43:
-		if (play_system_mode != XG_SYSTEM_MODE) {init_all_effect_xg();}
-	    play_system_mode = XG_SYSTEM_MODE;
-	    vol_table = xg_vol_table;
+		if (c->play_system_mode != XG_SYSTEM_MODE) {init_all_effect_xg(c);}
+	    c->play_system_mode = XG_SYSTEM_MODE;
+	    c->vol_table = c->xg_vol_table;
 	    break;
 	  case 0x7e:
-	    play_system_mode = GM_SYSTEM_MODE;
-	    vol_table = def_vol_table;
+	    c->play_system_mode = GM_SYSTEM_MODE;
+	    c->vol_table = c->def_vol_table;
 	    break;
 	  default:
-	    play_system_mode = DEFAULT_SYSTEM_MODE;
-		vol_table = def_vol_table;
+	    c->play_system_mode = DEFAULT_SYSTEM_MODE;
+		c->vol_table = c->def_vol_table;
 	    break;
 	}
 	break;
     }
 }
 
-int get_default_mapID(int ch)
+int get_default_mapID(struct timiditycontext_t *c, int ch)
 {
-    if(play_system_mode == XG_SYSTEM_MODE)
+    if(c->play_system_mode == XG_SYSTEM_MODE)
 	return ISDRUMCHANNEL(ch) ? XG_DRUM_MAP : XG_NORMAL_MAP;
     return INST_NO_MAP;
 }
@@ -3998,7 +3911,7 @@ int get_default_mapID(int ch)
    events, marking used instruments for loading. Convert event times to
    samples: handle tempo changes. Strip unnecessary events from the list.
    Free the linked list. */
-static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
+static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32 *eventsp, int32 *samplesp)
 {
     MidiEvent *groomed_list, *lp;
     MidiEventList *meep;
@@ -4014,36 +3927,36 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
     int chidx[256];
     int newbank, newprog;
 
-    move_channels(chidx);
+    move_channels(c, chidx);
 
-    COPY_CHANNELMASK(drumchannels, current_file_info->drumchannels);
-    COPY_CHANNELMASK(drumchannel_mask, current_file_info->drumchannel_mask);
+    COPY_CHANNELMASK(c->drumchannels, c->current_file_info->drumchannels);
+    COPY_CHANNELMASK(c->drumchannel_mask, c->current_file_info->drumchannel_mask);
 
     /* Move drumchannels */
     for(ch = REDUCE_CHANNELS; ch < MAX_CHANNELS; ch++)
     {
 	i = chidx[ch];
-	if(i != -1 && i != ch && !IS_SET_CHANNELMASK(drumchannel_mask, i))
+	if(i != -1 && i != ch && !IS_SET_CHANNELMASK(c->drumchannel_mask, i))
 	{
-	    if(IS_SET_CHANNELMASK(drumchannels, ch))
-		SET_CHANNELMASK(drumchannels, i);
+	    if(IS_SET_CHANNELMASK(c->drumchannels, ch))
+		SET_CHANNELMASK(c->drumchannels, i);
 	    else
-		UNSET_CHANNELMASK(drumchannels, i);
+		UNSET_CHANNELMASK(c->drumchannels, i);
 	}
     }
 
     memset(warn_tonebank, 0, sizeof(warn_tonebank));
-    if (special_tonebank >= 0)
-	newbank = special_tonebank;
+    if (c->special_tonebank >= 0)
+	newbank = c->special_tonebank;
     else
-	newbank = default_tonebank;
+	newbank = c->default_tonebank;
     for(j = 0; j < MAX_CHANNELS; j++)
     {
 	if(ISDRUMCHANNEL(j))
 	    current_set[j] = 0;
 	else
 	{
-	    if (tonebank[newbank] == NULL)
+	    if (c->tonebank[newbank] == NULL)
 	    {
 		if (warn_tonebank[newbank] == 0)
 		{
@@ -4056,30 +3969,30 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 	    current_set[j] = newbank;
 	}
 	bank_lsb[j] = bank_msb[j] = 0;
-	if(play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
+	if(c->play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
 	    bank_msb[j] = 127; /* Use MSB=127 for XG */
-	current_program[j] = default_program[j];
+	current_program[j] = c->default_program[j];
     }
 
     memset(warn_drumset, 0, sizeof(warn_drumset));
     tempo = 500000;
-    compute_sample_increment(tempo, divisions);
+    compute_sample_increment(c, tempo, divisions);
 
     /* This may allocate a bit more than we need */
     groomed_list = lp =
-	(MidiEvent *)safe_malloc(sizeof(MidiEvent) * (event_count + 1));
-    meep = evlist;
+	(MidiEvent *)safe_malloc(sizeof(MidiEvent) * (c->event_count + 1));
+    meep = c->evlist;
 
     our_event_count = 0;
     st = at = sample_cum = 0;
     counting_time = 2; /* We strip any silence before the first NOTE ON. */
     wrd_argc = 0;
-    change_system_mode(DEFAULT_SYSTEM_MODE);
+    change_system_mode(c, DEFAULT_SYSTEM_MODE);
 
     for(j = 0; j < MAX_CHANNELS; j++)
-	mapID[j] = get_default_mapID(j);
+	mapID[j] = get_default_mapID(c, j);
 
-    for(i = 0; i < event_count; i++)
+    for(i = 0; i < c->event_count; i++)
     {
 	skip_this_event = 0;
 	ch = meep->event.channel;
@@ -4087,7 +4000,7 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 	if(!gch && ch >= MAX_CHANNELS) /* For safety */
 	    meep->event.channel = ch = ch % MAX_CHANNELS;
 
-	if(!gch && IS_SET_CHANNELMASK(quietchannels, ch))
+	if(!gch && IS_SET_CHANNELMASK(c->quietchannels, ch))
 	    skip_this_event = 1;
 	else switch(meep->event.type)
 	{
@@ -4095,30 +4008,30 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 	    skip_this_event = 1;
 	    break;
 	  case ME_RESET:
-	    change_system_mode(meep->event.a);
+	    change_system_mode(c, meep->event.a);
 	    ctl->cmsg(CMSG_INFO, VERB_NOISY, "MIDI reset at %d sec",
 		      (int)((double)st / play_mode->rate + 0.5));
 	    for(j = 0; j < MAX_CHANNELS; j++)
 	    {
-		if(play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
+		if(c->play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
 		    mapID[j] = XG_DRUM_MAP;
 		else
-		    mapID[j] = get_default_mapID(j);
+		    mapID[j] = get_default_mapID(c, j);
 		if(ISDRUMCHANNEL(j))
 		    current_set[j] = 0;
 		else
 		{
-		    if(special_tonebank >= 0)
-			current_set[j] = special_tonebank;
+		    if(c->special_tonebank >= 0)
+			current_set[j] = c->special_tonebank;
 		    else
-			current_set[j] = default_tonebank;
-		    if(tonebank[current_set[j]] == NULL)
+			current_set[j] = c->default_tonebank;
+		    if(c->tonebank[current_set[j]] == NULL)
 			current_set[j] = 0;
 		}
 		bank_lsb[j] = bank_msb[j] = 0;
-		if(play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
+		if(c->play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
 		    bank_msb[j] = 127; /* Use MSB=127 for XG */
-		current_program[j] = default_program[j];
+		current_program[j] = c->default_program[j];
 	    }
 	    break;
 
@@ -4128,7 +4041,7 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 				else
 					newbank = current_set[ch];
 				newprog = meep->event.a;
-				switch (play_system_mode) {
+				switch (c->play_system_mode) {
 				case GS_SYSTEM_MODE:	/* GS */
 					switch (bank_lsb[ch]) {
 					case 0:		/* No change */
@@ -4177,26 +4090,26 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 						else {
 							ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 									"(XG ch=%d Normal voice)", ch);
-							midi_drumpart_change(ch, 0);
+							midi_drumpart_change(c, ch, 0);
 							mapID[ch] = XG_NORMAL_MAP;
 						}
 						break;
 					case 64:	/* SFX voice */
 						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 								"(XG ch=%d SFX voice)", ch);
-						midi_drumpart_change(ch, 0);
+						midi_drumpart_change(c, ch, 0);
 						mapID[ch] = XG_SFX64_MAP;
 						break;
 					case 126:	/* SFX kit */
 						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 								"(XG ch=%d SFX kit)", ch);
-						midi_drumpart_change(ch, 1);
+						midi_drumpart_change(c, ch, 1);
 						mapID[ch] = XG_SFX126_MAP;
 						break;
 					case 127:	/* Drum kit */
 						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 								"(XG ch=%d Drum kit)", ch);
-						midi_drumpart_change(ch, 1);
+						midi_drumpart_change(c, ch, 1);
 						mapID[ch] = XG_DRUM_MAP;
 						break;
 					default:
@@ -4210,7 +4123,7 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 				case GM2_SYSTEM_MODE:	/* GM2 */
 					ctl->cmsg(CMSG_INFO, VERB_DEBUG, "(GM2 ch=%d)", ch);
 					if ((bank_msb[ch] & 0xfe) == 0x78)	/* 0x78/0x79 */
-						midi_drumpart_change(ch, bank_msb[ch] == 0x78);
+						midi_drumpart_change(c, ch, bank_msb[ch] == 0x78);
 					mapID[ch] = (ISDRUMCHANNEL(ch)) ? GM2_DRUM_MAP
 							: GM2_TONE_MAP;
 					newbank = bank_lsb[ch];
@@ -4222,8 +4135,8 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 				if (ISDRUMCHANNEL(ch))
 					current_set[ch] = newprog;
 				else {
-					if (special_tonebank >= 0)
-						newbank = special_tonebank;
+					if (c->special_tonebank >= 0)
+						newbank = c->special_tonebank;
 					if (current_program[ch] == SPECIAL_PROGRAM)
 						skip_this_event = 1;
 					current_set[ch] = newbank;
@@ -4238,9 +4151,9 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 	    {
 		newbank = current_set[ch];
 		newprog = meep->event.a;
-		instrument_map(mapID[ch], &newbank, &newprog);
+		instrument_map(c, mapID[ch], &newbank, &newprog);
 
-		if(!drumset[newbank]) /* Is this a defined drumset? */
+		if(!c->drumset[newbank]) /* Is this a defined drumset? */
 		{
 		    if(warn_drumset[newbank] == 0)
 		    {
@@ -4252,8 +4165,8 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 		}
 
 		/* Mark this instrument to be loaded */
-		if(!(drumset[newbank]->tone[newprog].instrument))
-		    drumset[newbank]->tone[newprog].instrument =
+		if(!(c->drumset[newbank]->tone[newprog].instrument))
+		    c->drumset[newbank]->tone[newprog].instrument =
 			MAGIC_LOAD_INSTRUMENT;
 	    }
 	    else
@@ -4262,8 +4175,8 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 		    break;
 		newbank = current_set[ch];
 		newprog = current_program[ch];
-		instrument_map(mapID[ch], &newbank, &newprog);
-		if(tonebank[newbank] == NULL)
+		instrument_map(c, mapID[ch], &newbank, &newprog);
+		if(c->tonebank[newbank] == NULL)
 		{
 		    if(warn_tonebank[newbank] == 0)
 		    {
@@ -4275,8 +4188,8 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 		}
 
 		/* Mark this instrument to be loaded */
-		if(!(tonebank[newbank]->tone[newprog].instrument))
-		    tonebank[newbank]->tone[newprog].instrument =
+		if(!(c->tonebank[newbank]->tone[newprog].instrument))
+		    c->tonebank[newbank]->tone[newprog].instrument =
 			MAGIC_LOAD_INSTRUMENT;
 	    }
 	    break;
@@ -4308,26 +4221,26 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 	    break;
 
 	  case ME_DRUMPART:
-	    midi_drumpart_change(ch, meep->event.a);
+	    midi_drumpart_change(c, ch, meep->event.a);
 	    break;
 
 	  case ME_WRD:
-	    if(readmidi_wrd_mode == WRD_TRACE_MIMPI)
+	    if(c->readmidi_wrd_mode == WRD_TRACE_MIMPI)
 	    {
 		wrd_args[wrd_argc++] = meep->event.a | 256 * meep->event.b;
 		if(ch != WRD_ARG)
 		{
 		    if(ch == WRD_MAG) {
-			wrdt->apply(WRD_MAGPRELOAD, wrd_argc, wrd_args);
+			wrdt->apply(c, WRD_MAGPRELOAD, wrd_argc, wrd_args);
 		    }
 		    else if(ch == WRD_PLOAD)
-			wrdt->apply(WRD_PHOPRELOAD, wrd_argc, wrd_args);
+			wrdt->apply(c, WRD_PHOPRELOAD, wrd_argc, wrd_args);
 		    else if(ch == WRD_PATH)
-			wrdt->apply(WRD_PATH, wrd_argc, wrd_args);
+			wrdt->apply(c, WRD_PATH, wrd_argc, wrd_args);
 		    wrd_argc = 0;
 		}
 	    }
-	    if(counting_time == 2 && readmidi_wrd_mode != WRD_TRACE_NOTHING)
+	    if(counting_time == 2 && c->readmidi_wrd_mode != WRD_TRACE_NOTHING)
 		counting_time = 1;
 	    break;
 
@@ -4350,8 +4263,8 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 	/* Recompute time in samples*/
 	if((dt = meep->event.time - at) && !counting_time)
 	{
-	    samples_to_do = sample_increment * dt;
-	    sample_cum += sample_correction * dt;
+	    samples_to_do = c->sample_increment * dt;
+	    sample_cum += c->sample_correction * dt;
 	    if(sample_cum & 0xFFFF0000)
 	    {
 		samples_to_do += ((sample_cum >> 16) & 0xFFFF);
@@ -4372,7 +4285,7 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
 	if(meep->event.type == ME_TEMPO)
 	{
 	    tempo = ch + meep->event.b * 256 + meep->event.a * 65536;
-	    compute_sample_increment(tempo, divisions);
+	    compute_sample_increment(c, tempo, divisions);
 	}
 
 	if(!skip_this_event)
@@ -4390,43 +4303,43 @@ static MidiEvent *groom_list(int32 divisions, int32 *eventsp, int32 *samplesp)
     lp->time = st;
     lp->type = ME_EOT;
     our_event_count++;
-    free_midi_list();
-    
+    free_midi_list(c);
+
     *eventsp = our_event_count;
     *samplesp = st;
     return groomed_list;
 }
 
-static int read_smf_file(struct timidity_file *tf)
+static int read_smf_file(struct timiditycontext_t *c, struct timidity_file *tf)
 {
     int32 len, divisions;
     int16 format, tracks, divisions_tmp;
     int i;
 
-    if(current_file_info->file_type == IS_OTHER_FILE)
-	current_file_info->file_type = IS_SMF_FILE;
+    if(c->current_file_info->file_type == IS_OTHER_FILE)
+	c->current_file_info->file_type = IS_SMF_FILE;
 
-    if(current_file_info->karaoke_title == NULL)
-	karaoke_title_flag = 0;
+    if(c->current_file_info->karaoke_title == NULL)
+	c->karaoke_title_flag = 0;
     else
-	karaoke_title_flag = 1;
+	c->karaoke_title_flag = 1;
 
     errno = 0;
-    if(tf_read(&len, 4, 1, tf) != 1)
+    if(tf_read(c, &len, 4, 1, tf) != 1)
     {
 	if(errno)
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", current_filename,
+	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", c->current_filename,
 		      strerror(errno));
 	else
 	    ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
-		      "%s: Not a MIDI file!", current_filename);
+		      "%s: Not a MIDI file!", c->current_filename);
 	return 1;
     }
     len = BE_LONG(len);
 
-    tf_read(&format, 2, 1, tf);
-    tf_read(&tracks, 2, 1, tf);
-    tf_read(&divisions_tmp, 2, 1, tf);
+    tf_read(c, &format, 2, 1, tf);
+    tf_read(c, &tracks, 2, 1, tf);
+    tf_read(c, &divisions_tmp, 2, 1, tf);
     format = BE_SHORT(format);
     tracks = BE_SHORT(tracks);
     divisions_tmp = BE_SHORT(divisions_tmp);
@@ -4447,32 +4360,32 @@ static int read_smf_file(struct timidity_file *tf)
     {
 	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 		  "%s: MIDI file header size %ld bytes",
-		  current_filename, len);
-	skip(tf, len - 6); /* skip the excess */
+		  c->current_filename, len);
+	skip(c, tf, len - 6); /* skip the excess */
     }
     if(format < 0 || format > 2)
     {
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-		  "%s: Unknown MIDI file format %d", current_filename, format);
+		  "%s: Unknown MIDI file format %d", c->current_filename, format);
 	return 1;
     }
     ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Format: %d  Tracks: %d  Divisions: %d",
 	      format, tracks, divisions);
 
-    current_file_info->format = format;
-    current_file_info->tracks = tracks;
-    current_file_info->divisions = divisions;
+    c->current_file_info->format = format;
+    c->current_file_info->tracks = tracks;
+    c->current_file_info->divisions = divisions;
     if(tf->url->url_tell != NULL)
-	current_file_info->hdrsiz = (int16)tf_tell(tf);
+	c->current_file_info->hdrsiz = (int16)tf_tell(c, tf);
     else
-	current_file_info->hdrsiz = -1;
+	c->current_file_info->hdrsiz = -1;
 
     switch(format)
     {
       case 0:
-	if(read_smf_track(tf, 0, 1))
+	if(read_smf_track(c, tf, 0, 1))
 	{
-	    if(ignore_midi_error)
+	    if(c->ignore_midi_error)
 		break;
 	    return 1;
 	}
@@ -4481,9 +4394,9 @@ static int read_smf_file(struct timidity_file *tf)
       case 1:
 	for(i = 0; i < tracks; i++)
 	{
-	    if(read_smf_track(tf, i, 1))
+	    if(read_smf_track(c, tf, i, 1))
 	    {
-		if(ignore_midi_error)
+		if(c->ignore_midi_error)
 		    break;
 		return 1;
 	    }
@@ -4493,9 +4406,9 @@ static int read_smf_file(struct timidity_file *tf)
       case 2: /* We simply play the tracks sequentially */
 	for(i = 0; i < tracks; i++)
 	{
-	    if(read_smf_track(tf, i, 0))
+	    if(read_smf_track(c, tf, i, 0))
 	    {
-		if(ignore_midi_error)
+		if(c->ignore_midi_error)
 		    break;
 		return 1;
 	    }
@@ -4505,112 +4418,113 @@ static int read_smf_file(struct timidity_file *tf)
     return 0;
 }
 
-void readmidi_read_init(void)
+static void readmidi_read_init(struct timiditycontext_t *c)
 {
     int i;
-	static int first = 1;
 
 	/* initialize effect status */
 	for (i = 0; i < MAX_CHANNELS; i++)
-		init_channel_layer(i);
-	free_effect_buffers();
-	init_reverb_status_gs();
-	init_delay_status_gs();
-	init_chorus_status_gs();
-	init_eq_status_gs();
-	init_insertion_effect_gs();
-	init_multi_eq_xg();
-	if (play_system_mode == XG_SYSTEM_MODE) {init_all_effect_xg();}
-	init_userdrum();
-	init_userinst();
-	rhythm_part[0] = rhythm_part[1] = 9;
-	for(i = 0; i < 6; i++) {drum_setup_xg[i] = 9;}
+		init_channel_layer(c, i);
+	free_effect_buffers(c);
+	init_reverb_status_gs(c);
+	init_delay_status_gs(c);
+	init_chorus_status_gs(c);
+	init_eq_status_gs(c);
+	init_insertion_effect_gs(c);
+	init_multi_eq_xg(c);
+	if (c->play_system_mode == XG_SYSTEM_MODE) {init_all_effect_xg(c);}
+	init_userdrum(c);
+	init_userinst(c);
+	c->rhythm_part[0] = c->rhythm_part[1] = 9;
+	for(i = 0; i < 16; i++) {c->drum_setup_xg[i] = 9;}
 
     /* Put a do-nothing event first in the list for easier processing */
-    evlist = current_midi_point = alloc_midi_event();
-    evlist->event.time = 0;
-    evlist->event.type = ME_NONE;
-    evlist->event.channel = 0;
-    evlist->event.a = 0;
-    evlist->event.b = 0;
-    evlist->prev = NULL;
-    evlist->next = NULL;
-    readmidi_error_flag = 0;
-    event_count = 1;
+    c->evlist = c->current_midi_point = alloc_midi_event();
+    c->evlist->event.time = 0;
+    c->evlist->event.type = ME_NONE;
+    c->evlist->event.channel = 0;
+    c->evlist->event.a = 0;
+    c->evlist->event.b = 0;
+    c->evlist->prev = NULL;
+    c->evlist->next = NULL;
+    c->readmidi_error_flag = 0;
+    c->event_count = 1;
 
-    if(string_event_table != NULL)
+    if(c->string_event_table != NULL)
     {
-	free(string_event_table[0]);
-	free(string_event_table);
-	string_event_table = NULL;
-	string_event_table_size = 0;
+	free(c->string_event_table[0]);
+	free(c->string_event_table);
+	c->string_event_table = NULL;
+	c->string_event_table_size = 0;
     }
-	if (first != 1)
-		if (string_event_strtab.nstring > 0)
-			delete_string_table(&string_event_strtab);
-    init_string_table(&string_event_strtab);
-    karaoke_format = 0;
+	if (c->readmidi_read_init_first != 1)
+		if (c->string_event_strtab.nstring > 0)
+			delete_string_table(c, &c->string_event_strtab);
+    init_string_table(&c->string_event_strtab);
+    c->karaoke_format = 0;
 
+#if 0
     for(i = 0; i < 256; i++)
-	default_channel_program[i] = -1;
-    readmidi_wrd_mode = WRD_TRACE_NOTHING;
-	first = 0;
+	c->default_channel_program[i] = -1;
+#endif
+    c->readmidi_wrd_mode = WRD_TRACE_NOTHING;
+	c->readmidi_read_init_first = 0;
 }
 
-static void insert_note_steps(void)
+static void insert_note_steps(struct timiditycontext_t *c)
 {
 	MidiEventList *e;
 	int32 i, n, at, lasttime, meas, beat;
 	uint8 num = 0, denom = 1, a, b;
-	
-	e = evlist;
-	for (i = n = 0; i < event_count - 1 && n < 256 - 1; i++, e = e->next)
+
+	e = c->evlist;
+	for (i = n = 0; i < c->event_count - 1 && n < 256 - 1; i++, e = e->next)
 		if (e->event.type == ME_TIMESIG && e->event.channel == 0) {
 			if (n == 0 && e->event.time > 0) {	/* 4/4 is default */
-				SETMIDIEVENT(timesig[n], 0, ME_TIMESIG, 0, 4, 4);
+				SETMIDIEVENT(c->timesig[n], 0, ME_TIMESIG, 0, 4, 4);
 				n++;
 			}
-			if (n > 0 && e->event.a == timesig[n - 1].a
-					&& e->event.b == timesig[n - 1].b)
+			if (n > 0 && e->event.a == c->timesig[n - 1].a
+					&& e->event.b == c->timesig[n - 1].b)
 				continue;	/* unchanged */
-			if (n > 0 && e->event.time == timesig[n - 1].time)
+			if (n > 0 && e->event.time == c->timesig[n - 1].time)
 				n--;	/* overwrite previous timesig */
-			timesig[n++] = e->event;
+			c->timesig[n++] = e->event;
 		}
 	if (n == 0) {
-		SETMIDIEVENT(timesig[n], 0, ME_TIMESIG, 0, 4, 4);
+		SETMIDIEVENT(c->timesig[n], 0, ME_TIMESIG, 0, 4, 4);
 		n++;
 	}
-	timesig[n] = timesig[n - 1];
-	timesig[n].time = 0x7fffffff;	/* stopper */
+	c->timesig[n] = c->timesig[n - 1];
+	c->timesig[n].time = 0x7fffffff;	/* stopper */
 	lasttime = e->event.time;
-	readmidi_set_track(0, 1);
+	readmidi_set_track(c, 0, 1);
 	at = n = meas = beat = 0;
-	while (at < lasttime && ! readmidi_error_flag) {
-		if (at >= timesig[n].time) {
+	while (at < lasttime && ! c->readmidi_error_flag) {
+		if (at >= c->timesig[n].time) {
 			if (beat != 0)
 				meas++, beat = 0;
-			num = timesig[n].a, denom = timesig[n].b, n++;
+			num = c->timesig[n].a, denom = c->timesig[n].b, n++;
 		}
 		a = (meas + 1) & 0xff;
 		b = (((meas + 1) >> 8) & 0x0f) + ((beat + 1) << 4);
 		MIDIEVENT(at, ME_NOTE_STEP, 0, a, b);
 		if (++beat == num)
 			meas++, beat = 0;
-		at += current_file_info->divisions * 4 / denom;
+		at += c->current_file_info->divisions * 4 / denom;
 	}
 }
 
-static int32 compute_smf_at_time(const int32, int32 *);
-static int32 compute_smf_at_time2(const Measure, int32 *);
+static int32 compute_smf_at_time(struct timiditycontext_t *c, const int32, int32 *);
+static int32 compute_smf_at_time2(struct timiditycontext_t *c, const Measure, int32 *);
 
-static void insert_cuepoints(void)
+static void insert_cuepoints(struct timiditycontext_t *c)
 {
 	TimeSegment *sp;
 	int32 at, st, t;
 	uint8 a0, b0, a1, b1;
-	
-	for (sp = time_segments; sp != NULL; sp = sp->next) {
+
+	for (sp = c->time_segments; sp != NULL; sp = sp->next) {
 		if (sp->type == 0) {
 			if (sp->prev == NULL && sp->begin.s != 0) {
 				t = sp->begin.s * play_mode->rate;
@@ -4620,16 +4534,16 @@ static void insert_cuepoints(void)
 				MIDIEVENT(0, ME_CUEPOINT, 1, a1, b1);
 			}
 			if (sp->next != NULL) {
-				at = compute_smf_at_time(sp->end.s * play_mode->rate, &st);
+				at = compute_smf_at_time(c, sp->end.s * play_mode->rate, &st);
 				if (sp->next->type == 0)
 					t = sp->next->begin.s * play_mode->rate - st;
 				else
-					compute_smf_at_time2(sp->next->begin.m, &t), t -= st;
+					compute_smf_at_time2(c, sp->next->begin.m, &t), t -= st;
 				a0 = t >> 24, b0 = t >> 16, a1 = t >> 8, b1 = t;
 				MIDIEVENT(at, ME_CUEPOINT, 0, a0, b0);
 				MIDIEVENT(at, ME_CUEPOINT, 1, a1, b1);
 			} else if (sp->end.s != -1) {
-				at = compute_smf_at_time(sp->end.s * play_mode->rate, &st);
+				at = compute_smf_at_time(c, sp->end.s * play_mode->rate, &st);
 				t = 0x7fffffff;		/* stopper */
 				a0 = t >> 24, b0 = t >> 16, a1 = t >> 8, b1 = t;
 				MIDIEVENT(at, ME_CUEPOINT, 0, a0, b0);
@@ -4638,23 +4552,23 @@ static void insert_cuepoints(void)
 		} else {
 			if (sp->prev == NULL
 					&& (sp->begin.m.meas != 1 || sp->begin.m.beat != 1)) {
-				compute_smf_at_time2(sp->begin.m, &t);
+				compute_smf_at_time2(c, sp->begin.m, &t);
 				a0 = t >> 24, b0 = t >> 16, a1 = t >> 8, b1 = t;
 				MIDIEVENT(0, ME_NOTEON, 0, 0, 0);
 				MIDIEVENT(0, ME_CUEPOINT, 0, a0, b0);
 				MIDIEVENT(0, ME_CUEPOINT, 1, a1, b1);
 			}
 			if (sp->next != NULL) {
-				at = compute_smf_at_time2(sp->end.m, &st);
+				at = compute_smf_at_time2(c, sp->end.m, &st);
 				if (sp->next->type == 0)
 					t = sp->next->begin.s * play_mode->rate - st;
 				else
-					compute_smf_at_time2(sp->next->begin.m, &t), t -= st;
+					compute_smf_at_time2(c, sp->next->begin.m, &t), t -= st;
 				a0 = t >> 24, b0 = t >> 16, a1 = t >> 8, b1 = t;
 				MIDIEVENT(at, ME_CUEPOINT, 0, a0, b0);
 				MIDIEVENT(at, ME_CUEPOINT, 1, a1, b1);
 			} else if (sp->end.m.meas != -1 || sp->end.m.beat != -1) {
-				at = compute_smf_at_time2(sp->end.m, &st);
+				at = compute_smf_at_time2(c, sp->end.m, &st);
 				t = 0x7fffffff;		/* stopper */
 				a0 = t >> 24, b0 = t >> 16, a1 = t >> 8, b1 = t;
 				MIDIEVENT(at, ME_CUEPOINT, 0, a0, b0);
@@ -4664,15 +4578,15 @@ static void insert_cuepoints(void)
 	}
 }
 
-static int32 compute_smf_at_time(const int32 sample, int32 *sample_adj)
+static int32 compute_smf_at_time(struct timiditycontext_t *c, const int32 sample, int32 *sample_adj)
 {
 	MidiEventList *e;
 	int32 st = 0, tempo = 500000, prev_time = 0;
 	int i;
-	
-	for (i = 0, e = evlist; i < event_count; i++, e = e->next) {
+
+	for (i = 0, e = c->evlist; i < c->event_count; i++, e = e->next) {
 		st += (double) tempo * play_mode->rate / 1000000
-				/ current_file_info->divisions
+				/ c->current_file_info->divisions
 				* (e->event.time - prev_time) + 0.5;
 		if (st >= sample && e->event.type == ME_NOTE_STEP) {
 			*sample_adj = st;
@@ -4685,15 +4599,15 @@ static int32 compute_smf_at_time(const int32 sample, int32 *sample_adj)
 	return -1;
 }
 
-static int32 compute_smf_at_time2(const Measure m, int32 *sample)
+static int32 compute_smf_at_time2(struct timiditycontext_t *c, const Measure m, int32 *sample)
 {
 	MidiEventList *e;
 	int32 st = 0, tempo = 500000, prev_time = 0;
 	int i;
-	
-	for (i = 0, e = evlist; i < event_count; i++, e = e->next) {
+
+	for (i = 0, e = c->evlist; i < c->event_count; i++, e = e->next) {
 		st += (double) tempo * play_mode->rate / 1000000
-				/ current_file_info->divisions
+				/ c->current_file_info->divisions
 				* (e->event.time - prev_time) + 0.5;
 		if (e->event.type == ME_NOTE_STEP
 				&& ((e->event.a + ((e->event.b & 0x0f) << 8)) * 16
@@ -4708,106 +4622,106 @@ static int32 compute_smf_at_time2(const Measure m, int32 *sample)
 	return -1;
 }
 
-void free_time_segments(void)
+void free_time_segments(struct timiditycontext_t *c)
 {
 	TimeSegment *sp, *next;
-	
-	for (sp = time_segments; sp != NULL; sp = next)
+
+	for (sp = c->time_segments; sp != NULL; sp = next)
 		next = sp->next, free(sp);
-	time_segments = NULL;
+	c->time_segments = NULL;
 }
 
-MidiEvent *read_midi_file(struct timidity_file *tf, int32 *count, int32 *sp,
-			  char *fn)
+MidiEvent *read_midi_file(struct timiditycontext_t *c, struct timidity_file *tf,
+                          int32 *count, int32 *sp, char *fn)
 {
     char magic[4];
     MidiEvent *ev;
     int err, macbin_check, mtype, i;
 
     macbin_check = 1;
-    current_file_info = get_midi_file_info(current_filename, 1);
-    COPY_CHANNELMASK(drumchannels, current_file_info->drumchannels);
-    COPY_CHANNELMASK(drumchannel_mask, current_file_info->drumchannel_mask);
+    c->current_file_info = get_midi_file_info(c, c->current_filename, 1);
+    COPY_CHANNELMASK(c->drumchannels, c->current_file_info->drumchannels);
+    COPY_CHANNELMASK(c->drumchannel_mask, c->current_file_info->drumchannel_mask);
 
     errno = 0;
 
     if((mtype = get_module_type(fn)) > 0)
     {
-	readmidi_read_init();
+	readmidi_read_init(c);
 	if(!IS_URL_SEEK_SAFE(tf->url))
-	    tf->url = url_cache_open(tf->url, 1);
-	err = load_module_file(tf, mtype);
+	    tf->url = url_cache_open(c, tf->url, 1);
+	err = load_module_file(c, tf, mtype);
 	if(!err)
 	{
-	    current_file_info->format = 0;
-	    memset(&drumchannels, 0, sizeof(drumchannels));
+	    c->current_file_info->format = 0;
+	    memset(&c->drumchannels, 0, sizeof(c->drumchannels));
 	    goto grooming;
 	}
-	free_midi_list();
+	free_midi_list(c);
 
 	if(err == 2)
 	    return NULL;
-	url_rewind(tf->url);
+	url_rewind(c, tf->url);
 	url_cache_disable(tf->url);
     }
 
 #if MAX_CHANNELS > 16
     for(i = 16; i < MAX_CHANNELS; i++)
     {
-	if(!IS_SET_CHANNELMASK(drumchannel_mask, i))
+	if(!IS_SET_CHANNELMASK(c->drumchannel_mask, i))
 	{
-	    if(IS_SET_CHANNELMASK(drumchannels, i & 0xF))
-		SET_CHANNELMASK(drumchannels, i);
+	    if(IS_SET_CHANNELMASK(c->drumchannels, i & 0xF))
+		SET_CHANNELMASK(c->drumchannels, i);
 	    else
-		UNSET_CHANNELMASK(drumchannels, i);
+		UNSET_CHANNELMASK(c->drumchannels, i);
 	}
     }
 #endif
 
-    if(opt_default_mid &&
-       (current_file_info->mid == 0 || current_file_info->mid >= 0x7e))
-	current_file_info->mid = opt_default_mid;
+    if(c->opt_default_mid &&
+       (c->current_file_info->mid == 0 || c->current_file_info->mid >= 0x7e))
+	c->current_file_info->mid = c->opt_default_mid;
 
   retry_read:
-    if(tf_read(magic, 1, 4, tf) != 4)
+    if(tf_read(c, magic, 1, 4, tf) != 4)
     {
 	if(errno)
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", current_filename,
+	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", c->current_filename,
 		      strerror(errno));
 	else
 	    ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
-		      "%s: Not a MIDI file!", current_filename);
+		      "%s: Not a MIDI file!", c->current_filename);
 	return NULL;
     }
 
     if(memcmp(magic, "MThd", 4) == 0)
     {
-	readmidi_read_init();
-	err = read_smf_file(tf);
+	readmidi_read_init(c);
+	err = read_smf_file(c, tf);
     }
     else if(memcmp(magic, "RCM-", 4) == 0 || memcmp(magic, "COME", 4) == 0)
     {
-	readmidi_read_init();
-	err = read_rcp_file(tf, magic, fn);
+	readmidi_read_init(c);
+	err = read_rcp_file(c, tf, magic, fn);
     }
     else if (strncmp(magic, "RIFF", 4) == 0) {
-       if (tf_read(magic, 1, 4, tf) == 4 &&
-           tf_read(magic, 1, 4, tf) == 4 &&
+       if (tf_read(c, magic, 1, 4, tf) == 4 &&
+           tf_read(c, magic, 1, 4, tf) == 4 &&
            strncmp(magic, "RMID", 4) == 0 &&
-           tf_read(magic, 1, 4, tf) == 4 &&
+           tf_read(c, magic, 1, 4, tf) == 4 &&
            strncmp(magic, "data", 4) == 0 &&
-           tf_read(magic, 1, 4, tf) == 4) {
+           tf_read(c, magic, 1, 4, tf) == 4) {
            goto retry_read;
        } else {
            err = 1;
            ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
-                     "%s: Not a MIDI file!", current_filename);
+                     "%s: Not a MIDI file!", c->current_filename);
        }
     }
     else if(memcmp(magic, "melo", 4) == 0)
     {
-	readmidi_read_init();
-	err = read_mfi_file(tf);
+	readmidi_read_init(c);
+	err = read_mfi_file(c, tf);
     }
     else
     {
@@ -4815,25 +4729,25 @@ MidiEvent *read_midi_file(struct timidity_file *tf, int32 *count, int32 *sp,
 	{
 	    /* Mac Binary */
 	    macbin_check = 0;
-	    skip(tf, 128 - 4);
+	    skip(c, tf, 128 - 4);
 	    goto retry_read;
 	}
 	else if(memcmp(magic, "RIFF", 4) == 0)
 	{
 	    /* RIFF MIDI file */
-	    skip(tf, 20 - 4);
+	    skip(c, tf, 20 - 4);
 	    goto retry_read;
 	}
 	err = 1;
 	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
-		  "%s: Not a MIDI file!", current_filename);
+		  "%s: Not a MIDI file!", c->current_filename);
     }
 
     if(err)
     {
-	free_midi_list();
-	if(string_event_strtab.nstring > 0)
-	    delete_string_table(&string_event_strtab);
+	free_midi_list(c);
+	if(c->string_event_strtab.nstring > 0)
+	    delete_string_table(c, &c->string_event_strtab);
 	return NULL;
     }
 
@@ -4842,57 +4756,57 @@ MidiEvent *read_midi_file(struct timidity_file *tf, int32 *count, int32 *sp,
     {
 	if(wrdt->start != NULL)
 	    wrdt->start(WRD_TRACE_NOTHING);
-	readmidi_wrd_mode = WRD_TRACE_NOTHING;
+	c->readmidi_wrd_mode = WRD_TRACE_NOTHING;
     }
     else if(wrdt->id != '-' && wrdt->opened)
     {
-	readmidi_wrd_mode = import_wrd_file(fn);
+	c->readmidi_wrd_mode = import_wrd_file(c, fn);
 	if(wrdt->start != NULL)
-	    if(wrdt->start(readmidi_wrd_mode) == -1)
+	    if(wrdt->start(c->readmidi_wrd_mode) == -1)
 	    {
 		/* strip all WRD events */
 		MidiEventList *e;
 		int32 i;
-		for(i = 0, e = evlist; i < event_count; i++, e = e->next)
+		for(i = 0, e = c->evlist; i < c->event_count; i++, e = e->next)
 		    if (e->event.type == ME_WRD || e->event.type == ME_SHERRY)
 			e->event.type = ME_NONE;
 	    }
     }
     else
-	readmidi_wrd_mode = WRD_TRACE_NOTHING;
+	c->readmidi_wrd_mode = WRD_TRACE_NOTHING;
 
     /* make lyric table */
-    if(string_event_strtab.nstring > 0)
+    if(c->string_event_strtab.nstring > 0)
     {
-	string_event_table_size = string_event_strtab.nstring;
-	string_event_table = make_string_array(&string_event_strtab);
-	if(string_event_table == NULL)
+	c->string_event_table_size = c->string_event_strtab.nstring;
+	c->string_event_table = make_string_array(c, &c->string_event_strtab);
+	if(c->string_event_table == NULL)
 	{
-	    delete_string_table(&string_event_strtab);
-	    string_event_table_size = 0;
+	    delete_string_table(c, &c->string_event_strtab);
+	    c->string_event_table_size = 0;
 	}
     }
 
   grooming:
-    insert_note_steps();
-    insert_cuepoints();
-    ev = groom_list(current_file_info->divisions, count, sp);
+    insert_note_steps(c);
+    insert_cuepoints(c);
+    ev = groom_list(c, c->current_file_info->divisions, count, sp);
     if(ev == NULL)
     {
-	free_midi_list();
-	if(string_event_strtab.nstring > 0)
-	    delete_string_table(&string_event_strtab);
+	free_midi_list(c);
+	if(c->string_event_strtab.nstring > 0)
+	    delete_string_table(c, &c->string_event_strtab);
 	return NULL;
     }
-    current_file_info->samples = *sp;
-    if(current_file_info->first_text == NULL)
-	current_file_info->first_text = safe_strdup("");
-    current_file_info->readflag = 1;
+    c->current_file_info->samples = *sp;
+    if(c->current_file_info->first_text == NULL)
+	c->current_file_info->first_text = safe_strdup("");
+    c->current_file_info->readflag = 1;
     return ev;
 }
 
 
-struct midi_file_info *new_midi_file_info(const char *filename)
+struct midi_file_info *new_midi_file_info(struct timiditycontext_t *c, const char *filename)
 {
     struct midi_file_info *p;
     p = (struct midi_file_info *)safe_malloc(sizeof(struct midi_file_info));
@@ -4909,21 +4823,21 @@ struct midi_file_info *new_midi_file_info(const char *filename)
     p->file_type = IS_OTHER_FILE;
     if(filename != NULL)
 	p->filename = safe_strdup(filename);
-    COPY_CHANNELMASK(p->drumchannels, default_drumchannels);
-    COPY_CHANNELMASK(p->drumchannel_mask, default_drumchannel_mask);
+    COPY_CHANNELMASK(p->drumchannels, c->default_drumchannels);
+    COPY_CHANNELMASK(p->drumchannel_mask, c->default_drumchannel_mask);
 
     /* Append to midi_file_info */
-    p->next = midi_file_info;
-    midi_file_info = p;
+    p->next = c->midi_file_info;
+    c->midi_file_info = p;
 
     return p;
 }
 
-void free_all_midi_file_info(void)
+void free_all_midi_file_info(struct timiditycontext_t *c)
 {
   struct midi_file_info *info, *next;
 
-  info = midi_file_info;
+  info = c->midi_file_info;
   while (info) {
     next = info->next;
     free(info->filename);
@@ -4944,26 +4858,26 @@ void free_all_midi_file_info(void)
     free(info);
     info = next;
   }
-  midi_file_info = NULL;
-  current_file_info = NULL;
+  c->midi_file_info = NULL;
+  c->current_file_info = NULL;
 }
 
-struct midi_file_info *get_midi_file_info(const char *filename, int newp)
+struct midi_file_info *get_midi_file_info(struct timiditycontext_t *c, const char *filename, int newp)
 {
     struct midi_file_info *p;
     const char *tmp;
 
-    tmp = url_expand_home_dir(filename);
+    tmp = url_expand_home_dir(c, filename);
     /* Linear search */
-    for(p = midi_file_info; p; p = p->next)
+    for(p = c->midi_file_info; p; p = p->next)
 	if(!strcmp(tmp, p->filename))
 	    return p;
     if(newp)
-	return new_midi_file_info(tmp);
+	return new_midi_file_info(c, tmp);
     return NULL;
 }
 
-struct timidity_file *open_midi_file(const char *fn,
+struct timidity_file *open_midi_file(struct timiditycontext_t *c, const char *fn,
 				     int decompress, int noise_mode)
 {
     struct midi_file_info *infop;
@@ -4972,19 +4886,19 @@ struct timidity_file *open_midi_file(const char *fn,
     extern int opt_rcpcv_dll;
 #endif
 
-    infop = get_midi_file_info(fn, 0);
+    infop = get_midi_file_info(c, fn, 0);
     if(infop == NULL || infop->midi_data == NULL)
-	tf = open_file(fn, decompress, noise_mode);
+	tf = open_file(c, fn, decompress, noise_mode);
     else
     {
-	tf = open_with_mem(infop->midi_data, infop->midi_data_size,
+	tf = open_with_mem(c, infop->midi_data, infop->midi_data_size,
 			   noise_mode);
 	if(infop->compressed)
 	{
-	    if((tf->url = url_inflate_open(tf->url, infop->midi_data_size, 1))
+	    if((tf->url = url_inflate_open(c, tf->url, infop->midi_data_size, 1))
 	       == NULL)
 	    {
-		close_file(tf);
+		close_file(c, tf);
 		return NULL;
 	    }
 	}
@@ -4994,9 +4908,9 @@ struct timidity_file *open_midi_file(const char *fn,
     /* smf convert */
     if(tf != NULL && opt_rcpcv_dll)
     {
-	if(smfconv_w32(tf, fn))
+	if(smfconv_w32(c, tf, fn))
 	{
-	    close_file(tf);
+	    close_file(c, tf);
 	    return NULL;
 	}
     }
@@ -5006,15 +4920,15 @@ struct timidity_file *open_midi_file(const char *fn,
 }
 
 #ifndef NO_MIDI_CACHE
-static long deflate_url_reader(char *buf, long size, void *user_val)
+static long deflate_url_reader(struct timiditycontext_t *c, char *buf, long size, void *user_val)
 {
-    return url_nread((URL)user_val, buf, size);
+    return url_nread(c, (URL)user_val, buf, size);
 }
 
 /*
  * URL data into deflated buffer.
  */
-static void url_make_file_data(URL url, struct midi_file_info *infop)
+static void url_make_file_data(struct timiditycontext_t *c, URL url, struct midi_file_info *infop)
 {
     char buff[BUFSIZ];
     MemBuffer b;
@@ -5027,8 +4941,8 @@ static void url_make_file_data(URL url, struct midi_file_info *infop)
     if((compressor = open_deflate_handler(deflate_url_reader, url,
 					  ARC_DEFLATE_LEVEL)) == NULL)
 	return;
-    while((n = zip_deflate(compressor, buff, sizeof(buff))) > 0)
-	push_memb(&b, buff, n);
+    while((n = zip_deflate(c, compressor, buff, sizeof(buff))) > 0)
+	push_memb(c, &b, buff, n);
     close_deflate_handler(compressor);
     infop->compressed = 1;
 
@@ -5037,30 +4951,30 @@ static void url_make_file_data(URL url, struct midi_file_info *infop)
     rewind_memb(&b);
     infop->midi_data = (void *)safe_malloc(infop->midi_data_size);
     read_memb(&b, infop->midi_data, infop->midi_data_size);
-    delete_memb(&b);
+    delete_memb(c, &b);
 }
 
-static int check_need_cache(URL url, const char *filename)
+static int check_need_cache(struct timiditycontext_t *c, URL url, const char *filename)
 {
     int t1, t2;
-    t1 = url_check_type(filename);
+    t1 = url_check_type(c, filename);
     t2 = url->type;
     return (t1 == URL_http_t || t1 == URL_ftp_t || t1 == URL_news_t)
 	 && t2 != URL_arc_t;
 }
 #else
 /*ARGSUSED*/
-static void url_make_file_data(URL url, struct midi_file_info *infop)
+static void url_make_file_data(struct timiditycontext_t *c, URL url, struct midi_file_info *infop)
 {
 }
 /*ARGSUSED*/
-static int check_need_cache(URL url, const char *filename)
+static int check_need_cache(struct timiditycontext_t *c, URL url, const char *filename)
 {
     return 0;
 }
 #endif /* NO_MIDI_CACHE */
 
-int check_midi_file(const char *filename)
+int check_midi_file(struct timiditycontext_t *c, const char *filename)
 {
     struct midi_file_info *p;
     struct timidity_file *tf;
@@ -5071,15 +4985,15 @@ int check_midi_file(const char *filename)
 
     if(filename == NULL)
     {
-	if(current_file_info == NULL)
+	if(c->current_file_info == NULL)
 	    return -1;
-	filename = current_file_info->filename;
+	filename = c->current_file_info->filename;
     }
 
-    p = get_midi_file_info(filename, 0);
+    p = get_midi_file_info(c, filename, 0);
     if(p != NULL)
 	return p->format;
-    p = get_midi_file_info(filename, 1);
+    p = get_midi_file_info(c, filename, 1);
 
     if(get_module_type(filename) > 0)
     {
@@ -5087,36 +5001,36 @@ int check_midi_file(const char *filename)
 	return 0;
     }
 
-    tf = open_file(filename, 1, OF_SILENT);
+    tf = open_file(c, filename, 1, OF_SILENT);
     if(tf == NULL)
 	return -1;
 
-    check_cache = check_need_cache(tf->url, filename);
+    check_cache = check_need_cache(c, tf->url, filename);
     if(check_cache)
     {
 	if(!IS_URL_SEEK_SAFE(tf->url))
 	{
-	    if((tf->url = url_cache_open(tf->url, 1)) == NULL)
+	    if((tf->url = url_cache_open(c, tf->url, 1)) == NULL)
 	    {
-		close_file(tf);
+		close_file(c, tf);
 		return -1;
 	    }
 	}
     }
 
     /* Parse MIDI header */
-    if(tf_read(tmp, 1, 4, tf) != 4)
+    if(tf_read(c, tmp, 1, 4, tf) != 4)
     {
-	close_file(tf);
+	close_file(c, tf);
 	return -1;
     }
 
     if(tmp[0] == 0)
     {
-	skip(tf, 128 - 4);
-	if(tf_read(tmp, 1, 4, tf) != 4)
+	skip(c, tf, 128 - 4);
+	if(tf_read(c, tmp, 1, 4, tf) != 4)
 	{
-	    close_file(tf);
+	    close_file(c, tf);
 	    return -1;
 	}
     }
@@ -5133,37 +5047,37 @@ int check_midi_file(const char *filename)
 
     if(strncmp(tmp, "MThd", 4) != 0)
     {
-	close_file(tf);
+	close_file(c, tf);
 	return -1;
     }
 
-    if(tf_read(&len, 4, 1, tf) != 1)
+    if(tf_read(c, &len, 4, 1, tf) != 1)
     {
-	close_file(tf);
+	close_file(c, tf);
 	return -1;
     }
     len = BE_LONG(len);
 
-    tf_read(&format, 2, 1, tf);
+    tf_read(c, &format, 2, 1, tf);
     format = BE_SHORT(format);
     if(format < 0 || format > 2)
     {
-	close_file(tf);
+	close_file(c, tf);
 	return -1;
     }
-    skip(tf, len - 2);
+    skip(c, tf, len - 2);
 
     p->format = format;
-    p->hdrsiz = (int16)tf_tell(tf);
+    p->hdrsiz = (int16)tf_tell(c, tf);
 
   end_of_header:
     if(check_cache)
     {
-	url_rewind(tf->url);
+	url_rewind(c, tf->url);
 	url_cache_disable(tf->url);
-	url_make_file_data(tf->url, p);
+	url_make_file_data(c, tf->url, p);
     }
-    close_file(tf);
+    close_file(c, tf);
     return format;
 }
 
@@ -5194,7 +5108,7 @@ static char *get_midi_title1(struct midi_file_info *p)
     return s;
 }
 
-char *get_midi_title(const char *filename)
+char *get_midi_title(struct timiditycontext_t *c, const char *filename)
 {
     struct midi_file_info *p;
     struct timidity_file *tf;
@@ -5206,33 +5120,33 @@ char *get_midi_title(const char *filename)
 
     if(filename == NULL)
     {
-	if(current_file_info == NULL)
+	if(c->current_file_info == NULL)
 	    return NULL;
-	filename = current_file_info->filename;
+	filename = c->current_file_info->filename;
     }
 
-    p = get_midi_file_info(filename, 0);
+    p = get_midi_file_info(c, filename, 0);
     if(p == NULL)
-	p = get_midi_file_info(filename, 1);
-    else 
+	p = get_midi_file_info(c, filename, 1);
+    else
     {
 	if(p->seq_name != NULL || p->first_text != NULL || p->format < 0)
 	    return get_midi_title1(p);
     }
 
-    tf = open_file(filename, 1, OF_SILENT);
+    tf = open_file(c, filename, 1, OF_SILENT);
     if(tf == NULL)
 	return NULL;
 
     mtype = get_module_type(filename);
-    check_cache = check_need_cache(tf->url, filename);
+    check_cache = check_need_cache(c, tf->url, filename);
     if(check_cache || mtype > 0)
     {
 	if(!IS_URL_SEEK_SAFE(tf->url))
 	{
-	    if((tf->url = url_cache_open(tf->url, 1)) == NULL)
+	    if((tf->url = url_cache_open(c, tf->url, 1)) == NULL)
 	    {
-		close_file(tf);
+		close_file(c, tf);
 		return NULL;
 	    }
 	}
@@ -5253,28 +5167,28 @@ char *get_midi_title(const char *filename)
 
 	len = (int32)strlen(title);
 	len = SAFE_CONVERT_LENGTH(len);
-	str = (char *)new_segment(&tmpbuffer, len);
-	code_convert(title, str, len, NULL, NULL);
+	str = (char *)new_segment(c, &c->tmpbuffer, len);
+	code_convert(c, title, str, len, NULL, NULL);
 	p->seq_name = (char *)safe_strdup(str);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	p->format = 0;
 	free (title);
 	goto end_of_parse;
     }
 
     /* Parse MIDI header */
-    if(tf_read(tmp, 1, 4, tf) != 4)
+    if(tf_read(c, tmp, 1, 4, tf) != 4)
     {
-	close_file(tf);
+	close_file(c, tf);
 	return NULL;
     }
 
     if(tmp[0] == 0)
     {
-	skip(tf, 128 - 4);
-	if(tf_read(tmp, 1, 4, tf) != 4)
+	skip(c, tf, 128 - 4);
+	if(tf_read(c, tmp, 1, 4, tf) != 4)
 	{
-	    close_file(tf);
+	    close_file(c, tf);
 	    return NULL;
 	}
     }
@@ -5286,8 +5200,8 @@ char *get_midi_title(const char *filename)
 	char *str;
 
 	p->format = 1;
-	skip(tf, 0x20 - 4);
-	tf_read(local, 1, 0x40, tf);
+	skip(c, tf, 0x20 - 4);
+	tf_read(c, local, 1, 0x40, tf);
 	local[0x40]='\0';
 
 	for(i = 0x40 - 1; i >= 0; i--)
@@ -5299,10 +5213,10 @@ char *get_midi_title(const char *filename)
 	}
 
 	i = SAFE_CONVERT_LENGTH(i + 1);
-	str = (char *)new_segment(&tmpbuffer, i);
-	code_convert(local, str, i, NULL, NULL);
+	str = (char *)new_segment(c, &c->tmpbuffer, i);
+	code_convert(c, local, str, i, NULL, NULL);
 	p->seq_name = (char *)safe_strdup(str);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	p->format = 1;
 	goto end_of_parse;
     }
@@ -5310,15 +5224,15 @@ char *get_midi_title(const char *filename)
     {
 	int i;
 	char *master, *converted;
-	
-	master = get_mfi_file_title(tf);
+
+	master = get_mfi_file_title(c, tf);
 	if (master != NULL)
 	{
 	    i = SAFE_CONVERT_LENGTH(strlen(master) + 1);
-	    converted = (char *)new_segment(&tmpbuffer, i);
-	    code_convert(master, converted, i, NULL, NULL);
+	    converted = (char *)new_segment(c, &c->tmpbuffer, i);
+	    code_convert(c, master, converted, i, NULL, NULL);
 	    p->seq_name = (char *)safe_strdup(converted);
-	    reuse_mblock(&tmpbuffer);
+	    reuse_mblock(c, &c->tmpbuffer);
 	}
 	else
 	{
@@ -5339,30 +5253,30 @@ char *get_midi_title(const char *filename)
 	  if(strncmp(tmp, "RIFF", 4) == 0)
 	  {
 	/* RIFF MIDI file */
-	skip(tf, 20 - 4);
-  if(tf_read(tmp, 1, 4, tf) != 4)
+	skip(c, tf, 20 - 4);
+  if(tf_read(c, tmp, 1, 4, tf) != 4)
     {
-	close_file(tf);
+	close_file(c, tf);
 	return NULL;
     }
 	  }
 
     if(strncmp(tmp, "MThd", 4) != 0)
     {
-	close_file(tf);
+	close_file(c, tf);
 	return NULL;
     }
 
-    if(tf_read(&len, 4, 1, tf) != 1)
+    if(tf_read(c, &len, 4, 1, tf) != 1)
     {
-	close_file(tf);
+	close_file(c, tf);
 	return NULL;
     }
 
     len = BE_LONG(len);
 
-    tf_read(&format, 2, 1, tf);
-    tf_read(&tracks, 2, 1, tf);
+    tf_read(c, &format, 2, 1, tf);
+    tf_read(c, &tracks, 2, 1, tf);
     format = BE_SHORT(format);
     tracks = BE_SHORT(tracks);
     p->format = format;
@@ -5370,12 +5284,12 @@ char *get_midi_title(const char *filename)
     if(format < 0 || format > 2)
     {
 	p->format = -1;
-	close_file(tf);
+	close_file(c, tf);
 	return NULL;
     }
 
-    skip(tf, len - 4);
-    p->hdrsiz = (int16)tf_tell(tf);
+    skip(c, tf, len - 4);
+    p->hdrsiz = (int16)tf_tell(c, tf);
 
     if(format == 2)
 	goto end_of_parse;
@@ -5383,28 +5297,28 @@ char *get_midi_title(const char *filename)
     if(tracks >= 3)
     {
 	tracks = 3;
-	karaoke_format = 0;
+	c->karaoke_format = 0;
     }
     else
     {
 	tracks = 1;
-	karaoke_format = -1;
+	c->karaoke_format = -1;
     }
 
     for(trk = 0; trk < tracks; trk++)
     {
 	int32 next_pos, pos;
 
-	if(trk >= 1 && karaoke_format == -1)
+	if(trk >= 1 && c->karaoke_format == -1)
 	    break;
 
-	if((tf_read(tmp,1,4,tf) != 4) || (tf_read(&len,4,1,tf) != 1))
+	if((tf_read(c, tmp,1,4,tf) != 4) || (tf_read(c, &len,4,1,tf) != 1))
 	    break;
 
 	if(memcmp(tmp, "MTrk", 4))
 	    break;
 
-	next_pos = tf_tell(tf) + len;
+	next_pos = tf_tell(c, tf) + len;
 	laststatus = -1;
 	for(;;)
 	{
@@ -5422,37 +5336,37 @@ char *get_midi_title(const char *filename)
 
 	    if(me == 0xF0 || me == 0xF7) /* SysEx */
 	    {
-		if((len = getvl(tf)) < 0)
+		if((len = getvl(c, tf)) < 0)
 		    goto end_of_parse;
 		if((p->mid == 0 || p->mid >= 0x7e) && len > 0 && me == 0xF0)
 		{
 		    p->mid = tf_getc(tf);
 		    len--;
 		}
-		skip(tf, len);
+		skip(c, tf, len);
 	    }
 	    else if(me == 0xFF) /* Meta */
 	    {
 		type = tf_getc(tf);
-		if((len = getvl(tf)) < 0)
+		if((len = getvl(c, tf)) < 0)
 		    goto end_of_parse;
 		if((type == 1 || type == 3) && len > 0 &&
-		   (trk == 0 || karaoke_format != -1))
+		   (trk == 0 || c->karaoke_format != -1))
 		{
 		    char *si, *so;
 		    int s_maxlen = SAFE_CONVERT_LENGTH(len);
 
-		    si = (char *)new_segment(&tmpbuffer, len + 1);
-		    so = (char *)new_segment(&tmpbuffer, s_maxlen);
+		    si = (char *)new_segment(c, &c->tmpbuffer, len + 1);
+		    so = (char *)new_segment(c, &c->tmpbuffer, s_maxlen);
 
-		    if(len != tf_read(si, 1, len, tf))
+		    if(len != tf_read(c, si, 1, len, tf))
 		    {
-			reuse_mblock(&tmpbuffer);
+			reuse_mblock(c, &c->tmpbuffer);
 			goto end_of_parse;
 		    }
 
 		    si[len]='\0';
-		    code_convert(si, so, s_maxlen, NULL, NULL);
+		    code_convert(c, si, so, s_maxlen, NULL, NULL);
 		    if(trk == 0 && type == 3)
 		    {
 		      if(p->seq_name == NULL) {
@@ -5460,8 +5374,8 @@ char *get_midi_title(const char *filename)
 			p->seq_name = safe_strdup(fix_string(name));
 			free(name);
 		      }
-		      reuse_mblock(&tmpbuffer);
-		      if(karaoke_format == -1)
+		      reuse_mblock(c, &c->tmpbuffer);
+		      if(c->karaoke_format == -1)
 			goto end_of_parse;
 		    }
 		    if(p->first_text == NULL) {
@@ -5470,14 +5384,14 @@ char *get_midi_title(const char *filename)
 		      p->first_text = safe_strdup(fix_string(name));
 		      free(name);
 		    }
-		    if(karaoke_format != -1)
+		    if(c->karaoke_format != -1)
 		    {
 			if(trk == 1 && strncmp(si, "@K", 2) == 0)
-			    karaoke_format = 1;
-			else if(karaoke_format == 1 && trk == 2)
-			    karaoke_format = 2;
+			    c->karaoke_format = 1;
+			else if(c->karaoke_format == 1 && trk == 2)
+			    c->karaoke_format = 2;
 		    }
-		    if(type == 1 && karaoke_format == 2)
+		    if(type == 1 && c->karaoke_format == 2)
 		    {
 			if(strncmp(si, "@T", 2) == 0)
 			    p->karaoke_title =
@@ -5485,22 +5399,22 @@ char *get_midi_title(const char *filename)
 			else if(si[0] == '\\')
 			    goto end_of_parse;
 		    }
-		    reuse_mblock(&tmpbuffer);
+		    reuse_mblock(c, &c->tmpbuffer);
 		}
 		else if(type == 0x2F)
 		{
-		    pos = tf_tell(tf);
+		    pos = tf_tell(c, tf);
 		    if(pos < next_pos)
-			tf_seek(tf, next_pos - pos, SEEK_CUR);
+			tf_seek(c, tf, next_pos - pos, SEEK_CUR);
 		    break; /* End of track */
 		}
 		else
-		    skip(tf, len);
+		    skip(c, tf, len);
 	    }
 	    else /* MIDI event */
 	    {
 		/* skip MIDI event */
-		karaoke_format = -1;
+		c->karaoke_format = -1;
 		if(trk != 0)
 		    goto end_of_parse;
 
@@ -5538,17 +5452,17 @@ char *get_midi_title(const char *filename)
   end_of_parse:
     if(check_cache)
     {
-	url_rewind(tf->url);
+	url_rewind(c, tf->url);
 	url_cache_disable(tf->url);
-	url_make_file_data(tf->url, p);
+	url_make_file_data(c, tf->url, p);
     }
-    close_file(tf);
+    close_file(c, tf);
     if(p->first_text == NULL)
 	p->first_text = safe_strdup("");
     return get_midi_title1(p);
 }
 
-int midi_file_save_as(char *in_name, char *out_name)
+int midi_file_save_as(struct timiditycontext_t *c, char *in_name, char *out_name)
 {
     struct timidity_file *tf;
     FILE* ofp;
@@ -5557,16 +5471,16 @@ int midi_file_save_as(char *in_name, char *out_name)
 
     if(in_name == NULL)
     {
-	if(current_file_info == NULL)
+	if(c->current_file_info == NULL)
 	    return 0;
-	in_name = current_file_info->filename;
+	in_name = c->current_file_info->filename;
     }
-    out_name = (char *)url_expand_home_dir(out_name);
+    out_name = (char *)url_expand_home_dir(c, out_name);
 
     ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Save as %s...", out_name);
 
     errno = 0;
-    if((tf = open_midi_file(in_name, 1, 0)) == NULL)
+    if((tf = open_midi_file(c, in_name, 1, 0)) == NULL)
     {
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		  "%s: %s", out_name,
@@ -5580,37 +5494,37 @@ int midi_file_save_as(char *in_name, char *out_name)
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		  "%s: %s", out_name,
 		  errno ? strerror(errno) : "Can't save file");
-	close_file(tf);
+	close_file(c, tf);
 	return -1;
     }
 
-    while((n = tf_read(buff, 1, sizeof(buff), tf)) > 0) {
+    while((n = tf_read(c, buff, 1, sizeof(buff), tf)) > 0) {
 	size_t dummy = fwrite(buff, 1, n, ofp); ++dummy;
 	}
     ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Save as %s...Done", out_name);
 
     fclose(ofp);
-    close_file(tf);
+    close_file(c, tf);
     return 0;
 }
 
-char *event2string(int id)
+char *event2string(struct timiditycontext_t *c, int id)
 {
     if(id == 0)
 	return "";
 #ifdef ABORT_AT_FATAL
-    if(id >= string_event_table_size)
+    if(id >= c->string_event_table_size)
 	abort();
 #endif /* ABORT_AT_FATAL */
-    if(string_event_table == NULL || id < 0 || id >= string_event_table_size)
+    if(c->string_event_table == NULL || id < 0 || id >= c->string_event_table_size)
 	return NULL;
-    return string_event_table[id];
+    return c->string_event_table[id];
 }
 
 /*! initialize Delay Effect (GS) */
-void init_delay_status_gs(void)
+static void init_delay_status_gs(struct timiditycontext_t *c)
 {
-	struct delay_status_gs_t *p = &delay_status_gs;
+	struct delay_status_gs_t *p = &c->delay_status_gs;
 	p->type = 0;
 	p->level = 0x40;
 	p->level_center = 0x7F;
@@ -5621,13 +5535,13 @@ void init_delay_status_gs(void)
 	p->time_r = 0x01;
 	p->feedback = 0x50;
 	p->pre_lpf = 0;
-	recompute_delay_status_gs();
+	recompute_delay_status_gs(c);
 }
 
 /*! recompute Delay Effect (GS) */
-void recompute_delay_status_gs(void)
+void recompute_delay_status_gs(struct timiditycontext_t *c)
 {
-	struct delay_status_gs_t *p = &delay_status_gs;
+	struct delay_status_gs_t *p = &c->delay_status_gs;
 	p->time_center = delay_time_center_table[p->time_c > 0x73 ? 0x73 : p->time_c];
 	p->time_ratio_left = (double)p->time_l / 24;
 	p->time_ratio_right = (double)p->time_r / 24;
@@ -5651,9 +5565,9 @@ void recompute_delay_status_gs(void)
 }
 
 /*! Delay Macro (GS) */
-void set_delay_macro_gs(int macro)
+void set_delay_macro_gs(struct timiditycontext_t *c, int macro)
 {
-	struct delay_status_gs_t *p = &delay_status_gs;
+	struct delay_status_gs_t *p = &c->delay_status_gs;
 	if(macro >= 4) {p->type = 2;}	/* cross delay */
 	macro *= 10;
 	p->time_center = delay_time_center_table[delay_macro_presets[macro + 1]];
@@ -5667,23 +5581,23 @@ void set_delay_macro_gs(int macro)
 }
 
 /*! initialize Reverb Effect (GS) */
-void init_reverb_status_gs(void)
+static void init_reverb_status_gs(struct timiditycontext_t *c)
 {
-	struct reverb_status_gs_t *p = &reverb_status_gs;
+	struct reverb_status_gs_t *p = &c->reverb_status_gs;
 	p->character = 0x04;
 	p->pre_lpf = 0;
 	p->level = 0x40;
 	p->time = 0x40;
 	p->delay_feedback = 0;
 	p->pre_delay_time = 0;
-	recompute_reverb_status_gs();
-	init_reverb();
+	recompute_reverb_status_gs(c);
+	init_reverb(c);
 }
 
 /*! recompute Reverb Effect (GS) */
-void recompute_reverb_status_gs(void)
+void recompute_reverb_status_gs(struct timiditycontext_t *c)
 {
-	struct reverb_status_gs_t *p = &reverb_status_gs;
+	struct reverb_status_gs_t *p = &c->reverb_status_gs;
 
 	if(p->pre_lpf) {
 		p->lpf.a = 2.0 * ((double)(7 - p->pre_lpf) / 7.0f * 16000.0f + 200.0f) / play_mode->rate;
@@ -5692,9 +5606,9 @@ void recompute_reverb_status_gs(void)
 }
 
 /*! Reverb Type (GM2) */
-void set_reverb_macro_gm2(int macro)
+void set_reverb_macro_gm2(struct timiditycontext_t *c, int macro)
 {
-	struct reverb_status_gs_t *p = &reverb_status_gs;
+	struct reverb_status_gs_t *p = &c->reverb_status_gs;
 	int type = macro;
 	if (macro == 8) {macro = 5;}
 	macro *= 6;
@@ -5724,9 +5638,9 @@ void set_reverb_macro_gm2(int macro)
 }
 
 /*! Reverb Macro (GS) */
-void set_reverb_macro_gs(int macro)
+void set_reverb_macro_gs(struct timiditycontext_t *c, int macro)
 {
-	struct reverb_status_gs_t *p = &reverb_status_gs;
+	struct reverb_status_gs_t *p = &c->reverb_status_gs;
 	macro *= 6;
 	p->character = reverb_macro_presets[macro];
 	p->pre_lpf = reverb_macro_presets[macro + 1];
@@ -5737,9 +5651,9 @@ void set_reverb_macro_gs(int macro)
 }
 
 /*! initialize Chorus Effect (GS) */
-void init_chorus_status_gs(void)
+static void init_chorus_status_gs(struct timiditycontext_t *c)
 {
-	struct chorus_status_gs_t *p = &chorus_status_gs;
+	struct chorus_status_gs_t *p = &c->chorus_status_gs;
 	p->macro = 0;
 	p->pre_lpf = 0;
 	p->level = 0x40;
@@ -5749,13 +5663,13 @@ void init_chorus_status_gs(void)
 	p->depth = 0x13;
 	p->send_reverb = 0;
 	p->send_delay = 0;
-	recompute_chorus_status_gs();
+	recompute_chorus_status_gs(c);
 }
 
 /*! recompute Chorus Effect (GS) */
-void recompute_chorus_status_gs()
+void recompute_chorus_status_gs(struct timiditycontext_t *c)
 {
-	struct chorus_status_gs_t *p = &chorus_status_gs;
+	struct chorus_status_gs_t *p = &c->chorus_status_gs;
 
 	if(p->pre_lpf) {
 		p->lpf.a = 2.0 * ((double)(7 - p->pre_lpf) / 7.0f * 16000.0f + 200.0f) / play_mode->rate;
@@ -5764,9 +5678,9 @@ void recompute_chorus_status_gs()
 }
 
 /*! Chorus Macro (GS), Chorus Type (GM2) */
-void set_chorus_macro_gs(int macro)
+void set_chorus_macro_gs(struct timiditycontext_t *c, int macro)
 {
-	struct chorus_status_gs_t *p = &chorus_status_gs;
+	struct chorus_status_gs_t *p = &c->chorus_status_gs;
 	macro *= 8;
 	p->pre_lpf = chorus_macro_presets[macro];
 	p->level = chorus_macro_presets[macro + 1];
@@ -5779,21 +5693,21 @@ void set_chorus_macro_gs(int macro)
 }
 
 /*! initialize EQ (GS) */
-void init_eq_status_gs(void)
+static void init_eq_status_gs(struct timiditycontext_t *c)
 {
-	struct eq_status_gs_t *p = &eq_status_gs;
+	struct eq_status_gs_t *p = &c->eq_status_gs;
 	p->low_freq = 0;
 	p->low_gain = 0x40;
 	p->high_freq = 0;
 	p->high_gain = 0x40;
-	recompute_eq_status_gs();
+	recompute_eq_status_gs(c);
 }
 
 /*! recompute EQ (GS) */
-void recompute_eq_status_gs(void)
+void recompute_eq_status_gs(struct timiditycontext_t *c)
 {
 	double freq, dbGain;
-	struct eq_status_gs_t *p = &eq_status_gs;
+	struct eq_status_gs_t *p = &c->eq_status_gs;
 
 	/* Lowpass Shelving Filter */
 	if(p->low_freq == 0) {freq = 200;}
@@ -5819,17 +5733,17 @@ void recompute_eq_status_gs(void)
 }
 
 /*! initialize Multi EQ (XG) */
-void init_multi_eq_xg(void)
+static void init_multi_eq_xg(struct timiditycontext_t *c)
 {
-	multi_eq_xg.valid = 0;
-	set_multi_eq_type_xg(0);
-	recompute_multi_eq_xg();
+	c->multi_eq_xg.valid = 0;
+	set_multi_eq_type_xg(c, 0);
+	recompute_multi_eq_xg(c);
 }
 
 /*! set Multi EQ type (XG) */
-void set_multi_eq_type_xg(int type)
+void set_multi_eq_type_xg(struct timiditycontext_t *c, int type)
 {
-	struct multi_eq_xg_t *p = &multi_eq_xg;
+	struct multi_eq_xg_t *p = &c->multi_eq_xg;
 	type *= 20;
 	p->gain1 = multi_eq_block_table_xg[type];
 	p->freq1 = multi_eq_block_table_xg[type + 1];
@@ -5851,9 +5765,9 @@ void set_multi_eq_type_xg(int type)
 }
 
 /*! recompute Multi EQ (XG) */
-void recompute_multi_eq_xg(void)
+void recompute_multi_eq_xg(struct timiditycontext_t *c)
 {
-	struct multi_eq_xg_t *p = &multi_eq_xg;
+	struct multi_eq_xg_t *p = &c->multi_eq_xg;
 
 	if(p->freq1 != 0 && p->freq1 < 60 && p->gain1 != 0x40) {
 		p->valid1 = 1;
@@ -5908,14 +5822,14 @@ void recompute_multi_eq_xg(void)
 }
 
 /*! convert GS user drumset assign groups to internal "alternate assign". */
-void recompute_userdrum_altassign(int bank, int group)
+static void recompute_userdrum_altassign(struct timiditycontext_t *c, int bank, int group)
 {
 	int number = 0, i;
 	char *params[131], param[10];
 	ToneBank *bk;
 	UserDrumset *p;
-	
-	for(p = userdrum_first; p != NULL; p = p->next) {
+
+	for(p = c->userdrum_first; p != NULL; p = p->next) {
 		if(p->assign_group == group) {
 			sprintf(param, "%d", p->prog);
 			params[number] = safe_strdup(param);
@@ -5924,53 +5838,53 @@ void recompute_userdrum_altassign(int bank, int group)
 	}
 	params[number] = NULL;
 
-	alloc_instrument_bank(1, bank);
-	bk = drumset[bank];
+	alloc_instrument_bank(c, 1, bank);
+	bk = c->drumset[bank];
 	bk->alt = add_altassign_string(bk->alt, params, number);
 	for (i = number - 1; i >= 0; i--)
 		free(params[i]);
 }
 
 /*! initialize GS user drumset. */
-void init_userdrum()
+static void init_userdrum(struct timiditycontext_t *c)
 {
 	int i;
 	AlternateAssign *alt;
 
-	free_userdrum();
+	free_userdrum(c);
 
 	for(i=0;i<2;i++) {	/* allocate alternative assign */
 		alt = (AlternateAssign *)safe_malloc(sizeof(AlternateAssign));
 		memset(alt, 0, sizeof(AlternateAssign));
-		alloc_instrument_bank(1, 64 + i);
-		drumset[64 + i]->alt = alt;
+		alloc_instrument_bank(c, 1, 64 + i);
+		c->drumset[64 + i]->alt = alt;
 	}
 }
 
 /*! recompute GS user drumset. */
-Instrument *recompute_userdrum(int bank, int prog)
+Instrument *recompute_userdrum(struct timiditycontext_t *c, int bank, int prog)
 {
 	UserDrumset *p;
 	Instrument *ip = NULL;
 
-	p = get_userdrum(bank, prog);
+	p = get_userdrum(c, bank, prog);
 
-	free_tone_bank_element(&drumset[bank]->tone[prog]);
-	if(drumset[p->source_prog]) {
-		ToneBankElement *source_tone = &drumset[p->source_prog]->tone[p->source_note];
+	free_tone_bank_element(&c->drumset[bank]->tone[prog]);
+	if(c->drumset[p->source_prog]) {
+		ToneBankElement *source_tone = &c->drumset[p->source_prog]->tone[p->source_note];
 
 		if(source_tone->name == NULL /* NULL if "soundfont" directive is used */
 			  && source_tone->instrument == NULL) {
-			if((ip = load_instrument(1, p->source_prog, p->source_note)) == NULL) {
+			if((ip = load_instrument(c, 1, p->source_prog, p->source_note)) == NULL) {
 				ip = MAGIC_ERROR_INSTRUMENT;
 			}
 			source_tone->instrument = ip;
 		}
 		if(source_tone->name) {
-			copy_tone_bank_element(&drumset[bank]->tone[prog], source_tone);
+			copy_tone_bank_element(&c->drumset[bank]->tone[prog], source_tone);
 			ctl->cmsg(CMSG_INFO,VERB_NOISY,"User Drumset (%d %d -> %d %d)", p->source_prog, p->source_note, bank, prog);
-		} else if(drumset[0]->tone[p->source_note].name) {
-			copy_tone_bank_element(&drumset[bank]->tone[prog], &drumset[0]->tone[p->source_note]);
+		} else if(c->drumset[0]->tone[p->source_note].name) {
+			copy_tone_bank_element(&c->drumset[bank]->tone[prog], &c->drumset[0]->tone[p->source_note]);
 			ctl->cmsg(CMSG_INFO,VERB_NOISY,"User Drumset (%d %d -> %d %d)", 0, p->source_note, bank, prog);
 		} else {
 			ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Referring user drum set %d, note %d not found - this instrument will not be heard as expected", bank, prog);
@@ -5981,23 +5895,23 @@ Instrument *recompute_userdrum(int bank, int prog)
 
 /*! get pointer to requested GS user drumset.
    if it's not found, allocate a new item first. */
-UserDrumset *get_userdrum(int bank, int prog)
+static UserDrumset *get_userdrum(struct timiditycontext_t *c, int bank, int prog)
 {
 	UserDrumset *p;
 
-	for(p = userdrum_first; p != NULL; p = p->next) {
+	for(p = c->userdrum_first; p != NULL; p = p->next) {
 		if(p->bank == bank && p->prog == prog) {return p;}
 	}
 
 	p = (UserDrumset *)safe_malloc(sizeof(UserDrumset));
 	memset(p, 0, sizeof(UserDrumset));
 	p->next = NULL;
-	if(userdrum_first == NULL) {
-		userdrum_first = p;
-		userdrum_last = p;
+	if(c->userdrum_first == NULL) {
+		c->userdrum_first = p;
+		c->userdrum_last = p;
 	} else {
-		userdrum_last->next = p;
-		userdrum_last = p;
+		c->userdrum_last->next = p;
+		c->userdrum_last = p;
 	}
 	p->bank = bank;
 	p->prog = prog;
@@ -6006,37 +5920,37 @@ UserDrumset *get_userdrum(int bank, int prog)
 }
 
 /*! free GS user drumset. */
-void free_userdrum()
+void free_userdrum(struct timiditycontext_t *c)
 {
 	UserDrumset *p, *next;
 
-	for(p = userdrum_first; p != NULL; p = next){
+	for(p = c->userdrum_first; p != NULL; p = next){
 		next = p->next;
 		free(p);
     }
-	userdrum_first = userdrum_last = NULL;
+	c->userdrum_first = c->userdrum_last = NULL;
 }
 
 /*! initialize GS user instrument. */
-void init_userinst()
+static void init_userinst(struct timiditycontext_t *c)
 {
-	free_userinst();
+	free_userinst(c);
 }
 
 /*! recompute GS user instrument. */
-void recompute_userinst(int bank, int prog)
+void recompute_userinst(struct timiditycontext_t *c, int bank, int prog)
 {
 	UserInstrument *p;
 
-	p = get_userinst(bank, prog);
+	p = get_userinst(c, bank, prog);
 
-	free_tone_bank_element(&tonebank[bank]->tone[prog]);
-	if(tonebank[p->source_bank]) {
-		if(tonebank[p->source_bank]->tone[p->source_prog].name) {
-			copy_tone_bank_element(&tonebank[bank]->tone[prog], &tonebank[p->source_bank]->tone[p->source_prog]);
+	free_tone_bank_element(&c->tonebank[bank]->tone[prog]);
+	if(c->tonebank[p->source_bank]) {
+		if(c->tonebank[p->source_bank]->tone[p->source_prog].name) {
+			copy_tone_bank_element(&c->tonebank[bank]->tone[prog], &c->tonebank[p->source_bank]->tone[p->source_prog]);
 			ctl->cmsg(CMSG_INFO,VERB_NOISY,"User Instrument (%d %d -> %d %d)", p->source_bank, p->source_prog, bank, prog);
-		} else if(tonebank[0]->tone[p->source_prog].name) {
-			copy_tone_bank_element(&tonebank[bank]->tone[prog], &tonebank[0]->tone[p->source_prog]);
+		} else if(c->tonebank[0]->tone[p->source_prog].name) {
+			copy_tone_bank_element(&c->tonebank[bank]->tone[prog], &c->tonebank[0]->tone[p->source_prog]);
 			ctl->cmsg(CMSG_INFO,VERB_NOISY,"User Instrument (%d %d -> %d %d)", 0, p->source_prog, bank, prog);
 		}
 	}
@@ -6044,23 +5958,23 @@ void recompute_userinst(int bank, int prog)
 
 /*! get pointer to requested GS user instrument.
    if it's not found, allocate a new item first. */
-UserInstrument *get_userinst(int bank, int prog)
+static UserInstrument *get_userinst(struct timiditycontext_t *c, int bank, int prog)
 {
 	UserInstrument *p;
 
-	for(p = userinst_first; p != NULL; p = p->next) {
+	for(p = c->userinst_first; p != NULL; p = p->next) {
 		if(p->bank == bank && p->prog == prog) {return p;}
 	}
 
 	p = (UserInstrument *)safe_malloc(sizeof(UserInstrument));
 	memset(p, 0, sizeof(UserInstrument));
 	p->next = NULL;
-	if(userinst_first == NULL) {
-		userinst_first = p;
-		userinst_last = p;
+	if(c->userinst_first == NULL) {
+		c->userinst_first = p;
+		c->userinst_last = p;
 	} else {
-		userinst_last->next = p;
-		userinst_last = p;
+		c->userinst_last->next = p;
+		c->userinst_last = p;
 	}
 	p->bank = bank;
 	p->prog = prog;
@@ -6069,15 +5983,15 @@ UserInstrument *get_userinst(int bank, int prog)
 }
 
 /*! free GS user instrument. */
-void free_userinst()
+void free_userinst(struct timiditycontext_t *c)
 {
 	UserInstrument *p, *next;
 
-	for(p = userinst_first; p != NULL; p = next){
+	for(p = c->userinst_first; p != NULL; p = next){
 		next = p->next;
 		free(p);
     }
-	userinst_first = userinst_last = NULL;
+	c->userinst_first = c->userinst_last = NULL;
 }
 
 static void set_effect_param_xg(struct effect_xg_t *st, int type_msb, int type_lsb)
@@ -6115,7 +6029,7 @@ static void set_effect_param_xg(struct effect_xg_t *st, int type_msb, int type_l
 }
 
 /*! recompute XG effect parameters. */
-void recompute_effect_xg(struct effect_xg_t *st)
+void recompute_effect_xg(struct timiditycontext_t *c, struct effect_xg_t *st)
 {
 	EffectList *efc = st->ef;
 
@@ -6123,16 +6037,16 @@ void recompute_effect_xg(struct effect_xg_t *st)
 	while (efc != NULL && efc->info != NULL)
 	{
 		(*efc->engine->conv_xg)(st, efc);
-		(*efc->engine->do_effect)(NULL, MAGIC_INIT_EFFECT_INFO, efc);
+		(*efc->engine->do_effect)(c, NULL, MAGIC_INIT_EFFECT_INFO, efc);
 		efc = efc->next_ef;
 	}
 }
 
-void realloc_effect_xg(struct effect_xg_t *st)
+void realloc_effect_xg(struct timiditycontext_t *c, struct effect_xg_t *st)
 {
 	int type_msb = st->type_msb, type_lsb = st->type_lsb;
 
-	free_effect_list(st->ef);
+	free_effect_list(c, st->ef);
 	st->ef = NULL;
 	st->use_msb = 0;
 
@@ -6206,14 +6120,14 @@ void realloc_effect_xg(struct effect_xg_t *st)
 		break;
 	}
 	set_effect_param_xg(st, type_msb, type_lsb);
-	recompute_effect_xg(st);
+	recompute_effect_xg(c, st);
 }
 
-static void init_effect_xg(struct effect_xg_t *st)
+static void init_effect_xg(struct timiditycontext_t *c, struct effect_xg_t *st)
 {
 	int i;
 
-	free_effect_list(st->ef);
+	free_effect_list(c, st->ef);
 	st->ef = NULL;
 
 	st->use_msb = 0;
@@ -6227,37 +6141,37 @@ static void init_effect_xg(struct effect_xg_t *st)
 }
 
 /*! initialize XG effect parameters */
-static void init_all_effect_xg(void)
+static void init_all_effect_xg(struct timiditycontext_t *c)
 {
 	int i;
- 	init_effect_xg(&reverb_status_xg);
-	reverb_status_xg.type_msb = 0x01;
-	reverb_status_xg.connection = XG_CONN_SYSTEM_REVERB;
-	realloc_effect_xg(&reverb_status_xg);
-	init_effect_xg(&chorus_status_xg);
-	chorus_status_xg.type_msb = 0x41;
-	chorus_status_xg.connection = XG_CONN_SYSTEM_CHORUS;
-	realloc_effect_xg(&chorus_status_xg);
+	init_effect_xg(c, &c->reverb_status_xg);
+	c->reverb_status_xg.type_msb = 0x01;
+	c->reverb_status_xg.connection = XG_CONN_SYSTEM_REVERB;
+	realloc_effect_xg(c, &c->reverb_status_xg);
+	init_effect_xg(c, &c->chorus_status_xg);
+	c->chorus_status_xg.type_msb = 0x41;
+	c->chorus_status_xg.connection = XG_CONN_SYSTEM_CHORUS;
+	realloc_effect_xg(c, &c->chorus_status_xg);
 	for (i = 0; i < XG_VARIATION_EFFECT_NUM; i++) {
-		init_effect_xg(&variation_effect_xg[i]);
-		variation_effect_xg[i].type_msb = 0x05;
-		realloc_effect_xg(&variation_effect_xg[i]);
+		init_effect_xg(c, &c->variation_effect_xg[i]);
+		c->variation_effect_xg[i].type_msb = 0x05;
+		realloc_effect_xg(c, &c->variation_effect_xg[i]);
 	}
 	for (i = 0; i < XG_INSERTION_EFFECT_NUM; i++) {
-		init_effect_xg(&insertion_effect_xg[i]);
-		insertion_effect_xg[i].type_msb = 0x49;
-		realloc_effect_xg(&insertion_effect_xg[i]);
+		init_effect_xg(c, &c->insertion_effect_xg[i]);
+		c->insertion_effect_xg[i].type_msb = 0x49;
+		realloc_effect_xg(c, &c->insertion_effect_xg[i]);
 	}
-	init_ch_effect_xg();
+	init_ch_effect_xg(c);
 }
 
 /*! initialize GS insertion effect parameters */
-void init_insertion_effect_gs(void)
+static void init_insertion_effect_gs(struct timiditycontext_t *c)
 {
 	int i;
-	struct insertion_effect_gs_t *st = &insertion_effect_gs;
+	struct insertion_effect_gs_t *st = &c->insertion_effect_gs;
 
-	free_effect_list(st->ef);
+	free_effect_list(c, st->ef);
 	st->ef = NULL;
 
 	for(i = 0; i < 20; i++) {st->parameter[i] = 0;}
@@ -6292,27 +6206,27 @@ static void set_effect_param_gs(struct insertion_effect_gs_t *st, int msb, int l
 }
 
 /*! recompute GS insertion effect parameters. */
-void recompute_insertion_effect_gs(void)
+void recompute_insertion_effect_gs(struct timiditycontext_t *c)
 {
-	struct insertion_effect_gs_t *st = &insertion_effect_gs;
+	struct insertion_effect_gs_t *st = &c->insertion_effect_gs;
 	EffectList *efc = st->ef;
 
 	if (st->ef == NULL) {return;}
 	while(efc != NULL && efc->info != NULL)
 	{
 		(*efc->engine->conv_gs)(st, efc);
-		(*efc->engine->do_effect)(NULL, MAGIC_INIT_EFFECT_INFO, efc);
+		(*efc->engine->do_effect)(c, NULL, MAGIC_INIT_EFFECT_INFO, efc);
 		efc = efc->next_ef;
 	}
 }
 
 /*! re-allocate GS insertion effect parameters. */
-void realloc_insertion_effect_gs(void)
+void realloc_insertion_effect_gs(struct timiditycontext_t *c)
 {
-	struct insertion_effect_gs_t *st = &insertion_effect_gs;
+	struct insertion_effect_gs_t *st = &c->insertion_effect_gs;
 	int type_msb = st->type_msb, type_lsb = st->type_lsb;
 
-	free_effect_list(st->ef);
+	free_effect_list(c, st->ef);
 	st->ef = NULL;
 
 	switch(type_msb) {
@@ -6357,59 +6271,58 @@ void realloc_insertion_effect_gs(void)
 
 	set_effect_param_gs(st, type_msb, type_lsb);
 
-	recompute_insertion_effect_gs();
+	recompute_insertion_effect_gs(c);
 }
 
 /*! initialize channel layers. */
-void init_channel_layer(int ch)
+void init_channel_layer(struct timiditycontext_t *c, int ch)
 {
 	if (ch >= MAX_CHANNELS)
 		return;
-	CLEAR_CHANNELMASK(channel[ch].channel_layer);
-	SET_CHANNELMASK(channel[ch].channel_layer, ch);
-	channel[ch].port_select = ch >> 4;
+	CLEAR_CHANNELMASK(c->channel[ch].channel_layer);
+	SET_CHANNELMASK(c->channel[ch].channel_layer, ch);
+	c->channel[ch].port_select = ch >> 4;
 }
 
 /*! add a new layer. */
-void add_channel_layer(int to_ch, int from_ch)
+void add_channel_layer(struct timiditycontext_t *c, int to_ch, int from_ch)
 {
 	if (to_ch >= MAX_CHANNELS || from_ch >= MAX_CHANNELS)
 		return;
 	/* add a channel layer */
-	UNSET_CHANNELMASK(channel[to_ch].channel_layer, to_ch);
-	SET_CHANNELMASK(channel[to_ch].channel_layer, from_ch);
+	UNSET_CHANNELMASK(c->channel[to_ch].channel_layer, to_ch);
+	SET_CHANNELMASK(c->channel[to_ch].channel_layer, from_ch);
 	ctl->cmsg(CMSG_INFO, VERB_NOISY,
 			"Channel Layer (CH:%d -> CH:%d)", from_ch, to_ch);
 }
 
 /*! remove all layers for this channel. */
-void remove_channel_layer(int ch)
+void remove_channel_layer(struct timiditycontext_t *c, int ch)
 {
 	int i, offset;
-	
+
 	if (ch >= MAX_CHANNELS)
 		return;
 	/* remove channel layers */
 	offset = ch & ~0xf;
 	for (i = offset; i < offset + REDUCE_CHANNELS; i++)
-		UNSET_CHANNELMASK(channel[i].channel_layer, ch);
-	SET_CHANNELMASK(channel[ch].channel_layer, ch);
+		UNSET_CHANNELMASK(c->channel[i].channel_layer, ch);
+	SET_CHANNELMASK(c->channel[ch].channel_layer, ch);
 }
 
-void free_readmidi(void)
+void free_readmidi(struct timiditycontext_t *c)
 {
-	reuse_mblock(&mempool);
-	free_time_segments();
-	free_all_midi_file_info();
-	free_userdrum();
-	free_userinst();
-	if (string_event_strtab.nstring > 0)
-		delete_string_table(&string_event_strtab);
-	if (string_event_table != NULL) {
-		free(string_event_table[0]);
-		free(string_event_table);
-		string_event_table = NULL;
-		string_event_table_size = 0;
+	reuse_mblock(c, &c->mempool);
+	free_time_segments(c);
+	free_all_midi_file_info(c);
+	free_userdrum(c);
+	free_userinst(c);
+	if (c->string_event_strtab.nstring > 0)
+		delete_string_table(c, &c->string_event_strtab);
+	if (c->string_event_table != NULL) {
+		free(c->string_event_table[0]);
+		free(c->string_event_table);
+		c->string_event_table = NULL;
+		c->string_event_table_size = 0;
 	}
 }
-

@@ -35,9 +35,10 @@
 #include "readmidi.h"
 #include "controls.h"
 #include "wrd.h"
+#include "wrdi.h"
 
 static int wrdt_open(char *wrdt_opts);
-static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[]);
+static void wrdt_apply(struct timiditycontext_t *c, int cmd, int wrd_argc, int wrd_args[]);
 static void wrdt_update_events(void);
 static void wrdt_end(void);
 static void wrdt_close(void);
@@ -82,17 +83,17 @@ static void wrdt_close(void)
     inkey_flag = 0;
 }
 
-static char *wrd_event2string(int id)
+static char *wrd_event2string(struct timiditycontext_t *c, int id)
 {
     char *name;
 
-    name = event2string(id);
+    name = event2string(c, id);
     if(name != NULL)
 	return name + 1;
     return "";
 }
 
-static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
+static void wrdt_apply(struct timiditycontext_t *c, int cmd, int wrd_argc, int wrd_args[])
 {
     char *p;
     char *text;
@@ -108,12 +109,12 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
     switch(cmd)
     {
       case WRD_LYRIC:
-	p = wrd_event2string(wrd_args[0]);
+	p = wrd_event2string(c, wrd_args[0]);
 	len = strlen(p);
-	text = (char *)new_segment(&tmpbuffer, SAFE_CONVERT_LENGTH(len));
-	code_convert(p, text, SAFE_CONVERT_LENGTH(len), NULL, NULL);
+	text = (char *)new_segment(c, &c->tmpbuffer, SAFE_CONVERT_LENGTH(len));
+	code_convert(c, p, text, SAFE_CONVERT_LENGTH(len), NULL, NULL);
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", text);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	break;
       case WRD_NL: /* Newline (Ignored) */
 	break;
@@ -124,11 +125,11 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	break;
       case WRD_ESC:
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
-		  "@ESC(%s)", wrd_event2string(wrd_args[0]));
+		  "@ESC(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_EXEC:
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
-		  "@EXEC(%s)", wrd_event2string(wrd_args[0]));
+		  "@EXEC(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_FADE:
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
@@ -190,8 +191,8 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
       case WRD_LOOP: /* Never call */
 	break;
       case WRD_MAG:
-	p = (char *)new_segment(&tmpbuffer, MIN_MBLOCK_SIZE);
-        snprintf(p, MIN_MBLOCK_SIZE-1, "@MAG(%s", wrd_event2string(wrd_args[0]));
+	p = (char *)new_segment(c, &c->tmpbuffer, MIN_MBLOCK_SIZE);
+        snprintf(p, MIN_MBLOCK_SIZE-1, "@MAG(%s", wrd_event2string(c, wrd_args[0]));
         p[MIN_MBLOCK_SIZE-1] = '\0'; /* fail safe */
 	for(i = 1; i < 5; i++)
 	{
@@ -205,14 +206,14 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	}
         strncat(p, ")", MIN_MBLOCK_SIZE - strlen(p) - 1);
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", p);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	break;
       case WRD_MIDI: /* Never call */
 	break;
       case WRD_OFFSET: /* Never call */
 	break;
       case WRD_PAL:
-	p = (char *)new_segment(&tmpbuffer, MIN_MBLOCK_SIZE);
+	p = (char *)new_segment(c, &c->tmpbuffer, MIN_MBLOCK_SIZE);
 	snprintf(p, MIN_MBLOCK_SIZE, "@PAL(%03x", wrd_args[0]);
 	for(i = 1; i < 17; i++) {
 	    char q[5];
@@ -221,11 +222,11 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	}
 	strncat(p, ")", MIN_MBLOCK_SIZE - strlen(p) - 1);
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", p);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	break;
       case WRD_PALCHG:
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
-		  "@PALCHG(%s)", wrd_event2string(wrd_args[0]));
+		  "@PALCHG(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_PALREV:
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
@@ -233,23 +234,23 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 	break;
       case WRD_PATH:
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
-		  "@PATH(%s)", wrd_event2string(wrd_args[0]));
+		  "@PATH(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_PLOAD:
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
-		  "@PLOAD(%s)", wrd_event2string(wrd_args[0]));
+		  "@PLOAD(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_REM:
-	p = wrd_event2string(wrd_args[0]);
+	p = wrd_event2string(c, wrd_args[0]);
 	len = strlen(p);
-	text = (char *)new_segment(&tmpbuffer, SAFE_CONVERT_LENGTH(len));
-	code_convert(p, text, SAFE_CONVERT_LENGTH(len), NULL, NULL);
+	text = (char *)new_segment(c, &c->tmpbuffer, SAFE_CONVERT_LENGTH(len));
+	code_convert(c, p, text, SAFE_CONVERT_LENGTH(len), NULL, NULL);
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "@REM %s", text);
-	reuse_mblock(&tmpbuffer);
+	reuse_mblock(c, &c->tmpbuffer);
 	break;
       case WRD_REMARK:
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
-		  "@REMARK(%s)", wrd_event2string(wrd_args[0]));
+		  "@REMARK(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_REST: /* Never call */
 	break;
@@ -285,49 +286,49 @@ static void wrdt_apply(int cmd, int wrd_argc, int wrd_args[])
 
 	/* Ensyutsukun */
       case WRD_eFONTM:
-	print_ecmd("FONTM", wrd_args, 1);
+	print_ecmd(c,"FONTM", wrd_args, 1);
 	break;
       case WRD_eFONTP:
-	print_ecmd("FONTP", wrd_args, 4);
+	print_ecmd(c,"FONTP", wrd_args, 4);
 	break;
       case WRD_eFONTR:
-	print_ecmd("FONTR", wrd_args, 17);
+	print_ecmd(c,"FONTR", wrd_args, 17);
 	break;
       case WRD_eGSC:
-	print_ecmd("GSC", wrd_args, 1);
+	print_ecmd(c,"GSC", wrd_args, 1);
 	break;
       case WRD_eLINE:
-	print_ecmd("LINE", wrd_args, 1);
+	print_ecmd(c,"LINE", wrd_args, 1);
 	break;
       case WRD_ePAL:
-	print_ecmd("PAL", wrd_args, 2);
+	print_ecmd(c,"PAL", wrd_args, 2);
 	break;
       case WRD_eREGSAVE:
-	print_ecmd("REGSAVE", wrd_args, 17);
+	print_ecmd(c,"REGSAVE", wrd_args, 17);
 	break;
       case WRD_eSCROLL:
-	print_ecmd("SCROLL",wrd_args, 2);
+	print_ecmd(c,"SCROLL",wrd_args, 2);
 	break;
       case WRD_eTEXTDOT:
-	print_ecmd("TEXTDOT", wrd_args, 1);
+	print_ecmd(c,"TEXTDOT", wrd_args, 1);
 	break;
       case WRD_eTMODE:
-	print_ecmd("TMODE", wrd_args, 1);
+	print_ecmd(c,"TMODE", wrd_args, 1);
 	break;
       case WRD_eTSCRL:
-	print_ecmd("TSCRL", wrd_args, 0);
+	print_ecmd(c,"TSCRL", wrd_args, 0);
 	break;
       case WRD_eVCOPY:
-	print_ecmd("VCOPY", wrd_args, 9);
+	print_ecmd(c,"VCOPY", wrd_args, 9);
 	break;
       case WRD_eVSGET:
-	print_ecmd("VSGE", wrd_args, 4);
+	print_ecmd(c,"VSGE", wrd_args, 4);
 	break;
       case WRD_eVSRES:
-	print_ecmd("VSRES", wrd_args, 0);
+	print_ecmd(c,"VSRES", wrd_args, 0);
 	break;
       case WRD_eXCOPY:
-	print_ecmd("XCOPY", wrd_args, 14);
+	print_ecmd(c,"XCOPY", wrd_args, 14);
 	break;
       default:
 	break;

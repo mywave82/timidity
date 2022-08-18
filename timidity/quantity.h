@@ -25,6 +25,8 @@
 #ifndef ___QUANTITY_H_
 #define ___QUANTITY_H_
 
+struct timiditycontext_t;
+
 #define QUANTITY_UNIT_TYPE(u)		QUANTITY_OF_##u, QUANTITY_UNIT_NAME(u##_NUM)
 #define QUANTITY_UNIT_NAME(name)	QUANTITY_UNIT_##name
 enum quantity_units {
@@ -56,16 +58,16 @@ typedef struct Quantity_ {
 	} value;
 } Quantity;
 
-extern const char *string_to_quantity(const char *string, Quantity *quantity, uint16 type);
-extern void int_to_quantity(int32 number, Quantity *quantity, uint16 type);
-extern void float_to_quantity(FLOAT_T number, Quantity *quantity, uint16 type);
-extern int32 quantity_to_int(const Quantity *quantity, int32 param);
-extern FLOAT_T quantity_to_float(const Quantity *quantity, int32 param);
+extern const char *string_to_quantity(struct timiditycontext_t *c, const char *string, Quantity *quantity, uint16 type);
+extern void int_to_quantity(struct timiditycontext_t *c, int32 number, Quantity *quantity, uint16 type);
+extern void float_to_quantity(struct timiditycontext_t *c, FLOAT_T number, Quantity *quantity, uint16 type);
+extern int32 quantity_to_int(struct timiditycontext_t *c, const Quantity *quantity, int32 param);
+extern FLOAT_T quantity_to_float(struct timiditycontext_t *c, const Quantity *quantity, int32 param);
 
 #ifdef ___QUANTITY_C_	/* definitions that are only used in quantity.c and will rarely change */
 
-typedef int32 (*QuantityToIntProc)(int32 value, int32 param);
-typedef FLOAT_T (*QuantityToFloatProc)(FLOAT_T value, int32 param);
+typedef int32 (*QuantityToIntProc)(struct timiditycontext_t *c, int32 value, int32 param);
+typedef FLOAT_T (*QuantityToFloatProc)(struct timiditycontext_t *c, FLOAT_T value, int32 param);
 typedef union {
 	QuantityToIntProc	i;
 	QuantityToFloatProc	f;

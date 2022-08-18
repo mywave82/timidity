@@ -378,70 +378,63 @@ static const struct option longopts[] = {
 #define MAIN_INTERFACE static
 #endif /* main */
 
-MAIN_INTERFACE void timidity_start_initialize(void);
-MAIN_INTERFACE int timidity_pre_load_configuration(void);
-MAIN_INTERFACE int timidity_post_load_configuration(void);
-MAIN_INTERFACE void timidity_init_player(void);
-MAIN_INTERFACE int timidity_play_main(int nfiles, char **files);
-MAIN_INTERFACE int got_a_configuration;
-char *wrdt_open_opts = NULL;
-char *opt_aq_max_buff = NULL,
-     *opt_aq_fill_buff = NULL;
-int opt_aq_fill_buff_free_needed = 1;
-void timidity_init_aq_buff(void);
-int opt_control_ratio = 0; /* Save -C option */
+MAIN_INTERFACE void timidity_start_initialize(struct timiditycontext_t *c);
+MAIN_INTERFACE int timidity_pre_load_configuration(struct timiditycontext_t *c);
+MAIN_INTERFACE int timidity_post_load_configuration(struct timiditycontext_t *c);
+MAIN_INTERFACE void timidity_init_player(struct timiditycontext_t *c);
+MAIN_INTERFACE int timidity_play_main(struct timiditycontext_t *c, int nfiles, char **files);
+void timidity_init_aq_buff(struct timiditycontext_t *c);
 
-int set_extension_modes(char *);
-int set_ctl(char *);
-int set_play_mode(char *);
-int set_wrd(char *);
-MAIN_INTERFACE int set_tim_opt_short(int, char *);
-MAIN_INTERFACE int set_tim_opt_long(int, char *, int);
-static inline int parse_opt_A(const char *);
-static inline int parse_opt_drum_power(const char *);
-static inline int parse_opt_volume_comp(const char *);
-static inline int parse_opt_a(const char *);
-static inline int parse_opt_B(const char *);
-static inline int parse_opt_C(const char *);
-static inline int parse_opt_c(char *);
-static inline int parse_opt_D(const char *);
+int set_extension_modes(struct timiditycontext_t *c, char *);
+int set_ctl(struct timiditycontext_t *c, char *);
+int set_play_mode(struct timiditycontext_t *c, char *);
+MAIN_INTERFACE int set_tim_opt_short(struct timiditycontext_t *c, int, char *);
+MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int, char *, int);
+static inline int parse_opt_A(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_drum_power(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_volume_comp(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_a(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_B(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_C(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_c(struct timiditycontext_t *c, char *);
+static inline int parse_opt_D(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_d(const char *);
-static inline int parse_opt_E(char *);
-static inline int parse_opt_mod_wheel(const char *);
-static inline int parse_opt_portamento(const char *);
-static inline int parse_opt_vibrato(const char *);
-static inline int parse_opt_ch_pressure(const char *);
-static inline int parse_opt_mod_env(const char *);
-static inline int parse_opt_trace_text(const char *);
-static inline int parse_opt_overlap_voice(const char *);
-static inline int parse_opt_temper_control(const char *);
-static inline int parse_opt_default_mid(char *);
-static inline int parse_opt_system_mid(char *);
-static inline int parse_opt_default_bank(const char *);
-static inline int parse_opt_force_bank(const char *);
-static inline int parse_opt_default_program(const char *);
-static inline int parse_opt_force_program(const char *);
-static inline int set_default_program(int);
-static inline int parse_opt_delay(const char *);
-static inline int parse_opt_chorus(const char *);
-static inline int parse_opt_reverb(const char *);
-static int parse_opt_reverb_freeverb(const char *arg, char type);
-static inline int parse_opt_voice_lpf(const char *);
-static inline int parse_opt_noise_shaping(const char *);
-static inline int parse_opt_resample(const char *);
+static inline int parse_opt_E(struct timiditycontext_t *c, char *);
+static inline int parse_opt_mod_wheel(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_portamento(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_vibrato(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_ch_pressure(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_mod_env(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_trace_text(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_overlap_voice(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_temper_control(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_default_mid(struct timiditycontext_t *c, char *);
+static inline int parse_opt_system_mid(struct timiditycontext_t *c, char *);
+static inline int parse_opt_default_bank(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_force_bank(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_default_program(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_force_program(struct timiditycontext_t *c, const char *);
+static inline int set_default_program(struct timiditycontext_t *c, int);
+static inline int parse_opt_delay(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_chorus(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_reverb(struct timiditycontext_t *, const char *);
+static int parse_opt_reverb_freeverb(struct timiditycontext_t *c, const char *arg, char type);
+static inline int parse_opt_voice_lpf(struct timiditycontext_t *c ,const char *);
+static inline int parse_opt_noise_shaping(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_resample(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_e(const char *);
-static inline int parse_opt_F(const char *);
-static inline int parse_opt_f(const char *);
-static inline int parse_opt_G(const char *);
-static inline int parse_opt_G1(const char *);
+static inline int parse_opt_F(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_f(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_G(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_G1(struct timiditycontext_t *c, const char *);
 static int parse_segment(TimeSegment *, const char *);
 static int parse_segment2(TimeSegment *, const char *);
 static int parse_time(FLOAT_T *, const char *);
 static int parse_time2(Measure *, const char *);
 static inline int parse_opt_g(const char *);
-static inline int parse_opt_H(const char *);
+static inline int parse_opt_H(struct timiditycontext_t *c, const char *);
 __attribute__((noreturn))
-static inline int parse_opt_h(const char *);
+static inline int parse_opt_h(struct timiditycontext_t *c, const char *);
 #ifdef IA_DYNAMIC
 static inline void list_dyna_interface(FILE *, char *, char *);
 ControlMode *dynamic_interface_module(int);
@@ -461,19 +454,19 @@ static inline int parse_opt_seq_ports(const char *);
 #if defined(IA_WINSYN) || defined(IA_PORTMIDISYN) || defined(IA_NPSYN) || defined(IA_W32G_SYN) || defined(IA_W32GUI)
 static inline int parse_opt_rtsyn_latency(const char *);
 #endif
-static inline int parse_opt_j(const char *);
-static inline int parse_opt_K(const char *);
-static inline int parse_opt_k(const char *);
-static inline int parse_opt_L(char *);
-static inline int parse_opt_M(const char *);
-static inline int parse_opt_m(const char *);
-static inline int parse_opt_N(const char *);
-static inline int parse_opt_O(const char *);
-static inline int parse_opt_output_stereo(const char *);
-static inline int parse_opt_output_signed(const char *);
-static inline int parse_opt_output_bitwidth(const char *);
-static inline int parse_opt_output_format(const char *);
-static inline int parse_opt_output_swab(const char *);
+static inline int parse_opt_j(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_K(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_k(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_L(struct timiditycontext_t *c, char *);
+static inline int parse_opt_M(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_m(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_N(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_O(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_output_stereo(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_output_signed(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_output_bitwidth(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_output_format(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_output_swab(struct timiditycontext_t *c, const char *);
 #if defined(AU_PORTAUDIO) || defined(AU_W32)
 static inline int parse_opt_output_device(const char *);
 #endif
@@ -494,32 +487,32 @@ static inline int parse_opt_speex_dtx(const char *);
 static inline int parse_opt_speex_complexity(const char *);
 static inline int parse_opt_speex_nframes(const char *);
 #endif /* AU_SPEEX */
-static inline int parse_opt_o(char *);
-static inline int parse_opt_P(const char *);
-static inline int parse_opt_p(const char *);
-static inline int parse_opt_p1(const char *);
-static inline int parse_opt_Q(const char *);
-static inline int parse_opt_Q1(const char *);
-static inline int parse_opt_preserve_silence(const char *);
-static inline int parse_opt_q(const char *);
-static inline int parse_opt_R(const char *);
-static inline int parse_opt_S(const char *);
-static inline int parse_opt_s(const char *);
-static inline int parse_opt_T(const char *);
-static inline int parse_opt_t(const char *);
-static inline int parse_opt_U(const char *);
-static inline int parse_opt_volume_curve(char *);
+static inline int parse_opt_o(struct timiditycontext_t *c, char *);
+static inline int parse_opt_P(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_p(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_p1(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_Q(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_Q1(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_preserve_silence(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_q(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_R(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_S(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_s(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_T(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_t(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_U(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_volume_curve(struct timiditycontext_t *c, char *);
 __attribute__((noreturn))
 static inline int parse_opt_v(const char *);
-static inline int parse_opt_W(char *);
+static inline int parse_opt_W(struct timiditycontext_t *c, char *);
 #ifdef __W32__
 static inline int parse_opt_w(const char *);
 #endif
-static inline int parse_opt_x(char *);
+static inline int parse_opt_x(struct timiditycontext_t *c, char *);
 static inline void expand_escape_string(char *);
-static inline int parse_opt_Z(char *);
-static inline int parse_opt_Z1(const char *);
-static inline int parse_opt_default_module(const char *);
+static inline int parse_opt_Z(struct timiditycontext_t *c, char *);
+static inline int parse_opt_Z1(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_default_module(struct timiditycontext_t *c, const char *);
 __attribute__((noreturn))
 static inline int parse_opt_fail(const char *);
 static inline int set_value(int *, int, int, int, char *);
@@ -592,16 +585,11 @@ static char *dynamic_lib_root = NULL;
 #define MAXPATHLEN 1024
 #endif /* MAXPATHLEN */
 
-int free_instruments_afterwards=0;
-int def_prog = -1;
-char def_instr_name[256]="";
-VOLATILE int intr = 0;
-
 #ifdef __W32__
 CRITICAL_SECTION critSect;
 
 #pragma argsused
-static BOOL WINAPI handler(DWORD dw)
+static BOOL WINAPI handler(struct timiditycontext_t *c, DWORD dw)
 {
 #if defined(IA_WINSYN) || defined(IA_PORTMIDISYN)
 	if (ctl->id_character == 'W' || ctl->id_character == 'P')
@@ -615,25 +603,17 @@ static BOOL WINAPI handler(DWORD dw)
 #endif
 	printf ("***BREAK" NLS);
 	fflush(stdout);
-	intr++;
+	c->intr++;
 	return TRUE;
 }
 #endif
-
-int effect_lr_mode = -1;
-/* 0: left delay
- * 1: right delay
- * 2: rotate
- * -1: not use
- */
-int effect_lr_delay_msec = 25;
 
 #ifndef atof
 extern double atof(const char *);
 #endif
 
 /*! copy bank and, if necessary, map appropriately */
-static void copybank(ToneBank *to, ToneBank *from, int mapid, int bankmapfrom, int bankno)
+static void copybank(struct timiditycontext_t *c, ToneBank *to, ToneBank *from, int mapid, int bankmapfrom, int bankno)
 {
 	ToneBankElement *toelm, *fromelm;
 	int i;
@@ -649,25 +629,25 @@ static void copybank(ToneBank *to, ToneBank *from, int mapid, int bankmapfrom, i
 		copy_tone_bank_element(toelm, fromelm);
 		toelm->instrument = NULL;
 		if (mapid != INST_NO_MAP)
-		    set_instrument_map(mapid, bankmapfrom, i, bankno, i);
+		    set_instrument_map(c, mapid, bankmapfrom, i, bankno, i);
 	}
 }
 
 /*! copy the whole mapped bank. returns 0 if no error. */
-static int copymap(int mapto, int mapfrom, int isdrum)
+static int copymap(struct timiditycontext_t *c, int mapto, int mapfrom, int isdrum)
 {
-	ToneBank **tb = isdrum ? drumset : tonebank;
+	ToneBank **tb = isdrum ? c->drumset : c->tonebank;
 	int i, bankfrom, bankto;
 
 	for(i = 0; i < 128; i++)
 	{
-		bankfrom = find_instrument_map_bank(isdrum, mapfrom, i);
+		bankfrom = find_instrument_map_bank(c, isdrum, mapfrom, i);
 		if (bankfrom <= 0) /* not mapped */
 			continue;
-		bankto = alloc_instrument_map_bank(isdrum, mapto, i);
+		bankto = alloc_instrument_map_bank(c, isdrum, mapto, i);
 		if (bankto == -1) /* failed */
 			return 1;
-		copybank(tb[bankto], tb[bankfrom], mapto, i, bankto);
+		copybank(c, tb[bankto], tb[bankfrom], mapto, i, bankto);
 	}
 	return 0;
 }
@@ -750,7 +730,7 @@ static int **config_parse_envelope(const char *cp, int *num)
 	return env_list;
 }
 
-static Quantity **config_parse_modulation(const char *name, int line, const char *cp, int *num, int mod_type)
+static Quantity **config_parse_modulation(struct timiditycontext_t *c, const char *name, int line, const char *cp, int *num, int mod_type)
 {
 	const char *p, *px, *err;
 	char buf[128], *delim;
@@ -783,7 +763,7 @@ static Quantity **config_parse_modulation(const char *name, int line, const char
 				continue;
 			if ((delim = strpbrk(strncpy(buf, p, sizeof buf - 1), ":,")) != NULL)
 				*delim = '\0';
-			if (*buf != '\0' && (err = string_to_quantity(buf, &mod_list[i][j], qtypes[mod_type * 3 + j])) != NULL) {
+			if (*buf != '\0' && (err = string_to_quantity(c, buf, &mod_list[i][j], qtypes[mod_type * 3 + j])) != NULL) {
 				ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: %s: parameter %d of item %d: %s (%s)",
 						name, line, qtypestr[mod_type], j+1, i+1, err, buf);
 				free_ptr_list(mod_list, *num);
@@ -802,7 +782,7 @@ static Quantity **config_parse_modulation(const char *name, int line, const char
 	return mod_list;
 }
 
-static int set_gus_patchconf_opts(char *name,
+static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 		int line, char *opts, ToneBankElement *tone)
 {
 	char *cp;
@@ -882,11 +862,11 @@ static int set_gus_patchconf_opts(char *name,
 			return 1;
 		}
 	} else if (! strcmp(opts, "tremolo")) {
-		if ((tone->trem = config_parse_modulation(name,
+		if ((tone->trem = config_parse_modulation(c, name,
 				line, cp, &tone->tremnum, 0)) == NULL)
 			return 1;
 	} else if (! strcmp(opts, "vibrato")) {
-		if ((tone->vib = config_parse_modulation(name,
+		if ((tone->vib = config_parse_modulation(c, name,
 				line, cp, &tone->vibnum, 1)) == NULL)
 			return 1;
 	} else if (! strcmp(opts, "sclnote"))
@@ -958,7 +938,7 @@ static void reinit_tone_bank_element(ToneBankElement *tone)
 }
 
 #define SET_GUS_PATCHCONF_COMMENT
-static int set_gus_patchconf(char *name, int line,
+static int set_gus_patchconf(struct timiditycontext_t *c, char *name, int line,
 			     ToneBankElement *tone, char *pat, char **opts)
 {
     int j;
@@ -1036,7 +1016,7 @@ static int set_gus_patchconf(char *name, int line,
     for(j = 0; opts[j] != NULL; j++)
     {
 	int err;
-	if((err = set_gus_patchconf_opts(name, line, opts[j], tone)) != 0)
+	if((err = set_gus_patchconf_opts(c, name, line, opts[j], tone)) != 0)
     {
 #ifdef SET_GUS_PATCHCONF_COMMENT
         if(old_name != NULL)
@@ -1063,13 +1043,13 @@ static int set_gus_patchconf(char *name, int line,
     return 0;
 }
 
-static int set_patchconf(char *name, int line, ToneBank *bank, char *w[], int dr, int mapid, int bankmapfrom, int bankno)
+static int set_patchconf(struct timiditycontext_t *c, char *name, int line, ToneBank *bank, char *w[], int dr, int mapid, int bankmapfrom, int bankno)
 {
     int i;
 
     i = atoi(w[0]);
     if(!dr)
-	i -= progbase;
+	i -= c->progbase;
     if(i < 0 || i > 127)
     {
 	if(dr)
@@ -1081,7 +1061,7 @@ static int set_patchconf(char *name, int line, ToneBank *bank, char *w[], int dr
 	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		      "%s: line %d: Program must be between "
 		      "%d and %d",
-		      name, line, progbase, 127 + progbase);
+		      name, line, c->progbase, 127 + c->progbase);
 	return 1;
     }
     if(!bank)
@@ -1092,10 +1072,10 @@ static int set_patchconf(char *name, int line, ToneBank *bank, char *w[], int dr
 	return 1;
     }
 
-    if(set_gus_patchconf(name, line, &bank->tone[i], w[1], w + 2))
+    if(set_gus_patchconf(c, name, line, &bank->tone[i], w[1], w + 2))
 	return 1;
     if (mapid != INST_NO_MAP)
-	set_instrument_map(mapid, bankmapfrom, i, bankno, i);
+	set_instrument_map(c, mapid, bankmapfrom, i, bankno, i);
     return 0;
 }
 
@@ -1152,7 +1132,7 @@ static int strip_trailing_comment(char *string, int next_token_index)
     return next_token_index;
 }
 
-static char *expand_variables(char *string, MBlockList *varbuf, const char *basedir)
+static char *expand_variables(struct timiditycontext_t *c, char *string, MBlockList *varbuf, const char *basedir)
 {
 	char *p, *expstr;
 	const char *copystr;
@@ -1171,7 +1151,7 @@ static char *expand_variables(char *string, MBlockList *varbuf, const char *base
 		if (explen + copylen + 1 > limlen)
 		{
 			limlen += copylen + 128;
-			expstr = memcpy(new_segment(varbuf, limlen), expstr, explen);
+			expstr = memcpy(new_segment(c, varbuf, limlen), expstr, explen);
 		}
 		memcpy(&expstr[explen], copystr, copylen);
 		explen += copylen;
@@ -1226,20 +1206,20 @@ static char *expand_variables(char *string, MBlockList *varbuf, const char *base
   if(++errcnt >= 10) { \
     ctl->cmsg(CMSG_ERROR, VERB_NORMAL, \
       "Too many errors... Give up read %s", name); \
-    reuse_mblock(&varbuf); \
-    close_file(tf); return 1; }
+    reuse_mblock(c, &varbuf); \
+    close_file(c, tf); return 1; }
 
 #define READ_CONFIG_SUCCESS        0
 #define READ_CONFIG_ERROR          1
 #define READ_CONFIG_RECURSION      2 /* Too much recursion */
 #define READ_CONFIG_FILE_NOT_FOUND 3 /* Returned only w. allow_missing_file */
-MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file)
+#define rcf_count c->read_config_file_rcf_count
+MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int self, int allow_missing_file)
 {
     struct timidity_file *tf;
     char buf[1024], *tmp, *w[MAXWORDS + 1], *cp;
     ToneBank *bank = NULL;
     int i, j, k, line = 0, words, errcnt = 0;
-    static int rcf_count = 0;
     int dr = 0, bankno = 0, mapid = INST_NO_MAP, origbankno = 0x7FFFFFFF;
     int extension_flag, param_parse_err;
     MBlockList varbuf;
@@ -1254,11 +1234,11 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 
     if(self)
     {
-	tf = open_with_mem(name, (int32)strlen(name), OF_VERBOSE);
+	tf = open_with_mem(c, name, (int32)strlen(name), OF_VERBOSE);
 	name = "(configuration)";
     }
     else
-	tf = open_file(name, 1, allow_missing_file ? OF_NORMAL : OF_VERBOSE);
+	tf = open_file(c, name, 1, allow_missing_file ? OF_NORMAL : OF_VERBOSE);
     if(tf == NULL)
 	return allow_missing_file ? READ_CONFIG_FILE_NOT_FOUND :
 	                            READ_CONFIG_ERROR;
@@ -1266,7 +1246,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
     init_mblock(&varbuf);
     if (!self)
     {
-	basedir = strdup_mblock(&varbuf, current_filename);
+	basedir = strdup_mblock(c, &varbuf, c->current_filename);
 	if (is_url_prefix(basedir))
 	    sep = strrchr(basedir, '/');
 	else
@@ -1290,7 +1270,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
     }
 
     errno = 0;
-    while(tf_gets(buf, sizeof(buf), tf))
+    while(tf_gets(c, buf, sizeof(buf), tf))
     {
 	line++;
 	if(strncmp(buf, "#extension", 10) == 0) {
@@ -1307,7 +1287,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	    i++;
 	if (buf[i] == '#' || buf[i] == '\0')	/* /^#|^$/ */
 	    continue;
-	tmp = expand_variables(buf, &varbuf, basedir);
+	tmp = expand_variables(c, buf, &varbuf, basedir);
 	j = strcspn(tmp + i, " \t\r\n\240");
 	if (j == 0)
 		j = strlen(tmp + i);
@@ -1455,7 +1435,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		CHECKERRLIMIT;
 		continue;
 	    }
-	    copybank(bank, drumset[i], mapid, origbankno, bankno);
+	    copybank(c, bank, c->drumset[i], mapid, origbankno, bankno);
 	}
 	/* #extension copybank bank */
 	else if(strcmp(w[0], "copybank") == 0)
@@ -1485,7 +1465,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		CHECKERRLIMIT;
 		continue;
 	    }
-	    copybank(bank, tonebank[i], mapid, origbankno, bankno);
+	    copybank(c, bank, c->tonebank[i], mapid, origbankno, bankno);
 	}
 	/* #extension copymap tomapid frommapid */
 	else if(strcmp(w[0], "copymap") == 0)
@@ -1521,7 +1501,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		CHECKERRLIMIT;
 		continue;
 	    }
-	    if (copymap(mapto, mapfrom, toisdrum))
+	    if (copymap(c, mapto, mapfrom, toisdrum))
 	    {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No free %s available to map",
@@ -1660,7 +1640,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	}
 	/* #extension opt [-]{option}[optarg] */
 	else if (strcmp(w[0], "opt") == 0) {
-		int c, longind, err;
+		int ch, longind, err;
 		char *p, *cmd, *arg;
 
 		if (words != 2 && words != 3) {
@@ -1675,19 +1655,19 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 #if defined(__CYGWIN__)
 			optreset = 1;
 #endif
-			c = getopt_long(words, w, optcommands, longopts, &longind);
-			err = set_tim_opt_long(c, optarg, longind);
+			ch = getopt_long(words, w, optcommands, longopts, &longind);
+			err = set_tim_opt_long(c, ch, optarg, longind);
 			optind = optind_save;
 		} else {
 			/* backward compatibility */
-			if ((p = strchr(optcommands, c = *(cmd = w[1]))) == NULL)
+			if ((p = strchr(optcommands, ch = *(cmd = w[1]))) == NULL)
 				err = 1;
 			else {
 				if (*(p + 1) == ':')
 					arg = (words == 2) ? cmd + 1 : w[2];
 				else
 					arg = "";
-				err = set_tim_opt_short(c, arg);
+				err = set_tim_opt_short(c, ch, arg);
 			}
 		}
 		if (err) {
@@ -1759,7 +1739,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		continue;
 	    }
 
-	    bk = drumset[bankno];
+	    bk = c->drumset[bankno];
 	    bk->alt = add_altassign_string(bk->alt, w + 1, words - 1);
 	}	/* #extension legato [program] [0 or 1] */
 	else if(strcmp(w[0], "legato") == 0)
@@ -2097,9 +2077,9 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		}
 	    }
 	    if(isremove)
-		remove_soundfont(sf_file);
+		remove_soundfont(c, sf_file);
 	    else
-		add_soundfont(sf_file, order, cutoff, reso, amp);
+		add_soundfont(c, sf_file, order, cutoff, reso, amp);
 	}
 	else if(!strcmp(w[0], "font"))
 	{
@@ -2123,14 +2103,14 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		}
 		bank = atoi(w[2]);
 		if(words >= 4)
-		    preset = atoi(w[3]) - progbase;
+		    preset = atoi(w[3]) - c->progbase;
 		else
 		    preset = -1;
 		if(words >= 5)
 		    keynote = atoi(w[4]);
 		else
 		    keynote = -1;
-		if(exclude_soundfont(bank, preset, keynote))
+		if(exclude_soundfont(c, bank, preset, keynote))
 		{
 		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: No soundfont is given",
@@ -2152,14 +2132,14 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		order = atoi(w[2]);
 		bank = atoi(w[3]);
 		if(words >= 5)
-		    preset = atoi(w[4]) - progbase;
+		    preset = atoi(w[4]) - c->progbase;
 		else
 		    preset = -1;
 		if(words >= 6)
 		    keynote = atoi(w[5]);
 		else
 		    keynote = -1;
-		if(order_soundfont(bank, preset, keynote, order))
+		if(order_soundfont(c, bank, preset, keynote, order))
 		{
 		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: No soundfont is given",
@@ -2177,7 +2157,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		CHECKERRLIMIT;
 		continue;
 	    }
-	    progbase = atoi(w[1]);
+	    c->progbase = atoi(w[1]);
 	}
 	else if(!strcmp(w[0], "map")) /* map <name> set1 elem1 set2 elem2 */
 	{
@@ -2201,13 +2181,13 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		arg[i - 1] = atoi(w[i]);
 	    if(isdrum)
 	    {
-		arg[1] -= progbase;
-		arg[3] -= progbase;
+		arg[1] -= c->progbase;
+		arg[3] -= c->progbase;
 	    }
 	    else
 	    {
-		arg[2] -= progbase;
-		arg[4] -= progbase;
+		arg[2] -= c->progbase;
+		arg[4] -= c->progbase;
 	    }
 
 	    for(i = 1; i < 5; i++)
@@ -2220,7 +2200,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		CHECKERRLIMIT;
 		continue;
 	    }
-	    set_instrument_map(arg[0], arg[1], arg[2], arg[3], arg[4]);
+	    set_instrument_map(c, arg[0], arg[1], arg[2], arg[3], arg[4]);
 	}
 
 	/*
@@ -2236,7 +2216,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		continue;
 	    }
 	    for(i = 1; i < words; i++)
-		add_to_pathlist(w[i]);
+		add_to_pathlist(c, w[i]);
 	}
 	else if(!strcmp(w[0], "source") || !strcmp(w[0], "trysource"))
 	{
@@ -2251,7 +2231,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	    {
 		int status;
 		rcf_count++;
-		status = read_config_file(w[i], 0, !strcmp(w[0], "trysource"));
+		status = read_config_file(c, w[i], 0, !strcmp(w[0], "trysource"));
 		rcf_count--;
 		switch (status) {
 		case READ_CONFIG_SUCCESS:
@@ -2260,8 +2240,8 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		    CHECKERRLIMIT;
 		    continue;
 		case READ_CONFIG_RECURSION:
-		    reuse_mblock(&varbuf);
-		    close_file(tf);
+		    reuse_mblock(c, &varbuf);
+		    close_file(c, tf);
 		    return READ_CONFIG_RECURSION;
 		case READ_CONFIG_FILE_NOT_FOUND:
 		    break;
@@ -2278,9 +2258,9 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		CHECKERRLIMIT;
 		continue;
 	    }
-	    strncpy(def_instr_name, w[1], 255);
-	    def_instr_name[255] = '\0';
-	    default_instrument_name = def_instr_name;
+	    strncpy(c->def_instr_name, w[1], 255);
+	    c->def_instr_name[255] = '\0';
+	    c->default_instrument_name = c->def_instr_name;
 	}
 	/* drumset [mapid] num */
 	else if(!strcmp(w[0], "drumset"))
@@ -2308,19 +2288,19 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	    }
 	    else
 		newmapid = INST_NO_MAP;
-	    i = atoi(w[1]) - progbase;
+	    i = atoi(w[1]) - c->progbase;
 	    if(i < 0 || i > 127)
 	    {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Drum set must be between %d and %d",
 			  name, line,
-			  progbase, progbase + 127);
+			  c->progbase, c->progbase + 127);
 		CHECKERRLIMIT;
 		continue;
 	    }
 
 	    newbankno = i;
-	    i = alloc_instrument_map_bank(1, newmapid, i);
+	    i = alloc_instrument_map_bank(c, 1, newmapid, i);
 	    if (i == -1)
 	    {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -2332,7 +2312,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 
 	    if(words == 2)
 	    {
-		bank = drumset[i];
+		bank = c->drumset[i];
 		bankno = i;
 		mapid = newmapid;
 		origbankno = newbankno;
@@ -2347,7 +2327,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		    CHECKERRLIMIT;
 		    continue;
 		}
-		if (set_patchconf(name, line, drumset[i], &w[2], 1, newmapid, newbankno, i))
+		if (set_patchconf(c, name, line, c->drumset[i], &w[2], 1, newmapid, newbankno, i))
 		{
 		    CHECKERRLIMIT;
 		    continue;
@@ -2391,7 +2371,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 	    }
 
 	    newbankno = i;
-	    i = alloc_instrument_map_bank(0, newmapid, i);
+	    i = alloc_instrument_map_bank(c, 0, newmapid, i);
 	    if (i == -1)
 	    {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -2403,7 +2383,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 
 	    if(words == 2)
 	    {
-		bank = tonebank[i];
+		bank = c->tonebank[i];
 		bankno = i;
 		mapid = newmapid;
 		origbankno = newbankno;
@@ -2418,7 +2398,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		    CHECKERRLIMIT;
 		    continue;
 		}
-		if (set_patchconf(name, line, tonebank[i], &w[2], 0, newmapid, newbankno, i))
+		if (set_patchconf(c, name, line, c->tonebank[i], &w[2], 0, newmapid, newbankno, i))
 		{
 		    CHECKERRLIMIT;
 		    continue;
@@ -2436,7 +2416,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		CHECKERRLIMIT;
 		continue;
 	    }
-	    if (set_patchconf(name, line, bank, w, dr, mapid, origbankno, bankno))
+	    if (set_patchconf(c, name, line, bank, w, dr, mapid, origbankno, bankno))
 	    {
 		CHECKERRLIMIT;
 		continue;
@@ -2449,10 +2429,11 @@ MAIN_INTERFACE int read_config_file(char *name, int self, int allow_missing_file
 		  "Can't read %s: %s", name, strerror(errno));
 	errcnt++;
     }
-    reuse_mblock(&varbuf);
-    close_file(tf);
+    reuse_mblock(c, &varbuf);
+    close_file(c, tf);
     return (errcnt == 0) ? READ_CONFIG_SUCCESS : READ_CONFIG_ERROR;
 }
+#undef rcf_count
 
 #ifdef SUPPORT_SOCKET
 
@@ -2498,7 +2479,7 @@ static void init_mail_addr(void)
 }
 #endif /* SUPPORT_SOCKET */
 
-static int read_user_config_file(void)
+static int read_user_config_file(struct timiditycontext_t *c)
 {
     char *home;
     char path[BUFSIZ];
@@ -2520,49 +2501,49 @@ static int read_user_config_file(void)
 #ifdef __W32__
 /* timidity.cfg or _timidity.cfg or .timidity.cfg*/
     sprintf(path, "%s" PATH_STRING "timidity.cfg", home);
-    status = read_config_file(path, 0, 1);
+    status = read_config_file(c, path, 0, 1);
     if (status != READ_CONFIG_FILE_NOT_FOUND)
         return status;
 
     sprintf(path, "%s" PATH_STRING "_timidity.cfg", home);
-    status = read_config_file(path, 0, 1);
+    status = read_config_file(c, path, 0, 1);
     if (status != READ_CONFIG_FILE_NOT_FOUND)
         return status;
 #endif
 
     sprintf(path, "%s" PATH_STRING ".timidity.cfg", home);
-    status = read_config_file(path, 0, 1);
+    status = read_config_file(c, path, 0, 1);
     if (status != READ_CONFIG_FILE_NOT_FOUND)
         return status;
 
     return 0;
 }
 
-MAIN_INTERFACE void tmdy_free_config(void)
+MAIN_INTERFACE void tmdy_free_config(struct timiditycontext_t *c)
 {
-	free_tone_bank();
-	free_instrument_map();
-	clean_up_pathlist();
+	free_tone_bank(c);
+	free_instrument_map(c);
+	clean_up_pathlist(c);
 }
 
-int set_extension_modes(char *flag)
+int set_extension_modes(struct timiditycontext_t *c, char *flag)
 {
-	return parse_opt_E(flag);
+	return parse_opt_E(c, flag);
 }
 
-int set_ctl(char *cp)
+int set_ctl(struct timiditycontext_t *c, char *cp)
 {
 	return parse_opt_i(cp);
 }
 
-int set_play_mode(char *cp)
+int set_play_mode(struct timiditycontext_t *c, char *cp)
 {
-	return parse_opt_O(cp);
+	return parse_opt_O(c, cp);
 }
 
-int set_wrd(char *w)
+int set_wrd(struct timiditycontext_t *c, char *w)
 {
-	return parse_opt_W(w);
+	return parse_opt_W(c, w);
 }
 
 #ifdef __W32__
@@ -2571,63 +2552,58 @@ int opt_evil_mode = 0;
 int opt_rcpcv_dll = 0;
 #endif	/* SMFCONV */
 #endif	/* __W32__ */
-static int   try_config_again = 0;
-int32 opt_output_rate = 0;
-static char *opt_output_name = NULL;
-static StringTable opt_config_string;
 #ifdef SUPPORT_SOUNDSPEC
 static double spectrogram_update_sec = 0.0;
 #endif /* SUPPORT_SOUNDSPEC */
-int opt_buffer_fragments = -1;
 
-MAIN_INTERFACE int set_tim_opt_short(int c, char *optarg)
+MAIN_INTERFACE int set_tim_opt_short(struct timiditycontext_t *c, int ch, char *optarg)
 {
 	int err = 0;
 
-	switch (c) {
+	switch (ch) {
 	case '4':
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				"-4 option is obsoleted.  Please use -N");
 		return 1;
 	case 'A':
 		if (*optarg != ',' && *optarg != 'a')
-			err += parse_opt_A(optarg);
+			err += parse_opt_A(c, optarg);
 		if (strchr(optarg, ','))
-			err += parse_opt_drum_power(strchr(optarg, ',') + 1);
+			err += parse_opt_drum_power(c, strchr(optarg, ',') + 1);
 		if (strchr(optarg, 'a'))
-			opt_amp_compensation = 1;
+			c->opt_amp_compensation = 1;
 		return err;
 	case 'a':
-		antialiasing_allowed = 1;
+		c->antialiasing_allowed = 1;
 		break;
 	case 'B':
-		return parse_opt_B(optarg);
+		return parse_opt_B(c, optarg);
 	case 'C':
-		return parse_opt_C(optarg);
+		return parse_opt_C(c, optarg);
 	case 'c':
-		return parse_opt_c(optarg);
+		return parse_opt_c(c, optarg);
 	case 'D':
-		return parse_opt_D(optarg);
+		return parse_opt_D(c, optarg);
 	case 'd':
 		return parse_opt_d(optarg);
 	case 'E':
-		return parse_opt_E(optarg);
+		return parse_opt_E(c, optarg);
 	case 'e':
 		return parse_opt_e(optarg);
 	case 'F':
-		adjust_panning_immediately = (adjust_panning_immediately) ? 0 : 1;
+		c->adjust_panning_immediately = (c->adjust_panning_immediately) ? 0 : 1;
 		break;
 	case 'f':
-		fast_decay = (fast_decay) ? 0 : 1;
+		c->fast_decay = (c->fast_decay) ? 0 : 1;
 		break;
 	case 'G':
-		return parse_opt_G(optarg);
+		return parse_opt_G(c, optarg);
 	case 'g':
 		return parse_opt_g(optarg);
 	case 'H':
-		return parse_opt_H(optarg);
+		return parse_opt_H(c, optarg);
 	case 'h':
-		return parse_opt_h(optarg);
+		return parse_opt_h(c, optarg);
 	case 'I':
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				"-I option is obsoleted.  Please use -Ei");
@@ -2635,66 +2611,66 @@ MAIN_INTERFACE int set_tim_opt_short(int c, char *optarg)
 	case 'i':
 		return parse_opt_i(optarg);
 	case 'j':
-		opt_realtime_playing = (opt_realtime_playing) ? 0 : 1;
+		c->opt_realtime_playing = (c->opt_realtime_playing) ? 0 : 1;
 		break;
 	case 'K':
-		return parse_opt_K(optarg);
+		return parse_opt_K(c, optarg);
 	case 'k':
-		return parse_opt_k(optarg);
+		return parse_opt_k(c, optarg);
 	case 'L':
-		return parse_opt_L(optarg);
+		return parse_opt_L(c, optarg);
 	case 'M':
-		return parse_opt_M(optarg);
+		return parse_opt_M(c, optarg);
 	case 'm':
-		return parse_opt_m(optarg);
+		return parse_opt_m(c, optarg);
 	case 'N':
-		return parse_opt_N(optarg);
+		return parse_opt_N(c, optarg);
 	case 'O':
-		return parse_opt_O(optarg);
+		return parse_opt_O(c, optarg);
 	case 'o':
-		return parse_opt_o(optarg);
+		return parse_opt_o(c, optarg);
 	case 'P':
-		return parse_opt_P(optarg);
+		return parse_opt_P(c, optarg);
 	case 'p':
 		if (*optarg != 'a')
-			err += parse_opt_p(optarg);
+			err += parse_opt_p(c, optarg);
 		if (strchr(optarg, 'a'))
-			auto_reduce_polyphony = (auto_reduce_polyphony) ? 0 : 1;
+			c->auto_reduce_polyphony = (c->auto_reduce_polyphony) ? 0 : 1;
 		return err;
 	case 'Q':
-		return parse_opt_Q(optarg);
+		return parse_opt_Q(c, optarg);
 	case 'q':
-		return parse_opt_q(optarg);
+		return parse_opt_q(c, optarg);
 	case 'R':
-		return parse_opt_R(optarg);
+		return parse_opt_R(c, optarg);
 	case 'S':
-		return parse_opt_S(optarg);
+		return parse_opt_S(c, optarg);
 	case 's':
-		return parse_opt_s(optarg);
+		return parse_opt_s(c, optarg);
 	case 'T':
-		return parse_opt_T(optarg);
+		return parse_opt_T(c, optarg);
 	case 't':
-		return parse_opt_t(optarg);
+		return parse_opt_t(c, optarg);
 	case 'U':
-		free_instruments_afterwards = 1;
+		c->free_instruments_afterwards = 1;
 		break;
 	case 'V':
-		return parse_opt_volume_curve(optarg);
+		return parse_opt_volume_curve(c, optarg);
 	case 'v':
 		return parse_opt_v(optarg);
 	case 'W':
-		return parse_opt_W(optarg);
+		return parse_opt_W(c, optarg);
 #ifdef __W32__
 	case 'w':
 		return parse_opt_w(optarg);
 #endif
 	case 'x':
-		return parse_opt_x(optarg);
+		return parse_opt_x(c, optarg);
 	case 'Z':
 		if (strncmp(optarg, "pure", 4))
-			return parse_opt_Z(optarg);
+			return parse_opt_Z(c, optarg);
 		else
-			return parse_opt_Z1(optarg + 4);
+			return parse_opt_Z1(c, optarg + 4);
 	default:
 		return 1;
 	}
@@ -2702,107 +2678,107 @@ MAIN_INTERFACE int set_tim_opt_short(int c, char *optarg)
 }
 
 #ifdef __W32__
-MAIN_INTERFACE int set_tim_opt_short_cfg(int c, char *optarg)
+MAIN_INTERFACE int set_tim_opt_short_cfg(struct timiditycontext_t *c, int ch, char *optarg)
 {
-	switch (c) {
+	switch (ch) {
 	case 'c':
-		return parse_opt_c(optarg);
+		return parse_opt_c(c, optarg);
 	}
 	return 0;
 }
 #endif
 
 /* -------- getopt_long -------- */
-MAIN_INTERFACE int set_tim_opt_long(int c, char *optarg, int index)
+MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int ch, char *optarg, int index)
 {
 	const struct option *the_option = &(longopts[index]);
 	char *arg;
 
-	if (c == '?')	/* getopt_long failed parsing */
+	if (ch == '?')	/* getopt_long failed parsing */
 		parse_opt_fail(optarg);
-	else if (c < TIM_OPT_FIRST)
-		return set_tim_opt_short(c, optarg);
+	else if (ch < TIM_OPT_FIRST)
+		return set_tim_opt_short(c, ch, optarg);
 	if (! strncmp(the_option->name, "no-", 3))
 		arg = "no";		/* `reverse' switch */
 	else
 		arg = optarg;
-	switch (c) {
+	switch (ch) {
 	case TIM_OPT_VOLUME:
-		return parse_opt_A(arg);
+		return parse_opt_A(c, arg);
 	case TIM_OPT_DRUM_POWER:
-		return parse_opt_drum_power(arg);
+		return parse_opt_drum_power(c, arg);
 	case TIM_OPT_VOLUME_COMP:
-		return parse_opt_volume_comp(arg);
+		return parse_opt_volume_comp(c, arg);
 	case TIM_OPT_ANTI_ALIAS:
-		return parse_opt_a(arg);
+		return parse_opt_a(c, arg);
 	case TIM_OPT_BUFFER_FRAGS:
-		return parse_opt_B(arg);
+		return parse_opt_B(c, arg);
 	case TIM_OPT_CONTROL_RATIO:
-		return parse_opt_C(arg);
+		return parse_opt_C(c, arg);
 	case TIM_OPT_CONFIG_FILE:
-		return parse_opt_c(arg);
+		return parse_opt_c(c, arg);
 	case TIM_OPT_DRUM_CHANNEL:
-		return parse_opt_D(arg);
+		return parse_opt_D(c, arg);
 	case TIM_OPT_IFACE_PATH:
 		return parse_opt_d(arg);
 	case TIM_OPT_EXT:
-		return parse_opt_E(arg);
+		return parse_opt_E(c, arg);
 	case TIM_OPT_MOD_WHEEL:
-		return parse_opt_mod_wheel(arg);
+		return parse_opt_mod_wheel(c, arg);
 	case TIM_OPT_PORTAMENTO:
-		return parse_opt_portamento(arg);
+		return parse_opt_portamento(c, arg);
 	case TIM_OPT_VIBRATO:
-		return parse_opt_vibrato(arg);
+		return parse_opt_vibrato(c, arg);
 	case TIM_OPT_CH_PRESS:
-		return parse_opt_ch_pressure(arg);
+		return parse_opt_ch_pressure(c, arg);
 	case TIM_OPT_MOD_ENV:
-		return parse_opt_mod_env(arg);
+		return parse_opt_mod_env(c, arg);
 	case TIM_OPT_TRACE_TEXT:
-		return parse_opt_trace_text(arg);
+		return parse_opt_trace_text(c, arg);
 	case TIM_OPT_OVERLAP:
-		return parse_opt_overlap_voice(arg);
+		return parse_opt_overlap_voice(c, arg);
 	case TIM_OPT_TEMPER_CTRL:
-		return parse_opt_temper_control(arg);
+		return parse_opt_temper_control(c, arg);
 	case TIM_OPT_DEFAULT_MID:
-		return parse_opt_default_mid(arg);
+		return parse_opt_default_mid(c, arg);
 	case TIM_OPT_SYSTEM_MID:
-		return parse_opt_system_mid(arg);
+		return parse_opt_system_mid(c, arg);
 	case TIM_OPT_DEFAULT_BANK:
-		return parse_opt_default_bank(arg);
+		return parse_opt_default_bank(c, arg);
 	case TIM_OPT_FORCE_BANK:
-		return parse_opt_force_bank(arg);
+		return parse_opt_force_bank(c, arg);
 	case TIM_OPT_DEFAULT_PGM:
-		return parse_opt_default_program(arg);
+		return parse_opt_default_program(c, arg);
 	case TIM_OPT_FORCE_PGM:
-		return parse_opt_force_program(arg);
+		return parse_opt_force_program(c, arg);
 	case TIM_OPT_DELAY:
-		return parse_opt_delay(arg);
+		return parse_opt_delay(c, arg);
 	case TIM_OPT_CHORUS:
-		return parse_opt_chorus(arg);
+		return parse_opt_chorus(c, arg);
 	case TIM_OPT_REVERB:
-		return parse_opt_reverb(arg);
+		return parse_opt_reverb(c, arg);
 	case TIM_OPT_VOICE_LPF:
-		return parse_opt_voice_lpf(arg);
+		return parse_opt_voice_lpf(c, arg);
 	case TIM_OPT_NS:
-		return parse_opt_noise_shaping(arg);
+		return parse_opt_noise_shaping(c, arg);
 #ifndef FIXED_RESAMPLATION
 	case TIM_OPT_RESAMPLE:
-		return parse_opt_resample(arg);
+		return parse_opt_resample(c, arg);
 #endif
 	case TIM_OPT_EVIL:
 		return parse_opt_e(arg);
 	case TIM_OPT_FAST_PAN:
-		return parse_opt_F(arg);
+		return parse_opt_F(c, arg);
 	case TIM_OPT_FAST_DECAY:
-		return parse_opt_f(arg);
+		return parse_opt_f(c, arg);
 	case TIM_OPT_SEGMENT:
-		return parse_opt_G(arg);
+		return parse_opt_G(c, arg);
 	case TIM_OPT_SPECTROGRAM:
 		return parse_opt_g(arg);
 	case TIM_OPT_KEYSIG:
-		return parse_opt_H(arg);
+		return parse_opt_H(c, arg);
 	case TIM_OPT_HELP:
-		return parse_opt_h(arg);
+		return parse_opt_h(c, arg);
 	case TIM_OPT_INTERFACE:
 		return parse_opt_i(arg);
 	case TIM_OPT_VERBOSE:
@@ -2830,31 +2806,31 @@ MAIN_INTERFACE int set_tim_opt_long(int c, char *optarg, int index)
 		return parse_opt_rtsyn_latency(arg);
 #endif
 	case TIM_OPT_REALTIME_LOAD:
-		return parse_opt_j(arg);
+		return parse_opt_j(c, arg);
 	case TIM_OPT_ADJUST_KEY:
-		return parse_opt_K(arg);
+		return parse_opt_K(c, arg);
 	case TIM_OPT_VOICE_QUEUE:
-		return parse_opt_k(arg);
+		return parse_opt_k(c, arg);
 	case TIM_OPT_PATCH_PATH:
-		return parse_opt_L(arg);
+		return parse_opt_L(c, arg);
 	case TIM_OPT_PCM_FILE:
-		return parse_opt_M(arg);
+		return parse_opt_M(c, arg);
 	case TIM_OPT_DECAY_TIME:
-		return parse_opt_m(arg);
+		return parse_opt_m(c, arg);
 	case TIM_OPT_INTERPOLATION:
-		return parse_opt_N(arg);
+		return parse_opt_N(c, arg);
 	case TIM_OPT_OUTPUT_MODE:
-		return parse_opt_O(arg);
+		return parse_opt_O(c, arg);
 	case TIM_OPT_OUTPUT_STEREO:
 		if (! strcmp(the_option->name, "output-mono"))
 			/* --output-mono == --output-stereo=no */
 			arg = "no";
-		return parse_opt_output_stereo(arg);
+		return parse_opt_output_stereo(c, arg);
 	case TIM_OPT_OUTPUT_SIGNED:
 		if (! strcmp(the_option->name, "output-unsigned"))
 			/* --output-unsigned == --output-signed=no */
 			arg = "no";
-		return parse_opt_output_signed(arg);
+		return parse_opt_output_signed(c, arg);
 	case TIM_OPT_OUTPUT_BITWIDTH:
 		if (! strcmp(the_option->name, "output-16bit"))
 			arg = "16bit";
@@ -2862,7 +2838,7 @@ MAIN_INTERFACE int set_tim_opt_long(int c, char *optarg, int index)
 			arg = "24bit";
 		else if (! strcmp(the_option->name, "output-8bit"))
 			arg = "8bit";
-		return parse_opt_output_bitwidth(arg);
+		return parse_opt_output_bitwidth(c, arg);
 	case TIM_OPT_OUTPUT_FORMAT:
 		if (! strcmp(the_option->name, "output-linear"))
 			arg = "linear";
@@ -2870,9 +2846,9 @@ MAIN_INTERFACE int set_tim_opt_long(int c, char *optarg, int index)
 			arg = "ulaw";
 		else if (! strcmp(the_option->name, "output-alaw"))
 			arg = "alaw";
-		return parse_opt_output_format(arg);
+		return parse_opt_output_format(c, arg);
 	case TIM_OPT_OUTPUT_SWAB:
-		return parse_opt_output_swab(arg);
+		return parse_opt_output_swab(c, arg);
 #ifdef AU_FLAC
 	case TIM_OPT_FLAC_VERIFY:
 		return parse_opt_flac_verify(arg);
@@ -2902,149 +2878,149 @@ MAIN_INTERFACE int set_tim_opt_long(int c, char *optarg, int index)
 		return parse_opt_speex_nframes(arg);
 #endif /* AU_SPEEX */
 	case TIM_OPT_OUTPUT_FILE:
-		return parse_opt_o(arg);
+		return parse_opt_o(c, arg);
 	case TIM_OPT_PATCH_FILE:
-		return parse_opt_P(arg);
+		return parse_opt_P(c, arg);
 	case TIM_OPT_POLYPHONY:
-		return parse_opt_p(arg);
+		return parse_opt_p(c, arg);
 	case TIM_OPT_POLY_REDUCE:
-		return parse_opt_p1(arg);
+		return parse_opt_p1(c, arg);
 	case TIM_OPT_MUTE:
-		return parse_opt_Q(arg);
+		return parse_opt_Q(c, arg);
 	case TIM_OPT_TEMPER_MUTE:
-		return parse_opt_Q1(arg);
+		return parse_opt_Q1(c, arg);
 	case TIM_OPT_PRESERVE_SILENCE:
-		return parse_opt_preserve_silence(arg);
+		return parse_opt_preserve_silence(c, arg);
 	case TIM_OPT_AUDIO_BUFFER:
-		return parse_opt_q(arg);
+		return parse_opt_q(c, arg);
 	case TIM_OPT_CACHE_SIZE:
-		return parse_opt_S(arg);
+		return parse_opt_S(c, arg);
 	case TIM_OPT_SAMPLE_FREQ:
-		return parse_opt_s(arg);
+		return parse_opt_s(c, arg);
 	case TIM_OPT_ADJUST_TEMPO:
-		return parse_opt_T(arg);
+		return parse_opt_T(c, arg);
 	case TIM_OPT_CHARSET:
-		return parse_opt_t(arg);
+		return parse_opt_t(c, arg);
 	case TIM_OPT_UNLOAD_INST:
-		return parse_opt_U(arg);
+		return parse_opt_U(c, arg);
 	case TIM_OPT_VOLUME_CURVE:
-		return parse_opt_volume_curve(arg);
+		return parse_opt_volume_curve(c, arg);
 	case TIM_OPT_VERSION:
 		return parse_opt_v(arg);
 	case TIM_OPT_WRD:
-		return parse_opt_W(arg);
+		return parse_opt_W(c, arg);
 #ifdef __W32__
 	case TIM_OPT_RCPCV_DLL:
 		return parse_opt_w(arg);
 #endif
 	case TIM_OPT_CONFIG_STR:
-		return parse_opt_x(arg);
+		return parse_opt_x(c, arg);
 	case TIM_OPT_FREQ_TABLE:
-		return parse_opt_Z(arg);
+		return parse_opt_Z(c, arg);
 	case TIM_OPT_PURE_INT:
-		return parse_opt_Z1(arg);
+		return parse_opt_Z1(c, arg);
 	case TIM_OPT_MODULE:
-		return parse_opt_default_module(arg);
+		return parse_opt_default_module(c, arg);
 	default:
 		ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
-				"[BUG] Inconceivable case branch %d", c);
+				"[BUG] Inconceivable case branch %d", ch);
 		abort();
 	}
 }
 
 #ifdef __W32__
-MAIN_INTERFACE int set_tim_opt_long_cfg(int c, char *optarg, int index)
+MAIN_INTERFACE int set_tim_opt_long_cfg(struct timiditycontext_t *c, int ch, char *optarg, int index)
 {
 	const struct option *the_option = &(longopts[index]);
 	char *arg;
 
-	if (c == '?')	/* getopt_long failed parsing */
+	if (ch == '?')	/* getopt_long failed parsing */
 		parse_opt_fail(optarg);
-	else if (c < TIM_OPT_FIRST)
-		return set_tim_opt_short_cfg(c, optarg);
+	else if (ch < TIM_OPT_FIRST)
+		return set_tim_opt_short_cfg(c, ch, optarg);
 	if (! strncmp(the_option->name, "no-", 3))
 		arg = "no";		/* `reverse' switch */
 	else
 		arg = optarg;
-	switch (c) {
+	switch (ch) {
 	case TIM_OPT_CONFIG_FILE:
-		return parse_opt_c(arg);
+		return parse_opt_c(c, arg);
 	}
 	return 1;
 }
 #endif
 
-static inline int parse_opt_A(const char *arg)
+static inline int parse_opt_A(struct timiditycontext_t *c, const char *arg)
 {
 	/* amplify volume by n percent */
-	return set_val_i32(&amplification, atoi(arg), 0, MAX_AMPLIFICATION,
+	return set_val_i32(&c->amplification, atoi(arg), 0, MAX_AMPLIFICATION,
 			"Amplification");
 }
 
-static inline int parse_opt_drum_power(const char *arg)
+static inline int parse_opt_drum_power(struct timiditycontext_t *c, const char *arg)
 {
 	/* --drum-power */
-	return set_val_i32(&opt_drum_power, atoi(arg), 0, MAX_AMPLIFICATION,
+	return set_val_i32(&c->opt_drum_power, atoi(arg), 0, MAX_AMPLIFICATION,
 			"Drum power");
 }
 
-static inline int parse_opt_volume_comp(const char *arg)
+static inline int parse_opt_volume_comp(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]volume-compensation */
-	opt_amp_compensation = y_or_n_p(arg);
+	c->opt_amp_compensation = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_a(const char *arg)
+static inline int parse_opt_a(struct timiditycontext_t *c, const char *arg)
 {
-	antialiasing_allowed = y_or_n_p(arg);
+	c->antialiasing_allowed = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_B(const char *arg)
+static inline int parse_opt_B(struct timiditycontext_t *c, const char *arg)
 {
 	/* --buffer-fragments */
 	const char *p;
 
 	/* num */
 	if (*arg != ',') {
-		if (set_value(&opt_buffer_fragments, atoi(arg), 0, 1000,
+		if (set_value(&c->opt_buffer_fragments, atoi(arg), 0, 1000,
 				"Buffer Fragments (num)"))
 			return 1;
 	}
 	/* bits */
 	if ((p = strchr(arg, ',')) != NULL) {
-		if (set_value(&audio_buffer_bits, atoi(++p), 1, AUDIO_BUFFER_BITS,
+		if (set_value(&c->audio_buffer_bits, atoi(++p), 1, AUDIO_BUFFER_BITS,
 				"Buffer Fragments (bit)"))
 			return 1;
 	}
 	return 0;
 }
 
-static inline int parse_opt_C(const char *arg)
+static inline int parse_opt_C(struct timiditycontext_t *c, const char *arg)
 {
-	if (set_val_i32(&control_ratio, atoi(arg), 0, MAX_CONTROL_RATIO,
+	if (set_val_i32(&c->control_ratio, atoi(arg), 0, MAX_CONTROL_RATIO,
 			"Control ratio"))
 		return 1;
-	opt_control_ratio = control_ratio;
+	c->opt_control_ratio = c->control_ratio;
 	return 0;
 }
 
-static inline int parse_opt_c(char *arg)
+static inline int parse_opt_c(struct timiditycontext_t *c, char *arg)
 {
 #ifdef __W32__
-	if (got_a_configuration == 1)
+	if (c->got_a_configuration == 1)
 		return 0;
 #endif
-	if (read_config_file(arg, 0, 0))
+	if (read_config_file(c, arg, 0, 0))
 		return 1;
-	got_a_configuration = 1;
+	c->got_a_configuration = 1;
 	return 0;
 }
 
-static inline int parse_opt_D(const char *arg)
+static inline int parse_opt_D(struct timiditycontext_t *c, const char *arg)
 {
-	return set_channel_flag(&default_drumchannels, atoi(arg), "Drum channel");
+	return set_channel_flag(&c->default_drumchannels, atoi(arg), "Drum channel");
 }
 
 static inline int parse_opt_d(const char *arg)
@@ -3061,7 +3037,7 @@ static inline int parse_opt_d(const char *arg)
 #endif	/* IA_DYNAMIC */
 }
 
-static inline int parse_opt_E(char *arg)
+static inline int parse_opt_E(struct timiditycontext_t *c, char *arg)
 {
 	/* undocumented option --ext */
 	int err = 0;
@@ -3069,103 +3045,103 @@ static inline int parse_opt_E(char *arg)
 	while (*arg) {
 		switch (*arg) {
 		case 'w':
-			opt_modulation_wheel = 1;
+			c->opt_modulation_wheel = 1;
 			break;
 		case 'W':
-			opt_modulation_wheel = 0;
+			c->opt_modulation_wheel = 0;
 			break;
 		case 'p':
-			opt_portamento = 1;
+			c->opt_portamento = 1;
 			break;
 		case 'P':
-			opt_portamento = 0;
+			c->opt_portamento = 0;
 			break;
 		case 'v':
-			opt_nrpn_vibrato = 1;
+			c->opt_nrpn_vibrato = 1;
 			break;
 		case 'V':
-			opt_nrpn_vibrato = 0;
+			c->opt_nrpn_vibrato = 0;
 			break;
 		case 's':
-			opt_channel_pressure = 1;
+			c->opt_channel_pressure = 1;
 			break;
 		case 'S':
-			opt_channel_pressure = 0;
+			c->opt_channel_pressure = 0;
 			break;
 		case 'e':
-			opt_modulation_envelope = 1;
+			c->opt_modulation_envelope = 1;
 			break;
 		case 'E':
-			opt_modulation_envelope = 0;
+			c->opt_modulation_envelope = 0;
 			break;
 		case 't':
-			opt_trace_text_meta_event = 1;
+			c->opt_trace_text_meta_event = 1;
 			break;
 		case 'T':
-			opt_trace_text_meta_event = 0;
+			c->opt_trace_text_meta_event = 0;
 			break;
 		case 'o':
-			opt_overlap_voice_allow = 1;
+			c->opt_overlap_voice_allow = 1;
 			break;
 		case 'O':
-			opt_overlap_voice_allow = 0;
+			c->opt_overlap_voice_allow = 0;
 			break;
 		case 'z':
-			opt_temper_control = 1;
+			c->opt_temper_control = 1;
 			break;
 		case 'Z':
-			opt_temper_control = 0;
+			c->opt_temper_control = 0;
 			break;
 		case 'm':
-			if (parse_opt_default_mid(arg + 1))
+			if (parse_opt_default_mid(c, arg + 1))
 				err++;
 			arg += 2;
 			break;
 		case 'M':
-			if (parse_opt_system_mid(arg + 1))
+			if (parse_opt_system_mid(c, arg + 1))
 				err++;
 			arg += 2;
 			break;
 		case 'b':
-			if (parse_opt_default_bank(arg + 1))
+			if (parse_opt_default_bank(c, arg + 1))
 				err++;
 			while (isdigit(*(arg + 1)))
 				arg++;
 			break;
 		case 'B':
-			if (parse_opt_force_bank(arg + 1))
+			if (parse_opt_force_bank(c, arg + 1))
 				err++;
 			while (isdigit(*(arg + 1)))
 				arg++;
 			break;
 		case 'i':
-			if (parse_opt_default_program(arg + 1))
+			if (parse_opt_default_program(c, arg + 1))
 				err++;
 			while (isdigit(*(arg + 1)) || *(arg + 1) == '/')
 				arg++;
 			break;
 		case 'I':
-			if (parse_opt_force_program(arg + 1))
+			if (parse_opt_force_program(c, arg + 1))
 				err++;
 			while (isdigit(*(arg + 1)) || *(arg + 1) == '/')
 				arg++;
 			break;
 		case 'F':
 			if (strncmp(arg + 1, "delay=", 6) == 0) {
-				if (parse_opt_delay(arg + 7))
+				if (parse_opt_delay(c, arg + 7))
 					err++;
 			} else if (strncmp(arg + 1, "chorus=", 7) == 0) {
-				if (parse_opt_chorus(arg + 8))
+				if (parse_opt_chorus(c, arg + 8))
 					err++;
 			} else if (strncmp(arg + 1, "reverb=", 7) == 0) {
-				if (parse_opt_reverb(arg + 8))
+				if (parse_opt_reverb(c, arg + 8))
 					err++;
 			} else if (strncmp(arg + 1, "ns=", 3) == 0) {
-				if (parse_opt_noise_shaping(arg + 4))
+				if (parse_opt_noise_shaping(c, arg + 4))
 					err++;
 #ifndef FIXED_RESAMPLATION
 			} else if (strncmp(arg + 1, "resamp=", 7) == 0) {
-				if (parse_opt_resample(arg + 8))
+				if (parse_opt_resample(c, arg + 8))
 					err++;
 #endif
 			}
@@ -3186,63 +3162,63 @@ static inline int parse_opt_E(char *arg)
 	return err;
 }
 
-static inline int parse_opt_mod_wheel(const char *arg)
+static inline int parse_opt_mod_wheel(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]mod-wheel */
-	opt_modulation_wheel = y_or_n_p(arg);
+	c->opt_modulation_wheel = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_portamento(const char *arg)
+static inline int parse_opt_portamento(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]portamento */
-	opt_portamento = y_or_n_p(arg);
+	c->opt_portamento = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_vibrato(const char *arg)
+static inline int parse_opt_vibrato(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]vibrato */
-	opt_nrpn_vibrato = y_or_n_p(arg);
+	c->opt_nrpn_vibrato = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_ch_pressure(const char *arg)
+static inline int parse_opt_ch_pressure(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]ch-pressure */
-	opt_channel_pressure = y_or_n_p(arg);
+	c->opt_channel_pressure = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_mod_env(const char *arg)
+static inline int parse_opt_mod_env(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]mod-envelope */
-	opt_modulation_envelope = y_or_n_p(arg);
+	c->opt_modulation_envelope = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_trace_text(const char *arg)
+static inline int parse_opt_trace_text(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]trace-text-meta */
-	opt_trace_text_meta_event = y_or_n_p(arg);
+	c->opt_trace_text_meta_event = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_overlap_voice(const char *arg)
+static inline int parse_opt_overlap_voice(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]overlap-voice */
-	opt_overlap_voice_allow = y_or_n_p(arg);
+	c->opt_overlap_voice_allow = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_temper_control(const char *arg)
+static inline int parse_opt_temper_control(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]temper-control */
-	opt_temper_control = y_or_n_p(arg);
+	c->opt_temper_control = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_default_mid(char *arg)
+static inline int parse_opt_default_mid(struct timiditycontext_t *c, char *arg)
 {
 	/* --default-mid */
 	int val = str2mID(arg);
@@ -3251,11 +3227,11 @@ static inline int parse_opt_default_mid(char *arg)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Manufacture ID: Illegal value");
 		return 1;
 	}
-	opt_default_mid = val;
+	c->opt_default_mid = val;
 	return 0;
 }
 
-static inline int parse_opt_system_mid(char *arg)
+static inline int parse_opt_system_mid(struct timiditycontext_t *c, char *arg)
 {
 	/* --system-mid */
 	int val = str2mID(arg);
@@ -3264,28 +3240,28 @@ static inline int parse_opt_system_mid(char *arg)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Manufacture ID: Illegal value");
 		return 1;
 	}
-	opt_system_mid = val;
+	c->opt_system_mid = val;
 	return 0;
 }
 
-static inline int parse_opt_default_bank(const char *arg)
+static inline int parse_opt_default_bank(struct timiditycontext_t *c, const char *arg)
 {
 	/* --default-bank */
-	if (set_value(&default_tonebank, atoi(arg), 0, 0x7f, "Bank number"))
+	if (set_value(&c->default_tonebank, atoi(arg), 0, 0x7f, "Bank number"))
 		return 1;
-	special_tonebank = -1;
+	c->special_tonebank = -1;
 	return 0;
 }
 
-static inline int parse_opt_force_bank(const char *arg)
+static inline int parse_opt_force_bank(struct timiditycontext_t *c, const char *arg)
 {
 	/* --force-bank */
-	if (set_value(&special_tonebank, atoi(arg), 0, 0x7f, "Bank number"))
+	if (set_value(&c->special_tonebank, atoi(arg), 0, 0x7f, "Bank number"))
 		return 1;
 	return 0;
 }
 
-static inline int parse_opt_default_program(const char *arg)
+static inline int parse_opt_default_program(struct timiditycontext_t *c, const char *arg)
 {
 	/* --default-program */
 	int prog, i;
@@ -3296,46 +3272,46 @@ static inline int parse_opt_default_program(const char *arg)
 	if ((p = strchr(arg, '/')) != NULL) {
 		if (set_value(&i, atoi(++p), 1, MAX_CHANNELS, "Program channel"))
 			return 1;
-		default_program[i - 1] = prog;
+		c->default_program[i - 1] = prog;
 	} else
 		for (i = 0; i < MAX_CHANNELS; i++)
-			default_program[i] = prog;
+			c->default_program[i] = prog;
 	return 0;
 }
 
-static inline int parse_opt_force_program(const char *arg)
+static inline int parse_opt_force_program(struct timiditycontext_t *c, const char *arg)
 {
 	/* --force-program */
 	const char *p;
 	int i;
 
-	if (set_value(&def_prog, atoi(arg), 0, 0x7f, "Program number"))
+	if (set_value(&c->def_prog, atoi(arg), 0, 0x7f, "Program number"))
 		return 1;
 	if (ctl->opened)
-		set_default_program(def_prog);
+		set_default_program(c, c->def_prog);
 	if ((p = strchr(arg, '/')) != NULL) {
 		if (set_value(&i, atoi(++p), 1, MAX_CHANNELS, "Program channel"))
 			return 1;
-		default_program[i - 1] = SPECIAL_PROGRAM;
+		c->default_program[i - 1] = SPECIAL_PROGRAM;
 	} else
 		for (i = 0; i < MAX_CHANNELS; i++)
-			default_program[i] = SPECIAL_PROGRAM;
+			c->default_program[i] = SPECIAL_PROGRAM;
 	return 0;
 }
 
-static inline int set_default_program(int prog)
+static inline int set_default_program(struct timiditycontext_t *c, int prog)
 {
 	int bank;
 	Instrument *ip;
 
-	bank = (special_tonebank >= 0) ? special_tonebank : default_tonebank;
-	if ((ip = play_midi_load_instrument(0, bank, prog)) == NULL)
+	bank = (c->special_tonebank >= 0) ? c->special_tonebank : c->default_tonebank;
+	if ((ip = play_midi_load_instrument(c, 0, bank, prog)) == NULL)
 		return 1;
-	default_instrument = ip;
+	c->default_instrument = ip;
 	return 0;
 }
 
-static inline int parse_opt_delay(const char *arg)
+static inline int parse_opt_delay(struct timiditycontext_t *c, const char *arg)
 {
 	/* --delay */
 	const char *p;
@@ -3343,29 +3319,29 @@ static inline int parse_opt_delay(const char *arg)
 	switch (*arg) {
 	case '0':
 	case 'd':	/* disable */
-		effect_lr_mode = -1;
+		c->effect_lr_mode = -1;
 		return 0;
 	case 'l':	/* left */
-		effect_lr_mode = 0;
+		c->effect_lr_mode = 0;
 		break;
 	case 'r':	/* right */
-		effect_lr_mode = 1;
+		c->effect_lr_mode = 1;
 		break;
 	case 'b':	/* both */
-		effect_lr_mode = 2;
+		c->effect_lr_mode = 2;
 		break;
 	}
 	if ((p = strchr(arg, ',')) != NULL)
-		if ((effect_lr_delay_msec = atoi(++p)) < 0) {
-			effect_lr_delay_msec = 0;
-			effect_lr_mode = -1;
+		if ((c->effect_lr_delay_msec = atoi(++p)) < 0) {
+			c->effect_lr_delay_msec = 0;
+			c->effect_lr_mode = -1;
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid delay parameter.");
 			return 1;
 		}
 	return 0;
 }
 
-static inline int parse_opt_chorus(const char *arg)
+static inline int parse_opt_chorus(struct timiditycontext_t *c, const char *arg)
 {
 	/* --chorus */
 	const char *p;
@@ -3373,21 +3349,21 @@ static inline int parse_opt_chorus(const char *arg)
 	switch (*arg) {
 	case '0':
 	case 'd':	/* disable */
-		opt_chorus_control = 0;
-		opt_surround_chorus = 0;
+		c->opt_chorus_control = 0;
+		c->opt_surround_chorus = 0;
 		break;
 	case '1':
 	case 'n':	/* normal */
 	case '2':
 	case 's':	/* surround */
-		opt_surround_chorus = (*arg == '2' || *arg == 's') ? 1 : 0;
+		c->opt_surround_chorus = (*arg == '2' || *arg == 's') ? 1 : 0;
 		if ((p = strchr(arg, ',')) != NULL) {
-			if (set_value(&opt_chorus_control, atoi(++p), 0, 0x7f,
+			if (set_value(&c->opt_chorus_control, atoi(++p), 0, 0x7f,
 					"Chorus level"))
 				return 1;
-			opt_chorus_control = -opt_chorus_control;
+			c->opt_chorus_control = -c->opt_chorus_control;
 		} else
-			opt_chorus_control = 1;
+			c->opt_chorus_control = 1;
 		break;
 	default:
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid chorus parameter.");
@@ -3396,7 +3372,7 @@ static inline int parse_opt_chorus(const char *arg)
 	return 0;
 }
 
-static inline int parse_opt_reverb(const char *arg)
+static inline int parse_opt_reverb(struct timiditycontext_t *c, const char *arg)
 {
 	/* --reverb */
 	const char *p;
@@ -3428,34 +3404,34 @@ static inline int parse_opt_reverb(const char *arg)
 	switch (*arg) {
 	case '0':
 	case 'd':	/* disable */
-		opt_reverb_control = 0;
+		c->opt_reverb_control = 0;
 		break;
 	case '1':
 	case 'n':	/* normal */
 		if ((p = strchr(arg, ',')) != NULL) {
-			if (set_value(&opt_reverb_control, atoi(++p), 1, 0x7f,
+			if (set_value(&c->opt_reverb_control, atoi(++p), 1, 0x7f,
 					"Reverb level"))
 				return 1;
-			opt_reverb_control = -opt_reverb_control;
+			c->opt_reverb_control = - c->opt_reverb_control;
 		} else
-			opt_reverb_control = 1;
+			c->opt_reverb_control = 1;
 		break;
 	case '2':
 	case 'g':	/* global */
 		if ((p = strchr(arg, ',')) != NULL) {
-			if (set_value(&opt_reverb_control, atoi(++p), 1, 0x7f,
+			if (set_value(&c->opt_reverb_control, atoi(++p), 1, 0x7f,
 					"Reverb level"))
 				return 1;
-			opt_reverb_control = -opt_reverb_control - 128;
+			c->opt_reverb_control = - c->opt_reverb_control - 128;
 		} else
-			opt_reverb_control = 2;
+			c->opt_reverb_control = 2;
 		break;
 	case '3':
 	case 'f':	/* freeverb */
-		return parse_opt_reverb_freeverb(arg, 'f');
+		return parse_opt_reverb_freeverb(c, arg, 'f');
 	case '4':
 	case 'G':	/* global freeverb */
-		return parse_opt_reverb_freeverb(arg, 'G');
+		return parse_opt_reverb_freeverb(c, arg, 'G');
 	default:
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid reverb parameter.");
 		return 1;
@@ -3463,7 +3439,7 @@ static inline int parse_opt_reverb(const char *arg)
 	return 0;
 }
 
-static int parse_opt_reverb_freeverb(const char *arg, char type)
+static int parse_opt_reverb_freeverb(struct timiditycontext_t *c, const char *arg, char type)
 {
 	const char *p;
 
@@ -3473,22 +3449,22 @@ static int parse_opt_reverb_freeverb(const char *arg, char type)
 		p = "";
 	/* reverb level */
 	if (*p && *p != ',') {
-		if (set_value(&opt_reverb_control, atoi(p), 1, 0x7f,
+		if (set_value(&c->opt_reverb_control, atoi(p), 1, 0x7f,
 				"Reverb level"))
 			return 1;
 		if (type == 'f')
-			opt_reverb_control = -opt_reverb_control - 256;
+			c->opt_reverb_control = - c->opt_reverb_control - 256;
 		else
-			opt_reverb_control = -opt_reverb_control - 384;
+			c->opt_reverb_control = - c->opt_reverb_control - 384;
 	} else
-		opt_reverb_control = (type == 'f') ? 3 : 4;
+		c->opt_reverb_control = (type == 'f') ? 3 : 4;
 	if ((p = strchr(p, ',')) == NULL)
 		return 0;
 	p++;
 	/* ranges 0..10 below determined just to reject an extreme value */
 	/* scaleroom */
 	if (*p && *p != ',') {
-		if (parse_val_float_t(&freeverb_scaleroom, p, 0, 10,
+		if (parse_val_float_t(&c->freeverb_scaleroom, p, 0, 10,
 				"Freeverb scaleroom", 1))
 			return 1;
 	}
@@ -3497,7 +3473,7 @@ static int parse_opt_reverb_freeverb(const char *arg, char type)
 	p++;
 	/* offsetroom */
 	if (*p && *p != ',') {
-		if (parse_val_float_t(&freeverb_offsetroom, p, 0, 10,
+		if (parse_val_float_t(&c->freeverb_offsetroom, p, 0, 10,
 				"Freeverb offsetroom", 1))
 			return 1;
 	}
@@ -3511,26 +3487,26 @@ static int parse_opt_reverb_freeverb(const char *arg, char type)
 		if (set_val_i32(&value, atoi(p), 0, 1000,
 				"Freeverb predelay factor"))
 			return 1;
-		reverb_predelay_factor = value / 100.0;
+		c->reverb_predelay_factor = value / 100.0;
 	}
 	return 0;
 }
 
-static inline int parse_opt_voice_lpf(const char *arg)
+static inline int parse_opt_voice_lpf(struct timiditycontext_t *c, const char *arg)
 {
 	/* --voice-lpf */
 	switch (*arg) {
 	case '0':
 	case 'd':	/* disable */
-		opt_lpf_def = 0;
+		c->opt_lpf_def = 0;
 		break;
 	case '1':
 	case 'c':	/* chamberlin */
-		opt_lpf_def = 1;
+		c->opt_lpf_def = 1;
 		break;
 	case '2':
 	case 'm':	/* moog */
-		opt_lpf_def = 2;
+		c->opt_lpf_def = 2;
 		break;
 	default:
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid voice LPF type %s", arg);
@@ -3542,41 +3518,41 @@ static inline int parse_opt_voice_lpf(const char *arg)
 /* Noise Shaping filter from
  * Kunihiko IMAI <imai@leo.ec.t.kanazawa-u.ac.jp>
  */
-static inline int parse_opt_noise_shaping(const char *arg)
+static inline int parse_opt_noise_shaping(struct timiditycontext_t *c, const char *arg)
 {
 	/* --noise-shaping */
-	if (set_value(&noise_sharp_type, atoi(arg), 0, 4, "Noise shaping type"))
+	if (set_value(&c->noise_sharp_type, atoi(arg), 0, 4, "Noise shaping type"))
 		return 1;
 	return 0;
 }
 
-static inline int parse_opt_resample(const char *arg)
+static inline int parse_opt_resample(struct timiditycontext_t *c, const char *arg)
 {
 	/* --resample */
 	switch (*arg) {
 	case '0':
 	case 'd':	/* disable */
-		set_current_resampler(RESAMPLE_NONE);
+		set_current_resampler(c, RESAMPLE_NONE);
 		break;
 	case '1':
 	case 'l':	/* linear */
-		set_current_resampler(RESAMPLE_LINEAR);
+		set_current_resampler(c, RESAMPLE_LINEAR);
 		break;
 	case '2':
 	case 'c':	/* cspline */
-		set_current_resampler(RESAMPLE_CSPLINE);
+		set_current_resampler(c, RESAMPLE_CSPLINE);
 		break;
 	case '3':
 	case 'L':	/* lagrange */
-		set_current_resampler(RESAMPLE_LAGRANGE);
+		set_current_resampler(c, RESAMPLE_LAGRANGE);
 		break;
 	case '4':
 	case 'n':	/* newton */
-		set_current_resampler(RESAMPLE_NEWTON);
+		set_current_resampler(c, RESAMPLE_NEWTON);
 		break;
 	case '5':
 	case 'g':	/* guass */
-		set_current_resampler(RESAMPLE_GAUSS);
+		set_current_resampler(c, RESAMPLE_GAUSS);
 		break;
 	default:
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid resample type %s", arg);
@@ -3597,19 +3573,19 @@ static inline int parse_opt_e(const char *arg)
 #endif /* __W32__ */
 }
 
-static inline int parse_opt_F(const char *arg)
+static inline int parse_opt_F(struct timiditycontext_t *c, const char *arg)
 {
-	adjust_panning_immediately = y_or_n_p(arg);
+	c->adjust_panning_immediately = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_f(const char *arg)
+static inline int parse_opt_f(struct timiditycontext_t *c, const char *arg)
 {
-	fast_decay = y_or_n_p(arg);
+	c->fast_decay = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_G(const char *arg)
+static inline int parse_opt_G(struct timiditycontext_t *c, const char *arg)
 {
 	/* play just sub-segment(s) (seconds) */
 	TimeSegment *sp;
@@ -3617,22 +3593,22 @@ static inline int parse_opt_G(const char *arg)
 	int prev_end;
 
 	if (strchr(arg, 'm'))
-		return parse_opt_G1(arg);
-	if (time_segments == NULL) {
-		time_segments = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
-		time_segments->type = 0;
-		if (parse_segment(time_segments, p)) {
-			free_time_segments();
+		return parse_opt_G1(c, arg);
+	if (c->time_segments == NULL) {
+		c->time_segments = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
+		c->time_segments->type = 0;
+		if (parse_segment(c->time_segments, p)) {
+			free_time_segments(c);
 			return 1;
 		}
-		time_segments->prev = time_segments->next = NULL, sp = time_segments;
+		c->time_segments->prev = c->time_segments->next = NULL, sp = c->time_segments;
 	} else {
-		for (sp = time_segments; sp->next != NULL; sp = sp->next)
+		for (sp = c->time_segments; sp->next != NULL; sp = sp->next)
 			;
 		sp->next = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
 		sp->next->type = 0;
 		if (parse_segment(sp->next, p)) {
-			free_time_segments();
+			free_time_segments(c);
 			return 1;
 		}
 		sp->next->prev = sp, sp->next->next = NULL, sp = sp->next;
@@ -3641,22 +3617,22 @@ static inline int parse_opt_G(const char *arg)
 		sp->next = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
 		sp->next->type = 0;
 		if (parse_segment(sp->next, ++p)) {
-			free_time_segments();
+			free_time_segments(c);
 			return 1;
 		}
 		sp->next->prev = sp, sp->next->next = NULL, sp = sp->next;
 	}
 	prev_end = -1;
-	for (sp = time_segments; sp != NULL; sp = sp->next) {
+	for (sp = c->time_segments; sp != NULL; sp = sp->next) {
 		if (sp->type != 0)
 			continue;
 		if (sp->begin.s <= prev_end) {
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Segments must be ordered");
-			free_time_segments();
+			free_time_segments(c);
 			return 1;
 		} else if (sp->end.s != -1 && sp->begin.s >= sp->end.s) {
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Segment time must be ordered");
-			free_time_segments();
+			free_time_segments(c);
 			return 1;
 		}
 		prev_end = sp->end.s;
@@ -3664,28 +3640,28 @@ static inline int parse_opt_G(const char *arg)
 	return 0;
 }
 
-static inline int parse_opt_G1(const char *arg)
+static inline int parse_opt_G1(struct timiditycontext_t *c, const char *arg)
 {
 	/* play just sub-segment(s) (measure) */
 	TimeSegment *sp;
 	const char *p = arg;
 	int prev_end_meas, prev_end_beat;
 
-	if (time_segments == NULL) {
-		time_segments = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
-		time_segments->type = 1;
-		if (parse_segment2(time_segments, p)) {
-			free_time_segments();
+	if (c->time_segments == NULL) {
+		c->time_segments = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
+		c->time_segments->type = 1;
+		if (parse_segment2(c->time_segments, p)) {
+			free_time_segments(c);
 			return 1;
 		}
-		time_segments->prev = time_segments->next = NULL, sp = time_segments;
+		c->time_segments->prev = c->time_segments->next = NULL, sp = c->time_segments;
 	} else {
-		for (sp = time_segments; sp->next != NULL; sp = sp->next)
+		for (sp = c->time_segments; sp->next != NULL; sp = sp->next)
 			;
 		sp->next = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
 		sp->next->type = 1;
 		if (parse_segment2(sp->next, p)) {
-			free_time_segments();
+			free_time_segments(c);
 			return 1;
 		}
 		sp->next->prev = sp, sp->next->next = NULL, sp = sp->next;
@@ -3694,25 +3670,25 @@ static inline int parse_opt_G1(const char *arg)
 		sp->next = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
 		sp->next->type = 1;
 		if (parse_segment2(sp->next, ++p)) {
-			free_time_segments();
+			free_time_segments(c);
 			return 1;
 		}
 		sp->next->prev = sp, sp->next->next = NULL, sp = sp->next;
 	}
 	prev_end_meas = prev_end_beat = -1;
-	for (sp = time_segments; sp != NULL; sp = sp->next) {
+	for (sp = c->time_segments; sp != NULL; sp = sp->next) {
 		if (sp->type != 1)
 			continue;
 		if (sp->begin.m.meas * 16 + sp->begin.m.beat
 				<= prev_end_meas * 16 + prev_end_beat) {
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Segments must be ordered");
-			free_time_segments();
+			free_time_segments(c);
 			return 1;
 		} else if (sp->end.m.meas != -1 && sp->end.m.beat != -1
 				&& sp->begin.m.meas * 16 + sp->begin.m.beat
 				>= sp->end.m.meas * 16 + sp->end.m.beat) {
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Segment time must be ordered");
-			free_time_segments();
+			free_time_segments(c);
 			return 1;
 		}
 		prev_end_meas = sp->end.m.meas, prev_end_beat = sp->end.m.beat;
@@ -3808,7 +3784,7 @@ static inline int parse_opt_g(const char *arg)
 #endif	/* SUPPORT_SOUNDSPEC */
 }
 
-static inline int parse_opt_H(const char *arg)
+static inline int parse_opt_H(struct timiditycontext_t *c, const char *arg)
 {
 	/* force keysig (number of sharp/flat) */
 	int keysig;
@@ -3816,15 +3792,15 @@ static inline int parse_opt_H(const char *arg)
 	if (set_value(&keysig, atoi(arg), -7, 7,
 			"Force keysig (number of sHarp(+)/flat(-))"))
 		return 1;
-	opt_force_keysig = keysig;
+	c->opt_force_keysig = keysig;
 	return 0;
 }
 
 __attribute__((noreturn))
 #ifndef __BORLANDC__
-static inline int parse_opt_h(const char *arg)
+static inline int parse_opt_h(struct timiditycontext_t *c, const char *arg)
 #else
-static int parse_opt_h(const char *arg)
+static int parse_opt_h(struct timiditycontext_t *c, const char *arg)
 #endif
 {
 	static char *help_list[] = {
@@ -4109,7 +4085,7 @@ static int parse_opt_h(const char *arg)
 	strcpy(version, (strcmp(timidity_version, "current")) ? "version " : "");
 	strcat(version, timidity_version);
 	help_args[0] = version;
-	help_args[1] = program_name;
+	help_args[1] = c->program_name;
 	help_args[2] = NULL;
 	for (i = 0, j = 0; (h = help_list[i]) != NULL; i++) {
 		if (strchr(h, '%')) {
@@ -4524,64 +4500,64 @@ static inline int parse_opt_rtsyn_latency(const char *arg)
 }
 #endif
 
-static inline int parse_opt_j(const char *arg)
+static inline int parse_opt_j(struct timiditycontext_t *c, const char *arg)
 {
-	opt_realtime_playing = y_or_n_p(arg);
+	c->opt_realtime_playing = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_K(const char *arg)
+static inline int parse_opt_K(struct timiditycontext_t *c, const char *arg)
 {
 	/* key adjust */
-	if (set_value(&key_adjust, atoi(arg), -24, 24, "Key adjust"))
+	if (set_value(&c->key_adjust, atoi(arg), -24, 24, "Key adjust"))
 		return 1;
 	return 0;
 }
 
-static inline int parse_opt_k(const char *arg)
+static inline int parse_opt_k(struct timiditycontext_t *c, const char *arg)
 {
-	reduce_voice_threshold = atoi(arg);
+	c->reduce_voice_threshold = atoi(arg);
 	return 0;
 }
 
-static inline int parse_opt_L(char *arg)
+static inline int parse_opt_L(struct timiditycontext_t *c, char *arg)
 {
-	add_to_pathlist(arg);
-	try_config_again = 1;
+	add_to_pathlist(c, arg);
+	c->try_config_again = 1;
 	return 0;
 }
 
-static inline int parse_opt_M(const char *arg)
+static inline int parse_opt_M(struct timiditycontext_t *c, const char *arg)
 {
-	if (pcm_alternate_file)
-		free(pcm_alternate_file);
-	pcm_alternate_file = safe_strdup(arg);
+	if (c->pcm_alternate_file)
+		free(c->pcm_alternate_file);
+	c->pcm_alternate_file = safe_strdup(arg);
 	return 0;
 }
 
-static inline int parse_opt_m(const char *arg)
+static inline int parse_opt_m(struct timiditycontext_t *c, const char *arg)
 {
-	min_sustain_time = atoi(arg);
-	if (min_sustain_time < 0)
-		min_sustain_time = 0;
+	c->min_sustain_time = atoi(arg);
+	if (c->min_sustain_time < 0)
+		c->min_sustain_time = 0;
 	return 0;
 }
 
-static inline int parse_opt_N(const char *arg)
+static inline int parse_opt_N(struct timiditycontext_t *c, const char *arg)
 {
 	int val;
 
-	switch (get_current_resampler()) {
+	switch (get_current_resampler(c)) {
 	case RESAMPLE_CSPLINE:
 	case RESAMPLE_LAGRANGE:
-		no_4point_interpolation = y_or_n_p(arg);
+		c->no_4point_interpolation = y_or_n_p(arg);
 		break;
 	case RESAMPLE_NEWTON:
 	case RESAMPLE_GAUSS:
 		if (! (val = atoi(arg)))
 			/* set to linear interpolation for compatibility */
-			set_current_resampler(RESAMPLE_LINEAR);
-		else if (set_resampler_parm(val)) {
+			set_current_resampler(c, RESAMPLE_LINEAR);
+		else if (set_resampler_parm(c, val)) {
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid -N value");
 			return 1;
 		}
@@ -4590,7 +4566,7 @@ static inline int parse_opt_N(const char *arg)
 	return 0;
 }
 
-static inline int parse_opt_O(const char *arg)
+static inline int parse_opt_O(struct timiditycontext_t *c, const char *arg)
 {
 	/* output mode */
 	PlayMode *pmp, **pmpp;
@@ -4659,7 +4635,7 @@ static inline int parse_opt_O(const char *arg)
 	return 0;
 }
 
-static inline int parse_opt_output_stereo(const char *arg)
+static inline int parse_opt_output_stereo(struct timiditycontext_t *c, const char *arg)
 {
 	/* --output-stereo, --output-mono */
 	if (y_or_n_p(arg))
@@ -4674,7 +4650,7 @@ static inline int parse_opt_output_stereo(const char *arg)
 	return 0;
 }
 
-static inline int parse_opt_output_signed(const char *arg)
+static inline int parse_opt_output_signed(struct timiditycontext_t *c, const char *arg)
 {
 	/* --output-singed, --output-unsigned */
 	if (set_flag(&(play_mode->encoding), PE_SIGNED, arg))
@@ -4683,7 +4659,7 @@ static inline int parse_opt_output_signed(const char *arg)
 	return 0;
 }
 
-static inline int parse_opt_output_bitwidth(const char *arg)
+static inline int parse_opt_output_bitwidth(struct timiditycontext_t *c, const char *arg)
 {
 	/* --output-16bit, --output-24bit, --output-8bit */
 	switch (*arg) {
@@ -4704,7 +4680,7 @@ static inline int parse_opt_output_bitwidth(const char *arg)
 	}
 }
 
-static inline int parse_opt_output_format(const char *arg)
+static inline int parse_opt_output_format(struct timiditycontext_t *c, const char *arg)
 {
 	/* --output-linear, --output-ulaw, --output-alaw */
 	switch (*arg) {
@@ -4727,7 +4703,7 @@ static inline int parse_opt_output_format(const char *arg)
 	}
 }
 
-static inline int parse_opt_output_swab(const char *arg)
+static inline int parse_opt_output_swab(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]output-swab */
 	if (set_flag(&(play_mode->encoding), PE_BYTESWAP, arg))
@@ -4811,54 +4787,54 @@ static inline int parse_opt_speex_nframes(const char *arg)
 }
 #endif /* AU_SPEEX */
 
-static inline int parse_opt_o(char *arg)
+static inline int parse_opt_o(struct timiditycontext_t *c, char *arg)
 {
-	if (opt_output_name)
-		free(opt_output_name);
-	opt_output_name = safe_strdup(url_expand_home_dir(arg));
+	if (c->opt_output_name)
+		free(c->opt_output_name);
+	c->opt_output_name = safe_strdup(url_expand_home_dir(c, arg));
 	return 0;
 }
 
-static inline int parse_opt_P(const char *arg)
+static inline int parse_opt_P(struct timiditycontext_t *c, const char *arg)
 {
 	/* set overriding instrument */
-	strncpy(def_instr_name, arg, sizeof(def_instr_name) - 1);
-	def_instr_name[sizeof(def_instr_name) - 1] = '\0';
+	strncpy(c->def_instr_name, arg, sizeof(c->def_instr_name) - 1);
+	c->def_instr_name[sizeof(c->def_instr_name) - 1] = '\0';
 	return 0;
 }
 
-static inline int parse_opt_p(const char *arg)
+static inline int parse_opt_p(struct timiditycontext_t *c, const char *arg)
 {
-	if (set_value(&voices, atoi(arg), 1,
+	if (set_value(&c->voices, atoi(arg), 1,
 			MAX_SAFE_MALLOC_SIZE / sizeof(Voice), "Polyphony"))
 		return 1;
-	max_voices = voices;
+	c->max_voices = c->voices;
 	return 0;
 }
 
-static inline int parse_opt_p1(const char *arg)
+static inline int parse_opt_p1(struct timiditycontext_t *c, const char *arg)
 {
 	/* --[no-]polyphony-reduction */
-	auto_reduce_polyphony = y_or_n_p(arg);
+	c->auto_reduce_polyphony = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_Q(const char *arg)
+static inline int parse_opt_Q(struct timiditycontext_t *c, const char *arg)
 {
 	const char *p = arg;
 
 	if (strchr(arg, 't'))
 		/* backward compatibility */
-		return parse_opt_Q1(arg);
-	if (set_channel_flag(&quietchannels, atoi(arg), "Quiet channel"))
+		return parse_opt_Q1(c, arg);
+	if (set_channel_flag(&c->quietchannels, atoi(arg), "Quiet channel"))
 		return 1;
 	while ((p = strchr(p, ',')) != NULL)
-		if (set_channel_flag(&quietchannels, atoi(++p), "Quiet channel"))
+		if (set_channel_flag(&c->quietchannels, atoi(++p), "Quiet channel"))
 			return 1;
 	return 0;
 }
 
-static inline int parse_opt_Q1(const char *arg)
+static inline int parse_opt_Q1(struct timiditycontext_t *c, const char *arg)
 {
 	/* --temper-mute */
 	int prog;
@@ -4866,59 +4842,59 @@ static inline int parse_opt_Q1(const char *arg)
 
 	if (set_value(&prog, atoi(arg), 0, 7, "Temperament program number"))
 		return 1;
-	temper_type_mute |= 1 << prog;
+	c->temper_type_mute |= 1 << prog;
 	while ((p = strchr(p, ',')) != NULL) {
 		if (set_value(&prog, atoi(++p), 0, 7, "Temperament program number"))
 			return 1;
-		temper_type_mute |= 1 << prog;
+		c->temper_type_mute |= 1 << prog;
 	}
 	return 0;
 }
 
-static inline int parse_opt_preserve_silence(const char *arg)
+static inline int parse_opt_preserve_silence(struct timiditycontext_t *c, const char *arg)
 {
-	opt_preserve_silence = 1;
+	c->opt_preserve_silence = 1;
 	return 0;
 }
 
-static inline int parse_opt_q(const char *arg)
+static inline int parse_opt_q(struct timiditycontext_t *c, const char *arg)
 {
 	char *max_buff = safe_strdup(arg);
 	char *fill_buff = strchr(max_buff, '/');
 
 	if (fill_buff != max_buff) {
-		if (opt_aq_max_buff)
-			free(opt_aq_max_buff);
-		opt_aq_max_buff = max_buff;
+		if (c->opt_aq_max_buff)
+			free(c->opt_aq_max_buff);
+		c->opt_aq_max_buff = max_buff;
 	}
 	if (fill_buff) {
 		*fill_buff = '\0';
-		if (opt_aq_fill_buff)
-			free(opt_aq_fill_buff);
-		opt_aq_fill_buff = ++fill_buff;
-		opt_aq_fill_buff_free_needed = 0;
+		if (c->opt_aq_fill_buff)
+			free(c->opt_aq_fill_buff);
+		c->opt_aq_fill_buff = ++fill_buff;
+		c->opt_aq_fill_buff_free_not_needed = 1;
 	}
 	return 0;
 }
 
-static inline int parse_opt_R(const char *arg)
+static inline int parse_opt_R(struct timiditycontext_t *c, const char *arg)
 {
 	/* I think pseudo reverb can now be retired... Computers are
 	 * enough fast to do a full reverb, don't they?
 	 */
 	if (atoi(arg) == -1)	/* reset */
-		modify_release = 0;
+		c->modify_release = 0;
 	else {
-		if (set_val_i32(&modify_release, atoi(arg), 0, MAX_MREL,
+		if (set_val_i32(&c->modify_release, atoi(arg), 0, MAX_MREL,
 				"Modify Release"))
 			return 1;
-		if (modify_release == 0)
-			modify_release = DEFAULT_MREL;
+		if (c->modify_release == 0)
+			c->modify_release = DEFAULT_MREL;
 	}
 	return 0;
 }
 
-static inline int parse_opt_S(const char *arg)
+static inline int parse_opt_S(struct timiditycontext_t *c, const char *arg)
 {
 	int suffix = arg[strlen(arg) - 1];
 	int32 figure;
@@ -4936,47 +4912,47 @@ static inline int parse_opt_S(const char *arg)
 		figure = 1;
 		break;
 	}
-	allocate_cache_size = atof(arg) * figure;
+	c->allocate_cache_size = atof(arg) * figure;
 	return 0;
 }
 
-static inline int parse_opt_s(const char *arg)
+static inline int parse_opt_s(struct timiditycontext_t *c, const char *arg)
 {
 	/* sampling rate */
 	int32 freq;
 
 	if ((freq = atoi(arg)) < 100)
 		freq = atof(arg) * 1000 + 0.5;
-	return set_val_i32(&opt_output_rate, freq,
+	return set_val_i32(&c->opt_output_rate, freq,
 			MIN_OUTPUT_RATE, MAX_OUTPUT_RATE, "Resampling frequency");
 }
 
-static inline int parse_opt_T(const char *arg)
+static inline int parse_opt_T(struct timiditycontext_t *c, const char *arg)
 {
 	/* tempo adjust */
 	int adjust;
 
 	if (set_value(&adjust, atoi(arg), 10, 400, "Tempo adjust"))
 		return 1;
-	tempo_adjust = 100.0 / adjust;
+	c->tempo_adjust = 100.0 / adjust;
 	return 0;
 }
 
-static inline int parse_opt_t(const char *arg)
+static inline int parse_opt_t(struct timiditycontext_t *c, const char *arg)
 {
-	if (output_text_code)
-		free(output_text_code);
-	output_text_code = safe_strdup(arg);
+	if (c->output_text_code)
+		free(c->output_text_code);
+	c->output_text_code = safe_strdup(arg);
 	return 0;
 }
 
-static inline int parse_opt_U(const char *arg)
+static inline int parse_opt_U(struct timiditycontext_t *c, const char *arg)
 {
-	free_instruments_afterwards = y_or_n_p(arg);
+	c->free_instruments_afterwards = y_or_n_p(arg);
 	return 0;
 }
 
-static inline int parse_opt_volume_curve(char *arg)
+static inline int parse_opt_volume_curve(struct timiditycontext_t *c, char *arg)
 {
 	if (atof(arg) < 0) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -4984,8 +4960,8 @@ static inline int parse_opt_volume_curve(char *arg)
 		return 1;
 	}
 	if (atof(arg) != 0) {
-		init_user_vol_table(atof(arg));
-		opt_user_volume_curve = 1;
+		init_user_vol_table(c, atof(arg));
+		c->opt_user_volume_curve = 1;
 	}
 	return 0;
 }
@@ -5032,20 +5008,20 @@ static inline int parse_opt_v(const char *arg)
 	exit(EXIT_SUCCESS);
 }
 
-static inline int parse_opt_W(char *arg)
+static inline int parse_opt_W(struct timiditycontext_t *c, char *arg)
 {
 	const WRDTracer *wlp, **wlpp;
 
 	if (*arg == 'R') {	/* for WRD reader options */
-		put_string_table(&wrd_read_opts, arg + 1, strlen(arg + 1));
+		put_string_table(c, &c->wrd_read_opts, arg + 1, strlen(arg + 1));
 		return 0;
 	}
 	for (wlpp = wrdt_list; (wlp = *wlpp) != NULL; wlpp++)
 		if (wlp->id == *arg) {
 			wrdt = wlp;
-			if (wrdt_open_opts)
-				free(wrdt_open_opts);
-			wrdt_open_opts = safe_strdup(arg + 1);
+			if (c->wrdt_open_opts)
+				free(c->wrdt_open_opts);
+			c->wrdt_open_opts = safe_strdup(arg + 1);
 			return 0;
 		}
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -5078,11 +5054,11 @@ static inline int parse_opt_w(const char *arg)
 }
 #endif	/* __W32__ */
 
-static inline int parse_opt_x(char *arg)
+static inline int parse_opt_x(struct timiditycontext_t *c, char *arg)
 {
 	StringTableNode *st;
 
-	if ((st = put_string_table(&opt_config_string,
+	if ((st = put_string_table(c, &c->opt_config_string,
 			arg, strlen(arg))) != NULL)
 		expand_escape_string(st->string);
 	return 0;
@@ -5131,34 +5107,34 @@ static inline void expand_escape_string(char *s)
 	*t = *s;
 }
 
-static inline int parse_opt_Z(char *arg)
+static inline int parse_opt_Z(struct timiditycontext_t *c, char *arg)
 {
 	/* load frequency table */
-	return load_table(arg);
+	return load_table(c, arg);
 }
 
-static inline int parse_opt_Z1(const char *arg)
+static inline int parse_opt_Z1(struct timiditycontext_t *c, const char *arg)
 {
 	/* --pure-intonation */
 	int keysig;
 
-	opt_pure_intonation = 1;
+	c->opt_pure_intonation = 1;
 	if (*arg) {
 		if (set_value(&keysig, atoi(arg), -7, 7,
 				"Initial keysig (number of #(+)/b(-)[m(minor)])"))
 			return 1;
-		opt_init_keysig = keysig;
+		c->opt_init_keysig = keysig;
 		if (strchr(arg, 'm'))
-			opt_init_keysig += 16;
+			c->opt_init_keysig += 16;
 	}
 	return 0;
 }
 
-static inline int parse_opt_default_module(const char *arg)
+static inline int parse_opt_default_module(struct timiditycontext_t *c, const char *arg)
 {
-	opt_default_module = atoi(arg);
-	if (opt_default_module < 0)
-		opt_default_module = 0;
+	c->opt_default_module = atoi(arg);
+	if (c->opt_default_module < 0)
+		c->opt_default_module = 0;
 	return 0;
 }
 
@@ -5345,9 +5321,9 @@ static void sigterm_exit(int sig)
 }
 #endif /* HAVE_SIGNAL */
 
-static void timidity_arc_error_handler(char *error_message)
+static void timidity_arc_error_handler(struct timiditycontext_t *c, char *error_message)
 {
-    if(open_file_noise_mode)
+    if(c->open_file_noise_mode)
 	ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "%s", error_message);
 }
 
@@ -5366,11 +5342,11 @@ static PlayMode null_play_mode = {
     NULL                        /* detect */
 };
 
-MAIN_INTERFACE void timidity_start_initialize(void)
+#define is_not_first c->timidity_start_initialize_initialized
+MAIN_INTERFACE void timidity_start_initialize(struct timiditycontext_t *c)
 {
     int i;
     static const int drums[] = DEFAULT_DRUMCHANNELS;
-    static int is_first = 1;
 #if defined(__FreeBSD__) && !defined(__alpha__)
     fp_except_t fpexp;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
@@ -5382,12 +5358,12 @@ MAIN_INTERFACE void timidity_start_initialize(void)
     fpsetmask(fpexp & ~(FP_X_INV|FP_X_DZ));
 #endif
 
-    if(!output_text_code)
-	output_text_code = safe_strdup(OUTPUT_TEXT_CODE);
-    if(!opt_aq_max_buff)
-	opt_aq_max_buff = safe_strdup("5.0");
-    if(!opt_aq_fill_buff)
-	opt_aq_fill_buff = safe_strdup("100%");
+    if(!c->output_text_code)
+	c->output_text_code = safe_strdup(OUTPUT_TEXT_CODE);
+    if(!c->opt_aq_max_buff)
+	c->opt_aq_max_buff = safe_strdup("5.0");
+    if(!c->opt_aq_fill_buff)
+	c->opt_aq_fill_buff = safe_strdup("100%");
 
     /* Check the byte order */
     i = 1;
@@ -5403,35 +5379,35 @@ MAIN_INTERFACE void timidity_start_initialize(void)
 
     for(i = 0; i < MAX_CHANNELS; i++)
     {
-	memset(&(channel[i]), 0, sizeof(Channel));
+	memset(&(c->channel[i]), 0, sizeof(Channel));
     }
 
-    CLEAR_CHANNELMASK(quietchannels);
-    CLEAR_CHANNELMASK(default_drumchannels);
+    CLEAR_CHANNELMASK(c->quietchannels);
+    CLEAR_CHANNELMASK(c->default_drumchannels);
 
     for(i = 0; drums[i] > 0; i++)
-	SET_CHANNELMASK(default_drumchannels, drums[i] - 1);
+	SET_CHANNELMASK(c->default_drumchannels, drums[i] - 1);
 #if MAX_CHANNELS > 16
     for(i = 16; i < MAX_CHANNELS; i++)
-	if(IS_SET_CHANNELMASK(default_drumchannels, i & 0xF))
-	    SET_CHANNELMASK(default_drumchannels, i);
+	if(IS_SET_CHANNELMASK(c->default_drumchannels, i & 0xF))
+	    SET_CHANNELMASK(c->default_drumchannels, i);
 #endif
 
-    if(program_name == NULL)
-	program_name = "TiMidity";
-    uudecode_unquote_html = 1;
+    if(c->program_name == NULL)
+	c->program_name = "TiMidity";
+    c->uudecode_unquote_html = 1;
     for(i = 0; i < MAX_CHANNELS; i++)
     {
-	default_program[i] = DEFAULT_PROGRAM;
-	memset(channel[i].drums, 0, sizeof(channel[i].drums));
+	c->default_program[i] = DEFAULT_PROGRAM;
+	memset(c->channel[i].drums, 0, sizeof(c->channel[i].drums));
     }
-    arc_error_handler = timidity_arc_error_handler;
+    c->arc_error_handler = timidity_arc_error_handler;
 
     if(play_mode == NULL) play_mode = &null_play_mode;
 
-    if(is_first) /* initialize once time */
+    if(!is_not_first) /* initialize once time */
     {
-	got_a_configuration = 0;
+	c->got_a_configuration = 0;
 
 #ifdef SUPPORT_SOCKET
 	init_mail_addr();
@@ -5445,40 +5421,40 @@ MAIN_INTERFACE void timidity_start_initialize(void)
 #endif /* SUPPORT_SOCKET */
 
 	for(i = 0; url_module_list[i]; i++)
-	    url_add_module(url_module_list[i]);
-	init_string_table(&opt_config_string);
-	init_freq_table();
-	init_freq_table_tuning();
-	init_freq_table_pytha();
-	init_freq_table_meantone();
-	init_freq_table_pureint();
-	init_freq_table_user();
-	init_bend_fine();
-	init_bend_coarse();
-	init_tables();
-	init_gm2_pan_table();
-	init_attack_vol_table();
-	init_sb_vol_table();
-	init_modenv_vol_table();
-	init_def_vol_table();
-	init_gs_vol_table();
-	init_perceived_vol_table();
-	init_gm2_vol_table();
+	    url_add_module(c, url_module_list[i]);
+	init_string_table(&c->opt_config_string);
+	init_freq_table(c);
+	init_freq_table_tuning(c);
+	init_freq_table_pytha(c);
+	init_freq_table_meantone(c);
+	init_freq_table_pureint(c);
+	init_freq_table_user(c);
+	init_bend_fine(c);
+	init_bend_coarse(c);
+	init_tables(c);
+	init_gm2_pan_table(c);
+	init_attack_vol_table(c);
+	init_sb_vol_table(c);
+	init_modenv_vol_table(c);
+	init_def_vol_table(c);
+	init_gs_vol_table(c);
+	init_perceived_vol_table(c);
+	init_gm2_vol_table(c);
 #ifdef SUPPORT_SOCKET
-	url_news_connection_cache(URL_NEWS_CONN_CACHE);
+	url_news_connection_cache(c, URL_NEWS_CONN_CACHE);
 #endif /* SUPPORT_SOCKET */
 	for(i = 0; i < NSPECIAL_PATCH; i++)
-	    special_patch[i] = NULL;
-	init_midi_trace();
+	    c->special_patch[i] = NULL;
+	init_midi_trace(c);
 	int_rand(-1);	/* initialize random seed */
 	int_rand(42);	/* the 1st number generated is not very random */
 	ML_RegisterAllLoaders ();
     }
 
-    is_first = 0;
+    is_not_first = 1;
 }
 
-MAIN_INTERFACE int timidity_pre_load_configuration(void)
+MAIN_INTERFACE int timidity_pre_load_configuration(struct timiditycontext_t *c)
 {
 #if defined(__W32__)
     /* Windows */
@@ -5495,8 +5471,8 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
     if((check = open(local, 0)) >= 0)
     {
 	close(check);
-	if(!read_config_file(local, 0, 0)) {
-	    got_a_configuration = 1;
+	if(!read_config_file(c, local, 0, 0)) {
+	    c->got_a_configuration = 1;
 		return 0;
 	}
     }
@@ -5515,8 +5491,8 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
 	    if((check = open(local, 0)) >= 0)
 	    {
 		close(check);
-		if(!read_config_file(local, 0, 0)) {
-		    got_a_configuration = 1;
+		if(!read_config_file(c, local, 0, 0)) {
+		    c->got_a_configuration = 1;
 			return 0;
 		}
 	    }
@@ -5530,8 +5506,8 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
     if((check = open(local, 0)) >= 0)
     {
 	close(check);
-	if(!read_config_file(local, 0, 0)) {
-	    got_a_configuration = 1;
+	if(!read_config_file(c, local, 0, 0)) {
+	    c->got_a_configuration = 1;
 		return 0;
 	}
     }
@@ -5541,8 +5517,8 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
 
 #else
     /* UNIX */
-    if(!read_config_file(CONFIG_FILE, 0, 0))
-		got_a_configuration = 1;
+    if(!read_config_file(c, CONFIG_FILE, 0, 0))
+		c->got_a_configuration = 1;
 #endif
 
     /* Try read configuration file which is in the
@@ -5550,7 +5526,7 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
      * Please setup each user preference in $HOME/.timidity.cfg
      * (or %HOME%/timidity.cfg for DOS)
      */
-    if(read_user_config_file()) {
+    if(read_user_config_file(c)) {
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		  "Error: Syntax error in ~/.timidity.cfg");
 	return 1;
@@ -5559,7 +5535,7 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
     return 0;
 }
 
-MAIN_INTERFACE int timidity_post_load_configuration(void)
+MAIN_INTERFACE int timidity_post_load_configuration(struct timiditycontext_t *c)
 {
     int i, cmderr = 0;
 
@@ -5638,23 +5614,23 @@ MAIN_INTERFACE int timidity_post_load_configuration(void)
         }
     }
 
-    if(!got_a_configuration)
+    if(!c->got_a_configuration)
     {
-	if(try_config_again && !read_config_file(CONFIG_FILE, 0, 0))
-	    got_a_configuration = 1;
+	if(c->try_config_again && !read_config_file(c, CONFIG_FILE, 0, 0))
+	    c->got_a_configuration = 1;
     }
 
-    if(opt_config_string.nstring > 0)
+    if(c->opt_config_string.nstring > 0)
     {
 	char **config_string_list;
 
-	config_string_list = make_string_array(&opt_config_string);
+	config_string_list = make_string_array(c, &c->opt_config_string);
 	if(config_string_list != NULL)
 	{
 	    for(i = 0; config_string_list[i]; i++)
 	    {
-		if(!read_config_file(config_string_list[i], 1, 0))
-		    got_a_configuration = 1;
+		if(!read_config_file(c, config_string_list[i], 1, 0))
+		    c->got_a_configuration = 1;
 		else
 		    cmderr++;
 	    }
@@ -5663,33 +5639,33 @@ MAIN_INTERFACE int timidity_post_load_configuration(void)
 	}
     }
 
-    if(!got_a_configuration)
+    if(!c->got_a_configuration)
 	cmderr++;
     return cmderr;
 }
 
-MAIN_INTERFACE void timidity_init_player(void)
+MAIN_INTERFACE void timidity_init_player(struct timiditycontext_t *c)
 {
-    initialize_resampler_coeffs();
+    initialize_resampler_coeffs(c);
 
     /* Allocate voice[] */
-    voice = (Voice *) safe_realloc(voice, max_voices * sizeof(Voice));
-	memset(voice, 0, max_voices * sizeof(Voice));
+    c->voice = (Voice *) safe_realloc(c->voice, c->max_voices * sizeof(Voice));
+	memset(c->voice, 0, c->max_voices * sizeof(Voice));
 
     /* Set play mode parameters */
-    if(opt_output_rate != 0)
-	play_mode->rate = opt_output_rate;
+    if(c->opt_output_rate != 0)
+	play_mode->rate = c->opt_output_rate;
     else if(play_mode->rate == 0)
 	play_mode->rate = DEFAULT_RATE;
 
     /* save defaults */
-    COPY_CHANNELMASK(drumchannels, default_drumchannels);
-    COPY_CHANNELMASK(drumchannel_mask, default_drumchannel_mask);
+    COPY_CHANNELMASK(c->drumchannels, c->default_drumchannels);
+    COPY_CHANNELMASK(c->drumchannel_mask, c->default_drumchannel_mask);
 
-    if(opt_buffer_fragments != -1)
+    if(c->opt_buffer_fragments != -1)
     {
 	if(play_mode->flag & PF_BUFF_FRAGM_OPT)
-	    play_mode->extra_param[0] = opt_buffer_fragments;
+	    play_mode->extra_param[0] = c->opt_buffer_fragments;
 	else
 	    ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 		      "%s: -B option is ignored", play_mode->id_name);
@@ -5704,7 +5680,7 @@ MAIN_INTERFACE void timidity_init_player(void)
 #endif /* SOUNDSPEC */
 }
 
-void timidity_init_aq_buff(void)
+void timidity_init_aq_buff(struct timiditycontext_t *c)
 {
     double time1, /* max buffer */
 	   time2, /* init filled */
@@ -5713,21 +5689,21 @@ void timidity_init_aq_buff(void)
     if(!IS_STREAM_TRACE)
 	return; /* Ignore */
 
-    time1 = atof(opt_aq_max_buff);
-    time2 = atof(opt_aq_fill_buff);
-    base  = (double)aq_get_dev_queuesize() / play_mode->rate;
-    if(strchr(opt_aq_max_buff, '%'))
+    time1 = atof(c->opt_aq_max_buff);
+    time2 = atof(c->opt_aq_fill_buff);
+    base  = (double)aq_get_dev_queuesize(c) / play_mode->rate;
+    if(strchr(c->opt_aq_max_buff, '%'))
     {
 	time1 = base * (time1 - 100) / 100.0;
 	if(time1 < 0)
 	    time1 = 0;
     }
-    if(strchr(opt_aq_fill_buff, '%'))
+    if(strchr(c->opt_aq_fill_buff, '%'))
 	time2 = base * time2 / 100.0;
-    aq_set_soft_queue(time1, time2);
+    aq_set_soft_queue(c, time1, time2);
 }
 
-MAIN_INTERFACE int timidity_play_main(int nfiles, char **files)
+MAIN_INTERFACE int timidity_play_main(struct timiditycontext_t *c, int nfiles, char **files)
 {
     int need_stdin = 0, need_stdout = 0;
     int i;
@@ -5737,10 +5713,10 @@ MAIN_INTERFACE int timidity_play_main(int nfiles, char **files)
     if(nfiles == 0 && !strchr(INTERACTIVE_INTERFACE_IDS, ctl->id_character))
 	return 0;
 
-    if(opt_output_name)
+    if(c->opt_output_name)
     {
-	play_mode->name = opt_output_name;
-    if(!strcmp(opt_output_name, "-")){
+	play_mode->name = c->opt_output_name;
+    if(!strcmp(c->opt_output_name, "-")){
 	    need_stdout = 1;
 #ifdef __W32__
     	setmode( fileno(stdout), O_BINARY );
@@ -5764,7 +5740,7 @@ MAIN_INTERFACE int timidity_play_main(int nfiles, char **files)
 	return 3;
     }
 
-    if(wrdt->open(wrdt_open_opts))
+    if(wrdt->open(c->wrdt_open_opts))
     {
 	fprintf(stderr, "Couldn't open WRD Tracer: %s (`%c')" NLS,
 		wrdt->name, wrdt->id);
@@ -5812,7 +5788,7 @@ MAIN_INTERFACE int timidity_play_main(int nfiles, char **files)
 		  play_mode->id_name);
 
 	if (play_mode->flag & PF_PCM_STREAM) {
-	    play_mode->extra_param[1] = aq_calc_fragsize();
+	    play_mode->extra_param[1] = aq_calc_fragsize(c);
 	    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
 		      "requesting fragment size: %d",
 		      play_mode->extra_param[1]);
@@ -5828,28 +5804,28 @@ MAIN_INTERFACE int timidity_play_main(int nfiles, char **files)
 	    return 2;
 	}
 #endif /* IA_W32GUI */
-	if(!control_ratio)
+	if(!c->control_ratio)
 	{
-	    control_ratio = play_mode->rate / CONTROLS_PER_SECOND;
-	    if(control_ratio < 1)
-		control_ratio = 1;
-	    else if (control_ratio > MAX_CONTROL_RATIO)
-		control_ratio = MAX_CONTROL_RATIO;
+	    c->control_ratio = play_mode->rate / CONTROLS_PER_SECOND;
+	    if(c->control_ratio < 1)
+		c->control_ratio = 1;
+	    else if (c->control_ratio > MAX_CONTROL_RATIO)
+		c->control_ratio = MAX_CONTROL_RATIO;
 	}
 
-	init_load_soundfont();
+	init_load_soundfont(c);
 	if(!output_fail)
 	{
-	    aq_setup();
-	    timidity_init_aq_buff();
+	    aq_setup(c);
+	    timidity_init_aq_buff(c);
 	}
-	if(allocate_cache_size > 0)
-	    resamp_cache_reset();
+	if(c->allocate_cache_size > 0)
+	    resamp_cache_reset(c);
 
-	if (def_prog >= 0)
-		set_default_program(def_prog);
-	if (*def_instr_name)
-		set_default_instrument(def_instr_name);
+	if (c->def_prog >= 0)
+		set_default_program(c, c->def_prog);
+	if (*c->def_instr_name)
+		set_default_instrument(c, c->def_instr_name);
 
 	if(ctl->flags & CTLF_LIST_RANDOM)
 	    randomize_string_list(files, nfiles);
@@ -5862,8 +5838,8 @@ MAIN_INTERFACE int timidity_play_main(int nfiles, char **files)
 
 	retval=ctl->pass_playing_list(nfiles, files);
 
-	if(intr)
-	    aq_flush(1);
+	if(c->intr)
+	    aq_flush(c, 1);
 
 #ifdef XP_UNIX
 	return 0;
@@ -5896,7 +5872,7 @@ MAIN_INTERFACE int timidity_play_main(int nfiles, char **files)
 	close_soundspec();
 #endif /* SUPPORT_SOUNDSPEC */
 
-    free_archive_files();
+    free_archive_files(c);
 #ifdef SUPPORT_SOCKET
     url_news_connection_cache(URL_NEWS_CLOSE_CACHE);
 #endif /* SUPPORT_SOCKET */
@@ -6004,22 +5980,22 @@ int main(int argc, char **argv)
 	if (strncmp(program_name, "timidity", 8) == 0)
 		;
 	else if (strncmp(program_name, "kmidi", 5) == 0)
-		set_ctl("q");
+		set_ctl(c, "q");
 	else if (strncmp(program_name, "tkmidi", 6) == 0)
-		set_ctl("k");
+		set_ctl(c, "k");
 	else if (strncmp(program_name, "gtkmidi", 6) == 0)
-		set_ctl("g");
+		set_ctl(c, "g");
 	else if (strncmp(program_name, "xmmidi", 6) == 0)
-		set_ctl("m");
+		set_ctl(c, "m");
 	else if (strncmp(program_name, "xawmidi", 7) == 0)
-		set_ctl("a");
+		set_ctl(c, "a");
 	else if (strncmp(program_name, "xskinmidi", 9) == 0)
-		set_ctl("i");
+		set_ctl(c, "i");
 	if (argc == 1 && !strchr(INTERACTIVE_INTERFACE_IDS, ctl->id_character)) {
 		interesting_message();
 		return 0;
 	}
-	timidity_start_initialize();
+	timidity_start_initialize(c);
 #if defined (IA_W32GUI) || defined (IA_W32G_SYN)
 	if (CoInitialize(NULL) == S_OK)
 		CoInitializeOK = 1;
@@ -6052,7 +6028,7 @@ int main(int argc, char **argv)
 		if ((err = set_tim_opt_long_cfg(c, optarg, longind)) != 0)
 			break;
 #endif
-	if (got_a_configuration != 1){
+	if (c->got_a_configuration != 1){
 		if ((err = timidity_pre_load_configuration()) != 0)
 			return err;
 	}
@@ -6067,7 +6043,7 @@ int main(int argc, char **argv)
 	/* If there were problems, give up now */
 	if (err || (optind >= argc
 			&& !strchr(INTERACTIVE_INTERFACE_IDS, ctl->id_character))) {
-		if (!got_a_configuration) {
+		if (!c->got_a_configuration) {
 #ifdef __W32__
 			char config1[1024], config2[1024];
 
@@ -6107,7 +6083,7 @@ int main(int argc, char **argv)
 		return 1; /* problems with command line */
 #endif
 	}
-	timidity_init_player();
+	timidity_init_player(c);
 	nfiles = argc - optind;
 	files  = argv + optind;
 	if (nfiles > 0
@@ -6123,7 +6099,7 @@ int main(int argc, char **argv)
 #endif
 #ifdef IA_W32GUI
 	w32gLoadDefaultPlaylist();
-	main_ret = timidity_play_main(nfiles, files);
+	main_ret = timidity_play_main(c, nfiles, files);
 	if (save_playlist_once_before_exit_flag) {
 		save_playlist_once_before_exit_flag = 0;
 		w32gSaveDefaultPlaylist();
@@ -6138,7 +6114,7 @@ int main(int argc, char **argv)
 #ifdef IA_NPSYN
 	timeBeginPeriod(1);
 #endif
-	main_ret = timidity_play_main(nfiles, files);
+	main_ret = timidity_play_main(c, nfiles, files);
 #ifdef IA_NPSYN
 	timeEndPeriod(1);
 #endif
@@ -6164,16 +6140,16 @@ int main(int argc, char **argv)
 #endif
 	if (pcm_alternate_file)
 		free(pcm_alternate_file);
-	if (opt_output_name)
-		free(opt_output_name);
-	if (opt_aq_max_buff)
-		free(opt_aq_max_buff);
-	if (opt_aq_fill_buff && opt_aq_fill_buff_free_needed)
-		free(opt_aq_fill_buff);
+	if (c->opt_output_name)
+		free(c->opt_output_name);
+	if (c->opt_aq_max_buff)
+		free(c->opt_aq_max_buff);
+	if (c->opt_aq_fill_buff && !c->opt_aq_fill_buff_free_not_needed)
+		free(c->opt_aq_fill_buff);
 	if (output_text_code)
 		free(output_text_code);
-	if (wrdt_open_opts)
-		free(wrdt_open_opts);
+	if (c->wrdt_open_opts)
+		free(c->wrdt_open_opts);
 	if (nfiles > 0
 			&& ctl->id_character != 'r' && ctl->id_character != 'A'
 			&& ctl->id_character != 'W' && ctl->id_character != 'N'
@@ -6181,20 +6157,20 @@ int main(int argc, char **argv)
 		free(files_nbuf);
 		free(files);
 	}
-	free_soft_queue();
-	free_instruments(0);
-	free_soundfonts();
-	free_cache_data();
-	free_wrd();
-	free_readmidi();
-	free_global_mblock();
-	tmdy_free_config();
-	free_reverb_buffer();
-	free_effect_buffers();
+	free_soft_queue(c);
+	free_instruments(c, 0);
+	free_soundfonts(c);
+	free_cache_data(c);
+	free_wrd(c);
+	free_readmidi(c);
+	free_global_mblock(c);
+	tmdy_free_config(c);
+	free_reverb_buffer(c);
+	free_effect_buffers(c);
 	free(voice);
-	free_gauss_table();
+	free_gauss_table(c);
 	for (i = 0; i < MAX_CHANNELS; i++)
-		free_drum_effect(i);
+		free_drum_effect(c, i);
 	return main_ret;
 }
 #endif /* !ANOTHER_MAIN || __W32__ */

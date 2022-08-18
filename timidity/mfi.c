@@ -38,7 +38,7 @@
 
 #define MIDIEVENT(at, t, ch, pa, pb) \
     { MidiEvent event; SETMIDIEVENT(event, at, t, ch, pa, pb); \
-      readmidi_add_event(&event); }
+      readmidi_add_event(c, &event); }
 
 #ifdef LITTLE_ENDIAN
 #define BE_FCC(type)		((uint32)XCHG_LONG(type))
@@ -105,22 +105,22 @@
 
 typedef struct timidity_file	timidity_file;
 
-static int tf_read_beint16(int *, timidity_file *);
-static int tf_read_beint32(int *, timidity_file *);
-static int read_mfi_information(int, int *, int *, int *, timidity_file *);
-static int read_mfi_track(int, int, int, int, int, timidity_file *);
+static int tf_read_beint16(struct timiditycontext_t *c, int *, timidity_file *);
+static int tf_read_beint32(struct timiditycontext_t *c, int *, timidity_file *);
+static int read_mfi_information(struct timiditycontext_t *c, int, int *, int *, int *, timidity_file *);
+static int read_mfi_track(struct timiditycontext_t *c, int, int, int, int, int, timidity_file *);
 
-int read_mfi_file(timidity_file *tf)
+int read_mfi_file(struct timiditycontext_t *c, timidity_file *tf)
 {
 	int					length, dataLength, infoLength, dataType, mfiVersion, noteType, extStDLength;
 	uint32				type;
 	uint8				numTracks;
 	int					i;
 
-	if (tf_read_beint32(&dataLength, tf) != 1
-			|| tf_read_beint16(&infoLength, tf) != 1
-			|| tf_read_beint16(&dataType, tf) != 1
-			|| tf_read(&numTracks, 1, 1, tf) != 1)
+	if (tf_read_beint32(c, &dataLength, tf) != 1
+			|| tf_read_beint16(c, &infoLength, tf) != 1
+			|| tf_read_beint16(c, &dataType, tf) != 1
+			|| tf_read(c, &numTracks, 1, 1, tf) != 1)
 		return 1;
 	infoLength -= 2 + 1;
 	if (dataType == 0x0202)
@@ -139,30 +139,30 @@ int read_mfi_file(timidity_file *tf)
 		ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Too many tracks, last %d track(s) are ignored.", numTracks - (MAX_CHANNELS / 4));
 		numTracks = MAX_CHANNELS / 4;
 	}
-	current_file_info->divisions = 48;
-	current_file_info->format = 1;
-	current_file_info->tracks = numTracks;
-	current_file_info->file_type = IS_MFI_FILE;
+	c->current_file_info->divisions = 48;
+	c->current_file_info->format = 1;
+	c->current_file_info->tracks = numTracks;
+	c->current_file_info->file_type = IS_MFI_FILE;
 	noteType = extStDLength = 0;
-	if (read_mfi_information(infoLength, &mfiVersion, &noteType, &extStDLength, tf) != 0)
+	if (read_mfi_information(c, infoLength, &mfiVersion, &noteType, &extStDLength, tf) != 0)
 		return 1;
 	for(i = 0; i < numTracks; i++)
 	{
-		if (tf_read(&type, 4, 1, tf) != 1
-				|| tf_read_beint32(&length, tf) != 1)
+		if (tf_read(c, &type, 4, 1, tf) != 1
+				|| tf_read_beint32(c, &length, tf) != 1)
 			return 1;
 		if (type != BE_FCC(0x74726163 /*trac*/))
 		{
 			ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Unknown track signature.");
 			return 1;
 		}
-		if (read_mfi_track(i, length, mfiVersion, noteType, extStDLength, tf) != 0)
+		if (read_mfi_track(c, i, length, mfiVersion, noteType, extStDLength, tf) != 0)
 			return 1;
 	}
 	return 0;
 }
 
-static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, int *extStDLength, timidity_file *tf)
+static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int *mfiVersion, int *noteType, int *extStDLength, timidity_file *tf)
 {
 	int				length;
 	uint32			type;
@@ -178,8 +178,8 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 			return 1;
 		}
 		infoLength -= 6;
-		if (tf_read(&type, 4, 1, tf) != 1
-				|| tf_read_beint16(&length, tf) != 1)
+		if (tf_read(c, &type, 4, 1, tf) != 1
+				|| tf_read_beint16(c, &length, tf) != 1)
 			return 1;
 		if (length == 0)
 			continue;
@@ -194,16 +194,16 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 			case BE_FCC(0x7469746C /*titl*/): {	/* title */
 				char			*title;
 
-				if (current_file_info->seq_name == NULL)
+				if (c->current_file_info->seq_name == NULL)
 					goto skip_info_data;
 				title = safe_malloc(length + 1);
-				if (tf_read(title, length, 1, tf) != 1)
+				if (tf_read(c, title, length, 1, tf) != 1)
 				{
 					free(title);
 					return 1;
 				}
 				title[length] = '\0';
-				current_file_info->seq_name = title;
+				c->current_file_info->seq_name = title;
 				ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "Title: %s", title);
 			}	break;
 			case BE_FCC(0x736F7263 /*sorc*/): {	/* source */
@@ -211,7 +211,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 
 				if (length != 1)
 					goto skip_info_data;
-				if (tf_read(&byteData, 1, 1, tf) != 1)
+				if (tf_read(c, &byteData, 1, 1, tf) != 1)
 					return 1;
 				switch (byteData >> 1)
 				{
@@ -223,7 +223,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 				ctl->cmsg(CMSG_INFO, VERB_NOISY, "Source: %s%s", srcInfo, (byteData & 1) ? ", copyrighted" : "");
 			}	break;
 			case BE_FCC(0x76657273 /*vers*/):	/* version (unused) */
-				if (tf_read(&type, 4, 1, tf) != 1)
+				if (tf_read(c, &type, 4, 1, tf) != 1)
 					return 1;
 				switch(type)
 				{
@@ -245,7 +245,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 
 				if (length != 8)
 					goto skip_info_data;
-				if (tf_read(created, 8, 1, tf) != 1)
+				if (tf_read(c, created, 8, 1, tf) != 1)
 					return 1;
 				created[8] = '\0';
 				ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "Date: %.4s-%.2s-%.2s", created, &created[4], &created[6]);
@@ -254,17 +254,17 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 				int				lengthToRead;
 
 				lengthToRead = length >= sizeof buf ? sizeof buf - 1 : length;
-				if (lengthToRead > 0 && tf_read(buf, lengthToRead, 1, tf) != 1)
+				if (lengthToRead > 0 && tf_read(c, buf, lengthToRead, 1, tf) != 1)
 					return 1;
 				buf[lengthToRead] = '\0';
 				ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "Copyright: %s", buf);
-				if (lengthToRead < length && tf_seek(tf, length - lengthToRead, SEEK_CUR) == -1)
+				if (lengthToRead < length && tf_seek(c, tf, length - lengthToRead, SEEK_CUR) == -1)
 					return 1;
 			}	break;
 			/* case BE_FCC(0x70726F74 /-*prot*-/):
 				goto skip_info_data; */
 			case BE_FCC(0x6E6F7465 /*note*/):	/* note (MFi2) */
-				if (length != 2 || tf_read_beint16(noteType, tf) != 1)
+				if (length != 2 || tf_read_beint16(c, noteType, tf) != 1)
 					return 1;
 				if (*noteType > 1)
 				{
@@ -274,7 +274,7 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 				ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Note Type: %d", *noteType);
 				break;
 			case BE_FCC(0x65787374 /*exst*/):	/* extended status (MFi2) */
-				if (length != 2 || tf_read_beint16(extStDLength, tf) != 1)
+				if (length != 2 || tf_read_beint16(c, extStDLength, tf) != 1)
 					return 1;
 				if (*extStDLength != 0)
 				{
@@ -284,31 +284,31 @@ static int read_mfi_information(int infoLength, int *mfiVersion, int *noteType, 
 				break;
 			default:
 				skip_info_data:
-				if (tf_seek(tf, length, SEEK_CUR) == -1)
+				if (tf_seek(c, tf, length, SEEK_CUR) == -1)
 					return 1;
 		}
 	}
 	return 0;
 }
 
-char *get_mfi_file_title(timidity_file *tf)
+char *get_mfi_file_title(struct timiditycontext_t *c, timidity_file *tf)
 {
 	int				length, dataLength, infoLength, dataType;
 	uint32			type;
 	uint8			numTracks;
 
-	if (tf_read_beint32(&dataLength, tf) != 1
-			|| tf_read_beint16(&infoLength, tf) != 1
-			|| tf_read_beint16(&dataType, tf) != 1
+	if (tf_read_beint32(c, &dataLength, tf) != 1
+			|| tf_read_beint16(c, &infoLength, tf) != 1
+			|| tf_read_beint16(c, &dataType, tf) != 1
 					|| dataType == 0x0202
-			|| tf_read(&numTracks, 1, 1, tf) != 1)
+			|| tf_read(c, &numTracks, 1, 1, tf) != 1)
 		return NULL;
 	infoLength -= 2 + 1;
 	while (infoLength >= 4 + 2)
 	{
 		infoLength -= 6;
-		if (tf_read(&type, 4, 1, tf) != 1
-				|| tf_read_beint16(&length, tf) != 1)
+		if (tf_read(c, &type, 4, 1, tf) != 1
+				|| tf_read_beint16(c, &length, tf) != 1)
 			return NULL;
 		if (length > infoLength)
 			break;
@@ -321,7 +321,7 @@ char *get_mfi_file_title(timidity_file *tf)
 				return NULL;
 			if ((title = malloc(length + 1)) == NULL)
 				break;
-			if (tf_read(title, length, 1, tf) != 1)
+			if (tf_read(c, title, length, 1, tf) != 1)
 			{
 				free(title);
 				break;
@@ -329,7 +329,7 @@ char *get_mfi_file_title(timidity_file *tf)
 			title[length] = '\0';
 			return title;
 		}
-		else if (length != 0 && tf_seek(tf, length, SEEK_CUR) == -1)
+		else if (length != 0 && tf_seek(c, tf, length, SEEK_CUR) == -1)
 			break;
 	}
 	return NULL;
@@ -341,8 +341,8 @@ typedef struct LastNoteInfo {
 
 #define NO_LAST_NOTE_INFO	-1
 #define LASTNOTEINFO_HAS_DATA(lni)	((lni).on != NO_LAST_NOTE_INFO)
-#define SEND_LASTNOTEINFO(lni, ch)				if (LASTNOTEINFO_HAS_DATA((lni)[ch])) SendLastNoteInfo(lni, ch);
-#define SEND_AND_CLEAR_LASTNOTEINFO(lni, ch)	if (LASTNOTEINFO_HAS_DATA((lni)[ch])) { SendLastNoteInfo(lni, ch); (lni)[ch].on = NO_LAST_NOTE_INFO; }
+#define SEND_LASTNOTEINFO(lni, ch)				if (LASTNOTEINFO_HAS_DATA((lni)[ch])) SendLastNoteInfo(c, lni, ch);
+#define SEND_AND_CLEAR_LASTNOTEINFO(lni, ch)	if (LASTNOTEINFO_HAS_DATA((lni)[ch])) { SendLastNoteInfo(c, lni, ch); (lni)[ch].on = NO_LAST_NOTE_INFO; }
 
 static inline void StoreLastNoteInfo(LastNoteInfo *info, int channel, int time, int duration, int note, int velocity)
 {
@@ -352,7 +352,7 @@ static inline void StoreLastNoteInfo(LastNoteInfo *info, int channel, int time, 
 	info[channel].velocity = velocity;
 }
 
-static inline void SendLastNoteInfo(const LastNoteInfo *info, int channel)
+static inline void SendLastNoteInfo(struct timiditycontext_t *c, const LastNoteInfo *info, int channel)
 {
 	NOTE_BUF_EV_DEBUGSTR(channel, info[channel].on, note_name[info[channel].note % 12], info[channel].note / 12, info[channel].velocity, info[channel].off);
 	MIDIEVENT(info[channel].on, ME_NOTEON, channel, info[channel].note, info[channel].velocity);
@@ -360,13 +360,13 @@ static inline void SendLastNoteInfo(const LastNoteInfo *info, int channel)
 }
 
 #define CHECK_AND_READ_FROM_FILE(ptr, readLen)		do {	\
-						if ((length) < (readLen) || tf_read(ptr, readLen, 1, tf) != 1) {	\
+						if ((length) < (readLen) || tf_read(c, ptr, readLen, 1, tf) != 1) {	\
 							ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Odd track length.");	\
 							return 1;	\
 						}	\
 						length -= readLen;	\
 					} while(0)
-static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType, int extStDLength, timidity_file *tf)
+static int read_mfi_track(struct timiditycontext_t *c, int trackNo, int length, int mfiVersion, int noteType, int extStDLength, timidity_file *tf)
 {
 	uint8				data[5];
 	int					i, pos, note, velocity, dataLength;
@@ -374,7 +374,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 	int					channelMap[4];
 	LastNoteInfo		lastNotes[MAX_CHANNELS];
 
-	readmidi_set_track(trackNo, 1);
+	readmidi_set_track(c, trackNo, 1);
 	pos = 0;
 	velocity = 0x7F;
 	for(i = 0; i < 4; i++)
@@ -407,7 +407,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 				if (lastNotes[channel].off <= pos
 						|| note != lastNotes[channel].note)
 				{
-					SendLastNoteInfo(lastNotes, channel);
+					SendLastNoteInfo(c, lastNotes, channel);
 					StoreLastNoteInfo(lastNotes, channel, pos, data[2], note, velocity);
 				}
 				#if 0
@@ -415,7 +415,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 				{
 					if (lastNotes[channel].on == pos)	/* may be a chord */
 					{
-						SendLastNoteInfo(lastNotes, channel);
+						SendLastNoteInfo(c, lastNotes, channel);
 						StoreLastNoteInfo(lastNotes, channel, pos, data[2], note, velocity);
 					}
 					else	/* slur */
@@ -479,7 +479,7 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 				}
 				else
 				{
-					if (tf_seek(tf, extLength, SEEK_CUR) == -1)
+					if (tf_seek(c, tf, extLength, SEEK_CUR) == -1)
 						return 1;
 					EX_UNKNOWN_EXT_DATA_DEBUGSTR(extLength);
 					length -= extLength;
@@ -602,21 +602,21 @@ static int read_mfi_track(int trackNo, int length, int mfiVersion, int noteType,
 	return 0;
 }
 
-static int tf_read_beint16(int *value, timidity_file *tf)
+static int tf_read_beint16(struct timiditycontext_t *c, int *value, timidity_file *tf)
 {
 	uint16				value_;
 
-	if (tf_read(&value_, 2, 1, tf) != 1)
+	if (tf_read(c, &value_, 2, 1, tf) != 1)
 		return 0;
 	*value = BE_SHORT(value_);
 	return 1;
 }
 
-static int tf_read_beint32(int *value, timidity_file *tf)
+static int tf_read_beint32(struct timiditycontext_t *c, int *value, timidity_file *tf)
 {
 	uint32				value_;
 
-	if (tf_read(&value_, 4, 1, tf) != 1)
+	if (tf_read(c, &value_, 4, 1, tf) != 1)
 		return 0;
 	*value = BE_LONG(value_);
 	return 1;

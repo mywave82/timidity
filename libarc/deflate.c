@@ -259,21 +259,22 @@ struct deflate_buff_queue
     unsigned len;
     uch *ptr;
 };
-local struct deflate_buff_queue *free_queue = NULL;
+#define free_queue ((struct deflate_buff_queue *)c->deflate_free_queue)
+#define _free_queue (c->deflate_free_queue)
 
-local void reuse_queue(struct deflate_buff_queue *p)
+local void reuse_queue(struct timiditycontext_t *c, struct deflate_buff_queue *p)
 {
     p->next = free_queue;
-    free_queue = p;
+    _free_queue = p;
 }
-local struct deflate_buff_queue *new_queue(void)
+local struct deflate_buff_queue *new_queue(struct timiditycontext_t *c)
 {
     struct deflate_buff_queue *p;
 
     if(free_queue)
     {
 	p = free_queue;
-	free_queue = free_queue->next;
+	_free_queue = free_queue->next;
     }
     else
 	p = (struct deflate_buff_queue *)
@@ -288,7 +289,7 @@ local struct deflate_buff_queue *new_queue(void)
 struct _DeflateHandler
 {
     void *user_val;
-    long (* read_func)(char *buf, long size, void *user_val);
+    long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val);
 
     int initflag;
     struct deflate_buff_queue *qhead;
@@ -408,12 +409,12 @@ struct _DeflateHandler
     ulg static_len;	/* bit length of current block with static trees */
 };
 
-local void lm_init(DeflateHandler);
+local void lm_init(struct timiditycontext_t *c, DeflateHandler);
 local int  longest_match(DeflateHandler,unsigned cur_match);
-local void fill_window(DeflateHandler);
-local void deflate_fast(DeflateHandler);
-local void deflate_better(DeflateHandler);
-local long qcopy(DeflateHandler encoder, char *buff, long buff_size);
+local void fill_window(struct timiditycontext_t *c, DeflateHandler);
+local void deflate_fast(struct timiditycontext_t *c, DeflateHandler);
+local void deflate_better(struct timiditycontext_t *c, DeflateHandler);
+local long qcopy(struct timiditycontext_t *c, DeflateHandler encoder, char *buff, long buff_size);
 local void ct_init(DeflateHandler);
 local void init_block(DeflateHandler);
 local void pqdownheap(DeflateHandler,ct_data near *, int);
@@ -421,16 +422,16 @@ local void gen_bitlen(DeflateHandler,tree_desc near *);
 local void gen_codes(DeflateHandler,ct_data near *, int);
 local void build_tree(DeflateHandler,tree_desc near *);
 local void scan_tree(DeflateHandler,ct_data near *, int);
-local void send_tree(DeflateHandler,ct_data near *, int);
+local void send_tree(struct timiditycontext_t *c, DeflateHandler,ct_data near *, int);
 local int  build_bl_tree(DeflateHandler);
-local void send_all_trees(DeflateHandler,int,int,int);
-local void flush_block(DeflateHandler,int);
+local void send_all_trees(struct timiditycontext_t *c, DeflateHandler,int,int,int);
+local void flush_block(struct timiditycontext_t *c, DeflateHandler,int);
 local int  ct_tally(DeflateHandler,int,int);
-local void compress_block(DeflateHandler,ct_data near *, ct_data near *);
-local void send_bits(DeflateHandler,int,int);
+local void compress_block(struct timiditycontext_t *c, DeflateHandler,ct_data near *, ct_data near *);
+local void send_bits(struct timiditycontext_t *c, DeflateHandler,int,int);
 local unsigned bi_reverse(unsigned, int);
-local void bi_windup(DeflateHandler);
-local void qoutbuf(DeflateHandler);
+local void bi_windup(struct timiditycontext_t *c, DeflateHandler);
+local void qoutbuf(struct timiditycontext_t *c, DeflateHandler);
 
 #ifdef DEBUG
 local void error(char *m)
@@ -456,9 +457,9 @@ local void check_match (DeflateHandler,unsigned, unsigned, int);
  * suffix table instead of its output buffer, so it does not use put_ubyte
  * (to be cleaned up).
  */
-#define put_byte(c) {encoder->outbuf[encoder->outoff + encoder->outcnt++] = \
-  (uch)(c); if(encoder->outoff + encoder->outcnt == OUTBUFSIZ) \
-  qoutbuf(encoder);}
+#define put_byte(ch) {encoder->outbuf[encoder->outoff + encoder->outcnt++] = \
+  (uch)(ch); if(encoder->outoff + encoder->outcnt == OUTBUFSIZ) \
+  qoutbuf(c, encoder);}
 
 /* Output a 16 bit value, lsb first */
 #define put_short(w) \
@@ -487,8 +488,8 @@ local void check_match (DeflateHandler,unsigned, unsigned, int);
     encoder->prev[(s) & WMASK] =match_head = head(encoder->ins_h), \
     head(encoder->ins_h) = (s))
 
-#define SEND_CODE(c, tree) send_bits(encoder, (tree)[c].Code, (tree)[c].Len)
-/* Send a code of the given tree. c and tree must not have side effects */
+#define SEND_CODE(cc, tree) send_bits(c, encoder, (tree)[cc].Code, (tree)[cc].Len)
+/* Send a code of the given tree. cc and tree must not have side effects */
 
 #define D_CODE(dist) ((dist)<256 ? encoder->dist_code[dist] : encoder->dist_code[256+((dist)>>7)])
 /* Mapping from a distance to a distance code. dist is the distance - 1 and
@@ -508,7 +509,7 @@ local void check_match (DeflateHandler,unsigned, unsigned, int);
 /* ===========================================================================
  * Initialize the "longest match" routines for a new file
  */
-local void lm_init(DeflateHandler encoder)
+local void lm_init(struct timiditycontext_t *c, DeflateHandler encoder)
 {
     register unsigned j;
 
@@ -533,7 +534,7 @@ local void lm_init(DeflateHandler encoder)
     encoder->block_start = 0L;
 
     encoder->lookahead =
-	encoder->read_func((char*)encoder->window,
+	encoder->read_func(c, (char*)encoder->window,
 			   (long)(sizeof(int)<=2 ? (unsigned)WSIZE : 2*WSIZE),
 			   encoder->user_val);
 
@@ -547,7 +548,7 @@ local void lm_init(DeflateHandler encoder)
      * if input comes from a device such as a tty.
      */
     while(encoder->lookahead < MIN_LOOKAHEAD && !encoder->eofile)
-	fill_window(encoder);
+	fill_window(c, encoder);
 
     encoder->ins_h = 0;
     for(j=0; j<MIN_MATCH-1; j++)
@@ -730,7 +731,7 @@ local void check_match(DeflateHandler encoder,
  *    file reads are performed for at least two bytes (required for the
  *    translate_eol option).
  */
-local void fill_window(DeflateHandler encoder)
+local void fill_window(struct timiditycontext_t *c, DeflateHandler encoder)
 {
     register unsigned n, m;
     unsigned more = (unsigned)(window_size - (ulg)encoder->lookahead - (ulg)encoder->strstart);
@@ -770,7 +771,7 @@ local void fill_window(DeflateHandler encoder)
     }
     /* At this point, more >= 2 */
     if(!encoder->eofile) {
-	n = encoder->read_func((char*)encoder->window+encoder->strstart
+	n = encoder->read_func(c, (char*)encoder->window+encoder->strstart
 			       + encoder->lookahead,
 			       (long)more,
 			       encoder->user_val);
@@ -788,7 +789,7 @@ local void fill_window(DeflateHandler encoder)
  * new strings in the dictionary only for unmatched strings or for short
  * matches. It is used only for the fast compression options.
  */
-local void deflate_fast(DeflateHandler encoder)
+local void deflate_fast(struct timiditycontext_t *c, DeflateHandler encoder)
 {
 /*
     encoder->prev_length = MIN_MATCH-1;
@@ -859,7 +860,7 @@ local void deflate_fast(DeflateHandler encoder)
 	}
 	if(flush)
 	{
-	    flush_block(encoder, 0);
+	    flush_block(c, encoder, 0);
 	    encoder->block_start = (long)encoder->strstart;
 	}
 
@@ -869,11 +870,11 @@ local void deflate_fast(DeflateHandler encoder)
 	 * string following the next match.
 	 */
 	while(encoder->lookahead < MIN_LOOKAHEAD && !encoder->eofile)
-	    fill_window(encoder);
+	    fill_window(c, encoder);
     }
 }
 
-local void deflate_better(DeflateHandler encoder) {
+local void deflate_better(struct timiditycontext_t *c, DeflateHandler encoder) {
     /* Process the input block. */
     while(encoder->lookahead != 0 && encoder->qhead == NULL) {
 	/* Insert the string window[strstart .. strstart+2] in the
@@ -939,7 +940,7 @@ local void deflate_better(DeflateHandler encoder) {
 	    encoder->match_length = MIN_MATCH-1;
 	    encoder->strstart++;
 	    if(flush) {
-		flush_block(encoder, 0);
+		flush_block(c, encoder, 0);
 		encoder->block_start = (long)encoder->strstart;
 	    }
 
@@ -950,7 +951,7 @@ local void deflate_better(DeflateHandler encoder) {
 	     */
 	    Tracevv((stderr,"%c",encoder->window[encoder->strstart-1]));
 	    if(ct_tally (encoder, 0, encoder->window[encoder->strstart-1])) {
-		flush_block(encoder, 0);
+		flush_block(c, encoder, 0);
 		encoder->block_start = (long)encoder->strstart;
 	    }
 	    encoder->strstart++;
@@ -970,18 +971,18 @@ local void deflate_better(DeflateHandler encoder) {
 	 * string following the next match.
 	 */
 	while(encoder->lookahead < MIN_LOOKAHEAD && !encoder->eofile)
-	    fill_window(encoder);
+	    fill_window(c, encoder);
     }
 }
 
 /*ARGSUSED*/
-static long default_read_func(char *buf, long size, void *v)
+static long default_read_func(struct timiditycontext_t *c, char *buf, long size, void *v)
 {
     return (long)fread(buf, 1, size, stdin);
 }
 
 DeflateHandler open_deflate_handler(
-    long (* read_func)(char *buf, long size, void *user_val),
+    long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val),
     void *user_val,
     int level)
 {
@@ -1009,14 +1010,14 @@ void close_deflate_handler(DeflateHandler encoder)
     free(encoder);
 }
 
-local void init_deflate(DeflateHandler encoder)
+local void init_deflate(struct timiditycontext_t *c, DeflateHandler encoder)
 {
     if(encoder->eofile)
 	return;
     encoder->bi_buf = 0;
     encoder->bi_valid = 0;
     ct_init(encoder);
-    lm_init(encoder);
+    lm_init(c, encoder);
 
     encoder->qhead = NULL;
     encoder->outcnt = 0;
@@ -1040,13 +1041,13 @@ local void init_deflate(DeflateHandler encoder)
  * evaluation for matches: a match is finally adopted only if there is
  * no better match at the next window position.
  */
-long zip_deflate(DeflateHandler encoder, char *buff, long buff_size)
+long zip_deflate(struct timiditycontext_t *c, DeflateHandler encoder, char *buff, long buff_size)
 {
     long n;
 
     if(!encoder->initflag)
     {
-	init_deflate(encoder);
+	init_deflate(c, encoder);
 	encoder->initflag = 1;
 	if(encoder->lookahead == 0) { /* empty */
 	    encoder->complete = 1;
@@ -1054,27 +1055,27 @@ long zip_deflate(DeflateHandler encoder, char *buff, long buff_size)
 	}
     }
 
-    if((n = qcopy(encoder, buff, buff_size)) == buff_size)
+    if((n = qcopy(c, encoder, buff, buff_size)) == buff_size)
 	return buff_size;
 
     if(encoder->complete)
 	return n;
 
     if(encoder->compr_level <= 3) /* optimized for speed */
-	deflate_fast(encoder);
+	deflate_fast(c, encoder);
     else
-	deflate_better(encoder);
+	deflate_better(c, encoder);
     if(encoder->lookahead == 0)
     {
 	if(encoder->match_available)
 	    ct_tally(encoder, 0, encoder->window[encoder->strstart - 1]);
-	flush_block(encoder, 1);
+	flush_block(c, encoder, 1);
 	encoder->complete = 1;
     }
-    return n + qcopy(encoder, buff + n, buff_size - n);
+    return n + qcopy(c, encoder, buff + n, buff_size - n);
 }
 
-local long qcopy(DeflateHandler encoder, char *buff, long buff_size)
+local long qcopy(struct timiditycontext_t *c, DeflateHandler encoder, char *buff, long buff_size)
 {
   struct deflate_buff_queue *q;
     long n, i;
@@ -1096,7 +1097,7 @@ local long qcopy(DeflateHandler encoder, char *buff, long buff_size)
 	    struct deflate_buff_queue *p;
 	    p = q;
 	    q = q->next;
-	    reuse_queue(p);
+	    reuse_queue(c, p);
 	}
     }
     encoder->qhead = q;
@@ -1551,6 +1552,7 @@ local void scan_tree(
  * bl_tree.
  */
 local void send_tree(
+    struct timiditycontext_t *c,
     DeflateHandler encoder,
     ct_data near *tree,	/* the tree to be scanned */
     int max_code)	/* and its largest code of non zero frequency */
@@ -1580,15 +1582,15 @@ local void send_tree(
 	    }
 	    Assert(count >= 3 && count <= 6, " 3_6?");
 	    SEND_CODE(REP_3_6, encoder->bl_tree);
-	    send_bits(encoder, count-3, 2);
+	    send_bits(c, encoder, count-3, 2);
 
 	} else if(count <= 10) {
 	    SEND_CODE(REPZ_3_10, encoder->bl_tree);
-	    send_bits(encoder, count-3, 3);
+	    send_bits(c, encoder, count-3, 3);
 
 	} else {
 	    SEND_CODE(REPZ_11_138, encoder->bl_tree);
-	    send_bits(encoder, count-11, 7);
+	    send_bits(c, encoder, count-11, 7);
 	}
 	count = 0; prevlen = curlen;
 	if(nextlen == 0) {
@@ -1642,6 +1644,7 @@ local int build_bl_tree(DeflateHandler encoder)
  * IN assertion: lcodes >= 257, dcodes >= 1, blcodes >= 4.
  */
 local void send_all_trees(
+    struct timiditycontext_t *c,
     DeflateHandler encoder,
     int lcodes, int dcodes, int blcodes) /* number of codes for each tree */
 {
@@ -1651,19 +1654,19 @@ local void send_all_trees(
     Assert (lcodes <= L_CODES && dcodes <= D_CODES && blcodes <= BL_CODES,
 	    "too many codes");
     Tracev((stderr, "\nbl counts: "));
-    send_bits(encoder, lcodes-257, 5); /* not +255 as stated in appnote.txt */
-    send_bits(encoder, dcodes-1,   5);
-    send_bits(encoder, blcodes-4,  4); /* not -3 as stated in appnote.txt */
+    send_bits(c, encoder, lcodes-257, 5); /* not +255 as stated in appnote.txt */
+    send_bits(c, encoder, dcodes-1,   5);
+    send_bits(c, encoder, blcodes-4,  4); /* not -3 as stated in appnote.txt */
     for(rank = 0; rank < blcodes; rank++) {
 	Tracev((stderr, "\nbl code %2d ", bl_order[rank]));
-	send_bits(encoder, encoder->bl_tree[bl_order[rank]].Len, 3);
+	send_bits(c, encoder, encoder->bl_tree[bl_order[rank]].Len, 3);
     }
 
     /* send the literal tree */
-    send_tree(encoder, (ct_data near *)encoder->dyn_ltree,lcodes-1);
+    send_tree(c, encoder, (ct_data near *)encoder->dyn_ltree,lcodes-1);
 
     /* send the distance tree */
-    send_tree(encoder, (ct_data near *)encoder->dyn_dtree,dcodes-1);
+    send_tree(c, encoder, (ct_data near *)encoder->dyn_dtree,dcodes-1);
 }
 
 /* ===========================================================================
@@ -1671,6 +1674,7 @@ local void send_all_trees(
  * trees or store, and output the encoded block to the zip file.
  */
 local void flush_block(
+    struct timiditycontext_t *c,
     DeflateHandler encoder,
     int eof) /* true if this is the last block for a file */
 {
@@ -1720,8 +1724,8 @@ local void flush_block(
 	 * successful. If LIT_BUFSIZE <= WSIZE, it is never too late to
 	 * transform a block into a stored block.
 	 */
-	send_bits(encoder, (STORED_BLOCK<<1)+eof, 3);  /* send block type */
-	bi_windup(encoder);		 /* align on byte boundary */
+	send_bits(c, encoder, (STORED_BLOCK<<1)+eof, 3);  /* send block type */
+	bi_windup(c, encoder);		 /* align on byte boundary */
 	put_short((ush)stored_len);
 	put_short((ush)~stored_len);
 
@@ -1730,17 +1734,17 @@ local void flush_block(
 	for(i = 0; i < stored_len; i++)
 	    put_byte(p[i]);
     } else if(static_lenb == opt_lenb) {
-	send_bits(encoder, (STATIC_TREES<<1)+eof, 3);
-	compress_block(encoder,
+	send_bits(c, encoder, (STATIC_TREES<<1)+eof, 3);
+	compress_block(c, encoder,
 		       (ct_data near *)encoder->static_ltree,
 		       (ct_data near *)encoder->static_dtree);
     } else {
-	send_bits(encoder, (DYN_TREES<<1)+eof, 3);
-	send_all_trees(encoder,
+	send_bits(c, encoder, (DYN_TREES<<1)+eof, 3);
+	send_all_trees(c, encoder,
 		       encoder->l_desc.max_code+1,
 		       encoder->d_desc.max_code+1,
 		       max_blindex+1);
-	compress_block(encoder,
+	compress_block(c, encoder,
 		       (ct_data near *)encoder->dyn_ltree,
 		       (ct_data near *)encoder->dyn_dtree);
     }
@@ -1748,7 +1752,7 @@ local void flush_block(
     init_block(encoder);
 
     if(eof)
-	bi_windup(encoder);
+	bi_windup(c, encoder);
 }
 
 /* ===========================================================================
@@ -1817,6 +1821,7 @@ local int ct_tally(
  * Send the block data compressed using the given Huffman trees
  */
 local void compress_block(
+    struct timiditycontext_t *c,
     DeflateHandler encoder,
     ct_data near *ltree, /* literal tree */
     ct_data near *dtree) /* distance tree */
@@ -1844,7 +1849,7 @@ local void compress_block(
 	    extra = extra_lbits[code];
 	    if(extra != 0) {
 		lc -= encoder->base_length[code];
-		send_bits(encoder, lc, extra); /* send the extra length bits */
+		send_bits(c, encoder, lc, extra); /* send the extra length bits */
 	    }
 	    dist = encoder->d_buf[dx++];
 	    /* Here, dist is the match distance - 1 */
@@ -1855,7 +1860,7 @@ local void compress_block(
 	    extra = extra_dbits[code];
 	    if(extra != 0) {
 		dist -= encoder->base_dist[code];
-		send_bits(encoder, dist, extra);   /* send the extra distance bits */
+		send_bits(c, encoder, dist, extra);   /* send the extra distance bits */
 	    }
 	} /* literal or match pair ? */
 	flag >>= 1;
@@ -1870,6 +1875,7 @@ local void compress_block(
  */
 #define Buf_size (8 * sizeof(ush)) /* bit size of bi_buf */
 local void send_bits(
+    struct timiditycontext_t *c,
     DeflateHandler encoder,
     int value,	/* value to send */
     int length)	/* number of bits */
@@ -1909,7 +1915,7 @@ local unsigned bi_reverse(
 /* ===========================================================================
  * Write out any remaining bits in an incomplete byte.
  */
-local void bi_windup(DeflateHandler encoder)
+local void bi_windup(struct timiditycontext_t *c, DeflateHandler encoder)
 {
     if(encoder->bi_valid > 8) {
 	put_short(encoder->bi_buf);
@@ -1920,12 +1926,12 @@ local void bi_windup(DeflateHandler encoder)
     encoder->bi_valid = 0;
 }
 
-local void qoutbuf(DeflateHandler encoder)
+local void qoutbuf(struct timiditycontext_t *c, DeflateHandler encoder)
 {
     if(encoder->outcnt != 0)
     {
 	struct deflate_buff_queue *q;
-	q = new_queue();
+	q = new_queue(c);
 	if(encoder->qhead == NULL)
 	    encoder->qhead = encoder->qtail = q;
 	else

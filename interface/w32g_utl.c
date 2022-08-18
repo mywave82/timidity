@@ -465,8 +465,8 @@ SaveSettingPlayer(SETTING_PLAYER *sp)
 
 extern int set_play_mode(char *cp);
 extern int set_tim_opt(int c, char *optarg);
-extern int set_ctl(char *cp);
-extern int set_wrd(char *w);
+extern int set_ctl(struct timiditycontext_t *c, char *cp);
+extern int set_wrd(struct timiditycontext_t *c, char *w);
 
 #if defined(__W32__) && defined(SMFCONV)
 extern int opt_rcpcv_dll;
@@ -586,7 +586,7 @@ ApplySettingTiMidity(SETTING_TIMIDITY *st)
 	free(output_text_code);
     output_text_code = safe_strdup(st->output_text_code);
     free_instruments_afterwards = st->free_instruments_afterwards;
-    set_wrd(st->opt_wrd);
+    set_wrd(c, st->opt_wrd);
 #if defined(__W32__) && defined(SMFCONV)
     opt_rcpcv_dll = st->opt_rcpcv_dll;
 #endif /* SMFCONV */

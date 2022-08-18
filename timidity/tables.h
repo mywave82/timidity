@@ -29,33 +29,14 @@ extern FLOAT_T lookup_sine(int x);
 #include <math.h>
 #define lookup_sine(x) (sin((2*M_PI/1024.0) * (x)))
 #endif
-extern FLOAT_T lookup_triangular(int x);
+extern FLOAT_T lookup_triangular(struct timiditycontext_t *c, int x);
 extern FLOAT_T lookup_log(int x);
 
 #define SINE_CYCLE_LENGTH 1024
-extern int32 freq_table[];
-extern int32 freq_table_zapped[];
-extern int32 freq_table_tuning[][128];
-extern int32 freq_table_pytha[][128];
-extern int32 freq_table_meantone[][128];
-extern int32 freq_table_pureint[][128];
-extern int32 freq_table_user[][48][128];
-extern FLOAT_T *vol_table;
-extern FLOAT_T def_vol_table[];
-extern FLOAT_T gs_vol_table[];
-extern FLOAT_T *xg_vol_table; /* == gs_vol_table */
-extern const FLOAT_T *pan_table;
-extern FLOAT_T bend_fine[];
-extern FLOAT_T bend_coarse[];
 extern const FLOAT_T midi_time_table[], midi_time_table2[];
 #ifdef LOOKUP_HACK
-extern const uint8 _l2u[]; /* 13-bit PCM to 8-bit u-law */
+extern const int16 _u2l[]; /* 13-bit PCM to 8-bit u-law */
 extern const uint8 _l2u_[]; /* used in LOOKUP_HACK */
-extern int16 _u2l[];
-extern int32 *mixup;
-#ifdef LOOKUP_INTERPOLATION
-extern int8 *iplookup;
-#endif
 #endif
 extern const uint8 reverb_macro_presets[];
 extern const uint8 chorus_macro_presets[];
@@ -64,20 +45,13 @@ extern const float delay_time_center_table[];
 extern const float pre_delay_time_table[];
 extern const float chorus_delay_time_table[];
 extern const float rate1_table[];
-extern FLOAT_T attack_vol_table[];
-extern FLOAT_T perceived_vol_table[];
-extern FLOAT_T gm2_vol_table[];
-extern FLOAT_T user_vol_table[];
 extern const float sc_eg_attack_table[];
 extern const float sc_eg_decay_table[];
 extern const float sc_eg_release_table[];
 extern const FLOAT_T sc_vel_table[];
 extern const FLOAT_T sc_vol_table[];
 extern const FLOAT_T sc_pan_table[];
-extern FLOAT_T gm2_pan_table[];
 extern const FLOAT_T sc_drum_level_table[];
-extern FLOAT_T sb_vol_table[];
-extern FLOAT_T modenv_vol_table[];
 extern const float cb_to_amp_table[];
 extern const float reverb_time_table[];
 extern const float pan_delay_table[];
@@ -93,23 +67,23 @@ extern const int16 lpf_table_gs[];
 extern const int16 eq_freq_table_gs[];
 extern const float lofi_sampling_freq_table_xg[];
 
-extern void init_freq_table(void);
-extern void init_freq_table_tuning(void);
-extern void init_freq_table_pytha(void);
-extern void init_freq_table_meantone(void);
-extern void init_freq_table_pureint(void);
-extern void init_freq_table_user(void);
-extern void init_bend_fine(void);
-extern void init_bend_coarse(void);
-extern void init_tables(void);
-extern void init_gm2_pan_table(void);
-extern void init_attack_vol_table(void);
-extern void init_sb_vol_table(void);
-extern void init_modenv_vol_table(void);
-extern void init_def_vol_table(void);
-extern void init_gs_vol_table(void);
-extern void init_perceived_vol_table(void);
-extern void init_gm2_vol_table(void);
-extern void init_user_vol_table(FLOAT_T power);
+extern void init_freq_table(struct timiditycontext_t *c);
+extern void init_freq_table_tuning(struct timiditycontext_t *c);
+extern void init_freq_table_pytha(struct timiditycontext_t *c);
+extern void init_freq_table_meantone(struct timiditycontext_t *c);
+extern void init_freq_table_pureint(struct timiditycontext_t *c);
+extern void init_freq_table_user(struct timiditycontext_t *c);
+extern void init_bend_fine(struct timiditycontext_t *c);
+extern void init_bend_coarse(struct timiditycontext_t *c);
+extern void init_tables(struct timiditycontext_t *c);
+extern void init_gm2_pan_table(struct timiditycontext_t *c);
+extern void init_attack_vol_table(struct timiditycontext_t *c);
+extern void init_sb_vol_table(struct timiditycontext_t *c);
+extern void init_modenv_vol_table(struct timiditycontext_t *c);
+extern void init_def_vol_table(struct timiditycontext_t *c);
+extern void init_gs_vol_table(struct timiditycontext_t *c);
+extern void init_perceived_vol_table(struct timiditycontext_t *c);
+extern void init_gm2_vol_table(struct timiditycontext_t *c);
+extern void init_user_vol_table(struct timiditycontext_t *c, FLOAT_T power);
 
 #endif /* ___TABLES_H_ */

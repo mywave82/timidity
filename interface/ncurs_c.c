@@ -133,7 +133,7 @@ static int gslcd_displayed_flag = 0;
 #define GS_LCD_CLEAR_TIME 10.0
 #define GS_LCD_WIDTH 40
 
-extern int set_extension_modes(char *flag);
+extern int set_extension_modes(struct timiditycontext_c *c, char *flag);
 
 static struct
 {
@@ -2249,7 +2249,7 @@ static int ctl_cmd_E_enter(int32 *val)
     if(*text)
     {
 	lastb = special_tonebank;
-	if(set_extension_modes(text))
+	if(set_extension_modes(c, text))
 	    beep();
 	else
 	{

@@ -44,7 +44,7 @@
  * R G B
  * 1 2 4
  */
-int wrd_color_remap[8] =
+const int wrd_color_remap[8] =
 {
     0, /* 16 secret?, I don't know this code meaning. */
     1, /* 17 red */
@@ -62,7 +62,7 @@ int wrd_color_remap[8] =
  * {0,4,1,5,2,6,3,7} -- BRG to RGB
  * {0,1,4,5,2,3,6,7} -- GRB to RGB
  */
-int wrd_plane_remap[8] = {0,1,2,3,4,5,6,7};
+const int wrd_plane_remap[8] = {0,1,2,3,4,5,6,7};
 
 extern WRDTracer dumb_wrdt_mode;
 
@@ -73,7 +73,7 @@ extern WRDTracer mac_wrdt_mode;
 /*ARGSUSED*/
 static int null_wrdt_open(char *wrdt_opts) { return 0; }
 /*ARGSUSED*/
-static void null_wrdt_apply(int cmd, int argc, int args[]) { }
+static void null_wrdt_apply(struct timiditycontext_t *c, int cmd, int argc, int args[]) { }
 static void null_wrdt_update_events(void) { }
 static void null_wrdt_end(void) { }
 static void null_wrdt_close(void) { }
@@ -133,38 +133,35 @@ const WRDTracer *wrdt_list[] =
 
 const WRDTracer *wrdt = &null_wrdt_mode;
 
+static int wrd_add_path_one(struct timiditycontext_t *c, char *path, int pathlen);
 
-static StringTable path_list;
-static StringTable default_path_list;
-static int wrd_add_path_one(char *path, int pathlen);
-
-void wrd_init_path(void)
+void wrd_init_path(struct timiditycontext_t *c)
 {
     StringTableNode *p;
-    delete_string_table(&path_list);
-    for(p = default_path_list.head; p; p = p->next)
-	wrd_add_path_one(p->string, strlen(p->string));
+    delete_string_table(c, &c->wrdt_path_list);
+    for(p = c->wrdt_default_path_list.head; p; p = p->next)
+	wrd_add_path_one(c, p->string, strlen(p->string));
 
-    if(current_file_info)
+    if(c->current_file_info)
     {
-	if(strchr(current_file_info->filename, '#') != NULL)
-	    wrd_add_path_one(current_file_info->filename,
-			     strchr(current_file_info->filename, '#') -
-			     current_file_info->filename + 1);
-	if(pathsep_strrchr(current_file_info->filename) != NULL)
-	    wrd_add_path_one(current_file_info->filename,
-			     pathsep_strrchr(current_file_info->filename) -
-			     current_file_info->filename + 1);
+	if(strchr(c->current_file_info->filename, '#') != NULL)
+	    wrd_add_path_one(c, c->current_file_info->filename,
+			     strchr(c->current_file_info->filename, '#') -
+			     c->current_file_info->filename + 1);
+	if(pathsep_strrchr(c->current_file_info->filename) != NULL)
+	    wrd_add_path_one(c, c->current_file_info->filename,
+			     pathsep_strrchr(c->current_file_info->filename) -
+			     c->current_file_info->filename + 1);
     }
 }
 
-static int wrd_add_path_one(char *path, int pathlen)
+static int wrd_add_path_one(struct timiditycontext_t *c, char *path, int pathlen)
 {
     int exists;
     StringTableNode *p;
 
     exists = 0;
-    for(p = path_list.head; p; p = p->next)
+    for(p = c->wrdt_path_list.head; p; p = p->next)
 	if(strncmp(p->string, path, pathlen) == 0 &&
 	   p->string[pathlen] == '\0')
 	{
@@ -173,42 +170,42 @@ static int wrd_add_path_one(char *path, int pathlen)
 	}
     if(exists)
 	return 0;
-    put_string_table(&path_list, path, pathlen);
+    put_string_table(c, &c->wrdt_path_list, path, pathlen);
     return 1;
 }
 
-void wrd_add_path(char *path, int pathlen)
+void wrd_add_path(struct timiditycontext_t *c, char *path, int pathlen)
 {
     if(pathlen == 0)
 	pathlen = strlen(path);
-    if(!wrd_add_path_one(path, pathlen))
+    if(!wrd_add_path_one(c, path, pathlen))
 	return;
 
-    if(current_file_info &&
-       get_archive_type(current_file_info->filename) != -1)
+    if(c->current_file_info &&
+       get_archive_type(c, c->current_file_info->filename) != -1)
     {
 	MBlockList buf;
 	char *arc_path;
 	int baselen;
 
 	init_mblock(&buf);
-	baselen = strrchr(current_file_info->filename, '#') -
-	    current_file_info->filename + 1;
-	arc_path = new_segment(&buf, baselen + pathlen + 1);
-	strncpy(arc_path, current_file_info->filename, baselen);
+	baselen = strrchr(c->current_file_info->filename, '#') -
+	    c->current_file_info->filename + 1;
+	arc_path = new_segment(c, &buf, baselen + pathlen + 1);
+	strncpy(arc_path, c->current_file_info->filename, baselen);
 	strncpy(arc_path + baselen, path, pathlen);
 	arc_path[baselen + pathlen] = '\0';
-	put_string_table(&path_list, arc_path, strlen(arc_path));
-	reuse_mblock(&buf);
+	put_string_table(c, &c->wrdt_path_list, arc_path, strlen(arc_path));
+	reuse_mblock(c, &buf);
     }
 }
 
-void wrd_add_default_path(char *path)
+void wrd_add_default_path(struct timiditycontext_t *c, char *path)
 {
-    put_string_table(&default_path_list, path, strlen(path));
+    put_string_table(c, &c->wrdt_default_path_list, path, strlen(path));
 }
 
-static struct timidity_file *try_wrd_open_file(char *prefix, char *fn)
+static struct timidity_file *try_wrd_open_file(struct timiditycontext_t *c, char *prefix, char *fn)
 {
     MBlockList buf;
     char *path;
@@ -218,7 +215,7 @@ static struct timidity_file *try_wrd_open_file(char *prefix, char *fn)
     init_mblock(&buf);
     len1 = strlen(prefix);
     len2 = strlen(fn);
-    path = (char *)new_segment(&buf, len1 + len2 + 2);
+    path = (char *)new_segment(c, &buf, len1 + len2 + 2);
     strcpy(path, prefix);
     if( len1>0 && path[len1 - 1] != '#' && !IS_PATH_SEP(path[len1 - 1]))
     {
@@ -226,69 +223,66 @@ static struct timidity_file *try_wrd_open_file(char *prefix, char *fn)
 	path[len1] = '\0';
     }
     strcat(path, fn);
-    tf = open_file(path, 0, OF_SILENT);
-    reuse_mblock(&buf);
+    tf = open_file(c, path, 0, OF_SILENT);
+    reuse_mblock(c, &buf);
     return tf;
 }
 
 #define CUR_DIR_PATH ""
 
-struct timidity_file *wrd_open_file(char *filename)
+struct timidity_file *wrd_open_file(struct timiditycontext_t *c, char *filename)
 {
     StringTableNode *path;
     struct timidity_file *tf;
 
-    if(get_archive_type(filename) != -1)
-	return open_file(filename, 0, OF_SILENT);
+    if(get_archive_type(c, filename) != -1)
+	return open_file(c, filename, 0, OF_SILENT);
 
-    for(path = path_list.head; path; path = path->next){
-	if((tf = try_wrd_open_file(path->string, filename)) != NULL)
+    for(path = c->wrdt_path_list.head; path; path = path->next){
+	if((tf = try_wrd_open_file(c, path->string, filename)) != NULL)
 	    return tf;
     }
-    return try_wrd_open_file(CUR_DIR_PATH, filename);
+    return try_wrd_open_file(c, CUR_DIR_PATH, filename);
 }
 
-void wrd_midi_event(int cmd, int arg)
+void wrd_midi_event(struct timiditycontext_t *c, int cmd, int arg)
 {
-    static int wrd_argc = 0;
-    static int wrd_args[WRD_MAXPARAM];
-
     if(!wrdt->opened) /* Ignore any WRD command if WRD is closed */
 	return;
 
     if(cmd == -1)
     {
-	wrd_argc = 0;
+	c->wrd_midi_event_argc = 0;
 	return;
     }
 
-    wrd_args[wrd_argc++] = arg;
+    c->wrd_midi_event_args[c->wrd_midi_event_argc++] = arg;
     if(cmd != WRD_ARG)
     {
-	wrdt->apply(cmd, wrd_argc, wrd_args);
-	wrd_argc = 0;
+	wrdt->apply(c, cmd, c->wrd_midi_event_argc, c->wrd_midi_event_args);
+	c->wrd_midi_event_argc = 0;
     }
 }
 
-void wrd_sherry_event(int addr)
+void wrd_sherry_event(struct timiditycontext_t *c, int addr)
 {
     if(!wrdt->opened || wrdt->sherry == NULL)
 	return;
-    wrdt->sherry(datapacket[addr].data, datapacket[addr].len);
+    wrdt->sherry(c->datapacket[addr].data, c->datapacket[addr].len);
 }
 
-void free_wrd(void)
+void free_wrd(struct timiditycontext_t *c)
 {
-	delete_string_table(&path_list);
+	delete_string_table(c, &c->wrdt_path_list);
 }
 
 #ifdef __BORLANDC__
-void print_ecmd(char *cmd, int *args, int narg)
+void print_ecmd(struct timiditycontext_t *c, char *cmd, int *args, int narg)
 {
     char *p;
     size_t s = MIN_MBLOCK_SIZE;
 
-    p = (char *)new_segment(&tmpbuffer, s);
+    p = (char *)new_segment(c, &c->tmpbuffer, s);
     snprintf(p, s, "^%s(", cmd);
 
     if(*args == WRD_NOARG)
@@ -314,6 +308,6 @@ void print_ecmd(char *cmd, int *args, int narg)
     }
     strncat(p, ")", s - strlen(p) - 1);
     ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", p);
-    reuse_mblock(&tmpbuffer);
+    reuse_mblock(c, &c->tmpbuffer);
 }
 #endif

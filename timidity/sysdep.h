@@ -259,7 +259,7 @@ typedef struct _ChannelBitMask
 #ifdef LOOKUP_HACK
    typedef int8 sample_t;
    typedef uint8 final_volume_t;
-#  define FINAL_VOLUME(v) ((final_volume_t)~_l2u[v])
+#  define FINAL_VOLUME(v) ((final_volume_t)~c->_l2u[v])
 #  define MIXUP_SHIFT 5
 #  define MAX_AMP_VALUE 4095
 #else

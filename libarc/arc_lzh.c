@@ -73,12 +73,11 @@
 #define EXTEND_TOWNSOS		'T'
 #define EXTEND_XOSK		'X'
 
-static char *get_ptr;
-#define setup_get(PTR)		(get_ptr = (PTR))
-#define get_byte()		(*get_ptr++ & 0xff)
-#define skip_byte()		get_ptr++
+#define setup_get(PTR)		(c->lzh_get_ptr = (PTR))
+#define get_byte()		(*((c->lzh_get_ptr)++) & 0xff)
+#define skip_byte()		(c->lzh_get_ptr)++
 
-static unsigned short get_word(void)
+static unsigned short get_word(struct timiditycontext_t *c)
 {
     int b0, b1;
 
@@ -87,7 +86,7 @@ static unsigned short get_word(void)
     return (b1 << 8) + b0;
 }
 
-static long get_longword(void)
+static long get_longword(struct timiditycontext_t *c)
 {
     long b0, b1, b2, b3;
 
@@ -229,7 +228,7 @@ static unsigned char *convdelim(unsigned char *path, unsigned char delim)
     return path;
 }
 
-ArchiveEntryNode *next_lzh_entry(void)
+ArchiveEntryNode *next_lzh_entry(struct timiditycontext_t *c)
 {
     ArchiveEntryNode *entry;
     URL url;
@@ -248,8 +247,8 @@ ArchiveEntryNode *next_lzh_entry(void)
     int macbin_check;
     extern char *lzh_methods[];
 
-    url = arc_handler.url;
-    macbin_check = (arc_handler.counter == 0);
+    url = c->arc_handler.url;
+    macbin_check = (c->arc_handler.counter == 0);
 
   retry_read:
     dir_length = 0;
@@ -262,16 +261,16 @@ ArchiveEntryNode *next_lzh_entry(void)
 	if(macbin_check)
 	{
 	    macbin_check = 0;
-	    url_skip(url, 128-1);
-	    if(arc_handler.isfile)
-		arc_handler.pos += 128;
+	    url_skip(c, url, 128-1);
+	    if(c->arc_handler.isfile)
+		c->arc_handler.pos += 128;
 	    goto retry_read;
 	}
 	return NULL;
     }
 
     macbin_check = 0;
-    if(url_read(url, data + I_HEADER_CHECKSUM,
+    if(url_read(c, url, data + I_HEADER_CHECKSUM,
 		header_size - 1) < header_size - 1)
 	return NULL;
 #else	/* a little cleverer lzh check */
@@ -288,14 +287,14 @@ ArchiveEntryNode *next_lzh_entry(void)
 				&& *(data + i - 0) == '-')
 			{
 				int j;
-				if(arc_handler.isfile)
-					arc_handler.pos += i - 6;
+				if(c->arc_handler.isfile)
+					c->arc_handler.pos += i - 6;
 				for(j = 0; j<= 6; j++)
 					*(data + j) = *(data + i - 6 + j);
 				header_size = (int)(unsigned char)(*(data + i - 6));
 				if(header_size == 0)
 					return NULL;
-				if(url_read(url, data + 7, header_size - 7) < header_size - 7)
+				if(url_read(c, url, data + 7, header_size - 7) < header_size - 7)
 					return NULL;
 				break;
 			}
@@ -306,7 +305,7 @@ ArchiveEntryNode *next_lzh_entry(void)
 	} else {
 	    if((header_size = url_getc(url)) == EOF)
 			return NULL;
-		if(url_read(url, data + I_HEADER_CHECKSUM,
+		if(url_read(c, url, data + I_HEADER_CHECKSUM,
 			header_size - 1) < header_size - 1)
 		return NULL;
 	}
@@ -318,7 +317,7 @@ ArchiveEntryNode *next_lzh_entry(void)
 
     if(header_level != 2)
     {
-	if(url_read(url, data + header_size, 2) < 2)
+	if(url_read(c, url, data + header_size, 2) < 2)
 	    return NULL;
 	hdrsiz += 2;
     }
@@ -329,9 +328,9 @@ ArchiveEntryNode *next_lzh_entry(void)
     memcpy(method_id, data + I_METHOD, sizeof(method_id));
 
     setup_get(data + I_PACKED_SIZE);
-    compsize = get_longword();
-    origsize = get_longword();
-    get_longword(); /* last_modified_stamp */
+    compsize = get_longword(c);
+    origsize = get_longword(c);
+    get_longword(c); /* last_modified_stamp */
     skip_byte(); /* attribute */
 
     if((header_level = get_byte()) != 2)
@@ -344,12 +343,12 @@ ArchiveEntryNode *next_lzh_entry(void)
 
     if(header_size - name_length >= 24)
     {				/* EXTEND FORMAT */
-	get_word(); /* crc */
+	get_word(c); /* crc */
 	extend_type = get_byte();
     }
     else if(header_size - name_length == 22)
     {				/* Generic with CRC */
-	get_word(); /* crc */
+	get_word(c); /* crc */
 	extend_type = EXTEND_GENERIC;
     }
     else if(header_size - name_length == 20)
@@ -362,10 +361,10 @@ ArchiveEntryNode *next_lzh_entry(void)
     if(extend_type == EXTEND_UNIX && header_level == 0)
     {
 	skip_byte();		/* minor_version */
-	get_longword();		/* unix_last_modified_stamp */
-	get_word();		/* unix_mode */
-	get_word();		/* unix_uid */
-	get_word();		/* unix_gid */
+	get_longword(c);		/* unix_last_modified_stamp */
+	get_word(c);		/* unix_mode */
+	get_word(c);		/* unix_uid */
+	get_word(c);		/* unix_gid */
 	goto parse_ok;
     }
 
@@ -374,14 +373,14 @@ ArchiveEntryNode *next_lzh_entry(void)
 	/* Extend Header */
 	if(header_level != 2)
 	    setup_get(data + header_size);
-	ptr = get_ptr;
-	while((header_size = get_word()) != 0)
+	ptr = c->lzh_get_ptr;
+	while((header_size = get_word(c)) != 0)
 	{
 	    if(header_level != 2)
 	    {
-		if(data + LZHEADER_STRAGE - get_ptr < header_size)
+		if(data + LZHEADER_STRAGE - c->lzh_get_ptr < header_size)
 		    return NULL;
-		if(url_read(url, get_ptr, header_size) < header_size)
+		if(url_read(c, url, c->lzh_get_ptr, header_size) < header_size)
 		    return NULL;
 		hdrsiz += header_size;
 	    }
@@ -392,7 +391,7 @@ ArchiveEntryNode *next_lzh_entry(void)
 		/*
 		 * header crc
 		 */
-		setup_get(get_ptr + header_size - 3);
+		setup_get(c->lzh_get_ptr + header_size - 3);
 		break;
 	      case 1:
 		/*
@@ -424,14 +423,14 @@ ArchiveEntryNode *next_lzh_entry(void)
 		if(extend_type == EXTEND_MSDOS ||
 		    extend_type == EXTEND_HUMAN ||
 		    extend_type == EXTEND_GENERIC)
-		    get_word(); /* attribute */
+		    get_word(c); /* attribute */
 		break;
 	      case 0x50:
 		/*
 		 * UNIX permission
 		 */
 		if(extend_type == EXTEND_UNIX)
-		    get_word(); /* unix_mode */
+		    get_word(c); /* unix_mode */
 		break;
 	      case 0x51:
 		/*
@@ -439,41 +438,41 @@ ArchiveEntryNode *next_lzh_entry(void)
 		 */
 		if(extend_type == EXTEND_UNIX)
 		{
-		    get_word(); /* unix_gid */
-		    get_word(); /* unix_uid */
+		    get_word(c); /* unix_gid */
+		    get_word(c); /* unix_uid */
 		}
 		break;
 	      case 0x52:
 		/*
 		 * UNIX group name
 		 */
-		setup_get(get_ptr + header_size - 3);
+		setup_get(c->lzh_get_ptr + header_size - 3);
 		break;
 	      case 0x53:
 		/*
 		 * UNIX user name
 		 */
-		setup_get(get_ptr + header_size - 3);
+		setup_get(c->lzh_get_ptr + header_size - 3);
 		break;
 	      case 0x54:
 		/*
 		 * UNIX last modified time
 		 */
 		if(extend_type == EXTEND_UNIX)
-		    get_longword(); /* unix_last_modified_stamp */
+		    get_longword(c); /* unix_last_modified_stamp */
 		break;
 	      default:
 		/*
 		 * other headers
 		 */
-		setup_get(get_ptr + header_size - 3);
+		setup_get(c->lzh_get_ptr + header_size - 3);
 		break;
 	    }
 	}
-	if(header_level != 2 && get_ptr - ptr != 2)
+	if(header_level != 2 && c->lzh_get_ptr - ptr != 2)
 	{
-	    compsize -= get_ptr - ptr - 2;
-	    header_size += get_ptr - ptr - 2;
+	    compsize -= c->lzh_get_ptr - ptr - 2;
+	    header_size += c->lzh_get_ptr - ptr - 2;
 	}
     }
 
@@ -512,8 +511,8 @@ ArchiveEntryNode *next_lzh_entry(void)
   parse_ok:
     if(strncmp("-lhd-", method_id, 5) == 0)
     {
-	if(arc_handler.isfile)
-	    arc_handler.pos += hdrsiz;
+	if(c->arc_handler.isfile)
+	    c->arc_handler.pos += hdrsiz;
 	goto retry_read; /* Skip directory entry */
     }
 
@@ -529,19 +528,19 @@ ArchiveEntryNode *next_lzh_entry(void)
     entry->compsize = compsize;
     entry->origsize = origsize;
 
-    if(arc_handler.isfile)
+    if(c->arc_handler.isfile)
     {
-	arc_handler.pos += hdrsiz;
-	entry->start = arc_handler.pos;
+	c->arc_handler.pos += hdrsiz;
+	entry->start = c->arc_handler.pos;
 	entry->cache = NULL;
-	url_skip(url, compsize);
-	arc_handler.pos += compsize;
+	url_skip(c, url, compsize);
+	c->arc_handler.pos += compsize;
     }
     else
     {
       long n;
       entry->start = 0;
-      entry->cache = url_dump(url, compsize, &n);
+      entry->cache = url_dump(c, url, compsize, &n);
       if(n != compsize)
 	{
 	  free_entry_node(entry);

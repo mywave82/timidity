@@ -31,15 +31,6 @@
 #include "freq.h"
 #include "fft4g.h"
 
-float *floatdata, *magdata, *prunemagdata;
-int *ip;
-float *w;
-uint32 oldfftsize = 0;
-float pitchmags[129];
-double pitchbins[129];
-double new_pitchbins[129];
-int *fft1_bin_to_pitch;
-
 /* middle C = pitch 60 = 261.6 Hz
    freq     = 13.75 * exp((pitch - 9) / 12 * log(2))
    pitch    = 9 - log(13.75 / freq) * 12 / log(2)
@@ -254,7 +245,7 @@ int assign_chord(double *pitchbins, int *chord,
 
 
 /* initialize FFT arrays for the frequency analysis */
-int freq_initialize_fft_arrays(Sample *sp)
+static int freq_initialize_fft_arrays(struct timiditycontext_t *c, Sample *sp)
 {
 
     uint32 i;
@@ -267,9 +258,9 @@ int freq_initialize_fft_arrays(Sample *sp)
     origdata = sp->data;
 
     /* copy the sample to a new float array */
-    floatdata = (float *) safe_malloc(length * sizeof(float));
+    c->floatdata = (float *) safe_malloc(length * sizeof(float));
     for (i = 0; i < length; i++)
-	floatdata[i] = origdata[i];
+	c->floatdata[i] = origdata[i];
 
     /* length must be a power of 2 */
     /* set it to smallest power of 2 >= 1.4*rate */
@@ -277,43 +268,43 @@ int freq_initialize_fft_arrays(Sample *sp)
     newlength = pow(2, ceil(log(1.4*rate) / log(2)));
     if (length < newlength)
     {
-	floatdata = safe_realloc(floatdata, newlength * sizeof(float));
-	memset(floatdata + length, 0, (newlength - length) * sizeof(float));
+	c->floatdata = safe_realloc(c->floatdata, newlength * sizeof(float));
+	memset(c->floatdata + length, 0, (newlength - length) * sizeof(float));
     }
     length = newlength;
 
     /* allocate FFT arrays */
     /* calculate sin/cos and fft1_bin_to_pitch tables */
-    if (length != oldfftsize)
+    if (length != c->oldfftsize)
     {
         float f0;
 
-        if (oldfftsize > 0)
+        if (c->oldfftsize > 0)
         {
-            free(magdata);
-            free(prunemagdata);
-            free(ip);
-            free(w);
-            free(fft1_bin_to_pitch);
+            free(c->magdata);
+            free(c->prunemagdata);
+            free(c->ip);
+            free(c->w);
+            free(c->fft1_bin_to_pitch);
         }
-        magdata = (float *) safe_malloc(length * sizeof(float));
-        prunemagdata = (float *) safe_malloc(length * sizeof(float));
-        ip = (int *) safe_malloc(2 + sqrt(length) * sizeof(int));
-        *ip = 0;
-        w = (float *) safe_malloc((length >> 1) * sizeof(float));
-        fft1_bin_to_pitch = safe_malloc((length >> 1) * sizeof(float));
+        c->magdata = (float *) safe_malloc(length * sizeof(float));
+        c->prunemagdata = (float *) safe_malloc(length * sizeof(float));
+        c->ip = (int *) safe_malloc(2 + sqrt(length) * sizeof(int));
+        *c->ip = 0;
+        c->w = (float *) safe_malloc((length >> 1) * sizeof(float));
+        c->fft1_bin_to_pitch = safe_malloc((length >> 1) * sizeof(float));
 
         for (i = 1, f0 = (float) rate / length; i < (length >> 1); i++) {
-            fft1_bin_to_pitch[i] = assign_pitch_to_freq(i * f0);
+            c->fft1_bin_to_pitch[i] = assign_pitch_to_freq(i * f0);
         }
     }
-    oldfftsize = length;
+    c->oldfftsize = length;
 
     /* zero out arrays that need it */
-    memset(pitchmags, 0, 129 * sizeof(float));
-    memset(pitchbins, 0, 129 * sizeof(double));
-    memset(new_pitchbins, 0, 129 * sizeof(double));
-    memset(prunemagdata, 0, length * sizeof(float));
+    memset(c->pitchmags, 0, 129 * sizeof(float));
+    memset(c->pitchbins, 0, 129 * sizeof(double));
+    memset(c->new_pitchbins, 0, 129 * sizeof(double));
+    memset(c->prunemagdata, 0, length * sizeof(float));
 
     return(length);
 }
@@ -323,7 +314,7 @@ int freq_initialize_fft_arrays(Sample *sp)
 /* return the frequency of the sample */
 /* max of 1.4 - 2.0 seconds of audio is analyzed, depending on sample rate */
 /* samples < 1.4 seconds are padded to max length for higher fft accuracy */
-float freq_fourier(Sample *sp, int *chord)
+float freq_fourier(struct timiditycontext_t *c, Sample *sp, int *chord)
 {
 
     uint32 length, length0;
@@ -347,7 +338,7 @@ float freq_fourier(Sample *sp, int *chord)
     length = length0 = sp->data_length >> FRACTION_BITS;
     origdata = sp->data;
 
-    length = freq_initialize_fft_arrays(sp);
+    length = freq_initialize_fft_arrays(c, sp);
 
     /* base frequency of the FFT */
     f0 = (float) rate / length;
@@ -442,24 +433,24 @@ float freq_fourier(Sample *sp, int *chord)
     min_guessfreq = (float) rate / maxoffset;
 
     /* perform the in place FFT */
-    rdft(length, 1, floatdata, ip, w);
+    rdft(length, 1, c->floatdata, c->ip, c->w);
 
     /* calc the magnitudes */
     for (i = 2; i < length; i++)
     {
-	mag = floatdata[i++];
+	mag = c->floatdata[i++];
 	mag *= mag;
-	mag += floatdata[i] * floatdata[i];
-	magdata[i >> 1] = sqrt(mag);
+	mag += c->floatdata[i] * c->floatdata[i];
+	c->magdata[i >> 1] = sqrt(mag);
     }
 
     /* find max mag */
     maxmag = 0;
     for (i = 1; i < (length >> 1); i++)
     {
-	mag = magdata[i];
+	mag = c->magdata[i];
 
-	pitch = fft1_bin_to_pitch[i];
+	pitch = c->fft1_bin_to_pitch[i];
 	if (pitch && mag > maxmag)
 	    maxmag = mag;
     }
@@ -469,27 +460,27 @@ float freq_fourier(Sample *sp, int *chord)
      * The best choice of power seems to be between 1.64 - 1.68
      */
     for (i = 1; i < (length >> 1); i++)
-	magdata[i] = maxmag * pow(magdata[i] / maxmag, 1.66);
+	c->magdata[i] = maxmag * pow(c->magdata[i] / maxmag, 1.66);
 
     /* bin the pitches */
     for (i = 1; i < (length >> 1); i++)
     {
-	mag = magdata[i];
+	mag = c->magdata[i];
 
-	pitch = fft1_bin_to_pitch[i];
-	pitchbins[pitch] += mag;
+	pitch = c->fft1_bin_to_pitch[i];
+	c->pitchbins[pitch] += mag;
 
-	if (mag > pitchmags[pitch])
-	    pitchmags[pitch] = mag;
+	if (mag > c->pitchmags[pitch])
+	    c->pitchmags[pitch] = mag;
     }
 
     /* zero out lowest pitch, since it contains all lower frequencies too */
-    pitchbins[LOWEST_PITCH] = 0;
+    c->pitchbins[LOWEST_PITCH] = 0;
 
     /* find the largest peak */
     for (i = LOWEST_PITCH + 1, maxsum = -42; i <= HIGHEST_PITCH; i++)
     {
-	sum = pitchbins[i];
+	sum = c->pitchbins[i];
 	if (sum > maxsum)
 	{
 	    maxsum = sum;
@@ -501,13 +492,13 @@ float freq_fourier(Sample *sp, int *chord)
 
     /* zero out any peak below minpitch */
     for (i = LOWEST_PITCH + 1; i < minpitch; i++)
-	pitchbins[i] = 0;
+	c->pitchbins[i] = 0;
 
     /* remove all pitches below threshold */
     for (i = minpitch; i <= HIGHEST_PITCH; i++)
     {
-	if (pitchbins[i] / maxsum < 0.01 && pitchmags[i] / maxmag < 0.01)
-	    pitchbins[i] = 0;
+	if (c->pitchbins[i] / maxsum < 0.01 && c->pitchmags[i] / maxmag < 0.01)
+	    c->pitchbins[i] = 0;
     }
 
     /* keep local maxima */
@@ -515,28 +506,28 @@ float freq_fourier(Sample *sp, int *chord)
     {
 	double temp;
 
-	temp = pitchbins[i];
+	temp = c->pitchbins[i];
 
 	/* also keep significant bands to either side */
-	if (temp && pitchbins[i-1] < temp && pitchbins[i+1] < temp)
+	if (temp && c->pitchbins[i-1] < temp && c->pitchbins[i+1] < temp)
 	{
-	    new_pitchbins[i] = temp;
+	    c->new_pitchbins[i] = temp;
 
 	    temp *= 0.5;
-	    if (pitchbins[i-1] >= temp)
-		new_pitchbins[i-1] = pitchbins[i-1];
-	    if (pitchbins[i+1] >= temp)
-		new_pitchbins[i+1] = pitchbins[i-1];
+	    if (c->pitchbins[i-1] >= temp)
+		c->new_pitchbins[i-1] = c->pitchbins[i-1];
+	    if (c->pitchbins[i+1] >= temp)
+		c->new_pitchbins[i+1] = c->pitchbins[i-1];
 	}
     }
-    memcpy(pitchbins, new_pitchbins, 129 * sizeof(double));
+    memcpy(c->pitchbins, c->new_pitchbins, 129 * sizeof(double));
 
     /* find lowest and highest pitches */
     minpitch = LOWEST_PITCH;
-    while (minpitch < HIGHEST_PITCH && !pitchbins[minpitch])
+    while (minpitch < HIGHEST_PITCH && !c->pitchbins[minpitch])
 	minpitch++;
     maxpitch = HIGHEST_PITCH;
-    while (maxpitch > LOWEST_PITCH && !pitchbins[maxpitch])
+    while (maxpitch > LOWEST_PITCH && !c->pitchbins[maxpitch])
 	maxpitch--;
 
     /* uh oh, no pitches left...
@@ -546,7 +537,7 @@ float freq_fourier(Sample *sp, int *chord)
      */
     if (maxpitch < minpitch)
     {
-	free(floatdata);
+	free(c->floatdata);
 	return 260.0;
     }
 
@@ -572,10 +563,10 @@ float freq_fourier(Sample *sp, int *chord)
     /* filter out all "noise" from magnitude array */
     for (i = minbin, n = 0; i <= maxbin; i++)
     {
-	pitch = fft1_bin_to_pitch[i];
-	if (pitchbins[pitch])
+	pitch = c->fft1_bin_to_pitch[i];
+	if (c->pitchbins[pitch])
 	{
-	    prunemagdata[i] = magdata[i];
+	    c->prunemagdata[i] = c->magdata[i];
 	    n++;
 	}
     }
@@ -587,11 +578,11 @@ float freq_fourier(Sample *sp, int *chord)
      */
     if (!n)
     {
-	free(floatdata);
+	free(c->floatdata);
 	return 260.0;
     }
 
-    memset(new_pitchbins, 0, 129 * sizeof(double));
+    memset(c->new_pitchbins, 0, 129 * sizeof(double));
 
     maxsum = -1;
     minpitch = assign_pitch_to_freq(min_guessfreq);
@@ -602,13 +593,13 @@ float freq_fourier(Sample *sp, int *chord)
     /* initial guess is first local maximum */
     bestfreq = pitch_freq_table[minpitch];
     if (minpitch < HIGHEST_PITCH &&
-	pitchbins[minpitch+1] > pitchbins[minpitch])
+	c->pitchbins[minpitch+1] > c->pitchbins[minpitch])
 	    bestfreq = pitch_freq_table[minpitch+1];
 
     /* find best fundamental */
     for (i = minpitch; i <= maxpitch2; i++)
     {
-	if (!pitchbins[i])
+	if (!c->pitchbins[i])
 	    continue;
 
 	minfreq2 = pitch_freq_lb_table[i];
@@ -627,9 +618,9 @@ float freq_fourier(Sample *sp, int *chord)
 	    {
 		pitch = assign_pitch_to_freq(newfreq);
 
-		if (pitchbins[pitch])
+		if (c->pitchbins[pitch])
 		{
-		    sum += pitchbins[pitch];
+		    sum += c->pitchbins[pitch];
 		    n++;
 		    total = j;
 		}
@@ -647,8 +638,8 @@ float freq_fourier(Sample *sp, int *chord)
 		    pitch = assign_pitch_to_freq(freq);
 
 		    /* use only these pitches for chord detection */
-		    if (pitch <= HIGHEST_PITCH && pitchbins[pitch])
-			new_pitchbins[pitch] = weightsum;
+		    if (pitch <= HIGHEST_PITCH && c->pitchbins[pitch])
+			c->new_pitchbins[pitch] = weightsum;
 
 		    if (pitch > maxpitch)
 			continue;
@@ -666,7 +657,7 @@ float freq_fourier(Sample *sp, int *chord)
     bestpitch = assign_pitch_to_freq(bestfreq);
 
     /* assign chords */
-    if ((pitch = assign_chord(new_pitchbins, chord,
+    if ((pitch = assign_chord(c->new_pitchbins, chord,
 	bestpitch - 9, maxpitch2, bestpitch)) >= 0)
 	    bestpitch = pitch;
 
@@ -690,8 +681,8 @@ float freq_fourier(Sample *sp, int *chord)
 	for (bin = minbin; bin <= maxbin; bin++)
 	{
 	    tune = -36.37631656 + 17.31234049 * log(bin*f0) - bestpitch;
-	    sum += magdata[bin];
-	    weightsum += magdata[bin] * tune;
+	    sum += c->magdata[bin];
+	    weightsum += c->magdata[bin] * tune;
 	}
     }
 
@@ -705,7 +696,7 @@ float freq_fourier(Sample *sp, int *chord)
     if (bestfreq == 260.0)
 	bestfreq += 1E-5;
 
-    free(floatdata);
+    free(c->floatdata);
 
     return bestfreq;
 }

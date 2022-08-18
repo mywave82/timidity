@@ -28,7 +28,6 @@
 #include "url.h"
 #include "mblock.h"
 
-extern char *program_name, current_filename[];
 extern const char *note_name[];
 
 typedef struct {
@@ -48,23 +47,23 @@ struct timidity_file
 #define OF_VERBOSE	2
 
 
-extern void add_to_pathlist(char *s);
-extern void clean_up_pathlist(void);
+extern void add_to_pathlist(struct timiditycontext_t *c, char *s);
+extern void clean_up_pathlist(struct timiditycontext_t *c);
 extern int is_url_prefix(const char *name);
-extern struct timidity_file *open_file(const char *name, int decompress,
+extern struct timidity_file *open_file(struct timiditycontext_t *c, const char *name, int decompress,
 		int noise_mode);
-extern struct timidity_file *open_file_r(const char *name, int decompress,
+extern struct timidity_file *open_file_r(struct timiditycontext_t *c, const char *name, int decompress,
 		int noise_mode);
-extern struct timidity_file *open_with_mem(char *mem, int32 memlen,
+extern struct timidity_file *open_with_mem(struct timiditycontext_t *c, char *mem, int32 memlen,
 		int noise_mode);
-extern void close_file(struct timidity_file *tf);
-extern void skip(struct timidity_file *tf, size_t len);
-extern char *tf_gets(char *buff, int n, struct timidity_file *tf);
+extern void close_file(struct timiditycontext_t *c, struct timidity_file *tf);
+extern void skip(struct timiditycontext_t *c, struct timidity_file *tf, size_t len);
+extern char *tf_gets(struct timiditycontext_t *c, char *buff, int n, struct timidity_file *tf);
 #define tf_getc(tf) (url_getc((tf)->url))
-extern long tf_read(void *buff, int32 size, int32 nitems,
+extern long tf_read(struct timiditycontext_t *c, void *buff, int32 size, int32 nitems,
 		    struct timidity_file *tf);
-extern long tf_seek(struct timidity_file *tf, long offset, int whence);
-extern long tf_tell(struct timidity_file *tf);
+extern long tf_seek(struct timiditycontext_t *c, struct timidity_file *tf, long offset, int whence);
+extern long tf_tell(struct timiditycontext_t *c, struct timidity_file *tf);
 extern int int_rand(int n);	/* random [0..n-1] */
 extern int check_file_extension(const char *filename, const char *ext, int decompress);
 
@@ -74,11 +73,11 @@ extern void *safe_large_malloc(size_t count);
 extern char *safe_strdup(const char *s);
 extern void free_ptr_list(void *ptr_list, int count);
 extern int string_to_7bit_range(const char *s, int *start, int *end);
-extern char **expand_file_archives(char **files, int *nfiles_in_out);
+extern char **expand_file_archives(struct timiditycontext_t *c, char **files, int *nfiles_in_out);
 extern void randomize_string_list(char **strlist, int nstr);
 extern int pathcmp(const char *path1, const char *path2, int ignore_case);
 extern void sort_pathname(char **files, int nfiles);
-extern int  load_table(char *file);
+extern int  load_table(struct timiditycontext_t *c, char *file);
 extern char *pathsep_strrchr(const char *path);
 extern char *pathsep_strchr(const char *path);
 extern int str2mID(char *str);
@@ -90,15 +89,12 @@ extern int str2mID(char *str);
  * "JIS"	- Japanese Industrial Standard code
  * "SJIS"	- shift-JIS code
  */
-extern void code_convert(char *in, char *out, int outsiz,
+extern void code_convert(struct timiditycontext_t *c,
+                         char *in, char *out, int outsiz,
 			 char *in_code, char *out_code);
 
 extern void safe_exit(int status);
 
 extern const char *timidity_version;
-extern MBlockList tmpbuffer;
-extern char *output_text_code;
-
-extern int open_file_noise_mode;
 
 #endif /* ___COMMON_H_ */

@@ -21,6 +21,7 @@
 #ifndef ___WRD_H_
 #define ___WRD_H_
 
+struct timiditycontext_t;
 
 #define WRD_MAXPARAM 32
 #define WRD_MAXFADESTEP 12
@@ -91,7 +92,7 @@ typedef struct _WRDTracer
 
     /* apply() evaluates MIMPI WRD command. */
     /* wrd_argv[0] means WRD command, and the rests means the arguments */
-    void (* apply)(int cmd, int wrd_argc, int wrd_argv[]);
+    void (* apply)(struct timiditycontext_t *c, int cmd, int wrd_argc, int wrd_argv[]);
 
     /* sherry() evaluates Sherry WRD command. */
     void (* sherry)(uint8 *data, int len);
@@ -123,77 +124,28 @@ typedef struct _sry_datapacket
 
 extern const WRDTracer *wrdt_list[];
 extern const WRDTracer *wrdt;
-extern int wrd_color_remap[/* 8 */];
-extern int wrd_plane_remap[/* 8 */];
-extern sry_datapacket *datapacket;
+extern const int wrd_color_remap[/* 8 */];
+extern const int wrd_plane_remap[/* 8 */];
 
-extern int import_wrd_file(char *fn);
-extern void wrd_init_path(void);
-extern void wrd_add_path(char *path, int pathlen_opt);
-extern void wrd_add_default_path(char *path);
-extern struct timidity_file *wrd_open_file(char *filename);
+extern int import_wrd_file(struct timiditycontext_t *c, char *fn);
+extern void wrd_init_path(struct timiditycontext_t *c);
+extern void wrd_add_path(struct timiditycontext_t *c, char *path, int pathlen_opt);
+extern void wrd_add_default_path(struct timiditycontext_t *c, char *path);
+extern struct timidity_file *wrd_open_file(struct timiditycontext_t *c, char *filename);
 
-extern void wrd_midi_event(int cmd, int arg);
-extern void wrd_sherry_event(int addr);
+extern void wrd_midi_event(struct timiditycontext_t *c, int cmd, int arg);
+extern void wrd_sherry_event(struct timiditycontext_t *c, int addr);
 extern void *wrd_sherry_data;
 
 extern void sry_encode_bindata( char *code, const char *org, int len);
 extern int sry_decode_bindata( char *data );
-extern int wrd_read_sherry;
 
-extern void free_wrd(void);
+extern void free_wrd(struct timiditycontext_t *c);
 
-static inline void print_ecmd(char*, int*, int);
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#elif defined HAVE_STRING_H
-#include <string.h>
-#endif
-#include <limits.h>
-#include "mblock.h"
-#include "common.h"
-#include "controls.h"
-#include "strtab.h"
-
-#ifdef __BORLANDC__
-extern void pr_ecmd(char *cmd, int *args, int narg);
-#define print_ecmd( a, b, c) pr_ecmd(a, b, c)
-#else
-static inline void print_ecmd(char *cmd, int *args, int narg)
-{
-    char *p;
-    size_t s = MIN_MBLOCK_SIZE;
-
-    p = (char *)new_segment(&tmpbuffer, s);
-    snprintf(p, s, "^%s(", cmd);
-
-    if(*args == WRD_NOARG)
-	strncat(p, "*", s - strlen(p) - 1);
-    else {
-	char c[CHAR_BIT*sizeof(int)];
-	snprintf(c, sizeof(c)-1, "%d", args[0]);
-	strncat(p, c, s - strlen(p) - 1);
-    }
-    args++;
-    narg--;
-    while(narg > 0)
-    {
-	if(*args == WRD_NOARG)
-	    strncat(p, ",*", s - strlen(p) - 1);
-	else {
-	    char c[CHAR_BIT*sizeof(int)]; /* should be enough loong */
-	    snprintf(c, sizeof(c)-1, ",%d", args[0]);
-	    strncat(p, c, s - strlen(p) - 1);
-	}
-	args++;
-	narg--;
-    }
-    strncat(p, ")", s - strlen(p) - 1);
-    ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", p);
-    reuse_mblock(&tmpbuffer);
-}
+#ifndef MIMPI_BUG_EMULATION_LEVEL
+#define MIMPI_BUG_EMULATION_LEVEL 1
 #endif
 
-extern StringTable wrd_read_opts;
+#define MAXTOKLEN 255
 
 #endif /* ___WRD_H_ */

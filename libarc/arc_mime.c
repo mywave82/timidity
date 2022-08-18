@@ -52,10 +52,10 @@ struct StringStack
 };
 
 static void init_string_stack(struct StringStack *stk);
-static void push_string_stack(struct StringStack *stk, char *str, int len);
+static void push_string_stack(struct timiditycontext_t *c, struct StringStack *stk, char *str, int len);
 static char *top_string_stack(struct StringStack *stk);
 static void pop_string_stack(struct StringStack *stk);
-static void delete_string_stack(struct StringStack *stk);
+static void delete_string_stack(struct timiditycontext_t *c, struct StringStack *stk);
 
 struct MIMEHeaderStream
 {
@@ -69,35 +69,35 @@ struct MIMEHeaderStream
 };
 
 static void init_mime_stream(struct MIMEHeaderStream *hdr, URL url);
-static int  next_mime_header(struct MIMEHeaderStream *hdr);
-static void end_mime_stream(struct MIMEHeaderStream *hdr);
-static int seek_next_boundary(URL url, char *boundary, long *endpoint);
-static int whole_read_line(URL url, char *buff, int bufsiz);
-static void *arc_mime_decode(void *data, long size,
+static int  next_mime_header(struct timiditycontext_t *c, struct MIMEHeaderStream *hdr);
+static void end_mime_stream(struct timiditycontext_t *c, struct MIMEHeaderStream *hdr);
+static int seek_next_boundary(struct timiditycontext_t *c, URL url, char *boundary, long *endpoint);
+static int whole_read_line(struct timiditycontext_t *c, URL url, char *buff, int bufsiz);
+static void *arc_mime_decode(struct timiditycontext_t *c, void *data, long size,
 			     int comptype, long *newsize);
 
-ArchiveEntryNode *next_mime_entry(void)
+ArchiveEntryNode *next_mime_entry(struct timiditycontext_t *c)
 {
     ArchiveEntryNode *head, *tail;
     URL url;
     int part;
     struct StringStack boundary;
     struct MIMEHeaderStream hdr;
-    int c;
+    int ch;
 
-    if(arc_handler.counter != 0)
+    if(c->arc_handler.counter != 0)
 	return NULL;
 
     head = tail = NULL;
-    url = arc_handler.url; /* url_seek must be safety */
+    url = c->arc_handler.url; /* url_seek must be safety */
 
     init_string_stack(&boundary);
-    url_rewind(url);
-    c = url_getc(url);
-    if(c != '\0')
-	url_rewind(url);
+    url_rewind(c, url);
+    ch = url_getc(url);
+    if(ch != '\0')
+	url_rewind(c, url);
     else
-	url_skip(url, 128-1);	/* skip macbin header */
+	url_skip(c, url, 128-1);	/* skip macbin header */
 
     part = 1;
     for(;;)
@@ -113,7 +113,7 @@ ArchiveEntryNode *next_mime_entry(void)
 	new_boundary = encoding = name = filename = NULL;
 	init_mblock(&pool);
 	init_mime_stream(&hdr, url);
-	while(next_mime_header(&hdr))
+	while(next_mime_header(c, &hdr))
 	{
 	    if(strncmp(hdr.field, "Content-", 8) != 0)
 		continue;
@@ -145,7 +145,7 @@ ArchiveEntryNode *next_mime_entry(void)
 			}
 
 			*p = '\0';
-			new_boundary = strdup_mblock(&pool, new_boundary);
+			new_boundary = strdup_mblock(c, &pool, new_boundary);
 		    }
 		}
 		else if(strcasecmp(hdr.value, "multipart/mixed") == 0)
@@ -158,7 +158,7 @@ ArchiveEntryNode *next_mime_entry(void)
 			if((p = strchr(p, '"')) == NULL)
 			    continue;
 			*p = '\0';
-			name = strdup_mblock(&pool, name);
+			name = strdup_mblock(c, &pool, name);
 		    }
 		}
 	    }
@@ -176,21 +176,21 @@ ArchiveEntryNode *next_mime_entry(void)
 		if((p = strchr(p, '"')) == NULL)
 		    continue;
 		*p = '\0';
-		filename = strdup_mblock(&pool, filename);
+		filename = strdup_mblock(c, &pool, filename);
 	    }
 	    else if(strcmp(hdr.field + 8, "Transfer-Encoding") == 0)
 	    {
 		/* Content-Transfer-Encoding: X */
 		/* X := X-uuencode, base64, quoted-printable, ... */
-		encoding = strdup_mblock(&pool, hdr.value);
+		encoding = strdup_mblock(c, &pool, hdr.value);
 	    }
 	}
 
 	if(hdr.eof)
 	{
-	    reuse_mblock(&pool);
-	    end_mime_stream(&hdr);
-	    delete_string_stack(&boundary);
+	    reuse_mblock(c, &pool);
+	    end_mime_stream(c, &hdr);
+	    delete_string_stack(c, &boundary);
 	    return head;
 	}
 
@@ -198,13 +198,13 @@ ArchiveEntryNode *next_mime_entry(void)
 	    filename = name;
 
 	if(new_boundary)
-	    push_string_stack(&boundary, new_boundary, strlen(new_boundary));
+	    push_string_stack(c, &boundary, new_boundary, strlen(new_boundary));
 
-	data_start = url_tell(url);
-	last_check = seek_next_boundary(url, top_string_stack(&boundary),
+	data_start = url_tell(c, url);
+	last_check = seek_next_boundary(c, url, top_string_stack(&boundary),
 					&data_end);
 
-	savepoint = url_tell(url);
+	savepoint = url_tell(c, url);
 
 	/* find data type */
 	comptype = -1;
@@ -220,20 +220,20 @@ ArchiveEntryNode *next_mime_entry(void)
 		int i;
 
 		comptype = ARCHIVEC_UU;
-		url_seek(url, data_start, SEEK_SET);
+		url_seek(c, url, data_start, SEEK_SET);
 		url_set_readlimit(url, data_end - data_start);
 
 		/* find '^begin \d\d\d \S+' */
 		for(i = 0; i < MAX_CHECK_LINES; i++)
 		{
-		    if(whole_read_line(url, buff, sizeof(buff)) == -1)
+		    if(whole_read_line(c, url, buff, sizeof(buff)) == -1)
 			break; /* ?? */
 		    if(strncmp(buff, "begin ", 6) == 0)
 		    {
-			data_start = url_tell(url);
+			data_start = url_tell(c, url);
 			p = strchr(buff + 6, ' ');
 			if(p != NULL)
-			    filename = strdup_mblock(&pool, p + 1);
+			    filename = strdup_mblock(c, &pool, p + 1);
 			break;
 		    }
 		}
@@ -246,35 +246,35 @@ ArchiveEntryNode *next_mime_entry(void)
 	    char buff[BUFSIZ];
 	    int i;
 
-	    url_seek(url, data_start, SEEK_SET);
+	    url_seek(c, url, data_start, SEEK_SET);
 	    url_set_readlimit(url, data_end - data_start);
 
 	    for(i = 0; i < MAX_CHECK_LINES; i++)
 	    {
-		if(whole_read_line(url, buff, sizeof(buff)) == -1)
+		if(whole_read_line(c, url, buff, sizeof(buff)) == -1)
 		    break; /* ?? */
 		if(strncmp(buff, "begin ", 6) == 0)
 		{
 		    comptype = ARCHIVEC_UU;
-		    data_start = url_tell(url);
+		    data_start = url_tell(c, url);
 		    p = strchr(buff + 6, ' ');
 		    if(p != NULL)
-			filename = strdup_mblock(&pool, p + 1);
+			filename = strdup_mblock(c, &pool, p + 1);
 		    break;
 		}
 		else if((strncmp(buff, "(This file", 10) == 0) ||
 			(strncmp(buff, "(Convert with", 13) == 0))
 		{
-		    int c;
-		    while((c = url_getc(url)) != EOF)
+		    int ch;
+		    while((ch = url_getc(url)) != EOF)
 		    {
-			if(c == ':')
+			if(ch == ':')
 			{
 			    comptype = ARCHIVEC_HQX;
-			    data_start = url_tell(url);
+			    data_start = url_tell(c, url);
 			    break;
 			}
-			else if(c == '\n')
+			else if(ch == '\n')
 			{
 			    if(++i >= MAX_CHECK_LINES)
 				break;
@@ -294,12 +294,12 @@ ArchiveEntryNode *next_mime_entry(void)
 	{
 	    char buff[32];
 	    sprintf(buff, "part%d", part);
-	    filename = strdup_mblock(&pool, buff);
+	    filename = strdup_mblock(c, &pool, buff);
 	    arctype = -1;
 	}
 	else
 	{
-	    arctype = get_archive_type(filename);
+	    arctype = get_archive_type(c, filename);
 	    switch(arctype)
 	      {
 	      case ARCHIVE_TAR:
@@ -329,9 +329,9 @@ ArchiveEntryNode *next_mime_entry(void)
 	    goto next_entry;
 	  }
 
-	url_seek(url, data_start, SEEK_SET);
-	part_data = url_dump(url, data_end - data_start, &part_data_size);
-	part_data = arc_mime_decode(part_data, part_data_size,
+	url_seek(c, url, data_start, SEEK_SET);
+	part_data = url_dump(c, url, data_end - data_start, &part_data_size);
+	part_data = arc_mime_decode(c, part_data, part_data_size,
 				    comptype, &part_data_size);
 	if(part_data == NULL)
 	  goto next_entry;
@@ -352,7 +352,7 @@ ArchiveEntryNode *next_mime_entry(void)
 	  entry = new_entry_node(filename, strlen(filename));
 
 	  if(gz)
-	    gzmethod = parse_gzip_header_bytes(part_data, part_data_size,
+	    gzmethod = parse_gzip_header_bytes(c, part_data, part_data_size,
 					       &gzhdrsiz);
 	  else
 	    gzmethod = -1;
@@ -369,7 +369,7 @@ ArchiveEntryNode *next_mime_entry(void)
 	      entry->comptype = ARCHIVEC_DEFLATED;
 	      entry->origsize = part_data_size;
 	      entry->start = 0;
-	      entry->cache = arc_compress(part_data, part_data_size,
+	      entry->cache = arc_compress(c, part_data, part_data_size,
 					 ARC_DEFLATE_LEVEL, &entry->compsize);
 	      free(part_data);
 	      if(entry->cache == NULL)
@@ -389,10 +389,10 @@ ArchiveEntryNode *next_mime_entry(void)
 	    ArchiveEntryNode *entry;
 	    ArchiveHandler orig;
 
-	    arcurl = url_mem_open(part_data, part_data_size, 1);
-	    orig = arc_handler; /* save */
-	    entry = arc_parse_entry(arcurl, arctype);
-	    arc_handler = orig; /* restore */
+	    arcurl = url_mem_open(c, part_data, part_data_size, 1);
+	    orig = c->arc_handler; /* save */
+	    entry = arc_parse_entry(c, arcurl, arctype);
+	    c->arc_handler = orig; /* restore */
 	    if(head == NULL)
 		head = tail = entry;
 	    else
@@ -402,10 +402,10 @@ ArchiveEntryNode *next_mime_entry(void)
 	}
 
       next_entry:
-	url_seek(url, savepoint, SEEK_SET);
+	url_seek(c, url, savepoint, SEEK_SET);
 	part++;
-	reuse_mblock(&pool);
-	end_mime_stream(&hdr);
+	reuse_mblock(c, &pool);
+	end_mime_stream(c, &hdr);
 
 	if(last_check)
 	{
@@ -414,7 +414,7 @@ ArchiveEntryNode *next_mime_entry(void)
 		break;
 	}
     }
-    delete_string_stack(&boundary);
+    delete_string_stack(c, &boundary);
     return head;
 }
 
@@ -424,12 +424,12 @@ static void init_string_stack(struct StringStack *stk)
     init_mblock(&stk->pool);
 }
 
-static void push_string_stack(struct StringStack *stk, char *str, int len)
+static void push_string_stack(struct timiditycontext_t *c, struct StringStack *stk, char *str, int len)
 {
     struct StringStackElem *elem;
 
     elem = (struct StringStackElem *)
-	new_segment(&stk->pool, sizeof(struct StringStackElem) + len + 1);
+	new_segment(c, &stk->pool, sizeof(struct StringStackElem) + len + 1);
     memcpy(elem->str, str, len);
     elem->str[len] = '\0';
     elem->next = stk->elem;
@@ -450,9 +450,9 @@ static void pop_string_stack(struct StringStack *stk)
     stk->elem = stk->elem->next;
 }
 
-static void delete_string_stack(struct StringStack *stk)
+static void delete_string_stack(struct timiditycontext_t *c, struct StringStack *stk)
 {
-    reuse_mblock(&stk->pool);
+    reuse_mblock(c, &stk->pool);
 }
 
 static void init_mime_stream(struct MIMEHeaderStream *hdr, URL url)
@@ -463,11 +463,11 @@ static void init_mime_stream(struct MIMEHeaderStream *hdr, URL url)
     init_mblock(&hdr->pool);
 }
 
-static int whole_read_line(URL url, char *buff, int bufsiz)
+static int whole_read_line(struct timiditycontext_t *c, URL url, char *buff, int bufsiz)
 {
     int len;
 
-    if(url_gets(url, buff, bufsiz) == NULL)
+    if(url_gets(c, url, buff, bufsiz) == NULL)
 	return -1;
     len = strlen(buff);
     if(len == 0)
@@ -481,19 +481,19 @@ static int whole_read_line(URL url, char *buff, int bufsiz)
     else
     {
 	/* skip line */
-	int c;
+	int ch;
 	do
 	{
-	    c = url_getc(url);
-	} while(c != EOF && c != '\n');
+	    ch = url_getc(url);
+	} while(ch != EOF && ch != '\n');
     }
 
     return len;
 }
 
-static int next_mime_header(struct MIMEHeaderStream *hdr)
+static int next_mime_header(struct timiditycontext_t *c, struct MIMEHeaderStream *hdr)
 {
-    int len, c, n;
+    int len, ch, n;
     char *p;
 
     if(hdr->eof)
@@ -501,15 +501,15 @@ static int next_mime_header(struct MIMEHeaderStream *hdr)
 
     if(hdr->line == NULL)
     {
-	hdr->line = (char *)new_segment(&hdr->pool, MIN_MBLOCK_SIZE);
-	len = whole_read_line(hdr->url, hdr->line, MIN_MBLOCK_SIZE);
+	hdr->line = (char *)new_segment(c, &hdr->pool, MIN_MBLOCK_SIZE);
+	len = whole_read_line(c, hdr->url, hdr->line, MIN_MBLOCK_SIZE);
 	if(len <= 0)
 	{
 	    if(len == -1)
 		hdr->eof = 1;
 	    return 0;
 	}
-	hdr->field = (char *)new_segment(&hdr->pool, MIN_MBLOCK_SIZE);
+	hdr->field = (char *)new_segment(c, &hdr->pool, MIN_MBLOCK_SIZE);
 	hdr->bufflen = 0;
     }
 
@@ -521,17 +521,17 @@ static int next_mime_header(struct MIMEHeaderStream *hdr)
 
     for(;;)
     {
-	len = whole_read_line(hdr->url, hdr->line, MIN_MBLOCK_SIZE);
+	len = whole_read_line(c, hdr->url, hdr->line, MIN_MBLOCK_SIZE);
 	if(len <= 0)
 	{
 	    if(len == -1)
 		hdr->eof = 1;
 	    break;
 	}
-	c = *hdr->line;
-	if(c == '>' || ('A' <= c && c <= 'Z') ||  ('a' <= c && c <= 'z'))
+	ch = *hdr->line;
+	if(ch == '>' || ('A' <= ch && ch <= 'Z') ||  ('a' <= ch && ch <= 'z'))
 	    break;
-	if(c != ' ' && c != '\t')
+	if(ch != ' ' && ch != '\t')
 	    return 0; /* ?? */
 
 	n = MIN_MBLOCK_SIZE - 1 - hdr->bufflen;
@@ -565,12 +565,12 @@ static int next_mime_header(struct MIMEHeaderStream *hdr)
     return 1;
 }
 
-static void end_mime_stream(struct MIMEHeaderStream *hdr)
+static void end_mime_stream(struct timiditycontext_t *c, struct MIMEHeaderStream *hdr)
 {
-    reuse_mblock(&hdr->pool);
+    reuse_mblock(c, &hdr->pool);
 }
 
-static int seek_next_boundary(URL url, char *boundary, long *endpoint)
+static int seek_next_boundary(struct timiditycontext_t *c, URL url, char *boundary, long *endpoint)
 {
     MBlockList pool;
     char *buff;
@@ -578,21 +578,21 @@ static int seek_next_boundary(URL url, char *boundary, long *endpoint)
 
     if(boundary == NULL)
     {
-	url_seek(url, 0, SEEK_END);
-	*endpoint = url_tell(url);
+	url_seek(c, url, 0, SEEK_END);
+	*endpoint = url_tell(c, url);
 	return 0;
     }
 
     init_mblock(&pool);
-    buff = (char *)new_segment(&pool, MIN_MBLOCK_SIZE);
+    buff = (char *)new_segment(c, &pool, MIN_MBLOCK_SIZE);
     blen = strlen(boundary);
     ret = 0;
     for(;;)
     {
 	int len;
 
-	*endpoint = url_tell(url);
-	if((len = whole_read_line(url, buff, MIN_MBLOCK_SIZE)) < 0)
+	*endpoint = url_tell(c, url);
+	if((len = whole_read_line(c, url, buff, MIN_MBLOCK_SIZE)) < 0)
 	    break;
 	if(len < blen + 2)
 	    continue;
@@ -605,11 +605,11 @@ static int seek_next_boundary(URL url, char *boundary, long *endpoint)
 	    break;
 	}
     }
-    reuse_mblock(&pool);
+    reuse_mblock(c, &pool);
     return ret;
 }
 
-static void *arc_mime_decode(void *data, long size,
+static void *arc_mime_decode(struct timiditycontext_t *c, void *data, long size,
 			     int comptype, long *newsize)
 {
   URL url;
@@ -620,28 +620,28 @@ static void *arc_mime_decode(void *data, long size,
   if(data == NULL)
     return NULL;
 
-  if((url = url_mem_open(data, size, 1)) == NULL)
+  if((url = url_mem_open(c, data, size, 1)) == NULL)
     return NULL;
 
   switch(comptype)
     {
     case ARCHIVEC_UU:		/* uu encoded */
-      url = url_uudecode_open(url, 1);
+      url = url_uudecode_open(c, url, 1);
       break;
     case ARCHIVEC_B64:		/* base64 encoded */
-      url = url_b64decode_open(url, 1);
+      url = url_b64decode_open(c, url, 1);
       break;
     case ARCHIVEC_QS:		/* quoted string encoded */
-      url = url_hqxdecode_open(url, 1, 1);
+      url = url_hqxdecode_open(c, url, 1, 1);
       break;
     case ARCHIVEC_HQX:		/* HQX encoded */
-      url = url_qsdecode_open(url, 1);
+      url = url_qsdecode_open(c, url, 1);
       break;
     default:
-      url_close(url);
+      url_close(c, url);
       return NULL;
     }
-  data = url_dump(url, -1, newsize);
-  url_close(url);
+  data = url_dump(c, url, -1, newsize);
+  url_close(c, url);
   return data;
 }

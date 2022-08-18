@@ -46,21 +46,21 @@ typedef struct _URL_hqxdecode
     int stage, dataonly, autoclose;
 } URL_hqxdecode;
 
-static long url_hqxdecode_read(URL url, void *buff, long n);
-static int  url_hqxdecode_fgetc(URL url);
-static long url_hqxdecode_tell(URL url);
-static void url_hqxdecode_close(URL url);
+static long url_hqxdecode_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+static int  url_hqxdecode_fgetc(struct timiditycontext_t *c, URL url);
+static long url_hqxdecode_tell(struct timiditycontext_t *c, URL url);
+static void url_hqxdecode_close(struct timiditycontext_t *c, URL url);
 
-URL url_hqxdecode_open(URL reader, int dataonly, int autoclose)
+URL url_hqxdecode_open(struct timiditycontext_t *c, URL reader, int dataonly, int autoclose)
 {
     URL_hqxdecode *url;
 
-    url = (URL_hqxdecode *)alloc_url(sizeof(URL_hqxdecode));
+    url = (URL_hqxdecode *)alloc_url(c, sizeof(URL_hqxdecode));
     if(url == NULL)
     {
 	if(autoclose)
-	    url_close(reader);
-	url_errno = errno;
+	    url_close(c, reader);
+	c->url_errno = errno;
 	return NULL;
     }
 
@@ -90,9 +90,9 @@ URL url_hqxdecode_open(URL reader, int dataonly, int autoclose)
     return (URL)url;
 }
 
-static int hqxgetchar(URL reader)
+static int hqxgetchar(struct timiditycontext_t *c, URL reader)
 {
-    int c;
+    int ch;
     static const int hqx_decode_table[256] =
     {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -114,27 +114,27 @@ static int hqxgetchar(URL reader)
 
     do
     {
-	if((c = url_getc(reader)) == EOF)
+	if((ch = url_getc(reader)) == EOF)
 	    return EOF;
-    } while(c == '\r' || c == '\n');
-    return hqx_decode_table[c];
+    } while(ch == '\r' || ch == '\n');
+    return hqx_decode_table[ch];
 }
 
-static int hqxdecode_chunk(URL url, unsigned char *p)
+static int hqxdecode_chunk(struct timiditycontext_t *c, URL url, unsigned char *p)
 {
     int c1, c2, c3, c4;
     int n;
 
     n = 0;
-    if((c1 = hqxgetchar(url)) == EOF)
+    if((c1 = hqxgetchar(c, url)) == EOF)
 	return 0;
-    if((c2 = hqxgetchar(url)) == EOF)
+    if((c2 = hqxgetchar(c, url)) == EOF)
 	return 0;
     p[n++] = ((c1 << 2) | ((c2 & 0x30) >> 4));
-    if((c3 = hqxgetchar(url)) == EOF)
+    if((c3 = hqxgetchar(c, url)) == EOF)
 	return n;
     p[n++] = (((c2 & 0xf) << 4) | ((c3 & 0x3c) >> 2));
-    if((c4 = hqxgetchar(url)) == EOF)
+    if((c4 = hqxgetchar(c, url)) == EOF)
 	return n;
     p[n++] = (((c3 & 0x03) << 6) | c4);
     return n;
@@ -148,7 +148,7 @@ static uint32 convert_int32(unsigned char *p)
 	   (((uint32)p[0]) << 24);
 }
 
-static int hqxdecode_header(URL_hqxdecode *urlp)
+static int hqxdecode_header(struct timiditycontext_t *c,URL_hqxdecode *urlp)
 {
     int i, n;
     unsigned char *p, *q;
@@ -161,7 +161,7 @@ static int hqxdecode_header(URL_hqxdecode *urlp)
     url = urlp->reader;
     while(n < DECODEBUFSIZ - INFOBYTES - 2)
     {
-	i = hqxdecode_chunk(url, q + n);
+	i = hqxdecode_chunk(c, url, q + n);
 	n += i;
 	if(i != 3)
 	{
@@ -200,7 +200,7 @@ static int hqxdecode_header(URL_hqxdecode *urlp)
     return INFOBYTES + n;
 }
 
-static int hqxdecode(URL_hqxdecode *urlp)
+static int hqxdecode(struct timiditycontext_t *c, URL_hqxdecode *urlp)
 {
     int i, n;
     unsigned char *p;
@@ -214,7 +214,7 @@ static int hqxdecode(URL_hqxdecode *urlp)
 
     if(urlp->stage == 0)
     {
-	n = hqxdecode_header(urlp);
+	n = hqxdecode_header(c, urlp);
 	if(n == -1)
 	    return 1;
 	urlp->end = n;
@@ -261,7 +261,7 @@ static int hqxdecode(URL_hqxdecode *urlp)
 	{
 	    for(i = 0; i < n; i++)
 		p[i] = p[i + urlp->beg];
-	    n += hqxdecode_chunk(url, p + n);
+	    n += hqxdecode_chunk(c, url, p + n);
 	    if(n <= 2)
 	    {
 		urlp->eof = 1;
@@ -282,7 +282,7 @@ static int hqxdecode(URL_hqxdecode *urlp)
 
     while(n < DECODEBUFSIZ)
     {
-	i = hqxdecode_chunk(url, p + n);
+	i = hqxdecode_chunk(c, url, p + n);
 	n += i;
 	if(i != 3)
 	{
@@ -304,7 +304,7 @@ static int hqxdecode(URL_hqxdecode *urlp)
     return 0;
 }
 
-static long url_hqxdecode_read(URL url, void *buff, long size)
+static long url_hqxdecode_read(struct timiditycontext_t *c, URL url, void *buff, long size)
 {
     URL_hqxdecode *urlp = (URL_hqxdecode *)url;
     char *p = (char *)buff;
@@ -331,7 +331,7 @@ static long url_hqxdecode_read(URL url, void *buff, long size)
 
 	if(urlp->restlen == 0 || urlp->beg == urlp->end)
 	{
-	    hqxdecode(urlp);
+	    hqxdecode(c, urlp);
 	    continue;
 	}
 
@@ -349,10 +349,10 @@ static long url_hqxdecode_read(URL url, void *buff, long size)
     return n;
 }
 
-static int url_hqxdecode_fgetc(URL url)
+static int url_hqxdecode_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_hqxdecode *urlp = (URL_hqxdecode *)url;
-    int c;
+    int ch;
 
   retry_read:
     if(urlp->zoff > 0)
@@ -367,17 +367,17 @@ static int url_hqxdecode_fgetc(URL url)
 
     if(urlp->restlen == 0 || urlp->beg == urlp->end)
     {
-	hqxdecode(urlp);
+	hqxdecode(c, urlp);
 	goto retry_read;
     }
 
-    c = (int)urlp->decodebuf[urlp->beg++];
+    ch = (int)urlp->decodebuf[urlp->beg++];
     urlp->restlen--;
 
-    return c;
+    return ch;
 }
 
-static long url_hqxdecode_tell(URL url)
+static long url_hqxdecode_tell(struct timiditycontext_t *c, URL url)
 {
     URL_hqxdecode *urlp = (URL_hqxdecode *)url;
 
@@ -386,12 +386,12 @@ static long url_hqxdecode_tell(URL url)
     return urlp->rpos + urlp->beg;
 }
 
-static void url_hqxdecode_close(URL url)
+static void url_hqxdecode_close(struct timiditycontext_t *c, URL url)
 {
     URL_hqxdecode *urlp = (URL_hqxdecode *)url;
 
     if(urlp->autoclose)
-	url_close(urlp->reader);
+	url_close(c, urlp->reader);
     free(url);
 }
 
@@ -409,7 +409,7 @@ void main(int argc, char** argv)
     }
     filename = argv[1];
 
-    if((hqxdecoder = url_file_open(filename)) == NULL)
+    if((hqxdecoder = url_file_open(c, filename)) == NULL)
     {
 	perror(argv[1]);
 	exit(1);
@@ -417,7 +417,7 @@ void main(int argc, char** argv)
 
     for(;;)
     {
-	if(url_readline(hqxdecoder, buff, sizeof(buff)) == NULL)
+	if(url_readline(c, hqxdecoder, buff, sizeof(buff)) == NULL)
 	{
 	    fprintf(stderr, "%s: Not a hqx-file\n", filename);
 	    url_close(hqxdecoder);

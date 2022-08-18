@@ -46,25 +46,25 @@ typedef struct _URL_mem
     int   autofree;
 } URL_mem;
 
-static long url_mem_read(URL url, void *buff, long n);
+static long url_mem_read(struct timiditycontext_t *c, URL url, void *buff, long n);
 static char *url_mem_gets(URL url, char *buff, int n);
-static int url_mem_fgetc(URL url);
-static long url_mem_seek(URL url, long offset, int whence);
-static long url_mem_tell(URL url);
-static void url_mem_close(URL url);
+static int url_mem_fgetc(struct timiditycontext_t *c, URL url);
+static long url_mem_seek(struct timiditycontext_t *c, URL url, long offset, int whence);
+static long url_mem_tell(struct timiditycontext_t *c, URL url);
+static void url_mem_close(struct timiditycontext_t *c, URL url);
 
-URL url_mem_open(char *memory, long memsiz, int autofree)
+URL url_mem_open(struct timiditycontext_t *c, char *memory, long memsiz, int autofree)
 {
     URL_mem *url;
 
-    url = (URL_mem *)alloc_url(sizeof(URL_mem));
+    url = (URL_mem *)alloc_url(c, sizeof(URL_mem));
     if(url == NULL)
     {
-	url_errno = errno;
+	c->url_errno = errno;
 	if(autofree)
 	{
 	    free(memory);
-	    errno = url_errno;
+	    errno = c->url_errno;
 	}
 	return NULL;
     }
@@ -87,7 +87,7 @@ URL url_mem_open(char *memory, long memsiz, int autofree)
     return (URL)url;
 }
 
-static long url_mem_read(URL url, void *buff, long n)
+static long url_mem_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     URL_mem *urlp = (URL_mem *)url;
     long s;
@@ -132,7 +132,7 @@ static char *url_mem_gets(URL url, char *buff, int n)
     return buff;
 }
 
-static int url_mem_fgetc(URL url)
+static int url_mem_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_mem *urlp = (URL_mem *)url;
 
@@ -141,7 +141,7 @@ static int url_mem_fgetc(URL url)
     return (int)(unsigned char)urlp->memory[urlp->mempos++];
 }
 
-static long url_mem_seek(URL url, long offset, int whence)
+static long url_mem_seek(struct timiditycontext_t *c, URL url, long offset, int whence)
 {
     URL_mem *urlp = (URL_mem *)url;
     long ret;
@@ -167,12 +167,12 @@ static long url_mem_seek(URL url, long offset, int whence)
     return ret;
 }
 
-static long url_mem_tell(URL url)
+static long url_mem_tell(struct timiditycontext_t *c, URL url)
 {
     return ((URL_mem *)url)->mempos;
 }
 
-static void url_mem_close(URL url)
+static void url_mem_close(struct timiditycontext_t *c, URL url)
 {
     int save_errno = errno;
     URL_mem *urlp = (URL_mem *)url;

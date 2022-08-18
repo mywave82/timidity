@@ -87,12 +87,12 @@ typedef struct _URL_file
 } URL_file;
 
 static int name_file_check(const char *url_string);
-static long url_file_read(URL url, void *buff, long n);
+static long url_file_read(struct timiditycontext_t *c, URL url, void *buff, long n);
 static char *url_file_gets(URL url, char *buff, int n);
-static int url_file_fgetc(URL url);
-static long url_file_seek(URL url, long offset, int whence);
-static long url_file_tell(URL url);
-static void url_file_close(URL url);
+static int url_file_fgetc(struct timiditycontext_t *c, URL url);
+static long url_file_seek(struct timiditycontext_t *c, URL url, long offset, int whence);
+static long url_file_tell(struct timiditycontext_t *c, URL url);
+static void url_file_close(struct timiditycontext_t *c, URL url);
 
 struct URL_module URL_module_file =
 {
@@ -200,7 +200,7 @@ static void w32_munmap(void *ptr, long size, HANDLE hFile, HANDLE hMap)
 }
 #endif /* HAVE_MMAP */
 
-URL url_file_open(const char *fname)
+URL url_file_open(struct timiditycontext_t *c, const char *fname)
 {
     URL_file *url;
     char *mapptr;		/* Non NULL if mmap is success */
@@ -226,10 +226,10 @@ URL url_file_open(const char *fname)
 	fname += 5;
     if(*fname == '\0')
     {
-	url_errno = errno = ENOENT;
+	c->url_errno = errno = ENOENT;
 	return NULL;
     }
-    fname = url_expand_home_dir(fname);
+    fname = url_expand_home_dir(c, fname);
 
     fp = NULL;
     mapsize = 0;
@@ -237,7 +237,7 @@ URL url_file_open(const char *fname)
     mapptr = try_mmap(fname, &mapsize);
     if(errno == ENOENT || errno == EACCES)
     {
-	url_errno = errno;
+	c->url_errno = errno;
 	return NULL;
     }
 
@@ -257,10 +257,10 @@ URL url_file_open(const char *fname)
 	char *cnvname;
 	MBlockList pool;
 	init_mblock(&pool);
-	cnvname = (char *)strdup_mblock(&pool, fname);
+	cnvname = (char *)strdup_mblock(c, &pool, fname);
 	mac_TransPathSeparater(fname, cnvname);
 	fp = fopen(cnvname, "rb");
-	reuse_mblock(&pool);
+	reuse_mblock(c, &pool);
 	if( fp==NULL ){ /*try original name*/
 		fp = fopen(fname, "rb");
 	}
@@ -269,21 +269,21 @@ URL url_file_open(const char *fname)
 #endif
 	if(fp == NULL)
 	{
-	    url_errno = errno;
+	    c->url_errno = errno;
 	    return NULL;
 	}
     }
 
   done:
-    url = (URL_file *)alloc_url(sizeof(URL_file));
+    url = (URL_file *)alloc_url(c, sizeof(URL_file));
     if(url == NULL)
     {
-	url_errno = errno;
+	c->url_errno = errno;
 	if(mapptr)
 	    munmap(mapptr, mapsize);
 	if(fp && fp != stdin)
 	    fclose(fp);
-	errno = url_errno;
+	errno = c->url_errno;
 	return NULL;
     }
 
@@ -317,7 +317,7 @@ URL url_file_open(const char *fname)
     return (URL)url;
 }
 
-static long url_file_read(URL url, void *buff, long n)
+static long url_file_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     URL_file *urlp = (URL_file *)url;
 
@@ -334,7 +334,7 @@ static long url_file_read(URL url, void *buff, long n)
 	{
 	    if(ferror(urlp->fp))
 	    {
-		url_errno = errno;
+		c->url_errno = errno;
 		return -1;
 	    }
 	    return 0;
@@ -343,7 +343,7 @@ static long url_file_read(URL url, void *buff, long n)
     return n;
 }
 
-char *url_file_gets(URL url, char *buff, int n)
+static char *url_file_gets(URL url, char *buff, int n)
 {
     URL_file *urlp = (URL_file *)url;
 
@@ -378,7 +378,7 @@ char *url_file_gets(URL url, char *buff, int n)
     return fgets(buff, n, urlp->fp);
 }
 
-int url_file_fgetc(URL url)
+int url_file_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_file *urlp = (URL_file *)url;
 
@@ -396,7 +396,7 @@ int url_file_fgetc(URL url)
 #endif /* getc */
 }
 
-static void url_file_close(URL url)
+static void url_file_close(struct timiditycontext_t *c, URL url)
 {
     URL_file *urlp = (URL_file *)url;
 
@@ -418,7 +418,7 @@ static void url_file_close(URL url)
     free(url);
 }
 
-static long url_file_seek(URL url, long offset, int whence)
+static long url_file_seek(struct timiditycontext_t *c, URL url, long offset, int whence)
 {
     URL_file *urlp = (URL_file *)url;
     long ret;
@@ -446,7 +446,7 @@ static long url_file_seek(URL url, long offset, int whence)
     return ret;
 }
 
-static long url_file_tell(URL url)
+static long url_file_tell(struct timiditycontext_t *c, URL url)
 {
     URL_file *urlp = (URL_file *)url;
 

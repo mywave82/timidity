@@ -26,6 +26,8 @@
 #ifndef SFITEM_H_DEF
 #define SFITEM_H_DEF
 
+struct timiditycontext_t;
+
 #include "sflayer.h"
 #include "sffile.h"
 
@@ -82,8 +84,8 @@ typedef int (*SBKConv)(int gen, int amount);
 #define HIGHNUM(val)	(((val) >> 8) & 0xff)
 
 /* layer type definitions */
-extern LayerItem layer_items[SF_EOF];
+extern const LayerItem layer_items_default[SF_EOF];
 
-extern int sbk_to_sf2(int oper, int amount);
+extern int sbk_to_sf2(struct timiditycontext_t *c, int oper, int amount);
 
 #endif

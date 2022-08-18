@@ -55,7 +55,7 @@ enum trace_argtypes
 {
     ARG_VOID,
     ARG_INT,
-    ARG_INT_INT,
+    ARG_CONTEXT_INT_INT,
     ARG_CE,
     ARGTIME_VP,
 };
@@ -74,8 +74,8 @@ typedef struct _MidiTraceList
 
     union { /* Handler function */
 	void (*f0)(void);
-	void (*f1)(int);
-	void (*f2)(int, int);
+	void (*f1)(struct timiditycontext_t *c, int);
+	void (*f2)(struct timiditycontext_t *c, int, int);
 	void (*fce)(CtlEvent *ce);
 	void (*fv)(void *);
     } f;
@@ -83,39 +83,35 @@ typedef struct _MidiTraceList
     struct _MidiTraceList *next; /* Chain link next node */
 } MidiTraceList;
 
-
-MidiTrace midi_trace;
-extern int32 current_sample;
-
-static MidiTraceList *new_trace_node(void)
+static MidiTraceList *new_trace_node(struct timiditycontext_t *c)
 {
     MidiTraceList *p;
 
-    if(midi_trace.free_list == NULL)
-	p = (MidiTraceList *)new_segment(&midi_trace.pool,
+    if(c->midi_trace.free_list == NULL)
+	p = (MidiTraceList *)new_segment(c, &c->midi_trace.pool,
 					 sizeof(MidiTraceList));
     else
     {
-	p = midi_trace.free_list;
-	midi_trace.free_list = midi_trace.free_list->next;
+	p = c->midi_trace.free_list;
+	c->midi_trace.free_list = c->midi_trace.free_list->next;
     }
     return p;
 }
 
-static void reuse_trace_node(MidiTraceList *p)
+static void reuse_trace_node(struct timiditycontext_t *c, MidiTraceList *p)
 {
-    p->next = midi_trace.free_list;
-    midi_trace.free_list = p;
+    p->next = c->midi_trace.free_list;
+    c->midi_trace.free_list = p;
 }
 
-static int32 trace_start_time(void)
+static int32 trace_start_time(struct timiditycontext_t *c)
 {
     if(play_mode->flag & PF_CAN_TRACE)
-	return current_sample;
+	return c->current_sample;
     return -1;
 }
 
-static void run_midi_trace(MidiTraceList *p)
+static void run_midi_trace(struct timiditycontext_t *c, MidiTraceList *p)
 {
     if(!ctl->opened)
 	return;
@@ -126,10 +122,10 @@ static void run_midi_trace(MidiTraceList *p)
 	p->f.f0();
 	break;
       case ARG_INT:
-	p->f.f1(p->a.args[0]);
+	p->f.f1(c, p->a.args[0]);
 	break;
-      case ARG_INT_INT:
-	p->f.f2(p->a.args[0], p->a.args[1]);
+      case ARG_CONTEXT_INT_INT:
+	p->f.f2(c, p->a.args[0], p->a.args[1]);
 	break;
       case ARGTIME_VP:
 	p->f.fv(p->a.v);
@@ -140,84 +136,84 @@ static void run_midi_trace(MidiTraceList *p)
     }
 }
 
-static MidiTraceList *midi_trace_setfunc(MidiTraceList *node)
+static MidiTraceList *midi_trace_setfunc(struct timiditycontext_t *c, MidiTraceList *node)
 {
     MidiTraceList *p;
 
     if(!ctl->trace_playing || node->start < 0)
     {
-	run_midi_trace(node);
+	run_midi_trace(c, node);
 	return NULL;
     }
 
-    p = new_trace_node();
+    p = new_trace_node(c);
     *p = *node;
     p->next = NULL;
 
-    if(midi_trace.head == NULL)
-	midi_trace.head = midi_trace.tail = p;
+    if(c->midi_trace.head == NULL)
+	c->midi_trace.head = c->midi_trace.tail = p;
     else
     {
-	midi_trace.tail->next = p;
-	midi_trace.tail = p;
+	c->midi_trace.tail->next = p;
+	c->midi_trace.tail = p;
     }
 
     return p;
 }
 
-void push_midi_trace0(void (*f)(void))
+void push_midi_trace0(struct timiditycontext_t *c, void (*f)(void))
 {
     MidiTraceList node;
     if(f == NULL)
 	return;
     memset(&node, 0, sizeof(node));
-    node.start = trace_start_time();
+    node.start = trace_start_time(c);
     node.argtype = ARG_VOID;
     node.f.f0 = f;
-    midi_trace_setfunc(&node);
+    midi_trace_setfunc(c, &node);
 }
 
-void push_midi_trace1(void (*f)(int), int arg1)
+void push_midi_trace1(struct timiditycontext_t *c, void (*f)(struct timiditycontext_t *c, int), int arg1)
 {
     MidiTraceList node;
     if(f == NULL)
 	return;
     memset(&node, 0, sizeof(node));
-    node.start = trace_start_time();
+    node.start = trace_start_time(c);
     node.argtype = ARG_INT;
     node.f.f1 = f;
     node.a.args[0] = arg1;
-    midi_trace_setfunc(&node);
+    midi_trace_setfunc(c, &node);
 }
 
-void push_midi_trace2(void (*f)(int, int), int arg1, int arg2)
+void push_midi_trace2(struct timiditycontext_t *c, void (*f)(struct timiditycontext_t *c, int, int), int arg1, int arg2)
 {
     MidiTraceList node;
     if(f == NULL)
 	return;
     memset(&node, 0, sizeof(node));
-    node.start = trace_start_time();
-    node.argtype = ARG_INT_INT;
+    node.start = trace_start_time(c);
+    node.argtype = ARG_CONTEXT_INT_INT;
     node.f.f2 = f;
     node.a.args[0] = arg1;
     node.a.args[1] = arg2;
-    midi_trace_setfunc(&node);
+    midi_trace_setfunc(c, &node);
 }
 
-void push_midi_trace_ce(void (*f)(CtlEvent *), CtlEvent *ce)
+void push_midi_trace_ce(struct timiditycontext_t *c, void (*f)(CtlEvent *), CtlEvent *ce)
 {
     MidiTraceList node;
     if(f == NULL)
 	return;
     memset(&node, 0, sizeof(node));
-    node.start = trace_start_time();
+    node.start = trace_start_time(c);
     node.argtype = ARG_CE;
     node.f.fce = f;
     node.a.ce = *ce;
-    midi_trace_setfunc(&node);
+    midi_trace_setfunc(c, &node);
 }
 
-void push_midi_time_vp(int32 start, void (*f)(void *), void *vp)
+void push_midi_time_vp(struct timiditycontext_t *c, int32 start, void (*f)(void *), void *vp)
 {
     MidiTraceList node;
     if(f == NULL)
@@ -227,110 +223,109 @@ void push_midi_time_vp(int32 start, void (*f)(void *), void *vp)
     node.argtype = ARGTIME_VP;
     node.f.fv = f;
     node.a.v = vp;
-    midi_trace_setfunc(&node);
+    midi_trace_setfunc(c, &node);
 }
 
-int32 trace_loop(void)
+int32 trace_loop(struct timiditycontext_t *c)
 {
     int32 cur;
     int ctl_update;
-    static int lasttime = -1;
 
-    if(midi_trace.trace_loop_hook != NULL)
-	midi_trace.trace_loop_hook();
+    if(c->midi_trace.trace_loop_hook != NULL)
+	c->midi_trace.trace_loop_hook();
 
-    if(midi_trace.head == NULL)
+    if(c->midi_trace.head == NULL)
 	return 0;
 
-    if((cur = current_trace_samples()) == -1 || !ctl->trace_playing)
+    if((cur = current_trace_samples(c)) == -1 || !ctl->trace_playing)
 	cur = 0x7fffffff; /* apply all trace event */
 
     ctl_update = 0;
-    while(midi_trace.head && cur >= midi_trace.head->start
+    while(c->midi_trace.head && cur >= c->midi_trace.head->start
 	  && cur > 0) /* privent flying start */
     {
 	MidiTraceList *p;
 
-	p = midi_trace.head;
-	run_midi_trace(p);
+	p = c->midi_trace.head;
+	run_midi_trace(c, p);
 	if(p->argtype == ARG_CE)
 	    ctl_update = 1;
-	midi_trace.head = midi_trace.head->next;
-	reuse_trace_node(p);
+	c->midi_trace.head = c->midi_trace.head->next;
+	reuse_trace_node(c, p);
     }
 
     if(ctl_update)
-	ctl_mode_event(CTLE_REFRESH, 0, 0, 0);
+	ctl_mode_event(c, CTLE_REFRESH, 0, 0, 0);
 
-    if(midi_trace.head == NULL)
+    if(c->midi_trace.head == NULL)
     {
-	midi_trace.tail = NULL;
+	c->midi_trace.tail = NULL;
 	return 0; /* No more tracing */
     }
 
     if(!ctl_update)
     {
-	if(lasttime == cur)
-	    midi_trace.head->start--;	/* avoid infinite loop */
-	lasttime = cur;
+	if(c->trace_loop_lasttime == cur)
+	    c->midi_trace.head->start--;	/* avoid infinite loop */
+	c->trace_loop_lasttime = cur;
     }
 
     return 1; /* must call trace_loop() continued */
 }
 
-void trace_offset(int offset)
+void trace_offset(struct timiditycontext_t *c, int offset)
 {
-    midi_trace.offset = offset;
+    c->midi_trace.offset = offset;
 }
 
-void trace_flush(void)
+void trace_flush(struct timiditycontext_t *c)
 {
-    midi_trace.flush_flag = 1;
-    wrd_midi_event(WRD_START_SKIP, WRD_NOARG);
-    while(midi_trace.head)
+    c->midi_trace.flush_flag = 1;
+    wrd_midi_event(c, WRD_START_SKIP, WRD_NOARG);
+    while(c->midi_trace.head)
     {
 	MidiTraceList *p;
 
-	p = midi_trace.head;
-	run_midi_trace(p);
-	midi_trace.head = midi_trace.head->next;
-	reuse_trace_node(p);
+	p = c->midi_trace.head;
+	run_midi_trace(c, p);
+	c->midi_trace.head = c->midi_trace.head->next;
+	reuse_trace_node(c, p);
     }
-    wrd_midi_event(WRD_END_SKIP, WRD_NOARG);
-    reuse_mblock(&midi_trace.pool);
-    midi_trace.head = midi_trace.tail = midi_trace.free_list = NULL;
-    ctl_mode_event(CTLE_REFRESH, 0, 0, 0);
-    midi_trace.flush_flag = 0;
+    wrd_midi_event(c, WRD_END_SKIP, WRD_NOARG);
+    reuse_mblock(c, &c->midi_trace.pool);
+    c->midi_trace.head = c->midi_trace.tail = c->midi_trace.free_list = NULL;
+    ctl_mode_event(c, CTLE_REFRESH, 0, 0, 0);
+    c->midi_trace.flush_flag = 0;
 }
 
-void set_trace_loop_hook(void (* f)(void))
+void set_trace_loop_hook(struct timiditycontext_t *c, void (* f)(void))
 {
-    midi_trace.trace_loop_hook = f;
+    c->midi_trace.trace_loop_hook = f;
 }
 
-int32 current_trace_samples(void)
+int32 current_trace_samples(struct timiditycontext_t *c)
 {
     int32 sp;
-    if((sp = aq_samples()) == -1)
+    if((sp = aq_samples(c)) == -1)
 	return -1;
-    return midi_trace.offset + aq_samples();
+    return c->midi_trace.offset + aq_samples(c);
 }
 
-void init_midi_trace(void)
+void init_midi_trace(struct timiditycontext_t *c)
 {
-    memset(&midi_trace, 0, sizeof(midi_trace));
-    init_mblock(&midi_trace.pool);
+    memset(&c->midi_trace, 0, sizeof(c->midi_trace));
+    init_mblock(&c->midi_trace.pool);
 }
 
-int32 trace_wait_samples(void)
+int32 trace_wait_samples(struct timiditycontext_t *c)
 {
     int32 s;
 
-    if(midi_trace.head == NULL)
+    if(c->midi_trace.head == NULL)
 	return -1;
-    if((s = current_trace_samples()) == -1)
+    if((s = current_trace_samples(c)) == -1)
 	return 0;
-    s = midi_trace.head->start - s;
+    s = c->midi_trace.head->start - s;
     if(s < 0)
 	s = 0;
     return s;

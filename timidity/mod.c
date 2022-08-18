@@ -55,10 +55,10 @@ extern long int random (void);
 #include "unimod_priv.h"
 #include "mod2midi.h"
 
-static BOOL mod_do_play (MODULE *);
+static BOOL mod_do_play (struct timiditycontext_t *c, MODULE *);
 
 int
-load_module_file (struct timidity_file *tf, int mod_type)
+load_module_file (struct timiditycontext_t *c, struct timidity_file *tf, int mod_type)
 {
   MODULE *mf;
 
@@ -75,8 +75,8 @@ load_module_file (struct timidity_file *tf, int mod_type)
     return 1;
 
   current_file_info->file_type = mod_type;
-  load_module_samples (mf->samples, mf->numsmp, mod_type == IS_MOD_FILE);
-  mod_do_play (mf);
+  load_module_samples (c, mf->samples, mf->numsmp, mod_type == IS_MOD_FILE);
+  mod_do_play (c, mf);
   ML_Free (mf);
   return 0;
 }
@@ -2983,8 +2983,8 @@ HandleTick (void)
   return 1;
 }
 
-BOOL
-mod_do_play (MODULE * mf)
+static BOOL
+mod_do_play (struct timiditycontext_t *c, MODULE * mf)
 {
   int t;
 
@@ -3032,8 +3032,8 @@ mod_do_play (MODULE * mf)
      the regular mixing routines to apply them yet again */
   for (t = 0; t < 256; t++)
   {
-    if (special_patch[t])
-      special_patch[t]->sample->panning = 64;
+    if (c->special_patch[t])
+      c->special_patch[t]->sample->panning = 64;
   }
 
   /* Done! */

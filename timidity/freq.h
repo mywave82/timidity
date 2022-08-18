@@ -18,12 +18,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+struct timiditycontext_t;
+
 extern const float pitch_freq_table[129];
 extern const float pitch_freq_ub_table[129];
 extern const float pitch_freq_lb_table[129];
 extern const int chord_table[4][3][3];
 
-extern float freq_fourier(Sample *sp, int *chord);
+extern float freq_fourier(struct timiditycontext_t *c, Sample *sp, int *chord);
 extern int assign_pitch_to_freq(float freq);
 
 #define CHORD_MAJOR 0

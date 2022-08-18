@@ -21,6 +21,8 @@
 #ifndef ___ZIP_H_
 #define ___ZIP_H_
 
+struct timiditycontext_t;
+
 /* zip.h -- common declarations for deflate/inflate routine */
 
 #define INBUF_EXTRA  64
@@ -54,7 +56,7 @@ struct huft {
     } v;
 };
 
-int huft_build(unsigned *, unsigned, unsigned, const ush *, const ush *,
+int huft_build(struct timiditycontext_t *c, unsigned *, unsigned, unsigned, const ush *, const ush *,
 	       struct huft **, int *, MBlockList *pool);
 
 #define STORED_BLOCK 0
@@ -91,11 +93,11 @@ typedef struct _DeflateHandler *DeflateHandler;
 
 /* in deflate.c */
 extern DeflateHandler open_deflate_handler(
-	long (* read_func)(char *buf, long size, void *user_val),
+	long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val),
 	void *user_val,
 	int compression_level);
 
-extern long zip_deflate(DeflateHandler encoder,
+extern long zip_deflate(struct timiditycontext_t *c, DeflateHandler encoder,
 		    char *decode_buff,
 		    long decode_buff_size);
 
@@ -104,13 +106,13 @@ extern void close_deflate_handler(DeflateHandler encoder);
 
 /* in inflate.c */
 extern InflateHandler open_inflate_handler(
-	long (* read_func)(char *buf, long size, void *user_val),
+	long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val),
 	void *user_val);
 
-extern long zip_inflate(InflateHandler decoder,
+extern long zip_inflate(struct timiditycontext_t *c, InflateHandler decoder,
 		    char *decode_buff,
 		    long decode_buff_size);
 
-extern void close_inflate_handler(InflateHandler decoder);
+extern void close_inflate_handler(struct timiditycontext_t *c, InflateHandler decoder);
 
 #endif /* ___ZIP_H_ */

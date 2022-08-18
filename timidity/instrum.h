@@ -24,6 +24,8 @@
 #ifndef ___INSTRUM_H_
 #define ___INSTRUM_H_
 
+struct timiditycontext_t;
+
 typedef struct _Sample {
   splen_t
     loop_start, loop_end, data_length;
@@ -186,65 +188,73 @@ enum instrument_mapID
 };
 
 #define MAP_BANK_COUNT 256
-extern ToneBank *tonebank[], *drumset[];
 
-extern Instrument *default_instrument;
 #define NSPECIAL_PATCH 256
-extern SpecialPatch *special_patch[ /* NSPECIAL_PATCH */ ];
-extern int default_program[MAX_CHANNELS];
-extern int antialiasing_allowed;
-extern int fast_decay;
-extern int free_instruments_afterwards;
-extern int cutoff_allowed;
 
 #define SPECIAL_PROGRAM -1
 
 /* sndfont.c */
-extern int opt_sf_close_each_file;
-extern void add_soundfont(const char *sf_file, int sf_order,
+extern void add_soundfont(struct timiditycontext_t *c, const char *sf_file, int sf_order,
 			  int cutoff_allowed, int resonance_allowed,
 			  int amp);
-extern void remove_soundfont(const char *sf_file);
-extern void init_load_soundfont(void);
-extern Instrument *load_soundfont_inst(int order, int bank, int preset,
+extern void remove_soundfont(struct timiditycontext_t *c, const char *sf_file);
+extern void init_load_soundfont(struct timiditycontext_t *c);
+extern Instrument *load_soundfont_inst(struct timiditycontext_t *c, int order, int bank, int preset,
 				       int keynote);
-extern Instrument *extract_soundfont(const char *sf_file, int bank, int preset,
+extern Instrument *extract_soundfont(struct timiditycontext_t *c, const char *sf_file, int bank, int preset,
 				     int keynote);
-extern int exclude_soundfont(int bank, int preset, int keynote);
-extern int order_soundfont(int bank, int preset, int keynote, int order);
-extern char *soundfont_preset_name(int bank, int preset, int keynote,
+extern int exclude_soundfont(struct timiditycontext_t *c, int bank, int preset, int keynote);
+extern int order_soundfont(struct timiditycontext_t *c, int bank, int preset, int keynote, int order);
+extern char *soundfont_preset_name(struct timiditycontext_t *c, int bank, int preset, int keynote,
 				   char **sndfile);
-extern void free_soundfonts(void);
+extern void free_soundfonts(struct timiditycontext_t *c);
 
 /* instrum.c */
-extern int load_missing_instruments(int *rc);
-extern void free_instruments(int reload_default_inst);
-extern void free_special_patch(int id);
-extern int set_default_instrument(const char *name);
-extern void clear_magic_instruments(void);
-extern Instrument *load_instrument(int dr, int b, int prog);
-extern int find_instrument_map_bank(int dr, int map, int bk);
-extern int alloc_instrument_map_bank(int dr, int map, int bk);
-extern void alloc_instrument_bank(int dr, int bankset);
-extern int instrument_map(int mapID, int *set_in_out, int *elem_in_out);
-extern void set_instrument_map(int mapID,
+extern int load_missing_instruments(struct timiditycontext_t *c, int *rc);
+extern void free_instruments(struct timiditycontext_t *c, int reload_default_inst);
+extern void free_special_patch(struct timiditycontext_t *c, int id);
+extern int set_default_instrument(struct timiditycontext_t *c, const char *name);
+extern void clear_magic_instruments(struct timiditycontext_t *c);
+extern Instrument *load_instrument(struct timiditycontext_t *c, int dr, int b, int prog);
+extern int find_instrument_map_bank(struct timiditycontext_t *c, int dr, int map, int bk);
+extern int alloc_instrument_map_bank(struct timiditycontext_t *c, int dr, int map, int bk);
+extern void alloc_instrument_bank(struct timiditycontext_t *c, int dr, int bankset);
+extern int instrument_map(struct timiditycontext_t *c, int mapID, int *set_in_out, int *elem_in_out);
+extern void set_instrument_map(struct timiditycontext_t *c, int mapID,
 			       int set_from, int elem_from,
 			       int set_to, int elem_to);
-extern void free_instrument_map(void);
+extern void free_instrument_map(struct timiditycontext_t *c);
 extern AlternateAssign *add_altassign_string(AlternateAssign *old,
 					     char **params, int n);
 extern AlternateAssign *find_altassign(AlternateAssign *altassign, int note);
 extern void copy_tone_bank_element(ToneBankElement *elm, const ToneBankElement *src);
 extern void free_tone_bank_element(ToneBankElement *elm);
-extern void free_tone_bank(void);
+extern void free_tone_bank(struct timiditycontext_t *c);
 extern void free_instrument(Instrument *ip);
 extern void squash_sample_16to8(Sample *sp);
 
-extern char *default_instrument_name;
-extern int progbase;
-
-extern int32 modify_release;
 #define MAX_MREL 5000
 #define DEFAULT_MREL 800
+
+
+#define INSTRUMENT_HASH_SIZE 128
+struct InstrumentCache
+{
+    const char *name;
+    int panning, amp, note_to_use, strip_loop, strip_envelope, strip_tail;
+    Instrument *ip;
+    struct InstrumentCache *next;
+};
+
+/* bank mapping (mapped bank) */
+struct bank_map_elem {
+	int16 used, mapid;
+	int bankno;
+};
+
+struct inst_map_elem
+{
+    int set, elem, mapped;
+};
 
 #endif /* ___INSTRUM_H_ */

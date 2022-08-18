@@ -86,9 +86,9 @@ static SBKConv sbk_convertors[T_EOT] = {
  * sbk --> sf2 conversion
  *----------------------------------------------------------------*/
 
-int sbk_to_sf2(int oper, int amount)
+int sbk_to_sf2(struct timiditycontext_t *c, int oper, int amount)
 {
-	LayerItem *item = &layer_items[oper];
+	LayerItem *item = &c->layer_items[oper];
 	if (item->type < 0 || item->type >= T_EOT) {
 		fprintf(stderr, "illegal gen item type %d\n", item->type);
 		return amount;

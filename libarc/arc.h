@@ -23,6 +23,8 @@
 
 /* Archive library */
 
+struct timiditycontext_t;
+
 #include "url.h"
 #include "mblock.h"
 
@@ -36,27 +38,25 @@
  * Interfaces
  */
 
-extern char **expand_archive_names(int *nfiles_in_out, char **files);
+extern char **expand_archive_names(struct timiditycontext_t *c, int *nfiles_in_out, char **files);
 /* Regist all archive files in `files_in_out', and expand the archive */
 
-extern URL url_arc_open(const char *name);
+extern URL url_arc_open(struct timiditycontext_t *c, const char *name);
 /* Open input stream from archive.  `name' format must be "filename#entry".
  */
 
-extern void free_archive_files(void);
+extern void free_archive_files(struct timiditycontext_t *c);
 /* Call once at the last */
 
 /* utilities */
-extern int skip_gzip_header(URL url);
-extern int parse_gzip_header_bytes(char *gz, long maxparse, int *hdrsiz);
-extern int get_archive_type(const char *archive_name);
-extern void *arc_compress(void *buff, long bufsiz,
+extern int skip_gzip_header(struct timiditycontext_t *c, URL url);
+extern int parse_gzip_header_bytes(struct timiditycontext_t *c, char *gz, long maxparse, int *hdrsiz);
+extern int get_archive_type(struct timiditycontext_t *c, const char *archive_name);
+extern void *arc_compress(struct timiditycontext_t *c, void *buff, long bufsiz,
 			  int compress_level, long *compressed_size);
-extern void *arc_decompress(void *buff, long bufsiz, long *decompressed_size);
+extern void *arc_decompress(struct timiditycontext_t *c, void *buff, long bufsiz, long *decompressed_size);
 extern int arc_case_wildmat(char *text, char *p);
 extern int arc_wildmat(char *text, char *p);
-extern void (* arc_error_handler)(char *error_message);
-
 
 /*
  * Internal library usage only
@@ -80,13 +80,12 @@ typedef struct _ArchiveHandler {
     long pos;
 } ArchiveHandler;
 
-extern ArchiveHandler arc_handler;
-extern ArchiveEntryNode *arc_parse_entry(URL url, int archive_type);
+extern ArchiveEntryNode *arc_parse_entry(struct timiditycontext_t *c, URL url, int archive_type);
 extern ArchiveEntryNode *new_entry_node(const char *name, int len);
-extern ArchiveEntryNode *next_tar_entry(void);
-extern ArchiveEntryNode *next_zip_entry(void);
-extern ArchiveEntryNode *next_lzh_entry(void);
-extern ArchiveEntryNode *next_mime_entry(void);
+extern ArchiveEntryNode *next_tar_entry(struct timiditycontext_t *c);
+extern ArchiveEntryNode *next_zip_entry(struct timiditycontext_t *c);
+extern ArchiveEntryNode *next_lzh_entry(struct timiditycontext_t *c);
+extern ArchiveEntryNode *next_mime_entry(struct timiditycontext_t *c);
 extern void free_entry_node(ArchiveEntryNode *entry);
 
 /* Compression/Encoding type */
@@ -139,5 +138,12 @@ enum
     ARCHIVE_MIME,
     ARCHIVE_NEWSGROUP
 };
+
+typedef struct _ArchiveFileList
+{
+    char *archive_name;
+    ArchiveEntryNode *entry_list;
+    struct _ArchiveFileList *next;
+} ArchiveFileList;
 
 #endif /* ___LIBARC_H_ */

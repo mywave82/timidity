@@ -509,7 +509,7 @@ static int32 env_offset(int offset)
 /* calculate ramp rate in fractional unit;
  * diff = 8bit, time = msec
  */
-static int32 env_rate(int diff, double msec)
+static int32 env_rate(struct timiditycontext_t *c, int diff, double msec)
 {
     double rate;
 
@@ -519,7 +519,7 @@ static int32 env_rate(int diff, double msec)
 	diff = 255;
     diff <<= (7+15);
     rate = ((double)diff / play_mode->rate) * control_ratio * 1000.0 / msec;
-    if(fast_decay)
+    if(c->fast_decay)
 	rate *= 2;
     return (int32)rate;
 }
@@ -606,7 +606,7 @@ void shrink_huge_sample (Sample *sp)
     sp->loop_end = loop_end * (1 << FRACTION_BITS);
 }
 
-void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
+void load_module_samples (struct timiditycontext_t *c, SAMPLE * s, int numsamples, int ntsc)
 {
     int i;
 
@@ -621,11 +621,11 @@ void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 		  "MOD Sample %d (%.22s)", i, s->samplename);
 
-	special_patch[i] =
+	c->special_patch[i] =
 	    (SpecialPatch *)safe_malloc(sizeof(SpecialPatch));
-	special_patch[i]->type = INST_MOD;
-	special_patch[i]->samples = 1;
-	special_patch[i]->sample = sp =
+	c->special_patch[i]->type = INST_MOD;
+	c->special_patch[i]->samples = 1;
+	c->special_patch[i]->sample = sp =
 	    (Sample *)safe_malloc(sizeof(Sample));
 	memset(sp, 0, sizeof(Sample));
 	memset(name, 0, 23 * sizeof(char));
@@ -633,13 +633,13 @@ void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
 	{
 	    strncpy(name, s->samplename, 22);
 	    name[22] = '\0';
-	    code_convert(name, NULL, 23, NULL, "ASCII");
+	    code_convert(c, name, NULL, 23, NULL, "ASCII");
 	}
 	if(name[0] == '\0')
-	    special_patch[i]->name = NULL;
+	    c->special_patch[i]->name = NULL;
 	else
-	    special_patch[i]->name = safe_strdup(name);
-	special_patch[i]->sample_offset = 0;
+	    c->special_patch[i]->name = safe_strdup(name);
+	c->special_patch[i]->sample_offset = 0;
 
 	sp->data = (sample_t *)s->data;
 	sp->data_alloced = 1;
@@ -669,7 +669,7 @@ void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
 
 	/* attack */
 	sp->envelope_offset[0] = env_offset(255);
-	sp->envelope_rate[0]   = env_rate(255, 0.0);	/* fastest */
+	sp->envelope_rate[0]   = env_rate(c, 255, 0.0);	/* fastest */
 	sp->envelope_offset[1] = sp->envelope_offset[0];
 	sp->envelope_rate[1]   = 0; /* skip this stage */
 	/* sustain */
@@ -677,7 +677,7 @@ void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
 	sp->envelope_rate[2]   = 0;
 	/* release */
 	sp->envelope_offset[3] = env_offset(0);
-	sp->envelope_rate[3]   = env_rate(255, 80.0);	/* 80 msec */
+	sp->envelope_rate[3]   = env_rate(c, 255, 80.0);	/* 80 msec */
 	sp->envelope_offset[4] = sp->envelope_offset[3];
 	sp->envelope_rate[4]   = 0; /* skip this stage */
 	sp->envelope_offset[5] = sp->envelope_offset[4];
@@ -727,7 +727,7 @@ void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
 
 	/* pitch detection for mod->midi file conversion and surround chorus */
 	if (play_mode->id_character == 'M' ||
-	    opt_surround_chorus)
+	    c->opt_surround_chorus)
 	{
 	    sp->chord = -1;
 	    sp->root_freq_detected = freq_fourier(sp, &(sp->chord));
@@ -737,7 +737,7 @@ void load_module_samples (SAMPLE * s, int numsamples, int ntsc)
 	}
 
 	/* If necessary do some anti-aliasing filtering  */
-	if (antialiasing_allowed)
+	if (c->antialiasing_allowed)
 	  antialiasing((int16 *)sp->data, sp->data_length / 2,
 		       sp->sample_rate, play_mode->rate);
 

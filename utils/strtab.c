@@ -39,11 +39,11 @@ void init_string_table(StringTable *stab)
     memset(stab, 0, sizeof(StringTable));
 }
 
-StringTableNode *put_string_table(StringTable *stab, const char *str, int len)
+StringTableNode *put_string_table(struct timiditycontext_t *c, StringTable *stab, const char *str, int len)
 {
     StringTableNode *p;
 
-    p = new_segment(&stab->pool, sizeof(StringTableNode) + len + 1);
+    p = new_segment(c, &stab->pool, sizeof(StringTableNode) + len + 1);
     if(p == NULL)
 	return NULL;
     p->next = NULL;
@@ -66,7 +66,7 @@ StringTableNode *put_string_table(StringTable *stab, const char *str, int len)
     return p;
 }
 
-char **make_string_array(StringTable *stab)
+char **make_string_array(struct timiditycontext_t *c, StringTable *stab)
 {
     char **table, *u;
     int i, n, s;
@@ -98,12 +98,12 @@ char **make_string_array(StringTable *stab)
 	u += len;
     }
     table[i] = NULL;
-    delete_string_table(stab);
+    delete_string_table(c, stab);
     return table;
 }
 
-void delete_string_table(StringTable *stab)
+void delete_string_table(struct timiditycontext_t *c, StringTable *stab)
 {
-    reuse_mblock(&stab->pool);
+    reuse_mblock(c, &stab->pool);
     init_string_table(stab);
 }

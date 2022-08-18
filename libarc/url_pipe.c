@@ -43,10 +43,10 @@ typedef struct _URL_pipe
 #define PIPE_FP(url) (((URL_pipe *)(url))->fp)
 
 static int name_pipe_check(const char *url_string);
-static long url_pipe_read(URL url, void *buff, long n);
+static long url_pipe_read(struct timiditycontext_t *c, URL url, void *buff, long n);
 static char *url_pipe_gets(URL url, char *buff, int n);
-static int url_pipe_fgetc(URL url);
-static void url_pipe_close(URL url);
+static int url_pipe_fgetc(struct timiditycontext_t *c, URL url);
+static void url_pipe_close(struct timiditycontext_t *c, URL url);
 
 struct URL_module URL_module_pipe =
 {
@@ -74,7 +74,7 @@ static int name_pipe_check(const char *url_string)
 #endif
 }
 
-URL url_pipe_open(const char *command)
+URL url_pipe_open(struct timiditycontext_t *c, const char *command)
 {
     URL_pipe *url;
     char buff[BUFSIZ], *p;
@@ -97,17 +97,17 @@ URL url_pipe_open(const char *command)
 	    if(buff == p)
 	    {
 		errno = ENOENT;
-		url_errno = URLERR_IURLF;
+		c->url_errno = URLERR_IURLF;
 		return NULL;
 	    }
 	    p[1] = '\0';
 	}
     }
 
-    url = (URL_pipe *)alloc_url(sizeof(URL_pipe));
+    url = (URL_pipe *)alloc_url(c, sizeof(URL_pipe));
     if(url == NULL)
     {
-	url_errno = errno;
+	c->url_errno = errno;
 	return NULL;
     }
 
@@ -125,15 +125,15 @@ URL url_pipe_open(const char *command)
 
     if((url->fp = popen(buff, "r")) == NULL)
     {
-	url_pipe_close((URL)url);
-	url_errno = errno;
+	url_pipe_close(c, (URL)url);
+	c->url_errno = errno;
 	return NULL;
     }
 
     return (URL)url;
 }
 
-static long url_pipe_read(URL url, void *buff, long n)
+static long url_pipe_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     return (long)fread(buff, 1, n, PIPE_FP(url));
 }
@@ -143,7 +143,7 @@ static char *url_pipe_gets(URL url, char *buff, int n)
     return fgets(buff, n, PIPE_FP(url));
 }
 
-static int url_pipe_fgetc(URL url)
+static int url_pipe_fgetc(struct timiditycontext_t *c, URL url)
 {
 #ifdef getc
     return getc(PIPE_FP(url));
@@ -152,7 +152,7 @@ static int url_pipe_fgetc(URL url)
 #endif /* getc */
 }
 
-static void url_pipe_close(URL url)
+static void url_pipe_close(struct timiditycontext_t *c, URL url)
 {
     int save_errno = errno;
     if(PIPE_FP(url) != NULL)

@@ -76,19 +76,6 @@
 
 /* #define MIME_CONVERSION */
 
-char *program_name, current_filename[1024];
-MBlockList tmpbuffer;
-char *output_text_code = NULL;
-int open_file_noise_mode = OF_NORMAL;
-
-#ifdef DEFAULT_PATH
-    /* The paths in this list will be tried whenever we're reading a file */
-    static PathList defaultpathlist={DEFAULT_PATH,0};
-    static PathList *pathlist=&defaultpathlist; /* This is a linked list */
-#else
-    static PathList *pathlist=0;
-#endif
-
 const char *note_name[] =
 {
     "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
@@ -99,11 +86,11 @@ const char *note_name[] =
 #define TMP_MAX 238328
 #endif
 
-int
-tmdy_mkstemp(char *tmpl)
+#define value c->tmdy_mkstemp_value
+static int
+tmdy_mkstemp(struct timiditycontext_t *c, char *tmpl)
 {
   char *XXXXXX;
-  static uint32 value;
   uint32 random_time_bits;
   int count, fd = -1;
   int save_errno = errno;
@@ -168,10 +155,11 @@ tmdy_mkstemp(char *tmpl)
   errno = EEXIST;
   return -1;
 }
+#undef value
 
 
 static char *
-url_dumpfile(URL url, const char *ext)
+url_dumpfile(struct timiditycontext_t *c, URL url, const char *ext)
 {
   char filename[1024];
   char *tmpdir;
@@ -193,7 +181,7 @@ url_dumpfile(URL url, const char *ext)
     snprintf(filename, sizeof(filename), "%s" PATH_STRING "XXXXXX.%s",
 	     tmpdir, ext);
 
-  fd = tmdy_mkstemp(filename);
+  fd = tmdy_mkstemp(c, filename);
 
   if (fd == -1)
     return NULL;
@@ -204,7 +192,7 @@ url_dumpfile(URL url, const char *ext)
     return NULL;
   }
 
-  while((n = url_read(url, buff, sizeof(buff))) > 0) {
+  while((n = url_read(c, url, buff, sizeof(buff))) > 0) {
     size_t dummy = fwrite(buff, 1, n, fp); ++dummy;
   }
   fclose(fp);
@@ -214,14 +202,14 @@ url_dumpfile(URL url, const char *ext)
 
 /* Try to open a file for reading. If the filename ends in one of the
    defined compressor extensions, pipe the file through the decompressor */
-struct timidity_file *try_to_open(char *name, int decompress)
+static struct timidity_file *try_to_open(struct timiditycontext_t *c, char *name, int decompress)
 {
     struct timidity_file *tf;
     URL url;
     int len;
 
-    if((url = url_arc_open(name)) == NULL)
-      if((url = url_open(name)) == NULL)
+    if((url = url_arc_open(c, name)) == NULL)
+      if((url = url_open(c, name)) == NULL)
 	return NULL;
 
     tf = (struct timidity_file *)safe_malloc(sizeof(struct timidity_file));
@@ -235,20 +223,20 @@ struct timidity_file *try_to_open(char *name, int decompress)
 
 	if(!IS_URL_SEEK_SAFE(tf->url))
 	{
-	    if((tf->url = url_cache_open(tf->url, 1)) == NULL)
+	    if((tf->url = url_cache_open(c, tf->url, 1)) == NULL)
 	    {
-		close_file(tf);
+		close_file(c, tf);
 		return NULL;
 	    }
 	}
 
-	method = skip_gzip_header(tf->url);
+	method = skip_gzip_header(c, tf->url);
 	if(method == ARCHIVEC_DEFLATED)
 	{
 	    url_cache_disable(tf->url);
-	    if((tf->url = url_inflate_open(tf->url, -1, 1)) == NULL)
+	    if((tf->url = url_inflate_open(c, tf->url, -1, 1)) == NULL)
 	    {
-		close_file(tf);
+		close_file(c, tf);
 		return NULL;
 	    }
 
@@ -256,7 +244,7 @@ struct timidity_file *try_to_open(char *name, int decompress)
 	    return tf;
 	}
 	/* fail */
-	url_rewind(tf->url);
+	url_rewind(c, tf->url);
 	url_cache_disable(tf->url);
     }
 
@@ -277,17 +265,17 @@ struct timidity_file *try_to_open(char *name, int decompress)
 	    if(!check_file_extension(name, *dec, 0))
 		continue;
 
-	    tf->tmpname = url_dumpfile(tf->url, *dec);
+	    tf->tmpname = url_dumpfile(c, tf->url, *dec);
 	    if (tf->tmpname == NULL) {
-		close_file(tf);
+		close_file(c, tf);
 		return NULL;
 	    }
 
-	    url_close(tf->url);
+	    url_close(c, tf->url);
 	    snprintf(tmp, sizeof(tmp), *(dec+1), tf->tmpname);
-	    if((tf->url = url_pipe_open(tmp)) == NULL)
+	    if((tf->url = url_pipe_open(c, tmp)) == NULL)
 	    {
-		close_file(tf);
+		close_file(c, tf);
 		return NULL;
 	    }
 
@@ -308,17 +296,17 @@ struct timidity_file *try_to_open(char *name, int decompress)
 	    if(!check_file_extension(name, *dec, 0))
 		continue;
 
-	    tf->tmpname = url_dumpfile(tf->url, *dec);
+	    tf->tmpname = url_dumpfile(c, tf->url, *dec);
 	    if (tf->tmpname == NULL) {
-		close_file(tf);
+		close_file(c, tf);
 		return NULL;
 	    }
 
-	    url_close(tf->url);
+	    url_close(c, tf->url);
 	    sprintf(tmp, *(dec+1), tf->tmpname);
-	    if((tf->url = url_pipe_open(tmp)) == NULL)
+	    if((tf->url = url_pipe_open(c, tmp)) == NULL)
 	    {
-		close_file(tf);
+		close_file(c, tf);
 		return NULL;
 	    }
 
@@ -370,13 +358,13 @@ static int is_abs_path(const char *name)
 	return 0;
 }
 
-struct timidity_file *open_with_mem(char *mem, int32 memlen, int noise_mode)
+struct timidity_file *open_with_mem(struct timiditycontext_t *c, char *mem, int32 memlen, int noise_mode)
 {
     URL url;
     struct timidity_file *tf;
 
     errno = 0;
-    if((url = url_mem_open(mem, memlen, 0)) == NULL)
+    if((url = url_mem_open(c, mem, memlen, 0)) == NULL)
     {
 	if(noise_mode >= 2)
 	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Can't open.");
@@ -392,13 +380,13 @@ struct timidity_file *open_with_mem(char *mem, int32 memlen, int noise_mode)
  * This is meant to find and open files for reading, possibly piping
  * them through a decompressor.
  */
-struct timidity_file *open_file(const char *name, int decompress, int noise_mode)
+struct timidity_file *open_file(struct timiditycontext_t *c, const char *name, int decompress, int noise_mode)
 {
 	struct timidity_file *tf;
-	const PathList *plp = pathlist;
+	const PathList *plp = c->pathlist;
 	int l;
 
-	open_file_noise_mode = noise_mode;
+	c->open_file_noise_mode = noise_mode;
 	if (!name || !(*name)) {
 		if (noise_mode)
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -406,12 +394,12 @@ struct timidity_file *open_file(const char *name, int decompress, int noise_mode
 		return 0;
 	}
 	/* First try the given name */
-	strncpy(current_filename, url_unexpand_home_dir(name), 1023);
-	current_filename[1023] = '\0';
+	strncpy(c->current_filename, url_unexpand_home_dir(c, name), 1023);
+	c->current_filename[1023] = '\0';
 	if (noise_mode)
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s",
-				current_filename);
-	if ((tf = try_to_open(current_filename, decompress)))
+				c->current_filename);
+	if ((tf = try_to_open(c, c->current_filename, decompress)))
 		return tf;
 #ifdef __MACOS__
 	if (errno) {
@@ -420,28 +408,28 @@ struct timidity_file *open_file(const char *name, int decompress, int noise_mode
 #endif
 		if (noise_mode)
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
-					current_filename, strerror(errno));
+					c->current_filename, strerror(errno));
 		return 0;
 	}
 	if (!is_abs_path(name))
 		while (plp) {	/* Try along the path then */
-			*current_filename = 0;
+			*c->current_filename = 0;
 			if((l = strlen(plp->path))) {
-				strncpy(current_filename, plp->path,
-						sizeof(current_filename));
-				if (!IS_PATH_SEP(current_filename[l - 1])
-						&& current_filename[l - 1] != '#'
+				strncpy(c->current_filename, plp->path,
+						sizeof(c->current_filename));
+				if (!IS_PATH_SEP(c->current_filename[l - 1])
+						&& c->current_filename[l - 1] != '#'
 						&& name[0] != '#')
-					strncat(current_filename, PATH_STRING,
-							sizeof(current_filename)
-							- strlen(current_filename) - 1);
+					strncat(c->current_filename, PATH_STRING,
+							sizeof(c->current_filename)
+							- strlen(c->current_filename) - 1);
 			}
-			strncat(current_filename, name, sizeof(current_filename)
-					- strlen(current_filename) - 1);
+			strncat(c->current_filename, name, sizeof(c->current_filename)
+					- strlen(c->current_filename) - 1);
 			if (noise_mode)
 				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
-						"Trying to open %s", current_filename);
-			if ((tf = try_to_open(current_filename, decompress)))
+						"Trying to open %s", c->current_filename);
+			if ((tf = try_to_open(c, c->current_filename, decompress)))
 				 return tf;
 #ifdef __MACOS__
 			if(errno) {
@@ -450,13 +438,13 @@ struct timidity_file *open_file(const char *name, int decompress, int noise_mode
 #endif
 				if (noise_mode)
 					ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
-							current_filename, strerror(errno));
+							c->current_filename, strerror(errno));
 				return 0;
 			}
 			plp = plp->next;
 		}
 	/* Nothing could be opened. */
-	*current_filename = 0;
+	*c->current_filename = 0;
 	if (noise_mode >= 2)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", name,
 				(errno) ? strerror(errno) : "Can't open file");
@@ -467,14 +455,14 @@ struct timidity_file *open_file(const char *name, int decompress, int noise_mode
  * This is meant to find and open regular files for reading, possibly
  * piping them through a decompressor.
  */
-struct timidity_file *open_file_r(const char *name, int decompress, int noise_mode)
+struct timidity_file *open_file_r(struct timiditycontext_t *c, const char *name, int decompress, int noise_mode)
 {
 	struct stat st;
 	struct timidity_file *tf;
-	const PathList *plp = pathlist;
+	const PathList *plp = c->pathlist;
 	int l;
 
-	open_file_noise_mode = noise_mode;
+	c->open_file_noise_mode = noise_mode;
 	if (!name || !(*name)) {
 		if (noise_mode)
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -482,14 +470,14 @@ struct timidity_file *open_file_r(const char *name, int decompress, int noise_mo
 		return 0;
 	}
 	/* First try the given name */
-	strncpy(current_filename, url_unexpand_home_dir(name), 1023);
-	current_filename[1023] = '\0';
+	strncpy(c->current_filename, url_unexpand_home_dir(c, name), 1023);
+	c->current_filename[1023] = '\0';
 	if (noise_mode)
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s",
-				current_filename);
-	if (!stat(current_filename, &st))
+				c->current_filename);
+	if (!stat(c->current_filename, &st))
 		if (!S_ISDIR(st.st_mode))
-			if ((tf = try_to_open(current_filename, decompress)))
+			if ((tf = try_to_open(c, c->current_filename, decompress)))
 				return tf;
 #ifdef __MACOS__
 	if (errno) {
@@ -498,30 +486,30 @@ struct timidity_file *open_file_r(const char *name, int decompress, int noise_mo
 #endif
 		if (noise_mode)
 			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
-					current_filename, strerror(errno));
+					c->current_filename, strerror(errno));
 		return 0;
 	}
 	if (!is_abs_path(name))
 		while (plp) {	/* Try along the path then */
-			*current_filename = 0;
+			*c->current_filename = 0;
 			if((l = strlen(plp->path))) {
-				strncpy(current_filename, plp->path,
-						sizeof(current_filename));
-				if (!IS_PATH_SEP(current_filename[l - 1])
-						&& current_filename[l - 1] != '#'
+				strncpy(c->current_filename, plp->path,
+						sizeof(c->current_filename));
+				if (!IS_PATH_SEP(c->current_filename[l - 1])
+						&& c->current_filename[l - 1] != '#'
 						&& name[0] != '#')
-					strncat(current_filename, PATH_STRING,
-							sizeof(current_filename)
-							- strlen(current_filename) - 1);
+					strncat(c->current_filename, PATH_STRING,
+							sizeof(c->current_filename)
+							- strlen(c->current_filename) - 1);
 			}
-			strncat(current_filename, name, sizeof(current_filename)
-					- strlen(current_filename) - 1);
+			strncat(c->current_filename, name, sizeof(c->current_filename)
+					- strlen(c->current_filename) - 1);
 			if (noise_mode)
 				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
-						"Trying to open %s", current_filename);
-			if (!stat(current_filename, &st))
+						"Trying to open %s", c->current_filename);
+			if (!stat(c->current_filename, &st))
 				if (!S_ISDIR(st.st_mode))
-					if ((tf = try_to_open(current_filename, decompress)))
+					if ((tf = try_to_open(c, c->current_filename, decompress)))
 						 return tf;
 #ifdef __MACOS__
 			if(errno) {
@@ -530,13 +518,13 @@ struct timidity_file *open_file_r(const char *name, int decompress, int noise_mo
 #endif
 				if (noise_mode)
 					ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
-							current_filename, strerror(errno));
+							c->current_filename, strerror(errno));
 				return 0;
 			}
 			plp = plp->next;
 		}
 	/* Nothing could be opened. */
-	*current_filename = 0;
+	*c->current_filename = 0;
 	if (noise_mode >= 2)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", name,
 				(errno) ? strerror(errno) : "Can't open file");
@@ -544,7 +532,7 @@ struct timidity_file *open_file_r(const char *name, int decompress, int noise_mo
 }
 
 /* This closes files opened with open_file */
-void close_file(struct timidity_file *tf)
+void close_file(struct timiditycontext_t *c, struct timidity_file *tf)
 {
     int save_errno = errno;
     if(tf->url != NULL)
@@ -558,7 +546,7 @@ void close_file(struct timidity_file *tf)
 		;
 	}
 #endif /* __W32__ */
-	url_close(tf->url);
+	url_close(c, tf->url);
     }
     if(tf->tmpname != NULL)
     {
@@ -570,37 +558,37 @@ void close_file(struct timidity_file *tf)
 }
 
 /* This is meant for skipping a few bytes. */
-void skip(struct timidity_file *tf, size_t len)
+void skip(struct timiditycontext_t *c, struct timidity_file *tf, size_t len)
 {
-    url_skip(tf->url, (long)len);
+    url_skip(c, tf->url, (long)len);
 }
 
-char *tf_gets(char *buff, int n, struct timidity_file *tf)
+char *tf_gets(struct timiditycontext_t *c, char *buff, int n, struct timidity_file *tf)
 {
-    return url_gets(tf->url, buff, n);
+    return url_gets(c, tf->url, buff, n);
 }
 
-long tf_read(void *buff, int32 size, int32 nitems, struct timidity_file *tf)
+long tf_read(struct timiditycontext_t *c, void *buff, int32 size, int32 nitems, struct timidity_file *tf)
 {
-    return url_nread(tf->url, buff, size * nitems) / size;
+    return url_nread(c, tf->url, buff, size * nitems) / size;
 }
 
-long tf_seek(struct timidity_file *tf, long offset, int whence)
+long tf_seek(struct timiditycontext_t *c, struct timidity_file *tf, long offset, int whence)
 {
     long prevpos;
 
-    prevpos = url_seek(tf->url, offset, whence);
+    prevpos = url_seek(c, tf->url, offset, whence);
     if(prevpos == -1)
 	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 		  "Warning: Can't seek file position");
     return prevpos;
 }
 
-long tf_tell(struct timidity_file *tf)
+long tf_tell(struct timiditycontext_t *c, struct timidity_file *tf)
 {
     long pos;
 
-    pos = url_tell(tf->url);
+    pos = url_tell(c, tf->url);
     if(pos == -1)
     {
 	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
@@ -789,13 +777,13 @@ int string_to_7bit_range(const char *string_, int *start, int *end)
 }
 
 /* This adds a directory to the path list */
-void add_to_pathlist(char *s)
+void add_to_pathlist(struct timiditycontext_t *c, char *s)
 {
     PathList *cur, *prev, *plp;
 
     /* Check duplicated path in the pathlist. */
     plp = prev = NULL;
-    for(cur = pathlist; cur; prev = cur, cur = cur->next)
+    for(cur = c->pathlist; cur; prev = cur, cur = cur->next)
 	if(pathcmp(s, cur->path, 0) == 0)
 	{
 	    plp = cur;
@@ -805,7 +793,7 @@ void add_to_pathlist(char *s)
     if(plp) /* found */
     {
 	if(prev == NULL) /* first */
-	    pathlist = pathlist->next;
+	    c->pathlist = c->pathlist->next;
 	else
 	    prev->next = plp->next;
     }
@@ -816,19 +804,19 @@ void add_to_pathlist(char *s)
 	plp->path = safe_strdup(s);
     }
 
-    plp->next = pathlist;
-    pathlist = plp;
+    plp->next = c->pathlist;
+    c->pathlist = plp;
 }
 
-void clean_up_pathlist(void)
+void clean_up_pathlist(struct timiditycontext_t *c)
 {
   PathList *cur, *next;
 
-  cur = pathlist;
+  cur = c->pathlist;
   while (cur) {
     next = cur->next;
 #ifdef DEFAULT_PATH
-    if (cur == &defaultpathlist) {
+    if (cur == &c->defaultpathlist) {
       cur = next;
       continue;
     }
@@ -839,9 +827,9 @@ void clean_up_pathlist(void)
   }
 
 #ifdef DEFAULT_PATH
-  pathlist = &defaultpathlist;
+  c->pathlist = &c->defaultpathlist;
 #else
-  pathlist = NULL;
+  c->pathlist = NULL;
 #endif
 }
 
@@ -876,10 +864,10 @@ static void code_convert_cp1251(char *in, char *out, int maxlen)
     out[i]='\0';
 }
 
-static void code_convert_dump(char *in, char *out, int maxlen, char *ocode)
+static void code_convert_dump(struct timiditycontext_t *c, char *in, char *out, int maxlen, char *ocode)
 {
     if(ocode == NULL)
-	ocode = output_text_code;
+	ocode = c->output_text_code;
 
     if(ocode != NULL && ocode != (char *)-1
 	&& (strstr(ocode, "ASCII") || strstr(ocode, "ascii")))
@@ -905,14 +893,14 @@ static void code_convert_dump(char *in, char *out, int maxlen, char *ocode)
 }
 
 #ifdef JAPANESE
-static void code_convert_japan(char *in, char *out, int maxlen,
+#define mode     c->code_convert_japan_mode
+#define wrd_mode c->code_convert_japan_wrd_mode
+static void code_convert_japan(struct timiditycontext_t *c, char *in, char *out, int maxlen,
 			       char *icode, char *ocode)
 {
-    static char *mode = NULL, *wrd_mode = NULL;
-
     if(ocode != NULL && ocode != (char *)-1)
     {
-	nkf_convert(in, out, maxlen, icode, ocode);
+	nkf_convert(c, in, out, maxlen, icode, ocode);
 	if(out != NULL)
 	    out[maxlen] = '\0';
 	return;
@@ -920,7 +908,7 @@ static void code_convert_japan(char *in, char *out, int maxlen,
 
     if(mode == NULL || wrd_mode == NULL)
     {
-	mode = output_text_code;
+	mode = c->output_text_code;
 	if(mode == NULL || strstr(mode, "AUTO"))
 	{
 #ifndef __W32__
@@ -1013,10 +1001,10 @@ static void code_convert_japan(char *in, char *out, int maxlen,
 	    out[maxlen] = '\0';
 	}
 	else if(strcmp(mode, "ASCII") == 0)
-	    code_convert_dump(in, out, maxlen, "ASCII");
+	    code_convert_dump(c, in, out, maxlen, "ASCII");
 	else
 	{
-	    nkf_convert(in, out, maxlen, icode, mode);
+	    nkf_convert(c, in, out, maxlen, icode, mode);
 	    if(out != NULL)
 		out[maxlen] = '\0';
 	}
@@ -1031,18 +1019,20 @@ static void code_convert_japan(char *in, char *out, int maxlen,
 	    out[maxlen] = '\0';
 	}
 	else if(strcmp(wrd_mode, "ASCII") == 0)
-	    code_convert_dump(in, out, maxlen, "ASCII");
+	    code_convert_dump(c, in, out, maxlen, "ASCII");
 	else
 	{
-	    nkf_convert(in, out, maxlen, icode, wrd_mode);
+	    nkf_convert(c, in, out, maxlen, icode, wrd_mode);
 	    if(out != NULL)
 		out[maxlen] = '\0';
 	}
     }
 }
+#undef mode
+#undef wrd_mode
 #endif /* JAPANESE */
 
-void code_convert(char *in, char *out, int outsiz, char *icode, char *ocode)
+void code_convert(struct timiditycontext_t *c, char *in, char *out, int outsiz, char *icode, char *ocode)
 {
 #if !defined(MIME_CONVERSION) && defined(JAPANESE)
     int i;
@@ -1074,7 +1064,7 @@ void code_convert(char *in, char *out, int outsiz, char *icode, char *ocode)
 
 	if(strcasecmp(ocode, "ascii") == 0)
 	{
-	    code_convert_dump(in, out, outsiz - 1, "ASCII");
+	    code_convert_dump(c, in, out, outsiz - 1, "ASCII");
 	    return;
 	}
 
@@ -1086,9 +1076,9 @@ void code_convert(char *in, char *out, int outsiz, char *icode, char *ocode)
     }
 
 #if defined(JAPANESE)
-    code_convert_japan(in, out, outsiz - 1, icode, ocode);
+    code_convert_japan(c, in, out, outsiz - 1, icode, ocode);
 #else
-    code_convert_dump(in, out, outsiz - 1, ocode);
+    code_convert_dump(c, in, out, outsiz - 1, ocode);
 #endif
 }
 
@@ -1097,7 +1087,7 @@ void code_convert(char *in, char *out, int outsiz, char *icode, char *ocode)
  * Tue Apr 6 1999: Modified by Masanao Izumo <mo@goice.co.jp>
  *                 One pass implemented.
  */
-static char **expand_file_lists(char **files, int *nfiles_in_out)
+static char **expand_file_lists(struct timiditycontext_t *c, char **files, int *nfiles_in_out)
 {
     int nfiles;
     int i;
@@ -1108,26 +1098,21 @@ static char **expand_file_lists(char **files, int *nfiles_in_out)
     char *one_file[1];
     int one;
 
-    /* Recusive global */
-    static StringTable st;
-    static int error_outflag = 0;
-    static int depth = 0;
-
-    if(depth >= 16)
+    if(c->expand_file_lists_depth >= 16)
     {
-	if(!error_outflag)
+	if(!c->expand_file_lists_error_outflag)
 	{
 	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		      "Probable loop in playlist files");
-	    error_outflag = 1;
+	    c->expand_file_lists_error_outflag = 1;
 	}
 	return NULL;
     }
 
-    if(depth == 0)
+    if(c->expand_file_lists_depth == 0)
     {
-	error_outflag = 0;
-	init_string_table(&st);
+	c->expand_file_lists_error_outflag = 0;
+	init_string_table(&c->expand_file_lists_st);
     }
     nfiles = *nfiles_in_out;
 
@@ -1141,14 +1126,14 @@ static char **expand_file_lists(char **files, int *nfiles_in_out)
 	{
 	    /* Playlist file */
             if(*files[i] == '@')
-		list_file = open_file(files[i] + 1, 1, 1);
+		list_file = open_file(c, files[i] + 1, 1, 1);
             else
-		list_file = open_file(files[i], 1, 1);
+		list_file = open_file(c, files[i], 1, 1);
             if(list_file)
 	    {
-                while(tf_gets(input_line, sizeof(input_line), list_file)
+                while(tf_gets(c, input_line, sizeof(input_line), list_file)
 		      != NULL) {
-		  if(*input_line == '\n' || *input_line == '\r')
+		    if(*input_line == '\n' || *input_line == '\r')
 			continue;
 		    if((pfile = strchr(input_line, '\r')))
 			*pfile = '\0';
@@ -1156,24 +1141,24 @@ static char **expand_file_lists(char **files, int *nfiles_in_out)
 			*pfile = '\0';
 		    one_file[0] = input_line;
 		    one = 1;
-		    depth++;
-		    expand_file_lists(one_file, &one);
-		    depth--;
+		    c->expand_file_lists_depth++;
+		    expand_file_lists(c, one_file, &one);
+		    c->expand_file_lists_depth--;
 		}
-                close_file(list_file);
+                close_file(c, list_file);
             }
         }
 	else /* Other file */
-	    put_string_table(&st, files[i], strlen(files[i]));
+	    put_string_table(c, &c->expand_file_lists_st, files[i], strlen(files[i]));
     }
 
-    if(depth)
+    if(c->expand_file_lists_depth)
 	return NULL;
-    *nfiles_in_out = st.nstring;
-    return make_string_array(&st);
+    *nfiles_in_out = c->expand_file_lists_st.nstring;
+    return make_string_array(c, &c->expand_file_lists_st);
 }
 
-char **expand_file_archives(char **files, int *nfiles_in_out)
+char **expand_file_archives(struct timiditycontext_t *c, char **files, int *nfiles_in_out)
 {
     int nfiles;
     char **new_files;
@@ -1181,7 +1166,7 @@ char **expand_file_archives(char **files, int *nfiles_in_out)
 
     /* First, expand playlist files */
     nfiles = *nfiles_in_out;
-    files = expand_file_lists(files, &nfiles);
+    files = expand_file_lists(c, files, &nfiles);
     if(files == NULL)
       {
 	*nfiles_in_out = 0;
@@ -1190,8 +1175,8 @@ char **expand_file_archives(char **files, int *nfiles_in_out)
 
     /* Second, expand archive files */
     new_nfiles = nfiles;
-    open_file_noise_mode = OF_NORMAL;
-    new_files = expand_archive_names(&new_nfiles, files);
+    c->open_file_noise_mode = OF_NORMAL;
+    new_files = expand_archive_names(c, &new_nfiles, files);
     free(files[0]);
     free(files);
 

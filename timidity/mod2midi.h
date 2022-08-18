@@ -25,6 +25,8 @@
 
 #include "unimod.h"
 
+struct timiditycontext_t;
+
 void Voice_SetVolume (UBYTE, UWORD);
 void Voice_SetFrequency (UBYTE, ULONG);
 void Voice_SetPanning (UBYTE, ULONG);
@@ -35,5 +37,5 @@ void Voice_NewTempo (UWORD, UWORD);
 void Voice_TickDone ();
 void Voice_StartPlaying ();
 void Voice_EndPlaying ();
-void load_module_samples (SAMPLE *, int, int);
+void load_module_samples (struct timiditycontext_t *c, SAMPLE *, int, int);
 void Voice_SetPeriod (UBYTE v, ULONG period);

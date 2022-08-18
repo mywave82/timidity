@@ -21,6 +21,8 @@
 #ifndef ___RECACHE_H_
 #define ___RECACHE_H_
 
+struct timiditycontext_t;
+
 struct cache_hash
 {
     /* cache key */
@@ -33,14 +35,19 @@ struct cache_hash
     struct cache_hash *next;
 };
 
-extern void resamp_cache_reset(void);
-extern void resamp_cache_refer_on(Voice *vp, int32 sample_start);
-extern void resamp_cache_refer_off(int ch, int note, int32 sample_end);
-extern void resamp_cache_refer_alloff(int ch, int32 sample_end);
-extern void resamp_cache_create(void);
-extern struct cache_hash *resamp_cache_fetch(struct _Sample *sp, int note);
-extern void free_cache_data(void);
+extern void resamp_cache_reset(struct timiditycontext_t *c);
+extern void resamp_cache_refer_on(struct timiditycontext_t *c, Voice *vp, int32 sample_start);
+extern void resamp_cache_refer_off(struct timiditycontext_t *c, int ch, int note, int32 sample_end);
+extern void resamp_cache_refer_alloff(struct timiditycontext_t *c, int ch, int32 sample_end);
+extern void resamp_cache_create(struct timiditycontext_t *c);
+extern struct cache_hash *resamp_cache_fetch(struct timiditycontext_t *c, struct _Sample *sp, int note);
+extern void free_cache_data(struct timiditycontext_t *c);
 
-extern int32 allocate_cache_size;
+#define HASH_TABLE_SIZE 251
+
+struct channel_note_table_t {
+	int32 on[128];
+	struct cache_hash *cache[128];
+};
 
 #endif /* ___RECACHE_H_ */

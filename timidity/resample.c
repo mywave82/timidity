@@ -49,11 +49,12 @@ static const float newt_coeffs[58][58] = {
 #include "newton_table.c"
 };
 
-int sample_bounds_min, sample_bounds_max; /* min/max bounds for sample data */
-
 /* 4-point interpolation by cubic spline curve. */
 
-static resample_t resample_cspline(sample_t *src, splen_t ofs, resample_rec_t *rec)
+#ifdef FIXED_RESAMPLATION
+static
+#endif
+resample_t resample_cspline(struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec)
 {
     int32 ofsi, ofsf, v0, v1, v2, v3, temp;
 
@@ -76,8 +77,8 @@ static resample_t resample_cspline(sample_t *src, splen_t ofs, resample_rec_t *r
 			 ofsf >> FRACTION_BITS) * (ofsf - (2L << FRACTION_BITS))
 			>> FRACTION_BITS)) * ((1L << FRACTION_BITS) - ofsf)) + v2)
 	    / (6L << FRACTION_BITS);
-	return ((v1 > sample_bounds_max) ? sample_bounds_max :
-		((v1 < sample_bounds_min) ? sample_bounds_min : v1));
+	return ((v1 > c->sample_bounds_max) ? c->sample_bounds_max :
+		((v1 < c->sample_bounds_min) ? c->sample_bounds_min : v1));
     }
 }
 
@@ -92,7 +93,10 @@ static resample_t resample_cspline(sample_t *src, splen_t ofs, resample_rec_t *r
    just keep this labeled as resample_lagrange(), even if it really is the
    Newton form of the polynomial. */
 
-static resample_t resample_lagrange(sample_t *src, splen_t ofs, resample_rec_t *rec)
+#ifdef FIXED_RESAMPLATION
+static
+#endif
+resample_t resample_lagrange(struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec)
 {
     int32 ofsi, ofsf, v0, v1, v2, v3;
 
@@ -116,8 +120,8 @@ static resample_t resample_lagrange(sample_t *src, splen_t ofs, resample_rec_t *
 	v3 *= ofsf;
 	v3 >>= FRACTION_BITS;
 	v3 += v0;
-	return ((v3 > sample_bounds_max) ? sample_bounds_max :
-		((v3 < sample_bounds_min) ? sample_bounds_min : v3));
+	return ((v3 > c->sample_bounds_max) ? c->sample_bounds_max :
+		((v3 < c->sample_bounds_min) ? c->sample_bounds_min : v3));
     }
 }
 
@@ -145,11 +149,16 @@ static resample_t resample_lagrange(sample_t *src, splen_t ofs, resample_rec_t *
    quality interpolation option available, and is much faster than using
    Newton polynomials. */
 
+#if 0
 #define DEFAULT_GAUSS_ORDER	25
-static float *gauss_table[(1<<FRACTION_BITS)] = {0};	/* don't need doubles */
-static int gauss_n = DEFAULT_GAUSS_ORDER;
+float *gauss_table[(1<<FRACTION_BITS)]; /* don't need doubles */
+int gauss_n; // init to DEFAULT_GAUSS_ORDER;
+#endif
 
-static resample_t resample_gauss(sample_t *src, splen_t ofs, resample_rec_t *rec)
+#ifdef FIXED_RESAMPLATION
+static
+#endif
+resample_t resample_gauss(struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec)
 {
     sample_t *sptr;
     int32 left, right, temp_n;
@@ -159,7 +168,7 @@ static resample_t resample_gauss(sample_t *src, splen_t ofs, resample_rec_t *rec
     temp_n = (right<<1)-1;
     if (temp_n > (left<<1)+1)
 	temp_n = (left<<1)+1;
-    if (temp_n < gauss_n) {
+    if (temp_n < c->gauss_n) {
 	int ii, jj;
 	float xd, y;
 	if (temp_n <= 0)
@@ -175,15 +184,15 @@ static resample_t resample_gauss(sample_t *src, splen_t ofs, resample_rec_t *rec
 	    y *= xd - --ii;
 	}
 	y += *sptr;
-	return ((y > sample_bounds_max) ? sample_bounds_max :
-		((y < sample_bounds_min) ? sample_bounds_min : y));
+	return ((y > c->sample_bounds_max) ? c->sample_bounds_max :
+		((y < c->sample_bounds_min) ? c->sample_bounds_min : y));
     } else {
 	float *gptr, *gend;
 	float y;
 	y = 0;
-	sptr = src + left - (gauss_n>>1);
-	gptr = gauss_table[ofs&FRACTION_MASK];
-	if (gauss_n == DEFAULT_GAUSS_ORDER) {
+	sptr = src + left - (c->gauss_n>>1);
+	gptr = c->gauss_table[ofs&FRACTION_MASK];
+	if (c->gauss_n == DEFAULT_GAUSS_ORDER) {
 	    /* expanding the loop for the default case.
 	     * this will allow intensive optimization when compiled
 	     * with SSE2 capability.
@@ -217,13 +226,13 @@ static resample_t resample_gauss(sample_t *src, splen_t ofs, resample_rec_t *rec
 	    y += *sptr * *gptr;
 #undef do_gauss
 	} else {
-	    gend = gptr + gauss_n;
+	    gend = gptr + c->gauss_n;
 	    do {
 		y += *(sptr++) * *(gptr++);
 	    } while (gptr <= gend);
 	}
-	return ((y > sample_bounds_max) ? sample_bounds_max :
-		((y < sample_bounds_min) ? sample_bounds_min : y));
+	return ((y > c->sample_bounds_max) ? c->sample_bounds_max :
+		((y < c->sample_bounds_min) ? c->sample_bounds_min : y));
     }
 }
 
@@ -236,11 +245,13 @@ static resample_t resample_gauss(sample_t *src, splen_t ofs, resample_rec_t *rec
    playback.  Some points will be interpolated at orders > n to both increase
    accuracy and save CPU. */
 
+#if 0
 static int newt_n = 11;
 static int32 newt_old_trunc_x = -1;
 static int newt_grow = -1;
 static int newt_max = 13;
 static double newt_divd[60][60];
+#endif
 static const double newt_recip[60] = { 0, 1, 1.0/2, 1.0/3, 1.0/4, 1.0/5, 1.0/6, 1.0/7,
 			1.0/8, 1.0/9, 1.0/10, 1.0/11, 1.0/12, 1.0/13, 1.0/14,
 			1.0/15, 1.0/16, 1.0/17, 1.0/18, 1.0/19, 1.0/20, 1.0/21,
@@ -250,9 +261,14 @@ static const double newt_recip[60] = { 0, 1, 1.0/2, 1.0/3, 1.0/4, 1.0/5, 1.0/6, 
 			1.0/43, 1.0/44, 1.0/45, 1.0/46, 1.0/47, 1.0/48, 1.0/49,
 			1.0/50, 1.0/51, 1.0/52, 1.0/53, 1.0/54, 1.0/55, 1.0/56,
 			1.0/57, 1.0/58, 1.0/59 };
+#if 0
 static sample_t *newt_old_src = NULL;
+#endif
 
-static resample_t resample_newton(sample_t *src, splen_t ofs, resample_rec_t *rec)
+#ifdef FIXED_RESAMPLATION
+static
+#endif
+resample_t resample_newton(struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec)
 {
     int n_new, n_old;
     int32 v1, v2, diff = 0;
@@ -268,7 +284,7 @@ static resample_t resample_newton(sample_t *src, splen_t ofs, resample_rec_t *re
 	temp_n = 1;
     if (temp_n > (left<<1)+1)
 	temp_n = (left<<1)+1;
-    if (temp_n < newt_n) {
+    if (temp_n < c->newt_n) {
 	xd = ofs & FRACTION_MASK;
 	xd /= (1L<<FRACTION_BITS);
 	xd += temp_n>>1;
@@ -280,53 +296,56 @@ static resample_t resample_newton(sample_t *src, splen_t ofs, resample_rec_t *re
 	    y *= xd - --ii;
 	} y += *sptr;
     }else{
-	if (newt_grow >= 0 && src == newt_old_src &&
-	    (diff = (ofs>>FRACTION_BITS) - newt_old_trunc_x) > 0){
-	    n_new = newt_n + ((newt_grow + diff)<<1);
-	    if (n_new <= newt_max){
-		n_old = newt_n + (newt_grow<<1);
-		newt_grow += diff;
+	if (c->newt_grow >= 0 && src == c->newt_old_src &&
+	    (diff = (ofs>>FRACTION_BITS) - c->newt_old_trunc_x) > 0){
+	    n_new = c->newt_n + ((c->newt_grow + diff)<<1);
+	    if (n_new <= c->newt_max){
+		n_old = c->newt_n + (c->newt_grow<<1);
+		c->newt_grow += diff;
 		for (v1=(ofs>>FRACTION_BITS)+(n_new>>1)+1,v2=n_new;
 		     v2 > n_old; --v1, --v2){
-		    newt_divd[0][v2] = src[v1];
+		    c->newt_divd[0][v2] = src[v1];
 		}for (v1 = 1; v1 <= n_new; v1++)
 		    for (v2 = n_new; v2 > n_old; --v2)
-			newt_divd[v1][v2] = (newt_divd[v1-1][v2] -
-					     newt_divd[v1-1][v2-1]) *
+			c->newt_divd[v1][v2] = (c->newt_divd[v1-1][v2] -
+					     c->newt_divd[v1-1][v2-1]) *
 			    newt_recip[v1];
-	    }else newt_grow = -1;
+	    }else c->newt_grow = -1;
 	}
-	if (newt_grow < 0 || src != newt_old_src || diff < 0){
-	    newt_grow = 0;
-	    for (v1=(ofs>>FRACTION_BITS)-(newt_n>>1),v2=0;
-		 v2 <= newt_n; v1++, v2++){
-		newt_divd[0][v2] = src[v1];
-	    }for (v1 = 1; v1 <= newt_n; v1++)
-		for (v2 = newt_n; v2 >= v1; --v2)
-		    newt_divd[v1][v2] = (newt_divd[v1-1][v2] -
-					 newt_divd[v1-1][v2-1]) *
+	if (c->newt_grow < 0 || src != c->newt_old_src || diff < 0){
+	    c->newt_grow = 0;
+	    for (v1=(ofs>>FRACTION_BITS)-(c->newt_n>>1),v2=0;
+		 v2 <= c->newt_n; v1++, v2++){
+		c->newt_divd[0][v2] = src[v1];
+	    }for (v1 = 1; v1 <= c->newt_n; v1++)
+		for (v2 = c->newt_n; v2 >= v1; --v2)
+		    c->newt_divd[v1][v2] = (c->newt_divd[v1-1][v2] -
+					 c->newt_divd[v1-1][v2-1]) *
 			newt_recip[v1];
 	}
-	n_new = newt_n + (newt_grow<<1);
+	n_new = c->newt_n + (c->newt_grow<<1);
 	v2 = n_new;
-	y = newt_divd[v2][v2];
+	y = c->newt_divd[v2][v2];
 	xd = (double)(ofs&FRACTION_MASK) / (1L<<FRACTION_BITS) +
-	    (newt_n>>1) + newt_grow;
+	    (c->newt_n>>1) + c->newt_grow;
 	for (--v2; v2; --v2){
 	    y *= xd - v2;
-	    y += newt_divd[v2][v2];
-	}y = y*xd + **newt_divd;
-	newt_old_src = src;
-	newt_old_trunc_x = (ofs>>FRACTION_BITS);
+	    y += c->newt_divd[v2][v2];
+	}y = y*xd + **c->newt_divd;
+	c->newt_old_src = src;
+	c->newt_old_trunc_x = (ofs>>FRACTION_BITS);
     }
-    return ((y > sample_bounds_max) ? sample_bounds_max :
-	    ((y < sample_bounds_min) ? sample_bounds_min : y));
+    return ((y > c->sample_bounds_max) ? c->sample_bounds_max :
+	    ((y < c->sample_bounds_min) ? c->sample_bounds_min : y));
 }
 
 
 /* Simple linear interpolation */
 
-static resample_t resample_linear(sample_t *src, splen_t ofs, resample_rec_t *rec)
+#ifdef FIXED_RESAMPLATION
+static
+#endif
+resample_t resample_linear(struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec)
 {
     int32 v1, v2, ofsi;
 
@@ -334,7 +353,7 @@ static resample_t resample_linear(sample_t *src, splen_t ofs, resample_rec_t *re
     v1 = src[ofsi];
     v2 = src[ofsi + 1];
 #if defined(LOOKUP_HACK) && defined(LOOKUP_INTERPOLATION)
-    return (sample_t)(v1 + (iplookup[(((v2 - v1) << 5) & 0x03FE0) |
+    return (sample_t)(v1 + (c->iplookup[(((v2 - v1) << 5) & 0x03FE0) |
 				     ((ofs & FRACTION_MASK) >> (FRACTION_BITS-5))]));
 #else
     return (v1 + ((resample_t)((v2 - v1) * (ofs & FRACTION_MASK)) >> FRACTION_BITS));
@@ -344,7 +363,10 @@ static resample_t resample_linear(sample_t *src, splen_t ofs, resample_rec_t *re
 
 /* No interpolation -- Earplugs recommended for maximum listening enjoyment */
 
-static resample_t resample_none(sample_t *src, splen_t ofs, resample_rec_t *rec)
+#ifdef FIXED_RESAMPLATION
+static
+#endif
+resample_t resample_none(struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec)
 {
     return src[ofs >> FRACTION_BITS];
 }
@@ -353,7 +375,6 @@ static resample_t resample_none(sample_t *src, splen_t ofs, resample_rec_t *rec)
 /*
  */
 
-typedef resample_t (*resampler_t)(sample_t*, splen_t, resample_rec_t *);
 static const resampler_t resamplers[] = {
     resample_cspline,
     resample_lagrange,
@@ -370,19 +391,19 @@ static const resampler_t resamplers[] = {
  */
 #define cur_resample DEFAULT_RESAMPLATION
 #else
-static resampler_t cur_resample = DEFAULT_RESAMPLATION;
+#define cur_resample c->cur_resample
 #endif
 
-#define RESAMPLATION *dest++ = cur_resample(src, ofs, &resrc);
+#define RESAMPLATION *dest++ = cur_resample(c, src, ofs, &resrc);
 
 /* exported for recache.c */
-resample_t do_resamplation(sample_t *src, splen_t ofs, resample_rec_t *rec)
+resample_t do_resamplation(struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec)
 {
-    return cur_resample(src, ofs, rec);
+    return cur_resample(c, src, ofs, rec);
 }
 
 /* return the current resampling algorithm */
-int get_current_resampler(void)
+int get_current_resampler(struct timiditycontext_t *c)
 {
     int i;
     for (i = 0; i < (int)(sizeof(resamplers)/sizeof(resamplers[0])); i++)
@@ -392,7 +413,7 @@ int get_current_resampler(void)
 }
 
 /* set the current resampling algorithm */
-int set_current_resampler(int type)
+int set_current_resampler(struct timiditycontext_t *c, int type)
 {
 #ifdef FIXED_RESAMPLATION
     return -1;
@@ -408,10 +429,12 @@ int set_current_resampler(int type)
 #define FINALINTERP /* Nothing to do after TiMidity++ 2.9.0 */
 /* So it isn't interpolation. At least it's final. */
 
+#if 0
 static resample_t resample_buffer[AUDIO_BUFFER_SIZE];
 static int resample_buffer_offset;
-static resample_t *vib_resample_voice(int, int32 *, int);
-static resample_t *normal_resample_voice(int, int32 *, int);
+#endif
+static resample_t *vib_resample_voice(struct timiditycontext_t *c, int, int32 *, int);
+static resample_t *normal_resample_voice(struct timiditycontext_t *c, int, int32 *, int);
 
 #ifdef PRECALC_LOOPS
 #if SAMPLE_LENGTH_BITS == 32 && TIMIDITY_HAVE_INT64
@@ -421,7 +444,7 @@ static resample_t *normal_resample_voice(int, int32 *, int);
 #endif
 #endif /* PRECALC_LOOPS */
 
-void initialize_gauss_table(int n)
+static void initialize_gauss_table(struct timiditycontext_t *c, int n)
 {
     int m, i, k, n_half = (n>>1);
     double ck;
@@ -436,13 +459,13 @@ void initialize_gauss_table(int n)
 	zsin[i] = sin(i / (4*M_PI));
 
     x_inc = 1.0 / (1<<FRACTION_BITS);
-    gptr = safe_realloc(gauss_table[0], (n+1)*sizeof(float)*(1<<FRACTION_BITS));
+    gptr = safe_realloc(c->gauss_table[0], (n+1)*sizeof(float)*(1<<FRACTION_BITS));
     for (m = 0, x = 0.0; m < (1<<FRACTION_BITS); m++, x += x_inc)
     {
 	xz = (x + n_half) / (4*M_PI);
 	for (i = 0; i <= n; i++)
 	    xzsin[i] = sin(xz - z[i]);
-	gauss_table[m] = gptr;
+	c->gauss_table[m] = gptr;
 
 	for (k = 0; k <= n; k++)
 	{
@@ -461,11 +484,11 @@ void initialize_gauss_table(int n)
     }
 }
 
-void free_gauss_table(void)
+void free_gauss_table(struct timiditycontext_t *c)
 {
-	if(gauss_table[0] != 0)
-	  free(gauss_table[0]);
-	gauss_table[0] = NULL;
+	if(c->gauss_table[0] != 0)
+	  free(c->gauss_table[0]);
+	c->gauss_table[0] = NULL;
 }
 
 #if 0 /* NOT USED */
@@ -502,47 +525,47 @@ static void initialize_newton_coeffs(void)
 #endif /* NOT USED */
 
 /* initialize the coefficients of the current resampling algorithm */
-void initialize_resampler_coeffs(void)
+void initialize_resampler_coeffs(struct timiditycontext_t *c)
 {
     /* initialize_newton_coeffs(); */
-    initialize_gauss_table(gauss_n);
+    initialize_gauss_table(c, c->gauss_n);
     /* we don't have to initialize newton table any more */
 
     /* bounds checking values for the appropriate sample types */
     /* this is as good a place as any to initialize them */
     if (play_mode->encoding & PE_24BIT)
     {
-	sample_bounds_min = -8388608;
-	sample_bounds_max = 8388607;
+	c->sample_bounds_min = -8388608;
+	c->sample_bounds_max = 8388607;
     }
     else /* 16-bit */
     {
-	sample_bounds_min = -32768;
-	sample_bounds_max = 32767;
+	c->sample_bounds_min = -32768;
+	c->sample_bounds_max = 32767;
     }
 }
 
 /* change the parameter for the current resampling algorithm */
-int set_resampler_parm(int val)
+int set_resampler_parm(struct timiditycontext_t *c, int val)
 {
     if (cur_resample == resample_gauss) {
 	if (val < 1 || val > 34)
 	    return -1;
 	else
-	    gauss_n = val;
+	    c->gauss_n = val;
     } else if (cur_resample == resample_newton) {
 	if (val < 1 || val > 57)
 	    return -1;
 	else if (val % 2 == 0)
 	    return -1;
 	else {
-	    newt_n = val;
+	    c->newt_n = val;
 	    /* set optimal value for newt_max */
-	    newt_max = newt_n * 1.57730263158 - 1.875328947;
-	    if (newt_max < newt_n)
-		    newt_max = newt_n;
-	    if (newt_max > 57)
-		    newt_max = 57;
+	    c->newt_max = c->newt_n * 1.57730263158 - 1.875328947;
+	    if (c->newt_max < c->newt_n)
+		    c->newt_max = c->newt_n;
+	    if (c->newt_max > 57)
+		    c->newt_max = 57;
 	}
     }
     return 0;
@@ -550,10 +573,10 @@ int set_resampler_parm(int val)
 
 /*************** resampling with fixed increment *****************/
 
-static resample_t *rs_plain_c(int v, int32 *countptr)
+static resample_t *rs_plain_c(struct timiditycontext_t *c, int v, int32 *countptr)
 {
-    Voice *vp = &voice[v];
-    resample_t *dest = resample_buffer + resample_buffer_offset;
+    Voice *vp = &c->voice[v];
+    resample_t *dest = c->resample_buffer + c->resample_buffer_offset;
 	sample_t *src = vp->sample->data;
     int32 ofs, count = *countptr, i, le;
 
@@ -576,14 +599,14 @@ static resample_t *rs_plain_c(int v, int32 *countptr)
 	*countptr = count;
     }
     vp->sample_offset = ((splen_t)ofs << FRACTION_BITS);
-    return resample_buffer + resample_buffer_offset;
+    return c->resample_buffer + c->resample_buffer_offset;
 }
 
-static resample_t *rs_plain(int v, int32 *countptr)
+static resample_t *rs_plain(struct timiditycontext_t *c, int v, int32 *countptr)
 {
   /* Play sample until end, then free the voice. */
-  Voice *vp = &voice[v];
-  resample_t *dest = resample_buffer + resample_buffer_offset;
+  Voice *vp = &c->voice[v];
+  resample_t *dest = c->resample_buffer + c->resample_buffer_offset;
   sample_t *src = vp->sample->data;
   splen_t
     ofs = vp->sample_offset,
@@ -596,7 +619,7 @@ static resample_t *rs_plain(int v, int32 *countptr)
 #endif
 
   if(vp->cache && incr == (1 << FRACTION_BITS))
-      return rs_plain_c(v, countptr);
+      return rs_plain_c(c, v, countptr);
 
   resrc.loop_start = ls;
   resrc.loop_end = le;
@@ -643,16 +666,16 @@ static resample_t *rs_plain(int v, int32 *countptr)
 #endif /* PRECALC_LOOPS */
 
   vp->sample_offset = ofs; /* Update offset */
-  return resample_buffer + resample_buffer_offset;
+  return c->resample_buffer + c->resample_buffer_offset;
 }
 
-static resample_t *rs_loop_c(Voice *vp, int32 count)
+static resample_t *rs_loop_c(struct timiditycontext_t *c, Voice *vp, int32 count)
 {
   int32
     ofs = (int32)(vp->sample_offset >> FRACTION_BITS),
     le = (int32)(vp->sample->loop_end >> FRACTION_BITS),
     ll = le - (int32)(vp->sample->loop_start >> FRACTION_BITS);
-  resample_t *dest = resample_buffer + resample_buffer_offset;
+  resample_t *dest = c->resample_buffer + c->resample_buffer_offset;
   sample_t *src = vp->sample->data;
   int32 i, j;
 
@@ -672,17 +695,17 @@ static resample_t *rs_loop_c(Voice *vp, int32 count)
       ofs += i;
   }
   vp->sample_offset = ((splen_t)ofs << FRACTION_BITS);
-  return resample_buffer + resample_buffer_offset;
+  return c->resample_buffer + c->resample_buffer_offset;
 }
 
-static resample_t *rs_loop(Voice *vp, int32 count)
+static resample_t *rs_loop(struct timiditycontext_t *c, Voice *vp, int32 count)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   splen_t
     ofs = vp->sample_offset,
     ls, le, ll;
   resample_rec_t resrc;
-  resample_t *dest = resample_buffer + resample_buffer_offset;
+  resample_t *dest = c->resample_buffer + c->resample_buffer_offset;
   sample_t *src = vp->sample->data;
 #ifdef PRECALC_LOOPS
   int32 i, j;
@@ -690,7 +713,7 @@ static resample_t *rs_loop(Voice *vp, int32 count)
   int32 incr = vp->sample_increment;
 
   if(vp->cache && incr == (1 << FRACTION_BITS))
-      return rs_loop_c(vp, count);
+      return rs_loop_c(c, vp, count);
 
   resrc.loop_start = ls = vp->sample->loop_start;
   resrc.loop_end = le = vp->sample->loop_end;
@@ -723,10 +746,10 @@ static resample_t *rs_loop(Voice *vp, int32 count)
 #endif
 
   vp->sample_offset = ofs; /* Update offset */
-  return resample_buffer + resample_buffer_offset;
+  return c->resample_buffer + c->resample_buffer_offset;
 }
 
-static resample_t *rs_bidir(Voice *vp, int32 count)
+static resample_t *rs_bidir(struct timiditycontext_t *c, Voice *vp, int32 count)
 {
 #if SAMPLE_LENGTH_BITS == 32
   int32
@@ -736,7 +759,7 @@ static resample_t *rs_bidir(Voice *vp, int32 count)
     ofs = vp->sample_offset,
     le = vp->sample->loop_end,
     ls = vp->sample->loop_start;
-  resample_t *dest = resample_buffer + resample_buffer_offset;
+  resample_t *dest = c->resample_buffer + c->resample_buffer_offset;
   sample_t *src = vp->sample->data;
   int32 incr = vp->sample_increment;
   resample_rec_t resrc;
@@ -841,7 +864,7 @@ static resample_t *rs_bidir(Voice *vp, int32 count)
 #endif /* PRECALC_LOOPS */
   vp->sample_increment = incr;
   vp->sample_offset = ofs; /* Update offset */
-  return resample_buffer + resample_buffer_offset;
+  return c->resample_buffer + c->resample_buffer_offset;
 }
 
 /*********************** vibrato versions ***************************/
@@ -857,7 +880,7 @@ static int vib_phase_to_inc_ptr(int phase)
     return phase - VIBRATO_SAMPLE_INCREMENTS / 2;
 }
 
-static int32 update_vibrato(Voice *vp, int sign)
+static int32 update_vibrato(struct timiditycontext_t *c, Voice *vp, int sign)
 {
   int32 depth;
   int phase, pb;
@@ -888,7 +911,7 @@ static int32 update_vibrato(Voice *vp, int sign)
   depth = vp->vibrato_depth;
   depth <<= 7;
 
-  if (vp->vibrato_sweep && !channel[ch].mod.val)
+  if (vp->vibrato_sweep && !c->channel[ch].mod.val)
     {
       /* Need to update sweep */
       vp->vibrato_sweep_position += vp->vibrato_sweep;
@@ -903,7 +926,7 @@ static int32 update_vibrato(Voice *vp, int sign)
     }
 
   if(vp->sample->inst_type == INST_SF2) {
-  pb = (int)((lookup_triangular(vp->vibrato_phase *
+  pb = (int)((lookup_triangular(c, vp->vibrato_phase *
 			(SINE_CYCLE_LENGTH / (2 * VIBRATO_SAMPLE_INCREMENTS)))
 	    * (double)(depth) * VIBRATO_AMPLITUDE_TUNING));
   } else {
@@ -920,15 +943,15 @@ static int32 update_vibrato(Voice *vp, int sign)
 
   if(pb < 0) {
       pb = -pb;
-      a /= bend_fine[(pb >> 5) & 0xFF] * bend_coarse[pb >> 13];
+      a /= c->bend_fine[(pb >> 5) & 0xFF] * c->bend_coarse[pb >> 13];
 	  pb = -pb;
   } else {
-      a *= bend_fine[(pb >> 5) & 0xFF] * bend_coarse[pb >> 13];
+      a *= c->bend_fine[(pb >> 5) & 0xFF] * c->bend_coarse[pb >> 13];
   }
   a += 0.5;
 
   /* If the sweep's over, we can store the newly computed sample_increment */
-  if (!vp->vibrato_sweep || channel[ch].mod.val)
+  if (!vp->vibrato_sweep || c->channel[ch].mod.val)
     vp->vibrato_sample_increment[phase] = (int32) a;
 
   if (sign)
@@ -937,11 +960,11 @@ static int32 update_vibrato(Voice *vp, int sign)
   return (int32) a;
 }
 
-static resample_t *rs_vib_plain(int v, int32 *countptr)
+static resample_t *rs_vib_plain(struct timiditycontext_t *c, int v, int32 *countptr)
 {
   /* Play sample until end, then free the voice. */
-  Voice *vp = &voice[v];
-  resample_t *dest = resample_buffer + resample_buffer_offset;
+  Voice *vp = &c->voice[v];
+  resample_t *dest = c->resample_buffer + c->resample_buffer_offset;
   sample_t *src = vp->sample->data;
   splen_t
     ls = 0,
@@ -964,7 +987,7 @@ static resample_t *rs_vib_plain(int v, int32 *countptr)
       if (!cc--)
 	{
 	  cc = vp->vibrato_control_ratio;
-	  incr = update_vibrato(vp, 0);
+	  incr = update_vibrato(c, vp, 0);
 	}
       RESAMPLATION;
       ofs += incr;
@@ -980,10 +1003,10 @@ static resample_t *rs_vib_plain(int v, int32 *countptr)
   vp->vibrato_control_counter = cc;
   vp->sample_increment = incr;
   vp->sample_offset = ofs; /* Update offset */
-  return resample_buffer + resample_buffer_offset;
+  return c->resample_buffer + c->resample_buffer_offset;
 }
 
-static resample_t *rs_vib_loop(Voice *vp, int32 count)
+static resample_t *rs_vib_loop(struct timiditycontext_t *c, Voice *vp, int32 count)
 {
   /* Play sample until end-of-loop, skip back and continue. */
   splen_t
@@ -991,7 +1014,7 @@ static resample_t *rs_vib_loop(Voice *vp, int32 count)
     ls = vp->sample->loop_start,
     le = vp->sample->loop_end,
     ll = le - vp->sample->loop_start;
-  resample_t *dest = resample_buffer + resample_buffer_offset;
+  resample_t *dest = c->resample_buffer + c->resample_buffer_offset;
   sample_t *src = vp->sample->data;
   int cc = vp->vibrato_control_counter;
   int32 incr = vp->sample_increment;
@@ -1023,7 +1046,7 @@ static resample_t *rs_vib_loop(Voice *vp, int32 count)
       count -= i;
       if(vibflag) {
 		  cc = vp->vibrato_control_ratio;
-		  incr = update_vibrato(vp, 0);
+		  incr = update_vibrato(c, vp, 0);
 		  vibflag = 0;
 	  }
       for(j = 0; j < i; j++) {
@@ -1037,7 +1060,7 @@ static resample_t *rs_vib_loop(Voice *vp, int32 count)
       if (!cc--)
 	{
 	  cc=vp->vibrato_control_ratio;
-	  incr=update_vibrato(vp, 0);
+	  incr=update_vibrato(c, vp, 0);
 	}
       RESAMPLATION;
       ofs += incr;
@@ -1049,10 +1072,10 @@ static resample_t *rs_vib_loop(Voice *vp, int32 count)
   vp->vibrato_control_counter = cc;
   vp->sample_increment = incr;
   vp->sample_offset = ofs; /* Update offset */
-  return resample_buffer + resample_buffer_offset;
+  return c->resample_buffer + c->resample_buffer_offset;
 }
 
-static resample_t *rs_vib_bidir(Voice *vp, int32 count)
+static resample_t *rs_vib_bidir(struct timiditycontext_t *c, Voice *vp, int32 count)
 {
 #if SAMPLE_LENGTH_BITS == 32
   int32
@@ -1062,7 +1085,7 @@ static resample_t *rs_vib_bidir(Voice *vp, int32 count)
     ofs = vp->sample_offset,
     le = vp->sample->loop_end,
     ls = vp->sample->loop_start;
-  resample_t *dest = resample_buffer + resample_buffer_offset;
+  resample_t *dest = c->resample_buffer + c->resample_buffer_offset;
   sample_t *src = vp->sample->data;
   int cc=vp->vibrato_control_counter;
   int32 incr = vp->sample_increment;
@@ -1097,7 +1120,7 @@ static resample_t *rs_vib_bidir(Voice *vp, int32 count)
       if (vibflag)
 	{
 	  cc = vp->vibrato_control_ratio;
-	  incr = update_vibrato(vp, 0);
+	  incr = update_vibrato(c, vp, 0);
 	  vibflag = 0;
 	}
       for(j = 0; j < i; j++)
@@ -1124,7 +1147,7 @@ static resample_t *rs_vib_bidir(Voice *vp, int32 count)
       if (vibflag)
 	{
 	  cc = vp->vibrato_control_ratio;
-	  incr = update_vibrato(vp, (incr < 0));
+	  incr = update_vibrato(c, vp, (incr < 0));
 	  vibflag = 0;
 	}
       while (i--)
@@ -1159,7 +1182,7 @@ static resample_t *rs_vib_bidir(Voice *vp, int32 count)
 	  if (!cc--)
 	    {
 	      cc = vp->vibrato_control_ratio;
-	      incr = update_vibrato(vp, 0);
+	      incr = update_vibrato(c, vp, 0);
 	    }
 	  RESAMPLATION;
 	  ofs += incr;
@@ -1176,7 +1199,7 @@ static resample_t *rs_vib_bidir(Voice *vp, int32 count)
 	if (!cc--)
 	  {
 	    cc=vp->vibrato_control_ratio;
-	    incr=update_vibrato(vp, (incr < 0));
+	    incr=update_vibrato(c, vp, (incr < 0));
 	  }
 	RESAMPLATION;
 	ofs += incr;
@@ -1198,14 +1221,14 @@ static resample_t *rs_vib_bidir(Voice *vp, int32 count)
   vp->vibrato_control_counter = cc;
   vp->sample_increment = incr;
   vp->sample_offset = ofs;
-  return resample_buffer + resample_buffer_offset;
+  return c->resample_buffer + c->resample_buffer_offset;
 }
 
 /*********************** portamento versions ***************************/
 
-static int rs_update_porta(int v)
+static int rs_update_porta(struct timiditycontext_t *c, int v)
 {
-    Voice *vp = &voice[v];
+    Voice *vp = &c->voice[v];
     int32 d;
 
     d = vp->porta_dpb;
@@ -1228,15 +1251,15 @@ static int rs_update_porta(int v)
 	vp->porta_control_ratio = 0;
 	vp->porta_pb = 0;
     }
-    recompute_freq(v);
+    recompute_freq(c, v);
     return vp->porta_control_ratio;
 }
 
-static resample_t *porta_resample_voice(int v, int32 *countptr, int mode)
+static resample_t *porta_resample_voice(struct timiditycontext_t *c, int v, int32 *countptr, int mode)
 {
-    Voice *vp = &voice[v];
+    Voice *vp = &c->voice[v];
     int32 n = *countptr, i;
-    resample_t *(* resampler)(int, int32 *, int);
+    resample_t *(* resampler)(struct timiditycontext_t *c, int, int32 *, int);
     int cc = vp->porta_control_counter;
     int loop;
 
@@ -1250,71 +1273,73 @@ static resample_t *porta_resample_voice(int v, int32 *countptr, int mode)
 	loop = 0;
 
     vp->cache = NULL;
-    resample_buffer_offset = 0;
-    while(resample_buffer_offset < n)
+    c->resample_buffer_offset = 0;
+    while(c->resample_buffer_offset < n)
     {
 	if(cc == 0)
 	{
-	    if((cc = rs_update_porta(v)) == 0)
+	    if((cc = rs_update_porta(c, v)) == 0)
 	    {
-		i = n - resample_buffer_offset;
-		resampler(v, &i, mode);
-		resample_buffer_offset += i;
+		i = n - c->resample_buffer_offset;
+		resampler(c, v, &i, mode);
+		c->resample_buffer_offset += i;
 		break;
 	    }
 	}
 
-	i = n - resample_buffer_offset;
+	i = n - c->resample_buffer_offset;
 	if(i > cc)
 	    i = cc;
-	resampler(v, &i, mode);
-	resample_buffer_offset += i;
+	resampler(c, v, &i, mode);
+	c->resample_buffer_offset += i;
 
 	if(!loop && (i == 0 || vp->status == VOICE_FREE))
 	    break;
 	cc -= i;
     }
-    *countptr = resample_buffer_offset;
-    resample_buffer_offset = 0;
+    *countptr = c->resample_buffer_offset;
+    c->resample_buffer_offset = 0;
     vp->porta_control_counter = cc;
-    return resample_buffer;
+    return c->resample_buffer;
 }
 
 /* interface function */
-static resample_t *vib_resample_voice(int v, int32 *countptr, int mode)
+static resample_t *vib_resample_voice(struct timiditycontext_t *c, int v, int32 *countptr, int mode)
 {
-    Voice *vp = &voice[v];
+    Voice *vp = &c->voice[v];
 
     vp->cache = NULL;
     if(mode == 0)
-	return rs_vib_loop(vp, *countptr);
+	return rs_vib_loop(c, vp, *countptr);
     if(mode == 1)
-	return rs_vib_plain(v, countptr);
-    return rs_vib_bidir(vp, *countptr);
+	return rs_vib_plain(c, v, countptr);
+    return rs_vib_bidir(c, vp, *countptr);
 }
 
 /* interface function */
-static resample_t *normal_resample_voice(int v, int32 *countptr, int mode)
+static resample_t *normal_resample_voice(struct timiditycontext_t *c, int v, int32 *countptr, int mode)
 {
-    Voice *vp = &voice[v];
+    Voice *vp = &c->voice[v];
     if(mode == 0)
-	return rs_loop(vp, *countptr);
+	return rs_loop(c, vp, *countptr);
     if(mode == 1)
-	return rs_plain(v, countptr);
-    return rs_bidir(vp, *countptr);
+	return rs_plain(c, v, countptr);
+    return rs_bidir(c, vp, *countptr);
 }
 
 /* interface function */
-resample_t *resample_voice(int v, int32 *countptr)
+resample_t *resample_voice(struct timiditycontext_t *c, int v, int32 *countptr)
 {
-    Voice *vp = &voice[v];
+    Voice *vp = &c->voice[v];
     int mode;
     resample_t *result;
+#ifndef FIXED_RESAMPLATION
     resampler_t saved_resample;
-	int32 i;
+#endif
+    int32 i;
 
     if(vp->sample->sample_rate == play_mode->rate &&
-       vp->sample->root_freq == get_note_freq(vp->sample, vp->sample->note_to_use) &&
+       vp->sample->root_freq == get_note_freq(c, vp->sample, vp->sample->note_to_use) &&
        vp->frequency == vp->orig_frequency)
     {
 	int32 ofs;
@@ -1335,9 +1360,9 @@ resample_t *resample_voice(int v, int32 *countptr)
 	    vp->sample_offset += *countptr << FRACTION_BITS;
 
 	for (i = 0; i < *countptr; i++) {
-		resample_buffer[i] = vp->sample->data[i + ofs];
+		c->resample_buffer[i] = vp->sample->data[i + ofs];
 	}
-	return resample_buffer;
+	return c->resample_buffer;
     }
 
     mode = vp->sample->modes;
@@ -1356,17 +1381,17 @@ resample_t *resample_voice(int v, int32 *countptr)
     else
 	mode = 1;	/* no loop */
 
-    saved_resample = cur_resample;
 #ifndef FIXED_RESAMPLATION
-    if (reduce_quality_flag && cur_resample != resample_none)
+    saved_resample = cur_resample;
+    if (c->reduce_quality_flag && cur_resample != resample_none)
 	cur_resample = resample_linear;
 #endif
     if(vp->porta_control_ratio)
-	result = porta_resample_voice(v, countptr, mode);
+	result = porta_resample_voice(c, v, countptr, mode);
     else if(vp->vibrato_control_ratio)
-	result = vib_resample_voice(v, countptr, mode);
+	result = vib_resample_voice(c, v, countptr, mode);
     else
-	result = normal_resample_voice(v, countptr, mode);
+	result = normal_resample_voice(c, v, countptr, mode);
 
 #ifndef FIXED_RESAMPLATION
     cur_resample = saved_resample; /* get back */
@@ -1374,7 +1399,7 @@ resample_t *resample_voice(int v, int32 *countptr)
     return result;
 }
 
-void pre_resample(Sample * sp)
+void pre_resample(struct timiditycontext_t *c, Sample * sp)
 {
   double a, b;
   splen_t ofs, newlen;
@@ -1386,7 +1411,7 @@ void pre_resample(Sample * sp)
 	    sp->note_to_use,
 	    note_name[sp->note_to_use % 12], (sp->note_to_use & 0x7F) / 12);
 
-  f = get_note_freq(sp, sp->note_to_use);
+  f = get_note_freq(c, sp, sp->note_to_use);
   a = b = ((double) (sp->root_freq) * play_mode->rate) /
       ((double) (sp->sample_rate) * f);
   if((int64)sp->data_length * a >= 0x7fffffffL)
@@ -1421,7 +1446,7 @@ void pre_resample(Sample * sp)
      real-time, we go ahead and do the higher order interpolation. */
   for(i = 1; i < count; i++)
   {
-	x = cur_resample(src, ofs, &resrc);
+	x = cur_resample(c, src, ofs, &resrc);
     *dest++ = (int16)((x > 32767) ? 32767: ((x < -32768) ? -32768 : x));
     ofs += incr;
   }
@@ -1433,6 +1458,6 @@ void pre_resample(Sample * sp)
   sp->data = (sample_t *) newdata;
   sp->root_freq = f;
   sp->sample_rate = play_mode->rate;
-  sp->low_freq = freq_table[0];
-  sp->high_freq = freq_table[127];
+  sp->low_freq = c->freq_table[0];
+  sp->high_freq = c->freq_table[127];
 }

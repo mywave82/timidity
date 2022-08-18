@@ -213,18 +213,16 @@ static int printf_string_upper_bound (const char* format,
 
 int vsnprintf(char *buff, size_t bufsiz, const char *fmt, va_list ap)
 {
-    MBlockList pool;
     char *tmpbuf = buff;
     int ret;
     va_list ap2;
 
     VA_COPY(ap2, ap);
-    init_mblock(&pool);
-    tmpbuf = new_segment(&pool, printf_string_upper_bound(fmt, ap));
+    tmpbuf = malloc(printf_string_upper_bound(fmt, ap));
     ret = vsprintf(tmpbuf, fmt, ap2);
     strncpy(buff, tmpbuf, bufsiz);
     buff[bufsiz-1] = '\0';
-    reuse_mblock(&pool);
+    free (tmpbuf);
     va_end(ap2);
     return ret;
 }

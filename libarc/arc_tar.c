@@ -40,7 +40,7 @@
 static long octal_value(char *s, int len);
 static int tar_checksum(char *hdr);
 
-ArchiveEntryNode *next_tar_entry(void)
+ArchiveEntryNode *next_tar_entry(struct timiditycontext_t *c)
 {
     char hdr[TARHDRSIZ];
     long size, sizeb;
@@ -49,30 +49,30 @@ ArchiveEntryNode *next_tar_entry(void)
     int flen;
     int macbin_check;
 
-    url = arc_handler.url;
-    macbin_check = (arc_handler.counter == 0);
+    url = c->arc_handler.url;
+    macbin_check = (c->arc_handler.counter == 0);
 
   retry_read:
     if(!macbin_check)
       {
-	if(url_read(url, hdr, TARHDRSIZ) != TARHDRSIZ)
+	if(url_read(c, url, hdr, TARHDRSIZ) != TARHDRSIZ)
 	  return NULL;
       }
     else
       {
-	int c = url_getc(url);
-	if(c == 0)
+	int ch = url_getc(url);
+	if(ch == 0)
 	  {
-	    url_skip(url, 127);
-	    if(arc_handler.isfile)
-	      arc_handler.pos += 128;
-	    if(url_read(url, hdr, TARHDRSIZ) != TARHDRSIZ)
+	    url_skip(c, url, 127);
+	    if(c->arc_handler.isfile)
+	      c->arc_handler.pos += 128;
+	    if(url_read(c, url, hdr, TARHDRSIZ) != TARHDRSIZ)
 	      return NULL;
 	  }
 	else
 	  {
-	    hdr[0] = c;
-	    if(url_read(url, hdr+1, TARHDRSIZ-1) != TARHDRSIZ-1)
+	    hdr[0] = ch;
+	    if(url_read(c, url, hdr+1, TARHDRSIZ-1) != TARHDRSIZ-1)
 	      return NULL;
 	  }
       }
@@ -87,8 +87,8 @@ ArchiveEntryNode *next_tar_entry(void)
     flen = strlen(hdr);
     if(size == 0 && flen > 0 && hdr[flen - 1] == '/')
     {
-	if(arc_handler.isfile)
-	    arc_handler.pos += TARHDRSIZ;
+	if(c->arc_handler.isfile)
+	    c->arc_handler.pos += TARHDRSIZ;
 	goto retry_read;
     }
 
@@ -97,21 +97,21 @@ ArchiveEntryNode *next_tar_entry(void)
 	return NULL;
     sizeb = (((size) + (TARBLKSIZ-1)) & ~(TARBLKSIZ-1));
 
-    if((arc_handler.isfile) || (size > MAX_SAFE_MALLOC_SIZE))
+    if((c->arc_handler.isfile) || (size > MAX_SAFE_MALLOC_SIZE))
     {
-	arc_handler.pos += TARHDRSIZ;
+	c->arc_handler.pos += TARHDRSIZ;
 	entry->comptype = ARCHIVEC_STORED;
 	entry->compsize = entry->origsize = size;
-	entry->start = arc_handler.pos;
-	url_skip(url, sizeb);
-	arc_handler.pos += sizeb;
+	entry->start = c->arc_handler.pos;
+	url_skip(c, url, sizeb);
+	c->arc_handler.pos += sizeb;
     }
     else
     {
 	void *data;
 	long n;
 
-	data = url_dump(url, size, &n);
+	data = url_dump(c, url, size, &n);
 	if(size != n)
 	{
 	    if(data != NULL)
@@ -119,13 +119,13 @@ ArchiveEntryNode *next_tar_entry(void)
 	    free_entry_node(entry);
 	    return NULL;
 	}
-	entry->cache = arc_compress(data, size, ARC_DEFLATE_LEVEL,
+	entry->cache = arc_compress(c, data, size, ARC_DEFLATE_LEVEL,
 				    &entry->compsize);
 	free(data);
 	entry->comptype = ARCHIVEC_DEFLATED;
 	entry->origsize = size;
 	entry->start = 0;
-	url_skip(url, sizeb - size);
+	url_skip(c, url, sizeb - size);
     }
 
     return entry;

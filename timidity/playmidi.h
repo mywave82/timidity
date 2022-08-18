@@ -23,6 +23,8 @@
 #ifndef ___PLAYMIDI_H_
 #define ___PLAYMIDI_H_
 
+struct timiditycontext_t;
+
 typedef struct {
   int32 time;
   uint8 type, channel, a, b;
@@ -31,10 +33,10 @@ typedef struct {
 #define REVERB_MAX_DELAY_OUT (4 * play_mode->rate)
 
 #define MIDI_EVENT_NOTE(ep) (ISDRUMCHANNEL((ep)->channel) ? (ep)->a : \
-			     (((int)(ep)->a + note_key_offset + \
-			       channel[ep->channel].key_shift) & 0x7f))
+			     (((int)(ep)->a + c->note_key_offset + \
+			       c->channel[ep->channel].key_shift) & 0x7f))
 
-#define MIDI_EVENT_TIME(ep) ((int32)((ep)->time * midi_time_ratio + 0.5))
+#define MIDI_EVENT_TIME(ep) ((int32)((ep)->time * c->midi_time_ratio + 0.5))
 
 #define SYSEX_TAG 0xFF
 
@@ -42,7 +44,7 @@ typedef struct {
 enum midi_event_t
 {
 	ME_NONE,
-	
+
 	/* MIDI events */
 	ME_NOTEOFF,
 	ME_NOTEON,
@@ -50,7 +52,7 @@ enum midi_event_t
 	ME_PROGRAM,
 	ME_CHANNEL_PRESSURE,
 	ME_PITCHWHEEL,
-	
+
 	/* Controls */
 	ME_TONE_BANK_MSB,
 	ME_TONE_BANK_LSB,
@@ -92,7 +94,7 @@ enum midi_event_t
 	ME_ALL_NOTES_OFF,
 	ME_MONO,
 	ME_POLY,
-	
+
 	/* TiMidity Extensionals */
 #if 0
 	ME_VOLUME_ONOFF,		/* Not supported */
@@ -108,7 +110,7 @@ enum midi_event_t
 	ME_PATCH_OFFS,			/* Change special instrument sample position
 							 * Channel, LSB, MSB
 							 */
-	
+
 	/* Global channel events */
 	ME_TEMPO,
 	ME_CHORUS_TEXT,
@@ -122,26 +124,26 @@ enum midi_event_t
 	ME_RESET,				/* Reset and change system mode */
 	ME_NOTE_STEP,
 	ME_CUEPOINT,			/* skip to time segment */
-	
+
 	ME_TIMESIG,				/* Time signature */
 	ME_KEYSIG,				/* Key signature */
 	ME_TEMPER_KEYSIG,		/* Temperament key signature */
 	ME_TEMPER_TYPE,			/* Temperament type */
 	ME_MASTER_TEMPER_TYPE,	/* Master temperament type */
 	ME_USER_TEMPER_ENTRY,	/* User-defined temperament entry */
-	
+
 	ME_SYSEX_LSB,			/* Universal system exclusive message (LSB) */
 	ME_SYSEX_MSB,			/* Universal system exclusive message (MSB) */
 	ME_SYSEX_GS_LSB,		/* GS system exclusive message (LSB) */
 	ME_SYSEX_GS_MSB,		/* GS system exclusive message (MSB) */
 	ME_SYSEX_XG_LSB,		/* XG system exclusive message (LSB) */
 	ME_SYSEX_XG_MSB,		/* XG system exclusive message (MSB) */
-	
+
 	ME_WRD,					/* for MIMPI WRD tracer */
 	ME_SHERRY,				/* for Sherry WRD tracer */
 	ME_BARMARKER,
 	ME_STEP,				/* for Metronome */
-	
+
 	ME_LAST = 254,			/* Last sequence of MIDI list.
 							 * This event is reserved for realtime player.
 							 */
@@ -343,7 +345,7 @@ typedef struct {
   float cutoff_freq_coef, resonance_dB;
 
   int8 velocity_sense_depth, velocity_sense_offset;
-  
+
   int8 scale_tuning[12], prev_scale_tuning;
   int8 temper_type;
 
@@ -383,8 +385,8 @@ typedef struct {
 
 typedef struct {
 	int16 freq, last_freq, orig_freq;
-	double reso_dB, last_reso_dB, orig_reso_dB, reso_lin; 
-	int8 type;	/* filter type. 0: Off, 1: 12dB/oct, 2: 24dB/oct */ 
+	double reso_dB, last_reso_dB, orig_reso_dB, reso_lin;
+	int8 type;	/* filter type. 0: Off, 1: 12dB/oct, 2: 24dB/oct */
 	int32 f, q, p;	/* coefficients in fixed-point */
 	int32 b0, b1, b2, b3, b4;
 	float gain;
@@ -473,14 +475,7 @@ typedef struct {
 #define PANNED_CENTER 3
 /* Anything but PANNED_MYSTERY only uses the left volume */
 
-#define ISDRUMCHANNEL(c)  IS_SET_CHANNELMASK(drumchannels, c)
-
-extern Channel channel[];
-extern Voice *voice;
-
-/* --module */
-extern int opt_default_module;
-extern int opt_preserve_silence;
+#define ISDRUMCHANNEL(ch)  IS_SET_CHANNELMASK(c->drumchannels, ch)
 
 enum {
 	MODULE_TIMIDITY_DEFAULT = 0x0,
@@ -502,115 +497,37 @@ enum {
 	MODULE_TIMIDITY_DEBUG = 0x7f,
 };
 
-static inline int get_module(void) {return opt_default_module;}
-
-static inline int is_gs_module(void)
-{
-	int module = get_module();
-    return (module >= MODULE_SC55 && module <= MODULE_MU100);
-}
-
-static inline int is_xg_module(void)
-{
-	int module = get_module();
-    return (module >= MODULE_MU50 && module <= MODULE_MU100);
-}
-
-extern int32 control_ratio, amp_with_poly, amplification;
-
-extern ChannelBitMask default_drumchannel_mask;
-extern ChannelBitMask drumchannel_mask;
-extern ChannelBitMask default_drumchannels;
-extern ChannelBitMask drumchannels;
-
-extern int adjust_panning_immediately;
-extern int max_voices;
-extern int voices, upper_voices;
-extern int note_key_offset;
-extern FLOAT_T midi_time_ratio;
-extern int opt_modulation_wheel;
-extern int opt_portamento;
-extern int opt_nrpn_vibrato;
-extern int opt_reverb_control;
-extern int opt_chorus_control;
-extern int opt_surround_chorus;
-extern int opt_channel_pressure;
-extern int opt_lpf_def;
-extern int opt_overlap_voice_allow;
-extern int opt_temper_control;
-extern int opt_tva_attack;
-extern int opt_tva_decay;
-extern int opt_tva_release;
-extern int opt_delay_control;
-extern int opt_eq_control;
-extern int opt_insertion_effect;
-extern int opt_drum_effect;
-extern int opt_env_attack;
-extern int opt_modulation_envelope;
-extern int noise_sharp_type;
-extern int32 current_play_tempo;
-extern int opt_realtime_playing;
-extern int reduce_voice_threshold; /* msec */
-extern int check_eot_flag;
-extern int special_tonebank;
-extern int default_tonebank;
-extern int playmidi_seek_flag;
-extern int effect_lr_mode;
-extern int effect_lr_delay_msec;
-extern int auto_reduce_polyphony;
-extern int play_pause_flag;
-extern int reduce_quality_flag;
-extern int no_4point_interpolation;
-extern ChannelBitMask channel_mute;
-extern int temper_type_mute;
-extern int8 current_keysig;
-extern int8 current_temper_keysig;
-extern int temper_adj;
-extern int8 opt_init_keysig;
-extern int8 opt_force_keysig;
-extern int key_adjust;
-extern FLOAT_T tempo_adjust;
-extern int opt_pure_intonation;
-extern int current_freq_table;
-extern int32 opt_drum_power;
-extern int opt_amp_compensation;
-extern int opt_realtime_priority;	/* interface/alsaseq_c.c */
-extern int opt_sequencer_ports;		/* interface/alsaseq_c.c */
-extern int opt_user_volume_curve;
-extern int opt_pan_delay;
-
-extern int play_midi_file(char *fn);
-extern int dumb_pass_playing_list(int number_of_files, char *list_of_files[]);
-extern void default_ctl_lyric(int lyricid);
-extern int check_apply_control(void);
-extern void recompute_freq(int v);
-extern int midi_drumpart_change(int ch, int isdrum);
-extern void ctl_note_event(int noteID);
-extern void ctl_mode_event(int type, int trace, ptr_size_t arg1, ptr_size_t arg2);
-extern char *channel_instrum_name(int ch);
-extern int get_reverb_level(int ch);
-extern int get_chorus_level(int ch);
-extern void playmidi_output_changed(int play_state);
-extern Instrument *play_midi_load_instrument(int dr, int bk, int prog);
-extern void midi_program_change(int ch, int prog);
-extern void free_voice(int v);
-extern void free_reverb_buffer(void);
-extern void play_midi_setup_drums(int ch,int note);
+extern int play_midi_file(struct timiditycontext_t *c, char *fn);
+extern int dumb_pass_playing_list(struct timiditycontext_t *c, int number_of_files, char *list_of_files[]);
+extern void default_ctl_lyric(struct timiditycontext_t *c, int lyricid);
+extern int check_apply_control(struct timiditycontext_t *c);
+extern void recompute_freq(struct timiditycontext_t *c, int v);
+extern void recompute_voice_filter(struct timiditycontext_t *c, int v);
+extern int midi_drumpart_change(struct timiditycontext_t *c, int ch, int isdrum);
+extern void ctl_note_event(struct timiditycontext_t *c, int noteID);
+extern void ctl_mode_event(struct timiditycontext_t *c, int type, int trace, ptr_size_t arg1, ptr_size_t arg2);
+extern char *channel_instrum_name(struct timiditycontext_t *c, int ch);
+extern int get_reverb_level(struct timiditycontext_t *c, int ch);
+extern int get_chorus_level(struct timiditycontext_t *c, int ch);
+extern void playmidi_output_changed(struct timiditycontext_t *c, int play_state);
+extern Instrument *play_midi_load_instrument(struct timiditycontext_t *c, int dr, int bk, int prog);
+extern void midi_program_change(struct timiditycontext_t *c, int ch, int prog);
+extern void free_voice(struct timiditycontext_t *c, int v);
+extern void free_reverb_buffer(struct timiditycontext_t *c);
 
 /* For stream player */
-extern void playmidi_stream_init(void);
-extern void playmidi_tmr_reset(void);
-extern int play_event(MidiEvent *ev);
+extern void playmidi_stream_init(struct timiditycontext_t *c);
+extern void playmidi_tmr_reset(struct timiditycontext_t *c);
+extern int play_event(struct timiditycontext_t *c, MidiEvent *ev);
 
-extern void recompute_voice_filter(int);
-extern int32 get_note_freq(Sample *, int);
+extern int32 get_note_freq(struct timiditycontext_t *c, Sample *, int);
 
-extern void free_drum_effect(int);
+extern void free_drum_effect(struct timiditycontext_t *c, int);
 
-extern char* pcm_alternate_file;
-/* NULL, "none": disabled (default)
- * "auto":       automatically selected
- * filename:     use the one.
- */
+extern void reset_midi(struct timiditycontext_t *c, int playing);
+extern void kill_all_voices(struct timiditycontext_t *c);
+
+/* m2m.c */
+extern int convert_mod_to_midi_file(struct timiditycontext_t *c, MidiEvent * ev);
 
 #endif /* ___PLAYMIDI_H_ */

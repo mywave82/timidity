@@ -37,9 +37,9 @@ void init_memb(MemBuffer *b)
     memset(b, 0, sizeof(MemBuffer));
 }
 
-void delete_memb(MemBuffer *b)
+void delete_memb(struct timiditycontext_t *c, MemBuffer *b)
 {
-    reuse_mblock(&b->pool);
+    reuse_mblock(c, &b->pool);
     memset(b, 0, sizeof(MemBuffer));
 }
 
@@ -52,13 +52,13 @@ void rewind_memb(MemBuffer *b)
     }
 }
 
-void push_memb(MemBuffer *b, char *buff, long buff_size)
+void push_memb(struct timiditycontext_t *c, MemBuffer *b, char *buff, long buff_size)
 {
     b->total_size += buff_size;
     if(b->head == NULL)
     {
 	b->head = b->tail = b->cur =
-	    (MemBufferNode *)new_segment(&b->pool, MIN_MBLOCK_SIZE);
+	    (MemBufferNode *)new_segment(c, &b->pool, MIN_MBLOCK_SIZE);
 	b->head->next = NULL;
 	b->head->size = b->head->pos = 0;
     }
@@ -71,7 +71,7 @@ void push_memb(MemBuffer *b, char *buff, long buff_size)
 	n = (long)(MEMBASESIZE - p->size);
 	if(n == 0)
 	{
-	    p = (MemBufferNode *)new_segment(&b->pool, MIN_MBLOCK_SIZE);
+	    p = (MemBufferNode *)new_segment(c, &b->pool, MIN_MBLOCK_SIZE);
 	    b->tail->next = p;
 	    b->tail = p;
 	    p->next = NULL;
@@ -168,22 +168,22 @@ typedef struct _URL_memb
     int autodelete;
 } URL_memb;
 
-static long url_memb_read(URL url, void *buff, long n);
-static int url_memb_fgetc(URL url);
-static long url_memb_seek(URL url, long offset, int whence);
-static long url_memb_tell(URL url);
-static void url_memb_close(URL url);
+static long url_memb_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+static int url_memb_fgetc(struct timiditycontext_t *c, URL url);
+static long url_memb_seek(struct timiditycontext_t *c, URL url, long offset, int whence);
+static long url_memb_tell(struct timiditycontext_t *c, URL url);
+static void url_memb_close(struct timiditycontext_t *c, URL url);
 
-URL memb_open_stream(MemBuffer *b, int autodelete)
+URL memb_open_stream(struct timiditycontext_t *c, MemBuffer *b, int autodelete)
 {
     URL_memb *url;
 
-    url = (URL_memb *)alloc_url(sizeof(URL_memb));
+    url = (URL_memb *)alloc_url(c, sizeof(URL_memb));
     if(url == NULL)
     {
 	if(autodelete)
-	    delete_memb(b);
-	url_errno = errno;
+	    delete_memb(c, b);
+	c->url_errno = errno;
 	return NULL;
     }
 
@@ -205,7 +205,7 @@ URL memb_open_stream(MemBuffer *b, int autodelete)
     return (URL)url;
 }
 
-static long url_memb_read(URL url, void *buff, long n)
+static long url_memb_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     URL_memb *urlp = (URL_memb *)url;
     if((n = read_memb(urlp->b, buff, n)) > 0)
@@ -213,7 +213,7 @@ static long url_memb_read(URL url, void *buff, long n)
     return n;
 }
 
-static int url_memb_fgetc(URL url)
+static int url_memb_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_memb *urlp = (URL_memb *)url;
     MemBuffer *b = urlp->b;
@@ -233,7 +233,7 @@ static int url_memb_fgetc(URL url)
     return (int)((unsigned char *)p->base)[p->pos++];
 }
 
-static long url_memb_seek(URL url, long offset, int whence)
+static long url_memb_seek(struct timiditycontext_t *c, URL url, long offset, int whence)
 {
     URL_memb *urlp = (URL_memb *)url;
     MemBuffer *b = urlp->b;
@@ -268,17 +268,17 @@ static long url_memb_seek(URL url, long offset, int whence)
     return ret;
 }
 
-static long url_memb_tell(URL url)
+static long url_memb_tell(struct timiditycontext_t *c, URL url)
 {
     return ((URL_memb *)url)->pos;
 }
 
-static void url_memb_close(URL url)
+static void url_memb_close(struct timiditycontext_t *c, URL url)
 {
     URL_memb *urlp = (URL_memb *)url;
     if(urlp->autodelete)
     {
-	delete_memb(urlp->b);
+	delete_memb(c, urlp->b);
 	free(urlp->b);
     }
     free(url);

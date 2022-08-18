@@ -41,6 +41,7 @@
 #include "readmidi.h"
 #include "controls.h"
 #include "wrd.h"
+#include "wrdi.h"
 #include "strtab.h"
 
 /*#define DEBUG 1*/
@@ -54,35 +55,18 @@
 #endif /* JAPANESE */
 
 #define WRDENDCHAR 26 /* ^Z */
-#define MAXTOKLEN 255
 #define MAXTIMESIG 256
 
-/*
- * Define Bug emulation level.
- * 0: No emulatoin.
- * 1: Standard emulation (emulate if the bugs is well known).
- * 2: More emulation (including unknown bugs).
- * 3-9: Danger level!! (special debug level)
- */
-#ifndef MIMPI_BUG_EMULATION_LEVEL
-#define MIMPI_BUG_EMULATION_LEVEL 1
-#endif
-static int mimpi_bug_emulation_level = MIMPI_BUG_EMULATION_LEVEL;
-static int wrd_bugstatus;
-static int wrd_wmode_prev_step;
 #ifdef DEBUG
 #define WRD_BUGEMUINFO(code) ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, \
-    "WRD: Try to emulate bug of MIMPI at line %d (code=%d)", lineno, code)
+    "WRD: Try to emulate bug of MIMPI at line %d (code=%d)", c->wrd_lineno, code)
 #else
 #define WRD_BUGEMUINFO(code) ctl->cmsg(CMSG_WARNING, VERB_NOISY, \
-    "WRD: Try to emulate bug of MIMPI at line %d", lineno)
+    "WRD: Try to emulate bug of MIMPI at line %d", c->wrd_lineno)
 #endif /* DEBUG */
 /* Current max code: 13 */
 
 #define FADE_SPEED_BASE 24 /* 24 or 48?? */
-
-StringTable wrd_read_opts;
-static int version;
 
 struct wrd_delayed_event
 {
@@ -113,63 +97,56 @@ struct wrd_step_tracer
     MBlockList pool;	/* memory buffer */
 };
 
-static MBlockList sry_pool; /* data buffer */
-sry_datapacket *datapacket = NULL;
 #ifdef ENABLE_SHERRY
-static int datapacket_len, datapacket_cnt;
 #define DEFAULT_DATAPACKET_LEN 16384
-static int import_sherrywrd_file(const char * );
+static int import_sherrywrd_file(struct timiditycontext_t *c, const char * );
 #endif /* ENABLE_SHERRY */
 
 static uint8 cmdlookup(uint8 *cmd);
-static int wrd_nexttok(struct timidity_file *tf);
-static void wrd_readinit(void);
-static struct timidity_file *open_wrd_file(char *fn);
+static int wrd_nexttok(struct timiditycontext_t *c, struct timidity_file *tf);
+static void wrd_readinit(struct timiditycontext_t *c);
+static struct timidity_file *open_wrd_file(struct timiditycontext_t *c, char *fn);
 static int wrd_hexval(char *hex);
 static int wrd_eint(char *hex);
 static int wrd_atoi(char *val, int default_value);
-static void wrd_add_lyric(int32 at, char *lyric, int len);
+static void wrd_add_lyric(struct timiditycontext_t *c, int32 at, char *lyric, int len);
 static int wrd_split(char* arg, char** argv, int maxarg);
-static void wrdstep_inc(struct wrd_step_tracer *wrdstep, int32 inc);
+static void wrdstep_inc(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep, int32 inc);
 static void wrdstep_update_forward(struct wrd_step_tracer *wrdstep);
 static void wrdstep_update_backward(struct wrd_step_tracer *wrdstep);
-static void wrdstep_nextbar(struct wrd_step_tracer *wrdstep);
-static void wrdstep_prevbar(struct wrd_step_tracer *wrdstep);
-static void wrdstep_wait(struct wrd_step_tracer *wrdstep, int bar, int step);
-static void wrdstep_rest(struct wrd_step_tracer *wrdstep, int bar, int step);
-static struct wrd_delayed_event *wrd_delay_cmd(struct wrd_step_tracer *wrdstep,
+static void wrdstep_nextbar(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep);
+static void wrdstep_prevbar(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep);
+static void wrdstep_wait(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep, int bar, int step);
+static void wrdstep_rest(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep, int bar, int step);
+static struct wrd_delayed_event *wrd_delay_cmd(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep,
 					int32 waittime, int cmd, int arg);
-static uint8 wrd_tokval[MAXTOKLEN + 1]; /* Token value */
-static uint8 wrd_tok;		/* Token type */
-static int lineno;		/* linenumber */
-static int32 last_event_time;
 
 #define WRD_ADDEVENT(at, cmd, arg) \
     { MidiEvent e; e.time = (at); e.type = ME_WRD; e.channel = (cmd); \
       e.a = (uint8)((arg) & 0xFF); e.b = (uint8)(((arg) >> 8) & 0xFF); \
-      if(mimpi_bug_emulation_level > 0){ if(at < last_event_time){ e.time = \
-      last_event_time; }else{ last_event_time = e.time; }} \
-      readmidi_add_event(&e); }
+      if(c->mimpi_bug_emulation_level > 0){ if(at < c->wrd_last_event_time){ e.time = \
+      c->wrd_last_event_time; }else{ c->wrd_last_event_time = e.time; }} \
+      readmidi_add_event(c, &e); }
 
 #define WRD_ADDSTREVENT(at, cmd, str) \
-    { MidiEvent e; readmidi_make_string_event(ME_WRD, (str), &e, 0); \
+    { MidiEvent e; readmidi_make_string_event(c, ME_WRD, (str), &e, 0); \
       e.channel = (cmd); e.time = (at); \
-      if(mimpi_bug_emulation_level > 0){ if(at < last_event_time){ e.time = \
-      last_event_time; }else{ last_event_time = e.time; }} \
-      readmidi_add_event(&e); }
+      if(c->mimpi_bug_emulation_level > 0){ if(at < c->wrd_last_event_time){ e.time = \
+      c->wrd_last_event_time; }else{ c->wrd_last_event_time = e.time; }} \
+      readmidi_add_event(c, &e); }
 
 #define SETMIDIEVENT(e, at, t, ch, pa, pb) \
     { (e).time = (at); (e).type = (t); \
       (e).channel = (uint8)(ch); (e).a = (uint8)(pa); (e).b = (uint8)(pb); }
 #define MIDIEVENT(at, t, ch, pa, pb) \
     { MidiEvent event; SETMIDIEVENT(event, at, t, ch, pa, pb); \
-      readmidi_add_event(&event); }
+      readmidi_add_event(c, &event); }
 
 #ifdef DEBUG
 static char *wrd_name_string(int cmd);
 #endif /* DEBUG */
 
-int import_wrd_file(char *fn)
+int import_wrd_file(struct timiditycontext_t *c, char *fn)
 {
     struct timidity_file *tf;
     char *args[WRD_MAXPARAM], *arg0;
@@ -178,18 +155,15 @@ int import_wrd_file(char *fn)
     struct wrd_step_tracer wrdstep;
 #define step_at wrdstep.at
 
-    static int initflag = 0;
-    static char *default_wrd_file1, /* Default */
-		*default_wrd_file2; /* Always */
     char *wfn; /* opened WRD filename */
     StringTableNode *stn; /* Chain list of string */
 
-    if(!initflag) /* Initialize at once */
+    if(!c->import_wrd_file_initflag) /* Initialize at once */
     {
 	char *read_opts[WRD_MAXPARAM];
 
-	initflag = 1;
-	for(stn = wrd_read_opts.head; stn; stn = stn->next)
+	c->import_wrd_file_initflag = 1;
+	for(stn = c->wrd_read_opts.head; stn; stn = stn->next)
 	{
 	    int nopts;
 
@@ -201,61 +175,61 @@ int import_wrd_file(char *fn)
 		if((b = strchr(a, '=')) != NULL)
 		    *b++ = '\0';
 		if(strcmp(a, "d") == 0)
-		    mimpi_bug_emulation_level = (b ? atoi(b) : 0);
+		    c->mimpi_bug_emulation_level = (b ? atoi(b) : 0);
 		else if(strcmp(a, "f") == 0)
 		{
-		    if(default_wrd_file1 != NULL)
-			free(default_wrd_file1);
-		    default_wrd_file1 = (b ? safe_strdup(b) : NULL);
+		    if(c->import_wrd_file_default_wrd_file1 != NULL)
+			free(c->import_wrd_file_default_wrd_file1);
+		    c->import_wrd_file_default_wrd_file1 = (b ? safe_strdup(b) : NULL);
 		}
 		else if(strcmp(a, "F") == 0)
 		{
-		    if(default_wrd_file2 != NULL)
-			free(default_wrd_file2);
-		    default_wrd_file2 = (b ? safe_strdup(b) : NULL);
+		    if(c->import_wrd_file_default_wrd_file2 != NULL)
+			free(c->import_wrd_file_default_wrd_file2);
+		    c->import_wrd_file_default_wrd_file2 = (b ? safe_strdup(b) : NULL);
 		}
 		else if(strcmp(a, "p") == 0)
 		{
 		    if(b != NULL)
-			wrd_add_default_path(b);
+			wrd_add_default_path(c, b);
 		}
 	    }
 	}
     }
 
-    if(datapacket == NULL)
-	init_mblock(&sry_pool);
+    if(c->datapacket == NULL)
+	init_mblock(&c->sry_pool);
     else
     {
-	free(datapacket);
-	datapacket = NULL;
-	reuse_mblock(&sry_pool);
+	free(c->datapacket);
+	c->datapacket = NULL;
+	reuse_mblock(c, &c->sry_pool);
     }
 
-    wrd_init_path();
-    if(default_wrd_file2 != NULL)
-	tf = open_file((wfn = default_wrd_file2), 0, OF_NORMAL);
+    wrd_init_path(c);
+    if(c->import_wrd_file_default_wrd_file2 != NULL)
+	tf = open_file(c, (wfn = c->import_wrd_file_default_wrd_file2), 0, OF_NORMAL);
     else
-	tf = open_wrd_file(wfn = fn);
-    if(tf == NULL && default_wrd_file1 != NULL)
-	tf = open_file((wfn = default_wrd_file1), 0, OF_NORMAL);
+	tf = open_wrd_file(c, wfn = fn);
+    if(tf == NULL && c->import_wrd_file_default_wrd_file1 != NULL)
+	tf = open_file(c, (wfn = c->import_wrd_file_default_wrd_file1), 0, OF_NORMAL);
     if(tf == NULL)
     {
-	default_wrd_file1 = default_wrd_file2 = NULL;
+	c->import_wrd_file_default_wrd_file1 = c->import_wrd_file_default_wrd_file2 = NULL;
 #ifdef ENABLE_SHERRY
-	if(import_sherrywrd_file(fn))
+	if(import_sherrywrd_file(c, fn))
 	    return WRD_TRACE_SHERRY;
 #endif
 	return WRD_TRACE_NOTHING;
     }
 
-    wrd_readinit();
+    wrd_readinit(c);
 
     memset(&wrdstep, 0, sizeof(wrdstep));
     init_mblock(&wrdstep.pool);
     wrdstep.de = wrdstep.free_de = NULL;
-    wrdstep.timebase = current_file_info->divisions;
-    wrdstep.ntimesig = dump_current_timesig(wrdstep.timesig, MAXTIMESIG - 1);
+    wrdstep.timebase = c->current_file_info->divisions;
+    wrdstep.ntimesig = dump_current_timesig(c, wrdstep.timesig, MAXTIMESIG - 1);
     if(wrdstep.ntimesig > 0)
     {
 	wrdstep.timesig[wrdstep.ntimesig] =
@@ -275,46 +249,46 @@ int import_wrd_file(char *fn)
     else
 	wrdstep.barstep = 4 * wrdstep.timebase;
     wrdstep.step_inc = wrdstep.barstep;
-    wrdstep.last_at = readmidi_set_track(0, 0);
+    wrdstep.last_at = readmidi_set_track(c, 0, 0);
 
-    readmidi_set_track(0, 1);
+    readmidi_set_track(c, 0, 1);
 
 #ifdef DEBUG
     fprintf(stderr, "Timebase: %d\n", wrdstep.timebase);
     fprintf(stderr, "Step: %d\n", wrdstep.step_inc);
 #endif /* DEBUG */
 
-    while(!readmidi_error_flag && wrd_nexttok(tf))
+    while(!c->readmidi_error_flag && wrd_nexttok(c, tf))
     {
-	if(version == -1 &&
-	   (wrd_tok != WRD_COMMAND || wrd_tokval[0] != WRD_STARTUP))
+	if(c->wrd_version == -1 &&
+	   (c->wrd_tok != WRD_COMMAND || c->wrd_tokval[0] != WRD_STARTUP))
 	{
 	    /* WRD_STARTUP must be first */
 	    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "WRD: No @STARTUP");
-	    version = 0;
+	    c->wrd_version = 0;
 	    WRD_ADDEVENT(0, WRD_STARTUP, 0);
 	}
 
 #ifdef DEBUG
 	fprintf(stderr, "%d: [%d,%d]/%d %s: ",
-	       lineno,
+	       c->wrd_lineno,
 	       wrdstep.bar,
 	       wrdstep.step,
-	       wrd_bugstatus,
-	       wrd_name_string(wrd_tok));
-	if(wrd_tok == WRD_COMMAND)
-	    printf("%s(%s)", wrd_name_string(wrd_tokval[0]), wrd_tokval + 1);
-	else if(wrd_tok == WRD_LYRIC)
-	    printf("<%s>", wrd_tokval);
+	       c->wrd_bugstatus,
+	       wrd_name_string(c->wrd_tok));
+	if(c->wrd_tok == WRD_COMMAND)
+	    printf("%s(%s)", wrd_name_string(c->wrd_tokval[0]), wrd_tokval + 1);
+	else if(c->wrd_tok == WRD_LYRIC)
+	    printf("<%s>", c->wrd_tokval);
 	printf("\n");
 	fflush(stdout);
 #endif /* DEBUG */
 
-	switch(wrd_tok)
+	switch(c->wrd_tok)
 	{
 	  case WRD_COMMAND:
-	    arg0 = (char *)wrd_tokval + 1;
-	    switch(wrd_tokval[0])
+	    arg0 = (char *)c->wrd_tokval + 1;
+	    switch(c->wrd_tokval[0])
 	    {
 	      case WRD_COLOR:
 		num = atoi(arg0);
@@ -322,7 +296,7 @@ int import_wrd_file(char *fn)
 		break;
 	      case WRD_END:
 		while(step_at < wrdstep.last_at)
-		    wrdstep_nextbar(&wrdstep);
+		    wrdstep_nextbar(c, &wrdstep);
 		break;
 	      case WRD_ESC:
 		WRD_ADDSTREVENT(step_at, WRD_ESC, arg0);
@@ -350,14 +324,14 @@ int import_wrd_file(char *fn)
 		    {
 			delay =	(int32)((double)fade_speed *
 				       i / WRD_MAXFADESTEP);
-			wrd_delay_cmd(&wrdstep, delay, WRD_ARG,
+			wrd_delay_cmd(c, &wrdstep, delay, WRD_ARG,
 				      i);
-			wrd_delay_cmd(&wrdstep, delay, WRD_FADESTEP,
+			wrd_delay_cmd(c, &wrdstep, delay, WRD_FADESTEP,
 				      WRD_MAXFADESTEP);
 		    }
-		    wrd_delay_cmd(&wrdstep, fade_speed, WRD_ARG,
+		    wrd_delay_cmd(c, &wrdstep, fade_speed, WRD_ARG,
 				  WRD_MAXFADESTEP);
-		    wrd_delay_cmd(&wrdstep, fade_speed, WRD_FADESTEP,
+		    wrd_delay_cmd(c, &wrdstep, fade_speed, WRD_FADESTEP,
 				  WRD_MAXFADESTEP);
 		}
 		break;
@@ -423,7 +397,7 @@ int import_wrd_file(char *fn)
 		WRD_ADDEVENT(step_at, WRD_GON, num);
 		break;
 	      case WRD_GSCREEN:
-		if(mimpi_bug_emulation_level >= 1)
+		if(c->mimpi_bug_emulation_level >= 1)
 		{
 		    for(i = 0; arg0[i]; i++)
 			if(arg0[i] == '.')
@@ -452,7 +426,7 @@ int import_wrd_file(char *fn)
 		}
 		WRD_ADDEVENT(step_at, WRD_INKEY, WRD_NOARG);
 		num = (num - wrdstep.bar) * wrdstep.barstep;
-		wrd_delay_cmd(&wrdstep, num, WRD_OUTKEY, WRD_NOARG);
+		wrd_delay_cmd(c, &wrdstep, num, WRD_OUTKEY, WRD_NOARG);
 		break;
 	      case WRD_LOCATE:
 		if(strchr(arg0, ';') != NULL)
@@ -563,14 +537,14 @@ int import_wrd_file(char *fn)
 	      case WRD_REST:
 		argc = wrd_split(arg0, args, 2);
 		num = atoi(args[0]);
-		if(mimpi_bug_emulation_level >= 9 && /* For testing */
+		if(c->mimpi_bug_emulation_level >= 9 && /* For testing */
 		   num == 5 &&
 		   wrdstep.wmode0 == 1)
 		{
 		    WRD_BUGEMUINFO(901);
 		    num--; /* Why??? */
 		}
-		wrdstep_rest(&wrdstep, num, atoi(args[1]));
+		wrdstep_rest(c, &wrdstep, num, atoi(args[1]));
 		break;
 	      case WRD_SCREEN: /* Not supported */
 		break;
@@ -592,15 +566,15 @@ int import_wrd_file(char *fn)
 		WRD_ADDEVENT(step_at, WRD_SCROLL,wrd_atoi(args[6], 32));
 		break;
 	      case WRD_STARTUP:
-		version = atoi(arg0);
-		WRD_ADDEVENT(step_at, WRD_STARTUP, version);
+		c->wrd_version = atoi(arg0);
+		WRD_ADDEVENT(step_at, WRD_STARTUP, c->wrd_version);
 		break;
 	      case WRD_STOP: {
 		  MidiEvent e;
 		  e.time = step_at;
 		  e.type = ME_EOT;
 		  e.channel = e.a = e.b = 0;
-		  readmidi_add_event(&e);
+		  readmidi_add_event(c, &e);
 		}
 		break;
 	      case WRD_TCLS:
@@ -621,15 +595,15 @@ int import_wrd_file(char *fn)
 		break;
 	      case WRD_WAIT:
 		argc = wrd_split(arg0, args, 2);
-		wrdstep_wait(&wrdstep, atoi(args[0]), atoi(args[1]));
+		wrdstep_wait(c, &wrdstep, atoi(args[0]), atoi(args[1]));
 		break;
 	      case WRD_WMODE:
 		argc = wrd_split(arg0, args, 2);
 		wrdstep.wmode0 = wrd_atoi(args[0], wrdstep.wmode0); /* n */
 		wrdstep.wmode1 = wrd_atoi(args[1], wrdstep.wmode1); /* mode */
-		if(mimpi_bug_emulation_level >= 1 &&
-		   (version <= 0 || version == 400))
-		    wrd_wmode_prev_step = wrdstep.step_inc;
+		if(c->mimpi_bug_emulation_level >= 1 &&
+		   (c->wrd_version <= 0 || c->wrd_version == 400))
+		    c->wrd_wmode_prev_step = wrdstep.step_inc;
 		if(argc == 1 && wrdstep.wmode0 == 0)
 		    wrdstep.step_inc = wrdstep.barstep;
 		else
@@ -639,7 +613,7 @@ int import_wrd_file(char *fn)
 			ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 				  "WRD: Out of value range: "
 				  "@WMODE(%d,%d) at line %d",
-				  wrdstep.wmode0,wrdstep.wmode1,lineno);
+				  wrdstep.wmode0,wrdstep.wmode1,c->wrd_lineno);
 			wrdstep.step_inc = wrdstep.barstep;
 		    } else
 			wrdstep.step_inc =
@@ -653,8 +627,8 @@ int import_wrd_file(char *fn)
 	    }
 	    break;
 	  case WRD_ECOMMAND:
-	    arg0 = (char *)wrd_tokval + 1;
-	    switch(wrd_tokval[0])
+	    arg0 = (char *)c->wrd_tokval + 1;
+	    switch(c->wrd_tokval[0])
 	    {
 	      case WRD_eFONTM:
 		num = wrd_eint(arg0);
@@ -800,34 +774,34 @@ int import_wrd_file(char *fn)
 	      default:
 		ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 			  "WRD: Unknown WRD command at line %d (Ignored)",
-			  lineno);
+			  c->wrd_lineno);
 		break;
 	    }
 	    break;
 	  case WRD_STEP:
-	    if(wrd_wmode_prev_step == 0 ||
-	       wrd_wmode_prev_step == wrdstep.barstep ||
+	    if(c->wrd_wmode_prev_step == 0 ||
+	       c->wrd_wmode_prev_step == wrdstep.barstep ||
 	       wrdstep.step_inc == wrdstep.barstep)
-		wrdstep_inc(&wrdstep, wrdstep.step_inc);
+		wrdstep_inc(c, &wrdstep, wrdstep.step_inc);
 	    else
 	    {
-		if(wrd_wmode_prev_step != wrdstep.step_inc)
+		if(c->wrd_wmode_prev_step != wrdstep.step_inc)
 		    WRD_BUGEMUINFO(103);
-		wrdstep_inc(&wrdstep, wrd_wmode_prev_step);
+		wrdstep_inc(c, &wrdstep, c->wrd_wmode_prev_step);
 	    }
-	    wrd_wmode_prev_step = 0;
+	    c->wrd_wmode_prev_step = 0;
 	    break;
 	  case WRD_LYRIC:
 	    if(wrdstep.wmode1 == 0)
 	    {
-		i = (int32)strlen((char *)wrd_tokval);
-		if(i > 0 && wrd_tokval[i - 1] == ';')
-		    wrd_add_lyric(step_at, (char *)wrd_tokval, i - 1);
+		i = (int32)strlen((char *)c->wrd_tokval);
+		if(i > 0 && c->wrd_tokval[i - 1] == ';')
+		    wrd_add_lyric(c, step_at, (char *)c->wrd_tokval, i - 1);
 		else
 		{
-		    wrd_add_lyric(step_at, (char *)wrd_tokval, i);
+		    wrd_add_lyric(c, step_at, (char *)c->wrd_tokval, i);
 		    WRD_ADDEVENT(step_at, WRD_NL, WRD_NOARG);
-		    wrdstep_inc(&wrdstep, wrdstep.step_inc);
+		    wrdstep_inc(c, &wrdstep, wrdstep.step_inc);
 		}
 	    }
 	    else
@@ -835,7 +809,7 @@ int import_wrd_file(char *fn)
 		unsigned char *val, *lyric;
 		int barcheck;
 
-		val = (unsigned char *)wrd_tokval;
+		val = (unsigned char *)c->wrd_tokval;
 		barcheck = 0;
 		for(;;)
 		{
@@ -844,15 +818,15 @@ int import_wrd_file(char *fn)
 		    if(*val == '\0')
 		    {
 			WRD_ADDEVENT(step_at, WRD_NL, WRD_NOARG);
-			wrdstep_inc(&wrdstep, wrdstep.step_inc);
+			wrdstep_inc(c, &wrdstep, wrdstep.step_inc);
 			break;
 		    }
 
 		    if(*val == '\\')
 		    {
 			lyric = ++val;
-			wrd_add_lyric(step_at, (char *) lyric, 1);
-			wrdstep_inc(&wrdstep, wrdstep.step_inc);
+			wrd_add_lyric(c, step_at, (char *) lyric, 1);
+			wrdstep_inc(c, &wrdstep, wrdstep.step_inc);
 		    }
 		    else if(*val == '|')
 		    {
@@ -870,20 +844,20 @@ int import_wrd_file(char *fn)
 			i = val - lyric;
 			if(*val == '|')
 			    val++;
-			wrd_add_lyric(step_at, (char *) lyric, i);
+			wrd_add_lyric(c, step_at, (char *) lyric, i);
 
 			/* Why does /^\|[^\|]+\|$/ takes only one waiting ? */
-			if(mimpi_bug_emulation_level >= 2 &&
-			   version == 427 &&
+			if(c->mimpi_bug_emulation_level >= 2 &&
+			   c->wrd_version == 427 &&
 			   barcheck == 0 && *val == '\0')
 			{
 			    WRD_BUGEMUINFO(204);
 			    WRD_ADDEVENT(step_at, WRD_NL, WRD_NOARG);
-			    wrdstep_inc(&wrdstep, wrdstep.step_inc);
+			    wrdstep_inc(c, &wrdstep, wrdstep.step_inc);
 			    break;
 			}
 
-			wrdstep_inc(&wrdstep, wrdstep.step_inc);
+			wrdstep_inc(c, &wrdstep, wrdstep.step_inc);
 			barcheck++;
 		    }
 		    else
@@ -895,8 +869,8 @@ int import_wrd_file(char *fn)
 			    break;
 			i = val - lyric;
 			if(*lyric != '_')
-			    wrd_add_lyric(step_at, (char *) lyric, i);
-			wrdstep_inc(&wrdstep, wrdstep.step_inc);
+			    wrd_add_lyric(c, step_at, (char *) lyric, i);
+			wrdstep_inc(c, &wrdstep, wrdstep.step_inc);
 		    }
 		}
 	    }
@@ -910,9 +884,9 @@ int import_wrd_file(char *fn)
 
   end_of_wrd:
     while(wrdstep.de)
-	wrdstep_nextbar(&wrdstep);
-    reuse_mblock(&wrdstep.pool);
-    close_file(tf);
+	wrdstep_nextbar(c, &wrdstep);
+    reuse_mblock(c, &wrdstep.pool);
+    close_file(c, tf);
 #ifdef DEBUG
     fflush(stderr);
 #endif /* DEBUG */
@@ -922,7 +896,7 @@ int import_wrd_file(char *fn)
 #undef step_at
 }
 
-static struct wrd_delayed_event *wrd_delay_cmd(struct wrd_step_tracer *wrdstep,
+static struct wrd_delayed_event *wrd_delay_cmd(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep,
 					int32 waittime, int cmd, int arg)
 {
     struct wrd_delayed_event *p;
@@ -935,7 +909,7 @@ static struct wrd_delayed_event *wrd_delay_cmd(struct wrd_step_tracer *wrdstep,
     }
     else
 	p = (struct wrd_delayed_event *)
-	    new_segment(&wrdstep->pool, sizeof(struct wrd_delayed_event));
+	    new_segment(c, &wrdstep->pool, sizeof(struct wrd_delayed_event));
     p->waittime = waittime;
     p->cmd = cmd;
     p->arg = arg;
@@ -1011,27 +985,27 @@ static void wrdstep_update_backward(struct wrd_step_tracer *wrdstep)
     }
 }
 
-static void wrdstep_nextbar(struct wrd_step_tracer *wrdstep)
+static void wrdstep_nextbar(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep)
 {
-    wrdstep_inc(wrdstep, wrdstep->barstep - wrdstep->step);
+    wrdstep_inc(c, wrdstep, wrdstep->barstep - wrdstep->step);
 }
 
-static void wrdstep_prevbar(struct wrd_step_tracer *wrdstep)
+static void wrdstep_prevbar(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep)
 {
     if(wrdstep->bar == 0)
 	return;
-    wrdstep_inc(wrdstep, -wrdstep->step);
-    wrdstep_inc(wrdstep, -wrdstep->barstep);
+    wrdstep_inc(c, wrdstep, -wrdstep->step);
+    wrdstep_inc(c, wrdstep, -wrdstep->barstep);
 }
 
-static void wrdstep_setstep(struct wrd_step_tracer *wrdstep, int step)
+static void wrdstep_setstep(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep, int step)
 {
     if(step > wrdstep->barstep) /* Over step! */
 	step = wrdstep->barstep;
-    wrdstep_inc(wrdstep, step - wrdstep->step);
+    wrdstep_inc(c, wrdstep, step - wrdstep->step);
 }
 
-static void wrdstep_inc(struct wrd_step_tracer *wrdstep, int32 inc)
+static void wrdstep_inc(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep, int32 inc)
 {
     int inc_save = inc;
 
@@ -1103,12 +1077,12 @@ static void wrdstep_inc(struct wrd_step_tracer *wrdstep, int32 inc)
     }
 }
 
-static void wrdstep_wait(struct wrd_step_tracer *wrdstep, int bar, int step)
+static void wrdstep_wait(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep, int bar, int step)
 {
     bar = bar + wrdstep->offset - 1;
     step = wrdstep->timebase * step / 48;
 
-    if(mimpi_bug_emulation_level >= 2 && wrdstep->bar > bar)
+    if(c->mimpi_bug_emulation_level >= 2 && wrdstep->bar > bar)
     {
 	/* ignore backward bar */
 	WRD_BUGEMUINFO(213);
@@ -1116,32 +1090,32 @@ static void wrdstep_wait(struct wrd_step_tracer *wrdstep, int bar, int step)
     else
     {
 	while(wrdstep->bar > bar)
-	    wrdstep_prevbar(wrdstep);
+	    wrdstep_prevbar(c, wrdstep);
     }
 
     while(wrdstep->bar < bar)
-	wrdstep_nextbar(wrdstep);
-    wrdstep_setstep(wrdstep, step);
+	wrdstep_nextbar(c, wrdstep);
+    wrdstep_setstep(c, wrdstep, step);
 }
 
-static void wrdstep_rest(struct wrd_step_tracer *wrdstep, int bar, int step)
+static void wrdstep_rest(struct timiditycontext_t *c, struct wrd_step_tracer *wrdstep, int bar, int step)
 {
     while(bar-- > 0)
-	wrdstep_nextbar(wrdstep);
-    wrdstep_setstep(wrdstep, wrdstep->timebase * step / 48);
+	wrdstep_nextbar(c, wrdstep);
+    wrdstep_setstep(c, wrdstep, wrdstep->timebase * step / 48);
 }
 
-static void wrd_add_lyric(int32 at, char *lyric, int len)
+static void wrd_add_lyric(struct timiditycontext_t *c, int32 at, char *lyric, int len)
 {
     MBlockList pool;
     char *str;
 
     init_mblock(&pool);
-    str = (char *)new_segment(&pool, len + 1);
+    str = (char *)new_segment(c, &pool, len + 1);
     memcpy(str, lyric, len);
     str[len] = '\0';
     WRD_ADDSTREVENT(at, WRD_LYRIC, str);
-    reuse_mblock(&pool);
+    reuse_mblock(c, &pool);
 }
 
 static int wrd_hexval(char *hex)
@@ -1190,18 +1164,18 @@ static int wrd_atoi(char *val, int default_value)
     return !*val ? default_value : atoi(val);
 }
 
-static struct timidity_file *open_wrd_file(char *fn)
+static struct timidity_file *open_wrd_file(struct timiditycontext_t *c, char *fn)
 {
     char *wrdfile, *p;
     MBlockList pool;
     struct timidity_file *tf;
 
     init_mblock(&pool);
-    wrdfile = (char *)new_segment(&pool, strlen(fn) + 5);
+    wrdfile = (char *)new_segment(c, &pool, strlen(fn) + 5);
     strcpy(wrdfile, fn);
     if((p = strrchr(wrdfile, '.')) == NULL)
     {
-	reuse_mblock(&pool);
+	reuse_mblock(c, &pool);
 	return NULL;
     }
     if('A' <= p[1] && p[1] <= 'Z')
@@ -1209,17 +1183,17 @@ static struct timidity_file *open_wrd_file(char *fn)
     else
 	strcpy(p + 1, "wrd");
 
-    tf = open_file(wrdfile, 0, OF_NORMAL);
-    reuse_mblock(&pool);
+    tf = open_file(c, wrdfile, 0, OF_NORMAL);
+    reuse_mblock(c, &pool);
     return tf;
 }
 
-static void wrd_readinit(void)
+static void wrd_readinit(struct timiditycontext_t *c)
 {
-    wrd_nexttok(NULL);
-    version = -1;
-    lineno = 0;
-    last_event_time = 0;
+    wrd_nexttok(c, NULL);
+    c->wrd_version = -1;
+    c->wrd_lineno = 0;
+    c->wrd_last_event_time = 0;
 }
 
 /* return 1 if line is modified */
@@ -1238,11 +1212,11 @@ static int connect_wrd_line(char *line)
     return 0;
 }
 
-static void mimpi_bug_emu(int cmd, char *linebuf)
+static void mimpi_bug_emu(struct timiditycontext_t *c, int cmd, char *linebuf)
 {
-    if(mimpi_bug_emulation_level >= 1 && version <= 0)
+    if(c->mimpi_bug_emulation_level >= 1 && c->wrd_version <= 0)
     {
-	switch(wrd_bugstatus)
+	switch(c->wrd_bugstatus)
 	{
 	  case 0:  /* Normal state (0) */
 	  bugstate_0:
@@ -1250,22 +1224,22 @@ static void mimpi_bug_emu(int cmd, char *linebuf)
 	    {
 		if(connect_wrd_line(linebuf))
 		    WRD_BUGEMUINFO(105);
-		wrd_bugstatus = 2; /* WRD_WAIT shift */
+		c->wrd_bugstatus = 2; /* WRD_WAIT shift */
 	    }
-	    else if(mimpi_bug_emulation_level >= 2 &&
+	    else if(c->mimpi_bug_emulation_level >= 2 &&
 		    cmd == WRD_REST)
 	    {
 		if(connect_wrd_line(linebuf))
 		    WRD_BUGEMUINFO(206);
-		wrd_bugstatus = 4; /* REST shift */
+		c->wrd_bugstatus = 4; /* REST shift */
 	    }
-	    else if(mimpi_bug_emulation_level >= 8 && /* For testing */
+	    else if(c->mimpi_bug_emulation_level >= 8 && /* For testing */
 		    cmd == WRD_WMODE)
-		wrd_bugstatus = 3; /* WMODE shift */
+		c->wrd_bugstatus = 3; /* WMODE shift */
 	    break;
 
 	  case 2: /* WRD_WAIT shift */
-	    if(mimpi_bug_emulation_level >= 2)
+	    if(c->mimpi_bug_emulation_level >= 2)
 	    {
 		if(connect_wrd_line(linebuf))
 		    WRD_BUGEMUINFO(212);
@@ -1275,280 +1249,277 @@ static void mimpi_bug_emu(int cmd, char *linebuf)
 		if(connect_wrd_line(linebuf))
 		    WRD_BUGEMUINFO(107);
 	    }
-	    wrd_bugstatus = 0;
+	    c->wrd_bugstatus = 0;
 	    goto bugstate_0;
 
 	  case 3: /* Testing */
 	    if(cmd > 0 && connect_wrd_line(linebuf))
 		WRD_BUGEMUINFO(808);
-	    wrd_bugstatus = 0;
+	    c->wrd_bugstatus = 0;
 	    goto bugstate_0;
 
 	  case 4: /* WRD_REST shift */
 	    if(connect_wrd_line(linebuf))
 		WRD_BUGEMUINFO(209);
-	    wrd_bugstatus = 0;
+	    c->wrd_bugstatus = 0;
 	    goto bugstate_0;
 	}
     }
 }
 
-static int wrd_nexttok(struct timidity_file *tf)
+static int wrd_nexttok(struct timiditycontext_t *c, struct timidity_file *tf)
 {
-    int c, len;
-    static int waitflag;
-    static uint8 linebuf[MAXTOKLEN + 16]; /* Token value */
-    static int tokp;
+    int ch, len;
 
     if(tf == NULL)
     {
-	waitflag = 0;
-	tokp = 0;
-	linebuf[0] = '\0';
-	wrd_bugstatus = 0;
-	wrd_wmode_prev_step = 0;
+	c->wrd_nexttok_waitflag = 0;
+	c->wrd_nexttok_tokp = 0;
+	c->wrd_nexttok_linebuf[0] = '\0';
+	c->wrd_bugstatus = 0;
+	c->wrd_wmode_prev_step = 0;
 	return 1;
     }
 
-    if(waitflag)
+    if(c->wrd_nexttok_waitflag)
     {
-	waitflag = 0;
-	wrd_tok = WRD_STEP;
+	c->wrd_nexttok_waitflag = 0;
+	c->wrd_tok = WRD_STEP;
 	return 1;
     }
 
   retry_read:
-    if(!linebuf[tokp])
+    if(!c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp])
     {
-	tokp = 0;
-	wrd_wmode_prev_step = 0;
-	lineno++;
-	if(tf_gets((char *)linebuf, MAXTOKLEN, tf) == NULL)
+	c->wrd_nexttok_tokp = 0;
+	c->wrd_wmode_prev_step = 0;
+	c->wrd_lineno++;
+	if(tf_gets(c, (char *)c->wrd_nexttok_linebuf, MAXTOKLEN, tf) == NULL)
 	{
-	    wrd_tok = WRD_EOF;
+	    c->wrd_tok = WRD_EOF;
 	    return 0;
 	}
 
-	len = strlen((char *)linebuf); /* 0 < len < MAXTOKLEN */
-	if(linebuf[len - 1] != '\n') /* linebuf must be terminated '\n' */
+	len = strlen((char *)c->wrd_nexttok_linebuf); /* 0 < len < MAXTOKLEN */
+	if(c->wrd_nexttok_linebuf[len - 1] != '\n') /* c->wrd_nexttok_linebuf must be terminated '\n' */
 	{
-	    linebuf[len] = '\n';
-	    linebuf[len++] = '\0';
+	    c->wrd_nexttok_linebuf[len] = '\n';
+	    c->wrd_nexttok_linebuf[len++] = '\0';
 	}
 	else if(len > 1 &&
-		linebuf[len - 2] == '\r' && linebuf[len - 1] == '\n')
+		c->wrd_nexttok_linebuf[len - 2] == '\r' && c->wrd_nexttok_linebuf[len - 1] == '\n')
 	{
 	    /* CRLF => LF */
-	    linebuf[len - 2] = '\n';
-	    linebuf[len - 1] = '\0';
+	    c->wrd_nexttok_linebuf[len - 2] = '\n';
+	    c->wrd_nexttok_linebuf[len - 1] = '\0';
 	    len--;
 	}
     }
 
   retry_parse:
-    if(linebuf[tokp] == WRDENDCHAR)
+    if(c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == WRDENDCHAR)
     {
-	wrd_tok = WRD_EOF;
+	c->wrd_tok = WRD_EOF;
 	return 0;
     }
 
-    if(tokp == 0 && linebuf[tokp] != '@' && linebuf[tokp] != '^') /* Lyric */
+    if(c->wrd_nexttok_tokp == 0 && c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] != '@' && c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] != '^') /* Lyric */
     {
 	len = 0;
-	c = 0; /* Shut gcc-Wall up! */
+	ch = 0; /* Shut gcc-Wall up! */
 
 	while(len < MAXTOKLEN)
 	{
-	    c = linebuf[tokp++];
-	    if(c == '\n' || c == WRDENDCHAR)
+	    ch = c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp++];
+	    if(ch == '\n' || ch == WRDENDCHAR)
 		break;
-	    wrd_tokval[len++] = c;
+	    c->wrd_tokval[len++] = ch;
 	}
-	wrd_tokval[len] = '\0';
-	wrd_tok = WRD_LYRIC;
-	if(c == WRDENDCHAR)
+	c->wrd_tokval[len] = '\0';
+	c->wrd_tok = WRD_LYRIC;
+	if(ch == WRDENDCHAR)
 	{
-	    tokp = 0;
-	    linebuf[0] = WRDENDCHAR;
+	    c->wrd_nexttok_tokp = 0;
+	    c->wrd_nexttok_linebuf[0] = WRDENDCHAR;
 	}
 	return 1;
     }
 
     /* Command */
 
-    if(tokp == 0)
+    if(c->wrd_nexttok_tokp == 0)
     {
 	int i;
 	/* tab to space */
-	for(i = 0; linebuf[i]; i++)
-	    if(linebuf[i] == '\t')
-		linebuf[i] = ' ';
+	for(i = 0; c->wrd_nexttok_linebuf[i]; i++)
+	    if(c->wrd_nexttok_linebuf[i] == '\t')
+		c->wrd_nexttok_linebuf[i] = ' ';
     }
 
     /* Skip white space */
     for(;;)
     {
-	if(linebuf[tokp] == ' ')
-	    tokp++;
+	if(c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == ' ')
+	    c->wrd_nexttok_tokp++;
 #ifdef IS_SJIS_ZENKAKU_SPACE
-	else if(IS_SJIS_ZENKAKU_SPACE(linebuf + tokp))
-	    tokp += 2;
+	else if(IS_SJIS_ZENKAKU_SPACE(c->wrd_nexttok_linebuf + c->wrd_nexttok_tokp))
+	    c->wrd_nexttok_tokp += 2;
 #endif /* IS_SJIS_ZENKAKU_SPACE */
 	else
 	    break;
     }
 
-    c = linebuf[tokp++];
+    ch = c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp++];
 
-    if(c == '\n')
+    if(ch == '\n')
     {
-	wrd_tok = WRD_STEP;
+	c->wrd_tok = WRD_STEP;
 	return 1;
     }
 
-    if(c == ';')
+    if(ch == ';')
     {
-	if(linebuf[tokp] == '\n')
+	if(c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == '\n')
 	{
-	    tokp = 0;
-	    linebuf[0] = '\0';
+	    c->wrd_nexttok_tokp = 0;
+	    c->wrd_nexttok_linebuf[0] = '\0';
 	}
 	goto retry_read;
     }
 
-    if(c == '@' || c == '^') /* command */
+    if(ch == '@' || ch == '^') /* command */
     {
 	int cmd, save_tokp;
 
-	wrd_tok = (c == '@' ? WRD_COMMAND : WRD_ECOMMAND);
-	save_tokp = tokp;
+	c->wrd_tok = (ch == '@' ? WRD_COMMAND : WRD_ECOMMAND);
+	save_tokp = c->wrd_nexttok_tokp;
 
 	len = 0;
 #ifdef IS_SJIS_ZENKAKU_SPACE
-	if(IS_SJIS_ZENKAKU_SPACE(linebuf + tokp)) {
+	if(IS_SJIS_ZENKAKU_SPACE(c->wrd_nexttok_linebuf + c->wrd_nexttok_tokp)) {
 	    /* nop */
-	    mimpi_bug_emu(-1, (char *) linebuf);
-	    tokp += 2;
+	    mimpi_bug_emu(c, -1, (char *) c->wrd_nexttok_linebuf);
+	    c->wrd_nexttok_tokp += 2;
 	    goto retry_parse;
 	}
 #endif /* IS_SJIS_ZENKAKU_SPACE */
 
-	if(linebuf[tokp] == ' ' ||
-	   linebuf[tokp] == '\n' ||
-	   linebuf[tokp] == WRDENDCHAR ||
-	   linebuf[tokp] == ';')
+	if(c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == ' ' ||
+	   c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == '\n' ||
+	   c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == WRDENDCHAR ||
+	   c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == ';')
 	{
 	    /* nop */
-	    mimpi_bug_emu(-1, (char *) linebuf);
+	    mimpi_bug_emu(c, -1, (char *) c->wrd_nexttok_linebuf);
 	    goto retry_parse;
 	}
 
 	while(len < MAXTOKLEN)
 	{
-	    c = linebuf[tokp++];
-	    if(!isalpha(c))
+	    ch = c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp++];
+	    if(!isalpha(ch))
 		break;
-	    wrd_tokval[len++] = toupper(c);
+	    c->wrd_tokval[len++] = toupper(ch);
 	}
-	wrd_tokval[len] = '\0';
-	cmd = wrd_tokval[0] = cmdlookup(wrd_tokval);
+	c->wrd_tokval[len] = '\0';
+	cmd = c->wrd_tokval[0] = cmdlookup(c->wrd_tokval);
 
-	if(c != '(' || cmd == 0)
+	if(ch != '(' || cmd == 0)
 	{
 	    len = 1;
 	    if(cmd == 0) {
 		/* REM */
-		tokp = save_tokp;
-		cmd = wrd_tokval[0] = WRD_REM;
+		c->wrd_nexttok_tokp = save_tokp;
+		cmd = c->wrd_tokval[0] = WRD_REM;
 	    } else {
-		linebuf[--tokp] = c;	/* Putback advanced char */
+		c->wrd_nexttok_linebuf[--c->wrd_nexttok_tokp] = ch;	/* Putback advanced char */
 		/* skip spaces */
-		while(linebuf[tokp] == ' ')
-		    tokp++;
+		while(c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == ' ')
+		    c->wrd_nexttok_tokp++;
 	    }
 
 	    if(cmd == WRD_STARTUP)
 	    {
 		while(len < MAXTOKLEN)
 		{
-		    c = linebuf[tokp++];
-		    if((c == ';' && linebuf[tokp] == '\n') ||
-		       c == '\n' ||
-		       c == WRDENDCHAR ||
-		       c == '@' ||
-		       c == ' ')
+		    ch = c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp++];
+		    if((ch == ';' && c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == '\n') ||
+		       ch == '\n' ||
+		       ch == WRDENDCHAR ||
+		       ch == '@' ||
+		       ch == ' ')
 			break;
-		    wrd_tokval[len++] = c;
+		    c->wrd_tokval[len++] = ch;
 		}
 	    }
 	    else
 	    {
 		while(len < MAXTOKLEN)
 		{
-		    c = linebuf[tokp++];
-		    if((c == ';' && linebuf[tokp] == '\n') ||
-		       c == '\n' ||
-		       c == WRDENDCHAR)
+		    ch = c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp++];
+		    if((ch == ';' && c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == '\n') ||
+		       ch == '\n' ||
+		       ch == WRDENDCHAR)
 			break;
-		    wrd_tokval[len++] = c;
+		    c->wrd_tokval[len++] = ch;
 		}
 	    }
-	    linebuf[--tokp] = c;	/* Putback advanced char */
-	    wrd_tokval[len] = '\0';
+	    c->wrd_nexttok_linebuf[--c->wrd_nexttok_tokp] = ch;	/* Putback advanced char */
+	    c->wrd_tokval[len] = '\0';
 	    return 1;
 	}
 
-	if(wrd_tok == WRD_ECOMMAND)
+	if(c->wrd_tok == WRD_ECOMMAND)
 	{
 	    if(cmd == WRD_PAL)
-		wrd_tokval[0] = WRD_ePAL;
+		c->wrd_tokval[0] = WRD_ePAL;
 	    else if(cmd == WRD_SCROLL)
-		wrd_tokval[0] = WRD_eSCROLL;
+		c->wrd_tokval[0] = WRD_eSCROLL;
 	}
 
 	len = 1;
 	while(len < MAXTOKLEN)
 	{
-	    c = linebuf[tokp++];
-	    if(c == ')' || c == '\n' || c == WRDENDCHAR)
+	    ch = c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp++];
+	    if(ch == ')' || ch == '\n' || ch == WRDENDCHAR)
 		break;
-	    wrd_tokval[len++] = c;
+	    c->wrd_tokval[len++] = ch;
 	}
-	wrd_tokval[len] = '\0';
-	mimpi_bug_emu(wrd_tokval[0], (char *) linebuf);
+	c->wrd_tokval[len] = '\0';
+	mimpi_bug_emu(c, c->wrd_tokval[0], (char *) c->wrd_nexttok_linebuf);
 
-	if(c == WRDENDCHAR)
+	if(ch == WRDENDCHAR)
 	{
-	    tokp = 0;
-	    linebuf[0] = WRDENDCHAR;
+	    c->wrd_nexttok_tokp = 0;
+	    c->wrd_nexttok_linebuf[0] = WRDENDCHAR;
 	}
 	return 1;
     }
 
     /* This is quick hack for informal WRD file */
-    if(c == ':' && mimpi_bug_emulation_level >= 1)
+    if(ch == ':' && c->mimpi_bug_emulation_level >= 1)
     {
 	WRD_BUGEMUINFO(111);
 	goto retry_parse;
     }
 
     /* Convert error line to @REM format */
-    linebuf[--tokp] = c;	/* Putback advanced char */
+    c->wrd_nexttok_linebuf[--c->wrd_nexttok_tokp] = ch;	/* Putback advanced char */
     len = 0;
-    wrd_tok = WRD_COMMAND;
-    wrd_tokval[len++] = WRD_REM;
+    c->wrd_tok = WRD_COMMAND;
+    c->wrd_tokval[len++] = WRD_REM;
 
     while(len < MAXTOKLEN)
     {
-	c = linebuf[tokp++];
-	if((c == ';' && linebuf[tokp] == '\n') ||
-	   c == '\n' ||
-	   c == WRDENDCHAR)
+	ch = c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp++];
+	if((ch == ';' && c->wrd_nexttok_linebuf[c->wrd_nexttok_tokp] == '\n') ||
+	   ch == '\n' ||
+	   ch == WRDENDCHAR)
 	    break;
-	wrd_tokval[len++] = c;
+	c->wrd_tokval[len++] = ch;
     }
-    linebuf[--tokp] = c;	/* Putback advanced char */
-    wrd_tokval[len] = '\0';
+    c->wrd_nexttok_linebuf[--c->wrd_nexttok_tokp] = ch;	/* Putback advanced char */
+    c->wrd_tokval[len] = '\0';
     return 1;
 }
 
@@ -1770,11 +1741,6 @@ static char *wrd_name_string(int cmd)
 #pragma mark -
 #endif
 
-static int sherry_started;	/* 0 - before start command 0x01*/
-				/* 1 - after start command 0x01*/
-
-static int sry_timebase_mode = 0; /* 0 is default */
-
 static int32 sry_getVariableLength(struct timidity_file	*tf)
 {
   int32 value= 0;
@@ -1794,13 +1760,13 @@ static int sry_check_head(struct timidity_file	*tf)
 	char	magic[12];
 	uint8	version[4];
 
-	tf_read(magic, 12,1,tf);
+	tf_read(c, magic, 12,1,tf);
 	if( memcmp(magic, "Sherry WRD\0\0", 12) ){
 		ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 			  "Sherry open::Header NG." );
 		return 1;
 	}
-	tf_read(version, 1, 4, tf);
+	tf_read(c, version, 1, 4, tf);
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
 		  "Sherry WRD version: %02x %02x %02x %02x",
 		  version[0], version[1], version[2], version[3]);
@@ -1821,45 +1787,45 @@ struct sry_drawtext_{
 };
 typedef struct sry_drawtext_ sry_drawtext;
 
-static void sry_regist_datapacket( struct wrd_step_tracer* wrdstep,
+static void sry_regist_datapacket(struct timiditycontext_t *c, struct wrd_step_tracer* wrdstep,
 					const sry_datapacket* packet)
 {
-    int a, b, c;
+    int A, B, C;
     int err = 0;
 
-    if(datapacket == NULL)
+    if(c->datapacket == NULL)
     {
-	datapacket = (sry_datapacket *)safe_malloc(DEFAULT_DATAPACKET_LEN *
+	c->datapacket = (sry_datapacket *)safe_malloc(DEFAULT_DATAPACKET_LEN *
 						   sizeof(sry_datapacket));
-	datapacket_len = DEFAULT_DATAPACKET_LEN;
-	datapacket_cnt = 0;
+	c->datapacket_len = DEFAULT_DATAPACKET_LEN;
+	c->datapacket_cnt = 0;
     }
     else
     {
-	if(datapacket_cnt == (1<<24)-1) /* Over flow */
+	if(c->datapacket_cnt == (1<<24)-1) /* Over flow */
 	    err = 1;
 	else
 	{
-	    if(datapacket_cnt >= datapacket_len)
+	    if(c->datapacket_cnt >= c->datapacket_len)
 	    {
-		datapacket_len *= 2;
-		datapacket = (sry_datapacket *)
-		    safe_realloc(datapacket,
-				 datapacket_len * sizeof(sry_datapacket));
+		c->datapacket_len *= 2;
+		c->datapacket = (sry_datapacket *)
+		    safe_realloc(c->datapacket,
+				 c->datapacket_len * sizeof(sry_datapacket));
 	    }
 	}
     }
 
-    a = datapacket_cnt & 0xff;
-    b = (datapacket_cnt >> 8) & 0xff;
-    c = (datapacket_cnt >> 16) & 0xff;
-    datapacket[datapacket_cnt] = *packet;
-    MIDIEVENT(wrdstep->at, ME_SHERRY, a, b, c);
+    A = c->datapacket_cnt & 0xff;
+    B = (c->datapacket_cnt >> 8) & 0xff;
+    C = (c->datapacket_cnt >> 16) & 0xff;
+    c->datapacket[c->datapacket_cnt] = *packet;
+    MIDIEVENT(wrdstep->at, ME_SHERRY, A, B, C);
 
     if(err)
-	datapacket[datapacket_cnt].data[0] = 0xff;
+	c->datapacket[c->datapacket_cnt].data[0] = 0xff;
     else
-	datapacket_cnt++;
+	c->datapacket_cnt++;
 }
 
 static int sry_read_datapacket(struct timidity_file	*tf, sry_datapacket* packet)
@@ -1877,8 +1843,8 @@ static int sry_read_datapacket(struct timidity_file	*tf, sry_datapacket* packet)
 		return 1;
 	    }
 	} while(len == 0);
-	data =	(uint8 *)new_segment(&sry_pool, len + 1);
-	if(tf_read(data, 1, len, tf) < len)
+	data =	(uint8 *)new_segment(c, &c->sry_pool, len + 1);
+	if(tf_read(c, data, 1, len, tf) < len)
 	{
 	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		      "Warning: Too shorten Sherry WRD file.");
@@ -1890,14 +1856,14 @@ static int sry_read_datapacket(struct timidity_file	*tf, sry_datapacket* packet)
 	return 0;
 }
 
-static void sry_timebase21(struct wrd_step_tracer* wrdstep, int timebase)
+static void sry_timebase21(struct timiditycontext_t *c, struct wrd_step_tracer* wrdstep, int timebase)
 {
-    sherry_started=0;
+    c->sherry_started=0;
     memset(wrdstep, 0, sizeof(struct wrd_step_tracer));
     init_mblock(&wrdstep->pool);
     wrdstep->de = wrdstep->free_de = NULL;
     wrdstep->timebase = timebase; /* current_file_info->divisions; */
-    wrdstep->ntimesig = dump_current_timesig(wrdstep->timesig, MAXTIMESIG - 1);
+    wrdstep->ntimesig = dump_current_timesig(c, wrdstep->timesig, MAXTIMESIG - 1);
     if(wrdstep->ntimesig > 0)
     {
 	wrdstep->timesig[wrdstep->ntimesig] =
@@ -1920,9 +1886,9 @@ static void sry_timebase21(struct wrd_step_tracer* wrdstep, int timebase)
     else
 	wrdstep->barstep = 4 * wrdstep->timebase;
     wrdstep->step_inc = wrdstep->barstep;
-    wrdstep->last_at = readmidi_set_track(0, 0);
+    wrdstep->last_at = readmidi_set_track(c, 0, 0);
 
-    readmidi_set_track(0, 1);
+    readmidi_set_track(c, 0, 1);
     /* wrdstep.step_inc = wrdstep.timebase; */
 
 #ifdef DEBUG
@@ -1932,10 +1898,10 @@ static void sry_timebase21(struct wrd_step_tracer* wrdstep, int timebase)
 #endif /* DEBUG */
 }
 
-static void sry_timebase22(struct wrd_step_tracer* wrdstep, int mode)
+static void sry_timebase22(struct timiditycontext_t *c, struct wrd_step_tracer* wrdstep, int mode)
 {
-    sry_timebase_mode = mode;
-    if(sry_timebase_mode)
+    c->sry_timebase_mode = mode;
+    if(c->sry_timebase_mode)
 	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
 		  "Sherry time synchronize mode is not supported");
 }
@@ -1986,35 +1952,35 @@ static void sry_show_debug(uint8 *data)
     }
 }
 
-static void sry_read_headerblock(struct wrd_step_tracer* wrdstep,
+static void sry_read_headerblock(struct timiditycontext_t *c, struct wrd_step_tracer* wrdstep,
 					struct timidity_file *tf)
 {
 	sry_datapacket	packet;
 	int err;
 
 	packet.len = 1;
-	packet.data = (uint8 *)new_segment(&sry_pool, 1);
+	packet.data = (uint8 *)new_segment(c, &c->sry_pool, 1);
 	packet.data[0] = 0x01;
-	sry_regist_datapacket(wrdstep , &packet);
+	sry_regist_datapacket(c, wrdstep , &packet);
 
 	for(;;){
 		err= sry_read_datapacket(tf, &packet);
 		if( err ) break;
-		sry_regist_datapacket(wrdstep , &packet);
+		sry_regist_datapacket(c, wrdstep , &packet);
 		switch(packet.data[0])
 		{
 		  case 0x00: /* end of header */
 		    return;
 		  case 0x20:
-		    if( mimpi_bug_emulation_level >= 1 ){
-		      sry_timebase21(wrdstep, SRY_GET_SHORT(packet.data+1));
+		    if( c->mimpi_bug_emulation_level >= 1 ){
+		      sry_timebase21(c, wrdstep, SRY_GET_SHORT(packet.data+1));
 		    }
 		    break;
 		  case 0x21:
-		    sry_timebase21(wrdstep, SRY_GET_SHORT(packet.data+1));
+		    sry_timebase21(c, wrdstep, SRY_GET_SHORT(packet.data+1));
 		    break;
 		  case 0x22:
-		    sry_timebase22(wrdstep, packet.data[1]);
+		    sry_timebase22(c, wrdstep, packet.data[1]);
 		    break;
 		  case 0x61:
 		    sry_wrdinfo(packet.data + 1, packet.len - 1);
@@ -2027,7 +1993,7 @@ static void sry_read_headerblock(struct wrd_step_tracer* wrdstep,
 	}
 }
 
-static void sry_read_datablock(struct wrd_step_tracer* wrdstep,
+static void sry_read_datablock(struct timiditycontext_t *c, struct wrd_step_tracer* wrdstep,
 				  struct timidity_file	*tf)
 {
     sry_datapacket  packet;
@@ -2049,20 +2015,20 @@ static void sry_read_datablock(struct wrd_step_tracer* wrdstep,
 		/* wrdstep_wait(wrdstep, delta_time,0); */
 		/* wrdstep_setstep(wrdstep, delta_time); */
 
-		if( sherry_started && delta_time ){
-		    wrdstep_inc(wrdstep,
+		if( c->sherry_started && delta_time ){
+		    wrdstep_inc(c, wrdstep,
 				delta_time*current_file_info->divisions
 				/wrdstep->timebase);
 		}
 
 		if( packet.data[0]==0x01 ){
-			sherry_started=1;
+			c->sherry_started=1;
 			continue;
 		} else if( (packet.data[0]&0x70) == 0x70) {
 		    sry_show_debug(packet.data);
 		}
 
-		sry_regist_datapacket(wrdstep , &packet);
+		sry_regist_datapacket(c, wrdstep , &packet);
 		if(packet.data[0] == 0x31 ||
 		   packet.data[0] == 0x35 ||
 		   packet.data[0] == 0x36)
@@ -2077,7 +2043,7 @@ static void sry_read_datablock(struct wrd_step_tracer* wrdstep,
     }
 }
 
-static int import_sherrywrd_file(const char * fn)
+static int import_sherrywrd_file(struct timiditycontext_t *c, const char * fn)
 {
 	char	sry_fn[256];
 	char	*cp;
@@ -2089,27 +2055,27 @@ static int import_sherrywrd_file(const char * fn)
 	if( cp==0 ) return 0;
 
 	strncpy(cp+1, "sry", sizeof(sry_fn) - (cp - sry_fn) - 1);
-	tf= open_file( sry_fn, 0, OF_NORMAL);
+	tf= open_file(c, sry_fn, 0, OF_NORMAL);
 	if( tf==NULL ) return 0;
 	if( sry_check_head(tf)!=0 ) return 0;
 	ctl->cmsg(CMSG_INFO, VERB_NORMAL,
 		  "%s: reading sherry data...", sry_fn);
 
-	wrd_readinit();
+	wrd_readinit(c);
 	memset(&wrdstep, 0, sizeof(wrdstep));
 
 /**********************/
 /*    MIDIEVENT(0, ME_SHERRY_START, 0, 0, 0); */
-    sry_read_headerblock( &wrdstep, tf);
-    sry_read_datablock( &wrdstep, tf);
+    sry_read_headerblock(c, &wrdstep, tf);
+    sry_read_datablock(c, &wrdstep, tf);
 
 /*  end_of_wrd: */
     while(wrdstep.de)
     {
-	wrdstep_nextbar(&wrdstep);
+	wrdstep_nextbar(c, &wrdstep);
     }
-    reuse_mblock(&wrdstep.pool);
-    close_file(tf);
+    reuse_mblock(c, &wrdstep.pool);
+    close_file(c, tf);
 #ifdef DEBUG
     fflush(stderr);
 #endif /* DEBUG */

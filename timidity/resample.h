@@ -38,11 +38,11 @@ enum {
 	RESAMPLE_NONE
 };
 
-extern int get_current_resampler(void);
-extern int set_current_resampler(int type);
-extern void initialize_resampler_coeffs(void);
-extern int set_resampler_parm(int val);
-extern void free_gauss_table(void);
+extern int get_current_resampler(struct timiditycontext_t *c);
+extern int set_current_resampler(struct timiditycontext_t *c, int type);
+extern void initialize_resampler_coeffs(struct timiditycontext_t *c);
+extern int set_resampler_parm(struct timiditycontext_t *c, int val);
+extern void free_gauss_table(struct timiditycontext_t *c);
 
 typedef struct resample_rec {
 	splen_t loop_start;
@@ -50,9 +50,18 @@ typedef struct resample_rec {
 	splen_t data_length;
 } resample_rec_t;
 
-extern resample_t do_resamplation(sample_t *src, splen_t ofs, resample_rec_t *rec);
+extern resample_t do_resamplation(struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec);
 
-extern resample_t *resample_voice(int v, int32 *countptr);
-extern void pre_resample(Sample *sp);
+extern resample_t *resample_voice(struct timiditycontext_t *c, int v, int32 *countptr);
+extern void pre_resample(struct timiditycontext_t *c, Sample *sp);
+
+#define DEFAULT_GAUSS_ORDER	25
+
+typedef resample_t (*resampler_t)(struct timiditycontext_t *c, sample_t*, splen_t, resample_rec_t *);
+
+#ifndef FIXED_RESAMPLATION
+resample_t DEFAULT_RESAMPLATION (struct timiditycontext_t *c, sample_t *src, splen_t ofs, resample_rec_t *rec);
+#endif
+
 
 #endif /* ___RESAMPLE_H_ */

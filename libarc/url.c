@@ -36,31 +36,25 @@
 
 /* #define DEBUG */
 
-int url_errno;
-static struct URL_module *url_mod_list = NULL;
-char *user_mailaddr = NULL;
-char *url_user_agent = NULL;
-int url_newline_code = '\n';
 const char * const url_lib_version = URL_LIB_VERSION;
-int uudecode_unquote_html = 0;
 
-void url_add_module(struct URL_module *m)
+void url_add_module(struct timiditycontext_t *c, struct URL_module *m)
 {
-    m->chain = url_mod_list;
-    url_mod_list = m;
+    m->chain = c->url_mod_list;
+    c->url_mod_list = m;
 }
 
-void url_add_modules(struct URL_module *m, ...)
+void url_add_modules(struct timiditycontext_t *c, struct URL_module *m, ...)
 {
     va_list ap;
     struct URL_module *mod;
 
     if(m == NULL)
 	return;
-    url_add_module(m);
+    url_add_module(c, m);
     va_start(ap, m);
     while((mod = va_arg(ap, struct URL_module *)) != NULL)
-	url_add_module(mod);
+	url_add_module(c, mod);
 }
 
 static int url_init_nop(void)
@@ -69,21 +63,21 @@ static int url_init_nop(void)
     return 1;
 }
 
-int url_check_type(const char *s)
+int url_check_type(struct timiditycontext_t *c, const char *s)
 {
     struct URL_module *m;
 
-    for(m = url_mod_list; m; m = m->chain)
+    for(m = c->url_mod_list; m; m = m->chain)
 	if(m->type != URL_none_t && m->name_check && m->name_check(s))
 	    return m->type;
     return -1;
 }
 
-URL url_open(const char *s)
+URL url_open(struct timiditycontext_t *c, const char *s)
 {
     struct URL_module *m;
 
-    for(m = url_mod_list; m; m = m->chain)
+    for(m = c->url_mod_list; m; m = m->chain)
     {
 #ifdef DEBUG
 	fprintf(stderr, "Check URL type=%d\n", m->type);
@@ -100,22 +94,22 @@ URL url_open(const char *s)
 		m->url_init = url_init_nop;
 	    }
 
-	    url_errno = URLERR_NONE;
+	    c->url_errno = URLERR_NONE;
 	    errno = 0;
-	    return m->url_open(s);
+	    return m->url_open(c, s);
 	}
     }
 
-    url_errno = URLERR_NOURL;
+    c->url_errno = URLERR_NOURL;
     errno = ENOENT;
     return NULL;
 }
 
-long url_read(URL url, void *buff, long n)
+long url_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     if(n <= 0)
 	return 0;
-    url_errno = URLERR_NONE;
+    c->url_errno = URLERR_NONE;
     errno = 0;
     if(url->nread >= url->readlimit) {
         url->eof = 1;
@@ -123,13 +117,13 @@ long url_read(URL url, void *buff, long n)
     }
     if(url->nread + n > url->readlimit)
 	n = (long)(url->readlimit - url->nread);
-    n = url->url_read(url, buff, n);
+    n = url->url_read(c, url, buff, n);
     if(n > 0)
 	url->nread += n;
     return n;
 }
 
-long url_safe_read(URL url, void *buff, long n)
+long url_safe_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     long i;
     if(n <= 0)
@@ -138,7 +132,7 @@ long url_safe_read(URL url, void *buff, long n)
     do /* Ignore signal intruption */
     {
 	errno = 0;
-	i = url_read(url, buff, n);
+	i = url_read(c, url, buff, n);
     } while(i == -1 && errno == EINTR);
 #if 0
     /* Already done in url_read!! */
@@ -148,7 +142,7 @@ long url_safe_read(URL url, void *buff, long n)
     return i;
 }
 
-long url_nread(URL url, void *buff, long n)
+long url_nread(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     long insize = 0;
     char *s = (char *)buff;
@@ -156,7 +150,7 @@ long url_nread(URL url, void *buff, long n)
     do
     {
 	long i;
-	i = url_safe_read(url, s + insize, n - insize);
+	i = url_safe_read(c, url, s + insize, n - insize);
 	if(i <= 0)
 	{
 	    if(insize == 0)
@@ -169,14 +163,14 @@ long url_nread(URL url, void *buff, long n)
     return insize;
 }
 
-char *url_gets(URL url, char *buff, int n)
+char *url_gets(struct timiditycontext_t *c, URL url, char *buff, int n)
 {
     if(url->nread >= url->readlimit)
 	return NULL;
 
     if(url->url_gets == NULL)
     {
-	int maxlen, i, c;
+	int maxlen, i, ch;
 	int newline = url_newline_code;
 
 	maxlen = n - 1;
@@ -188,10 +182,10 @@ char *url_gets(URL url, char *buff, int n)
 
 	do
 	{
-	    if((c = url_getc(url)) == EOF)
+	    if((ch = url_getc(url)) == EOF)
 		break;
-	    buff[i++] = c;
-	} while(c != newline && i < maxlen);
+	    buff[i++] = ch;
+	} while(ch != newline && i < maxlen);
 
 	if(i == 0)
 	    return NULL; /* EOF */
@@ -199,7 +193,7 @@ char *url_gets(URL url, char *buff, int n)
 	return buff;
     }
 
-    url_errno = URLERR_NONE;
+    c->url_errno = URLERR_NONE;
     errno = 0;
 
     if(url->nread + n > url->readlimit)
@@ -211,9 +205,9 @@ char *url_gets(URL url, char *buff, int n)
     return buff;
 }
 
-int url_readline(URL url, char *buff, int n)
+int url_readline(struct timiditycontext_t *c, URL url, char *buff, int n)
 {
-    int maxlen, i, c;
+    int maxlen, i, ch;
 
     maxlen = n - 1;
     if(maxlen == 0)
@@ -225,21 +219,21 @@ int url_readline(URL url, char *buff, int n)
 	i = 0;
 	do
 	{
-	    if((c = url_getc(url)) == EOF)
+	    if((ch = url_getc(url)) == EOF)
 		break;
-	    buff[i++] = c;
-	} while(c != '\r' && c != '\n' && i < maxlen);
+	    buff[i++] = ch;
+	} while(ch != '\r' && ch != '\n' && i < maxlen);
 	if(i == 0)
 	    return 0; /* EOF */
-    } while(i == 1 && (c == '\r' || c == '\n'));
+    } while(i == 1 && (ch == '\r' || ch == '\n'));
 
-    if(c == '\r' || c == '\n')
+    if(ch == '\r' || ch == '\n')
 	i--;
     buff[i] = '\0';
     return i;
 }
 
-int url_fgetc(URL url)
+int url_fgetc(struct timiditycontext_t *c, URL url)
 {
     if(url->nread >= url->readlimit)
 	return EOF;
@@ -247,17 +241,17 @@ int url_fgetc(URL url)
     url->nread++;
     if(url->url_fgetc == NULL)
     {
-	unsigned char c;
-	if(url_read(url, &c, 1) <= 0)
+	unsigned char ch;
+	if(url_read(c, url, &ch, 1) <= 0)
 	    return EOF;
-	return (int)c;
+	return (int)ch;
     }
-    url_errno = URLERR_NONE;
+    c->url_errno = URLERR_NONE;
     errno = 0;
-    return url->url_fgetc(url);
+    return url->url_fgetc(c, url);
 }
 
-long url_seek(URL url, long offset, int whence)
+long url_seek(struct timiditycontext_t *c, URL url, long offset, int whence)
 {
     long pos, savelimit;
 
@@ -265,12 +259,12 @@ long url_seek(URL url, long offset, int whence)
     {
 	if(whence == SEEK_CUR && offset >= 0)
 	{
-	    pos = url_tell(url);
+	    pos = url_tell(c, url);
 	    if(offset == 0)
 		return pos;
 	    savelimit = (long)url->readlimit;
 	    url->readlimit = URL_MAX_READLIMIT;
-	    url_skip(url, offset);
+	    url_skip(c, url, offset);
 	    url->readlimit = savelimit;
 	    url->nread = 0;
 	    return pos;
@@ -278,39 +272,39 @@ long url_seek(URL url, long offset, int whence)
 
 	if(whence == SEEK_SET)
 	{
-	    pos = url_tell(url);
+	    pos = url_tell(c, url);
 	    if(pos != -1 && pos <= offset)
 	    {
 		if(pos == offset)
 		    return pos;
 		savelimit = (long)url->readlimit;
 		url->readlimit = URL_MAX_READLIMIT;
-		url_skip(url, offset - pos);
+		url_skip(c, url, offset - pos);
 		url->readlimit = savelimit;
 		url->nread = 0;
 		return pos;
 	    }
 	}
 
-	url_errno = errno = EPERM;
+	c->url_errno = errno = EPERM;
 	return -1;
     }
-    url_errno = URLERR_NONE;
+    c->url_errno = URLERR_NONE;
     errno = 0;
     url->nread = 0;
-    return url->url_seek(url, offset, whence);
+    return url->url_seek(c, url, offset, whence);
 }
 
-long url_tell(URL url)
+long url_tell(struct timiditycontext_t *c, URL url)
 {
-    url_errno = URLERR_NONE;
+    c->url_errno = URLERR_NONE;
     errno = 0;
     if(url->url_tell == NULL)
 	return (long)url->nread;
-    return url->url_tell(url);
+    return url->url_tell(c, url);
 }
 
-void url_skip(URL url, long n)
+void url_skip(struct timiditycontext_t *c, URL url, long n)
 {
     char tmp[BUFSIZ];
 
@@ -323,7 +317,7 @@ void url_skip(URL url, long n)
 	    return;
 	if(savenread + n > url->readlimit)
 	    n = (long)(url->readlimit - savenread);
-	if(url->url_seek(url, n, SEEK_CUR) != -1)
+	if(url->url_seek(c, url, n, SEEK_CUR) != -1)
 	{
 	    url->nread = savenread + n;
 	    return;
@@ -333,22 +327,22 @@ void url_skip(URL url, long n)
 
     while(n > 0)
     {
-	long c;
+	long ch;
 
-	c = n;
-	if(c > sizeof(tmp))
-	    c = sizeof(tmp);
-	c = url_read(url, tmp, c);
-	if(c <= 0)
+	ch = n;
+	if(ch > sizeof(tmp))
+	    ch = sizeof(tmp);
+	ch = url_read(c, url, tmp, ch);
+	if(ch <= 0)
 	    break;
-	n -= c;
+	n -= ch;
     }
 }
 
-void url_rewind(URL url)
+void url_rewind(struct timiditycontext_t *c, URL url)
 {
     if(url->url_seek != NULL)
-	url->url_seek(url, 0, SEEK_SET);
+	url->url_seek(c, url, 0, SEEK_SET);
     url->nread = 0;
 }
 
@@ -361,7 +355,7 @@ void url_set_readlimit(URL url, long readlimit)
     url->nread = 0;
 }
 
-URL alloc_url(int size)
+URL alloc_url(struct timiditycontext_t *c, int size)
 {
     URL url;
 #ifdef HAVE_SAFE_MALLOC
@@ -372,7 +366,7 @@ URL alloc_url(int size)
     if(url != NULL)
 	memset(url, 0, size);
     else
-	url_errno = errno;
+	c->url_errno = errno;
 #endif /* HAVE_SAFE_MALLOC */
 
     url->nread = 0;
@@ -381,7 +375,7 @@ URL alloc_url(int size)
     return url;
 }
 
-void url_close(URL url)
+void url_close(struct timiditycontext_t *c, URL url)
 {
     int save_errno = errno;
 
@@ -402,7 +396,7 @@ void url_close(URL url)
     }
     else
     {
-	url->url_close(url);
+	url->url_close(c, url);
 #if 0
 	url->url_close = NULL;
 #endif /* unix */
@@ -412,9 +406,9 @@ void url_close(URL url)
 
 #if defined(TILD_SCHEME_ENABLE)
 #include <pwd.h>
-const char *url_expand_home_dir(const char *fname)
+#define path (c->url_expand_home_dir_path)
+const char *url_expand_home_dir(struct timiditycontext_t *c, const char *fname)
 {
-    static char path[BUFSIZ];
     char *dir;
     int dirlen;
 
@@ -449,9 +443,10 @@ const char *url_expand_home_dir(const char *fname)
     path[sizeof(path) - 1] = '\0';
     return path;
 }
-const char *url_unexpand_home_dir(const char *fname)
+#undef path
+#define path (c->url_unexpand_home_dir_path)
+const char *url_unexpand_home_dir(struct timiditycontext_t *c, const char *fname)
 {
-    static char path[BUFSIZ];
     char *dir;
     const char *p;
     int dirlen;
@@ -485,12 +480,13 @@ const char *url_unexpand_home_dir(const char *fname)
     strcat(path, p);
     return path;
 }
+#undef path
 #else
-const char *url_expand_home_dir(const char *fname)
+const char *url_expand_home_dir(struct timiditycontext_t *c, const char *fname)
 {
     return fname;
 }
-const char *url_unexpand_home_dir(const char *fname)
+const char *url_unexpand_home_dir(struct timiditycontext_t *c, const char *fname)
 {
     return fname;
 }
@@ -517,7 +513,7 @@ const char *url_strerror(int no)
     return url_strerror_txt[no - URLERR_NONE];
 }
 
-void *url_dump(URL url, long nbytes, long *read_size)
+void *url_dump(struct timiditycontext_t *c, URL url, long nbytes, long *read_size)
 {
     long allocated, offset, read_len;
     char *buff;
@@ -531,7 +527,7 @@ void *url_dump(URL url, long nbytes, long *read_size)
 	buff = (void *)safe_malloc(nbytes);
 	if(nbytes == 0)
 	    return buff;
-	read_len = url_nread(url, buff, nbytes);
+	read_len = url_nread(c, url, buff, nbytes);
 	if(read_size != NULL)
 	  *read_size = read_len;
 	if(read_len <= 0)
@@ -546,7 +542,7 @@ void *url_dump(URL url, long nbytes, long *read_size)
     buff = (char *)safe_malloc(allocated);
     offset = 0;
     read_len = allocated;
-    while((nbytes = url_read(url, buff + offset, read_len)) > 0)
+    while((nbytes = url_read(c, url, buff + offset, read_len)) > 0)
     {
 	offset += nbytes;
 	read_len -= nbytes;

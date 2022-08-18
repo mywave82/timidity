@@ -22,7 +22,10 @@
 
 #ifndef ___READMIDI_H_
 #define ___READMIDI_H_
+
 #include "reverb.h"
+
+struct timiditycontext_t;
 
 /* MIDI file types */
 #define IS_ERROR_FILE	-1	/* Error file */
@@ -74,9 +77,9 @@ enum {
 };
 
 #define IS_CURRENT_MOD_FILE \
-	(current_file_info && \
-	current_file_info->file_type >= 700 && \
-	current_file_info->file_type < 800)
+	(c->current_file_info && \
+	c->current_file_info->file_type >= 700 && \
+	c->current_file_info->file_type < 800)
 
 typedef struct {
   MidiEvent event;
@@ -132,70 +135,99 @@ typedef struct _TimeSegment {
 	struct _TimeSegment *next;
 } TimeSegment;
 
-extern int32 readmidi_set_track(int trackno, int rewindp);
-extern void readmidi_add_event(MidiEvent *newev);
-extern void readmidi_add_ctl_event(int32 at, int ch, int control, int val);
-extern int parse_sysex_event(uint8 *data, int32 datalen, MidiEvent *ev_ret);
-extern int parse_sysex_event_multi(uint8 *data, int32 datalen, MidiEvent *ev_ret);
+extern int32 readmidi_set_track(struct timiditycontext_t *c, int trackno, int rewindp);
+extern void readmidi_add_event(struct timiditycontext_t *c, MidiEvent *newev);
+extern void readmidi_add_ctl_event(struct timiditycontext_t *c, int32 at, int ch, int control, int val);
+extern int parse_sysex_event(struct timiditycontext_t *c, uint8 *data, int32 datalen, MidiEvent *ev_ret);
+extern int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *data, int32 datalen, MidiEvent *ev_ret);
 extern int convert_midi_control_change(int chn, int type, int val,
 				       MidiEvent *ev_ret);
 extern int unconvert_midi_control_change(MidiEvent *ev);
-extern char *readmidi_make_string_event(int type, char *string, MidiEvent *ev,
+extern char *readmidi_make_string_event(struct timiditycontext_t *c, int type, char *string, MidiEvent *ev,
 					int cnv);
-extern void free_time_segments(void);
-extern MidiEvent *read_midi_file(struct timidity_file *mtf,
+extern void free_time_segments(struct timiditycontext_t *c);
+extern MidiEvent *read_midi_file(struct timiditycontext_t *c, struct timidity_file *mtf,
 				 int32 *count, int32 *sp, char *file_name);
-extern struct midi_file_info *get_midi_file_info(const char *filename,int newp);
-extern struct midi_file_info *new_midi_file_info(const char *filename);
-extern void free_all_midi_file_info(void);
-extern int check_midi_file(const char *filename);
-extern char *get_midi_title(const char *filename);
-extern struct timidity_file *open_midi_file(const char *name,
+extern struct midi_file_info *get_midi_file_info(struct timiditycontext_t *c, const char *filename,int newp);
+extern struct midi_file_info *new_midi_file_info(struct timiditycontext_t *c, const char *filename);
+extern void free_all_midi_file_info(struct timiditycontext_t *c);
+extern int check_midi_file(struct timiditycontext_t *c, const char *filename);
+extern char *get_midi_title(struct timiditycontext_t *c, const char *filename);
+extern struct timidity_file *open_midi_file(struct timiditycontext_t *c, const char *name,
 					    int decompress, int noise_mode);
-extern int midi_file_save_as(char *in_name, char *out_name);
-extern char *event2string(int id);
-extern void change_system_mode(int mode);
-extern int get_default_mapID(int ch);
-extern int dump_current_timesig(MidiEvent *codes, int maxlen);
+extern int midi_file_save_as(struct timiditycontext_t *c, char *in_name, char *out_name);
+extern char *event2string(struct timiditycontext_t *c, int id);
+extern void change_system_mode(struct timiditycontext_t *c, int mode);
+extern int get_default_mapID(struct timiditycontext_t *c, int ch);
+extern int dump_current_timesig(struct timiditycontext_t *c, MidiEvent *codes, int maxlen);
 
-extern ChannelBitMask quietchannels;
-extern struct midi_file_info *current_file_info;
-extern TimeSegment *time_segments;
-extern int opt_trace_text_meta_event;
-extern int opt_default_mid;
-extern int opt_system_mid;
-extern int ignore_midi_error;
-extern int readmidi_error_flag;
-extern int readmidi_wrd_mode;
-extern int play_system_mode;
+extern void recompute_delay_status_gs(struct timiditycontext_t *c);
+extern void set_delay_macro_gs(struct timiditycontext_t *c, int);
+extern void recompute_chorus_status_gs(struct timiditycontext_t *c);
+extern void set_chorus_macro_gs(struct timiditycontext_t *c, int);
+extern void recompute_reverb_status_gs(struct timiditycontext_t *c);
+extern void set_reverb_macro_gs(struct timiditycontext_t *c, int);
+extern void set_reverb_macro_gm2(struct timiditycontext_t *c, int);
+extern void recompute_eq_status_gs(struct timiditycontext_t *c);
+extern void realloc_insertion_effect_gs(struct timiditycontext_t *c);
+extern void recompute_insertion_effect_gs(struct timiditycontext_t *c);
+extern void recompute_multi_eq_xg(struct timiditycontext_t *c);
+extern void set_multi_eq_type_xg(struct timiditycontext_t *c, int);
+extern void realloc_effect_xg(struct timiditycontext_t *c, struct effect_xg_t *st);
+extern void recompute_effect_xg(struct timiditycontext_t *c, struct effect_xg_t *st);
 
-extern void recompute_delay_status_gs(void);
-extern void set_delay_macro_gs(int);
-extern void recompute_chorus_status_gs(void);
-extern void set_chorus_macro_gs(int);
-extern void recompute_reverb_status_gs(void);
-extern void set_reverb_macro_gs(int);
-extern void set_reverb_macro_gm2(int);
-extern void recompute_eq_status_gs(void);
-extern void realloc_insertion_effect_gs(void);
-extern void recompute_insertion_effect_gs(void);
-extern void recompute_multi_eq_xg(void);
-extern void set_multi_eq_type_xg(int);
-extern void realloc_effect_xg(struct effect_xg_t *st);
-extern void recompute_effect_xg(struct effect_xg_t *st);
+extern Instrument *recompute_userdrum(struct timiditycontext_t *c, int bank, int prog);
+extern void free_userdrum(struct timiditycontext_t *c);
 
-extern Instrument *recompute_userdrum(int bank, int prog);
-extern void free_userdrum();
+extern void recompute_userinst(struct timiditycontext_t *c, int bank, int prog);
+extern void free_userinst(struct timiditycontext_t *c);
 
-extern void recompute_userinst(int bank, int prog);
-extern void free_userinst();
+extern void init_channel_layer(struct timiditycontext_t *c, int);
+extern void add_channel_layer(struct timiditycontext_t *c, int, int);
+extern void remove_channel_layer(struct timiditycontext_t *c, int);
 
-extern void init_channel_layer(int);
-extern void add_channel_layer(int, int);
-extern void remove_channel_layer(int);
+extern void free_readmidi(struct timiditycontext_t *c);
 
-extern void free_readmidi(void);
+
+extern int read_mfi_file(struct timiditycontext_t *c, struct timidity_file *tf);
+extern char *get_mfi_file_title(struct timiditycontext_t *c, struct timidity_file *tf);
+
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
+typedef struct _UserDrumset {
+	int8 bank;
+	int8 prog;
+	int8 play_note;
+	int8 level;
+	int8 assign_group;
+	int8 pan;
+	int8 reverb_send_level;
+	int8 chorus_send_level;
+	int8 rx_note_off;
+	int8 rx_note_on;
+	int8 delay_send_level;
+	int8 source_map;
+	int8 source_prog;
+	int8 source_note;
+	struct _UserDrumset *next;
+} UserDrumset;
+
+typedef struct _UserInstrument {
+	int8 bank;
+	int8 prog;
+	int8 source_map;
+	int8 source_bank;
+	int8 source_prog;
+	int8 vibrato_rate;
+	int8 vibrato_depth;
+	int8 cutoff_freq;
+	int8 resonance;
+	int8 env_attack;
+	int8 env_decay;
+	int8 env_release;
+	int8 vibrato_delay;
+	struct _UserInstrument *next;
+} UserInstrument;
 
 #endif /* ___READMIDI_H_ */

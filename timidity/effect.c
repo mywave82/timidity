@@ -21,8 +21,8 @@
     Mainly written by Masanao Izumo <iz@onicos.co.jp>
 
     Interfaces:
-    void init_effect(void);
-    do_effect(int32* buf, int32 count);
+    void init_effect(struct timiditycontext_t *c);
+    do_effect(struct timiditycontext_t *c, int32* buf, int32 count);
 */
 
 #ifdef HAVE_CONFIG_H
@@ -51,59 +51,52 @@
 #define NS_AMP_MAX	((int32) 0x0fffffff)
 #define NS_AMP_MIN	((int32)-0x0fffffff)
 
-static void effect_left_right_delay(int32 *, int32);
-static void init_mtrand(void);
-static void init_ns_tap(void);
-static void init_ns_tap16(void);
-static void ns_shaping8(int32 *, int32);
-static void ns_shaping16(int32 *, int32);
-static void ns_shaping16_trad(int32 *, int32);
+static void effect_left_right_delay(struct timiditycontext_t *c, int32 *, int32);
+static void init_mtrand(struct timiditycontext_t *c);
+static void init_ns_tap(struct timiditycontext_t *c);
+static void init_ns_tap16(struct timiditycontext_t *c);
+static void ns_shaping8(struct timiditycontext_t *c, int32 *, int32);
+static void ns_shaping16(struct timiditycontext_t *c, int32 *, int32);
+static void ns_shaping16_trad(struct timiditycontext_t *c, int32 *, int32);
 static void do_soft_clipping1(int32 *, int32);
 static void do_soft_clipping2(int32 *, int32);
-static void ns_shaping16_9(int32 *, int32);
-static inline unsigned long frand(void);
+static void ns_shaping16_9(struct timiditycontext_t *c, int32 *, int32);
+static inline unsigned long frand(struct timiditycontext_t *c);
 static inline int32 my_mod(int32, int32);
 
-static int32 ns_z0[4];
-static int32 ns_z1[4];
 static const int32 ns9_order = 9;
-static int32 ns9_histposl, ns9_histposr;
-static int32 ns9_ehl[18] = {0};
-static int32 ns9_ehr[18] = {0};
-//static int32 ns9_ehl[18];
-//static int32 ns9_ehr[18];
-static uint32 ns9_r1l, ns9_r2l, ns9_r1r, ns9_r2r;
 static const float ns9_coef[9] = {
 	2.412f, -3.370f, 3.937f, -4.174f, 3.353f,
 	-2.205f, 1.281f, -0.569f, 0.0847f
 };
-static int32 ns9_c[9];
-int noise_sharp_type = 4;
 
-void init_effect(void)
+void init_effect(struct timiditycontext_t *c)
 {
-	effect_left_right_delay(NULL, 0);
-	init_mtrand();
-	init_pink_noise(&global_pink_noise_light);
-	init_ns_tap();
-	init_reverb();
-	init_ch_delay();
-	init_ch_chorus();
-	init_eq_gs();
+	effect_left_right_delay(c, NULL, 0);
+	init_mtrand(c);
+	init_pink_noise(&c->global_pink_noise_light);
+	init_ns_tap(c);
+	init_reverb(c);
+	init_ch_delay(c);
+	init_ch_chorus(c);
+	init_eq_gs(c);
 }
 
 /*
  * Left & Right Delay Effect
  */
-static void effect_left_right_delay(int32 *buff, int32 count)
+#define prev         c->effect_left_right_delay_prev
+#define turn_counter c->effect_left_right_delay_turn_counter
+#define tc           c->effect_left_right_delay_tc
+#define status       c->effect_left_right_delay_status
+#define rate0        c->effect_left_right_delay_rate0
+#define rate1        c->effect_left_right_delay_rate1
+#define dr           c->effect_left_right_delay_dr
+static void effect_left_right_delay(struct timiditycontext_t *c, int32 *buff, int32 count)
 {
-	static int32 prev[AUDIO_BUFFER_SIZE * 2];
 	int32 save[AUDIO_BUFFER_SIZE * 2];
 	int32 pi, i, j, k, v, backoff;
 	int b;
-	static int turn_counter = 0, tc;
-	static int status;
-	static double rate0, rate1, dr;
 	int32 *p;
 
 	if (buff == NULL) {
@@ -112,12 +105,12 @@ static void effect_left_right_delay(int32 *buff, int32 count)
 	}
 	if (play_mode->encoding & PE_MONO)
 		return;
-	if (effect_lr_mode == 0 || effect_lr_mode == 1 || effect_lr_mode == 2)
-		b = effect_lr_mode;
+	if (c->effect_lr_mode == 0 || c->effect_lr_mode == 1 || c->effect_lr_mode == 2)
+		b = c->effect_lr_mode;
 	else
 		return;
 	count *= 2;
-	backoff = 2 * (int) (play_mode->rate * effect_lr_delay_msec / 1000.0);
+	backoff = 2 * (int) (play_mode->rate * c->effect_lr_delay_msec / 1000.0);
 	if (backoff == 0)
 		return;
 	if (backoff > count)
@@ -216,91 +209,98 @@ static void effect_left_right_delay(int32 *buff, int32 count)
 	}
 	memcpy(prev + count - backoff, save + count - backoff, 4 * backoff);
 }
+#undef prev
+#undef turn_counter
+#undef tc
+#undef status
+#undef rate0
+#undef rate1
+#undef dr
 
-static void init_mtrand(void)
+static void init_mtrand(struct timiditycontext_t *c)
 {
 	unsigned long init[4] = { 0x123, 0x234, 0x345, 0x456 };
 	unsigned long length = 4;
-	init_by_array(init, length);
+	init_by_array(c, init, length);
 }
 
 /* Noise Shaping filter from
  * Kunihiko IMAI <imai@leo.ec.t.kanazawa-u.ac.jp>
  * (Modified by Masanao Izumo <mo@goice.co.jp>)
  */
-static void init_ns_tap(void)
+static void init_ns_tap(struct timiditycontext_t *c)
 {
-	memset(ns_z0, 0, sizeof(ns_z0));
-	memset(ns_z1, 0, sizeof(ns_z1));
+	memset(c->ns_z0, 0, sizeof(c->ns_z0));
+	memset(c->ns_z1, 0, sizeof(c->ns_z1));
 	if (play_mode->encoding & PE_16BIT)
-		init_ns_tap16();
+		init_ns_tap16(c);
 }
 
-static void init_ns_tap16(void)
+static void init_ns_tap16(struct timiditycontext_t *c)
 {
 	int i;
 
 	for (i = 0; i < ns9_order; i++)
-		ns9_c[i] = TIM_FSCALE(ns9_coef[i], 24);
-	memset(ns9_ehl, 0, sizeof(ns9_ehl));
-	memset(ns9_ehr, 0, sizeof(ns9_ehr));
-	ns9_histposl = ns9_histposr = 8;
-	ns9_r1l = ns9_r2l = ns9_r1r = ns9_r2r = 0;
+		c->ns9_c[i] = TIM_FSCALE(ns9_coef[i], 24);
+	memset(c->ns9_ehl, 0, sizeof(c->ns9_ehl));
+	memset(c->ns9_ehr, 0, sizeof(c->ns9_ehr));
+	c->ns9_histposl = c->ns9_histposr = 8;
+	c->ns9_r1l = c->ns9_r2l = c->ns9_r1r = c->ns9_r2r = 0;
 }
 
-void do_effect(int32 *buf, int32 count)
+void do_effect(struct timiditycontext_t *c, int32 *buf, int32 count)
 {
 	int32 nsamples = (play_mode->encoding & PE_MONO)
 			? count : count * 2;
-	int reverb_level = (opt_reverb_control < 0)
-			? -opt_reverb_control & 0x7f : DEFAULT_REVERB_SEND_LEVEL;
+	int reverb_level = (c->opt_reverb_control < 0)
+			? -c->opt_reverb_control & 0x7f : DEFAULT_REVERB_SEND_LEVEL;
 
 	/* reverb in mono */
-	if (opt_reverb_control && play_mode->encoding & PE_MONO)
-		do_mono_reverb(buf, count);
+	if (c->opt_reverb_control && play_mode->encoding & PE_MONO)
+		do_mono_reverb(c, buf, count);
 	/* for static reverb / chorus level */
-	if (opt_reverb_control == 2 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && ! (opt_reverb_control & 0x80))
-			|| opt_chorus_control < 0) {
-		set_dry_signal(buf, nsamples);
+	if (c->opt_reverb_control == 2 || c->opt_reverb_control == 4
+			|| (c->opt_reverb_control < 0 && ! (c->opt_reverb_control & 0x80))
+			|| c->opt_chorus_control < 0) {
+		set_dry_signal(c, buf, nsamples);
 		/* chorus sounds horrible
 		 * if applied globally on top of channel chorus
 		 */
 #if 0
-		if (opt_chorus_control < 0)
-			set_ch_chorus(buf, nsamples, -opt_chorus_control);
+		if (c->opt_chorus_control < 0)
+			set_ch_chorus(buf, nsamples, -c->opt_chorus_control);
 #endif
-		if (opt_reverb_control == 2 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && ! (opt_reverb_control & 0x80)))
-			set_ch_reverb(buf, nsamples, reverb_level);
-		mix_dry_signal(buf, nsamples);
+		if (c->opt_reverb_control == 2 || c->opt_reverb_control == 4
+			|| (c->opt_reverb_control < 0 && ! (c->opt_reverb_control & 0x80)))
+			set_ch_reverb(c, buf, nsamples, reverb_level);
+		mix_dry_signal(c, buf, nsamples);
 			/* chorus sounds horrible
 			 * if applied globally on top of channel chorus
 			 */
 #if 0
-		if (opt_chorus_control < 0 && !opt_surround_chorus)
-			do_ch_chorus(buf, nsamples);
+		if (c->opt_chorus_control < 0 && !c->opt_surround_chorus)
+			do_ch_chorus(c, buf, nsamples);
 #endif
-		if (opt_reverb_control == 2 || opt_reverb_control == 4
-				|| (opt_reverb_control < 0 && ! (opt_reverb_control & 0x80)))
-			do_ch_reverb(buf, nsamples);
+		if (c->opt_reverb_control == 2 || c->opt_reverb_control == 4
+				|| (c->opt_reverb_control < 0 && ! (c->opt_reverb_control & 0x80)))
+			do_ch_reverb(c, buf, nsamples);
 	}
 	/* L/R Delay */
-	effect_left_right_delay(buf, count);
+	effect_left_right_delay(c, buf, count);
 	/* Noise shaping filter must apply at last */
 	if (play_mode->encoding & PE_24BIT) {}
 	else if (! (play_mode->encoding & (PE_16BIT | PE_ULAW | PE_ALAW)))
-		ns_shaping8(buf, count);
+		ns_shaping8(c, buf, count);
 	else if (play_mode->encoding & PE_16BIT)
-		ns_shaping16(buf, count);
+		ns_shaping16(c, buf, count);
 }
 
-static void ns_shaping8(int32 *lp, int32 c)
+static void ns_shaping8(struct timiditycontext_t *c, int32 *lp, int32 v)
 {
 	int32 l, i, ll;
 	int32 ns_tap_0, ns_tap_1, ns_tap_2, ns_tap_3;
 
-	switch (noise_sharp_type) {
+	switch (c->noise_sharp_type) {
 	case 1:
 		ns_tap_0 = 1;
 		ns_tap_1 = 0;
@@ -329,19 +329,19 @@ static void ns_shaping8(int32 *lp, int32 c)
 		return;
 	}
 	if (! (play_mode->encoding & PE_MONO))
-		c *= 2;
-	for (i = 0; i < c; i++) {
+		v *= 2;
+	for (i = 0; i < v; i++) {
 		/* applied noise-shaping filter */
 		if (lp[i] > NS_AMP_MAX)
 			lp[i] = NS_AMP_MAX;
 		else if (lp[i] < NS_AMP_MIN)
 			lp[i] = NS_AMP_MIN;
-		ll = lp[i] + ns_tap_0 * ns_z0[0] + ns_tap_1 * ns_z0[1]
-				+ ns_tap_2 * ns_z0[2] + ns_tap_3 * ns_z0[3];
+		ll = lp[i] + ns_tap_0 * c->ns_z0[0] + ns_tap_1 * c->ns_z0[1]
+				+ ns_tap_2 * c->ns_z0[2] + ns_tap_3 * c->ns_z0[3];
 		l = ll >> (32 - 8 - GUARD_BITS);
 		lp[i] = l << (32 - 8 - GUARD_BITS);
-		ns_z0[3] = ns_z0[2], ns_z0[2] = ns_z0[1], ns_z0[1] = ns_z0[0];
-		ns_z0[0] = ll - l * (1U << (32 - 8 - GUARD_BITS));
+		c->ns_z0[3] = c->ns_z0[2], c->ns_z0[2] = c->ns_z0[1], c->ns_z0[1] = c->ns_z0[0];
+		c->ns_z0[0] = ll - l * (1U << (32 - 8 - GUARD_BITS));
 		if (play_mode->encoding & PE_MONO)
 			continue;
 		i++;
@@ -349,40 +349,40 @@ static void ns_shaping8(int32 *lp, int32 c)
 			lp[i] = NS_AMP_MAX;
 		else if (lp[i] < NS_AMP_MIN)
 			lp[i] = NS_AMP_MIN;
-		ll = lp[i] + ns_tap_0 * ns_z1[0] + ns_tap_1 * ns_z1[1]
-				+ ns_tap_2 * ns_z1[2] + ns_tap_3 * ns_z1[3];
+		ll = lp[i] + ns_tap_0 * c->ns_z1[0] + ns_tap_1 * c->ns_z1[1]
+				+ ns_tap_2 * c->ns_z1[2] + ns_tap_3 * c->ns_z1[3];
 		l = ll >> (32 - 8 - GUARD_BITS);
 		lp[i] = l << (32 - 8 - GUARD_BITS);
-		ns_z1[3] = ns_z1[2], ns_z1[2] = ns_z1[1], ns_z1[1] = ns_z1[0];
-		ns_z1[0] = ll - l * (1U << (32 - 8 - GUARD_BITS));
+		c->ns_z1[3] = c->ns_z1[2], c->ns_z1[2] = c->ns_z1[1], c->ns_z1[1] = c->ns_z1[0];
+		c->ns_z1[0] = ll - l * (1U << (32 - 8 - GUARD_BITS));
 	}
 }
 
-static void ns_shaping16(int32 *lp, int32 c)
+static void ns_shaping16(struct timiditycontext_t *c, int32 *lp, int32 v)
 {
 	if (! (play_mode->encoding & PE_MONO))
-		c *= 2;
-	switch (noise_sharp_type) {
+		v *= 2;
+	switch (c->noise_sharp_type) {
 	case 1:
-		ns_shaping16_trad(lp, c);
+		ns_shaping16_trad(c, lp, v);
 		break;
 	case 2:
-		do_soft_clipping1(lp, c);
-		ns_shaping16_9(lp, c);
+		do_soft_clipping1(lp, v);
+		ns_shaping16_9(c, lp, v);
 		break;
 	case 3:
-		do_soft_clipping2(lp, c);
-		ns_shaping16_9(lp, c);
+		do_soft_clipping2(lp, v);
+		ns_shaping16_9(c, lp, v);
 		break;
 	case 4:
-		ns_shaping16_9(lp, c);
+		ns_shaping16_9(c, lp, v);
 		break;
 	default:
 		break;
 	}
 }
 
-static void ns_shaping16_trad(int32 *lp, int32 c)
+static void ns_shaping16_trad(struct timiditycontext_t *c, int32 *lp, int32 count)
 {
 	int32 l, i, ll;
 	int32 ns_tap_0, ns_tap_1, ns_tap_2, ns_tap_3;
@@ -391,18 +391,18 @@ static void ns_shaping16_trad(int32 *lp, int32 c)
 	ns_tap_1 = 6;
 	ns_tap_2 = -4;
 	ns_tap_3 = 1;
-	for (i = 0; i < c; i++) {
+	for (i = 0; i < count; i++) {
 		/* applied noise-shaping filter */
 		if (lp[i] > NS_AMP_MAX)
 			lp[i] = NS_AMP_MAX;
 		else if (lp[i] < NS_AMP_MIN)
 			lp[i] = NS_AMP_MIN;
-		ll = lp[i] + ns_tap_0 * ns_z0[0] + ns_tap_1 * ns_z0[1]
-				+ ns_tap_2 * ns_z0[2] + ns_tap_3 * ns_z0[3];
+		ll = lp[i] + ns_tap_0 * c->ns_z0[0] + ns_tap_1 * c->ns_z0[1]
+				+ ns_tap_2 * c->ns_z0[2] + ns_tap_3 * c->ns_z0[3];
 		l = ll >> (32 - 16 - GUARD_BITS);
 		lp[i] = l << (32 - 16 - GUARD_BITS);
-		ns_z0[3] = ns_z0[2], ns_z0[2] = ns_z0[1], ns_z0[1] = ns_z0[0];
-		ns_z0[0] = ll - l * (1U << (32 - 16 - GUARD_BITS));
+		c->ns_z0[3] = c->ns_z0[2], c->ns_z0[2] = c->ns_z0[1], c->ns_z0[1] = c->ns_z0[0];
+		c->ns_z0[0] = ll - l * (1U << (32 - 16 - GUARD_BITS));
 		if (play_mode->encoding & PE_MONO)
 			continue;
 		i++;
@@ -410,12 +410,12 @@ static void ns_shaping16_trad(int32 *lp, int32 c)
 			lp[i] = NS_AMP_MAX;
 		else if (lp[i] < NS_AMP_MIN)
 			lp[i] = NS_AMP_MIN;
-		ll = lp[i] + ns_tap_0 * ns_z1[0] + ns_tap_1 * ns_z1[1]
-				+ ns_tap_2 * ns_z1[2] + ns_tap_3 * ns_z1[3];
+		ll = lp[i] + ns_tap_0 * c->ns_z1[0] + ns_tap_1 * c->ns_z1[1]
+				+ ns_tap_2 * c->ns_z1[2] + ns_tap_3 * c->ns_z1[3];
 		l = ll >> (32 - 16 - GUARD_BITS);
 		lp[i] = l << (32 - 16 - GUARD_BITS);
-		ns_z1[3] = ns_z1[2], ns_z1[2] = ns_z1[1], ns_z1[1] = ns_z1[0];
-		ns_z1[0] = ll - l * (1U << (32 - 16 - GUARD_BITS));
+		c->ns_z1[3] = c->ns_z1[2], c->ns_z1[2] = c->ns_z1[1], c->ns_z1[1] = c->ns_z1[0];
+		c->ns_z1[0] = ll - l * (1U << (32 - 16 - GUARD_BITS));
 	}
 }
 
@@ -449,82 +449,82 @@ static void do_soft_clipping2(int32 *buf, int32 count)
 	}
 }
 
-static void ns_shaping16_9(int32 *lp, int32 c)
+static void ns_shaping16_9(struct timiditycontext_t *c, int32 *lp, int32 count)
 {
 	int32 i, l, sample, output;
 
-	for (i = 0; i < c; i++) {
+	for (i = 0; i < count; i++) {
 		/* left channel */
-		ns9_r2l = ns9_r1l;
-		ns9_r1l = frand();
+		c->ns9_r2l = c->ns9_r1l;
+		c->ns9_r1l = frand(c);
 		lp[i] = (lp[i] > NS_AMP_MAX) ? NS_AMP_MAX
 				: (lp[i] < NS_AMP_MIN) ? NS_AMP_MIN : lp[i];
 #if OPT_MODE != 0
-		sample = lp[i] - imuldiv24(ns9_c[8], ns9_ehl[ns9_histposl + 8])
-				- imuldiv24(ns9_c[7], ns9_ehl[ns9_histposl + 7])
-				- imuldiv24(ns9_c[6], ns9_ehl[ns9_histposl + 6])
-				- imuldiv24(ns9_c[5], ns9_ehl[ns9_histposl + 5])
-				- imuldiv24(ns9_c[4], ns9_ehl[ns9_histposl + 4])
-				- imuldiv24(ns9_c[3], ns9_ehl[ns9_histposl + 3])
-				- imuldiv24(ns9_c[2], ns9_ehl[ns9_histposl + 2])
-				- imuldiv24(ns9_c[1], ns9_ehl[ns9_histposl + 1])
-				- imuldiv24(ns9_c[0], ns9_ehl[ns9_histposl]);
+		sample = lp[i] - imuldiv24(c->ns9_c[8], c->ns9_ehl[c->ns9_histposl + 8])
+				- imuldiv24(c->ns9_c[7], c->ns9_ehl[c->ns9_histposl + 7])
+				- imuldiv24(c->ns9_c[6], c->ns9_ehl[c->ns9_histposl + 6])
+				- imuldiv24(c->ns9_c[5], c->ns9_ehl[c->ns9_histposl + 5])
+				- imuldiv24(c->ns9_c[4], c->ns9_ehl[c->ns9_histposl + 4])
+				- imuldiv24(c->ns9_c[3], c->ns9_ehl[c->ns9_histposl + 3])
+				- imuldiv24(c->ns9_c[2], c->ns9_ehl[c->ns9_histposl + 2])
+				- imuldiv24(c->ns9_c[1], c->ns9_ehl[c->ns9_histposl + 1])
+				- imuldiv24(c->ns9_c[0], c->ns9_ehl[c->ns9_histposl]);
 #else
-		sample = lp[i] - ns9_coef[8] * ns9_ehl[ns9_histposl + 8]
-				- ns9_coef[7] * ns9_ehl[ns9_histposl + 7]
-				- ns9_coef[6] * ns9_ehl[ns9_histposl + 6]
-				- ns9_coef[5] * ns9_ehl[ns9_histposl + 5]
-				- ns9_coef[4] * ns9_ehl[ns9_histposl + 4]
-				- ns9_coef[3] * ns9_ehl[ns9_histposl + 3]
-				- ns9_coef[2] * ns9_ehl[ns9_histposl + 2]
-				- ns9_coef[1] * ns9_ehl[ns9_histposl + 1]
-				- ns9_coef[0] * ns9_ehl[ns9_histposl];
+		sample = lp[i] - ns9_coef[8] * c->ns9_ehl[c->ns9_histposl + 8]
+				- ns9_coef[7] * c->ns9_ehl[c->ns9_histposl + 7]
+				- ns9_coef[6] * c->ns9_ehl[c->ns9_histposl + 6]
+				- ns9_coef[5] * c->ns9_ehl[c->ns9_histposl + 5]
+				- ns9_coef[4] * c->ns9_ehl[c->ns9_histposl + 4]
+				- ns9_coef[3] * c->ns9_ehl[c->ns9_histposl + 3]
+				- ns9_coef[2] * c->ns9_ehl[c->ns9_histposl + 2]
+				- ns9_coef[1] * c->ns9_ehl[c->ns9_histposl + 1]
+				- ns9_coef[0] * c->ns9_ehl[c->ns9_histposl];
 #endif
 		l = sample >> (32 - 16 - GUARD_BITS);
 		output = l * (1U << (32 - 16 - GUARD_BITS))
-				+ ((ns9_r1l - ns9_r2l) >> 30);
-		ns9_histposl = my_mod((ns9_histposl + 8), ns9_order);
-		ns9_ehl[ns9_histposl + 9] = ns9_ehl[ns9_histposl] = output - sample;
+				+ ((c->ns9_r1l - c->ns9_r2l) >> 30);
+		c->ns9_histposl = my_mod((c->ns9_histposl + 8), ns9_order);
+		c->ns9_ehl[c->ns9_histposl + 9] = c->ns9_ehl[c->ns9_histposl] = output - sample;
 		lp[i] = output;
 		/* right channel */
 		i++;
-		ns9_r2r = ns9_r1r;
-		ns9_r1r = frand();
+		c->ns9_r2r = c->ns9_r1r;
+		c->ns9_r1r = frand(c);
 		lp[i] = (lp[i] > NS_AMP_MAX) ? NS_AMP_MAX
 				: (lp[i] < NS_AMP_MIN) ? NS_AMP_MIN : lp[i];
 #if OPT_MODE != 0
-		sample = lp[i] - imuldiv24(ns9_c[8], ns9_ehr[ns9_histposr + 8])
-				- imuldiv24(ns9_c[7], ns9_ehr[ns9_histposr + 7])
-				- imuldiv24(ns9_c[6], ns9_ehr[ns9_histposr + 6])
-				- imuldiv24(ns9_c[5], ns9_ehr[ns9_histposr + 5])
-				- imuldiv24(ns9_c[4], ns9_ehr[ns9_histposr + 4])
-				- imuldiv24(ns9_c[3], ns9_ehr[ns9_histposr + 3])
-				- imuldiv24(ns9_c[2], ns9_ehr[ns9_histposr + 2])
-				- imuldiv24(ns9_c[1], ns9_ehr[ns9_histposr + 1])
-				- imuldiv24(ns9_c[0], ns9_ehr[ns9_histposr]);
+		sample = lp[i] - imuldiv24(c->ns9_c[8], c->ns9_ehr[c->ns9_histposr + 8])
+				- imuldiv24(c->ns9_c[7], c->ns9_ehr[c->ns9_histposr + 7])
+				- imuldiv24(c->ns9_c[6], c->ns9_ehr[c->ns9_histposr + 6])
+				- imuldiv24(c->ns9_c[5], c->ns9_ehr[c->ns9_histposr + 5])
+				- imuldiv24(c->ns9_c[4], c->ns9_ehr[c->ns9_histposr + 4])
+				- imuldiv24(c->ns9_c[3], c->ns9_ehr[c->ns9_histposr + 3])
+				- imuldiv24(c->ns9_c[2], c->ns9_ehr[c->ns9_histposr + 2])
+				- imuldiv24(c->ns9_c[1], c->ns9_ehr[c->ns9_histposr + 1])
+				- imuldiv24(c->ns9_c[0], c->ns9_ehr[c->ns9_histposr]);
 #else
-		sample = lp[i] - ns9_coef[8] * ns9_ehr[ns9_histposr + 8]
-				- ns9_coef[7] * ns9_ehr[ns9_histposr + 7]
-				- ns9_coef[6] * ns9_ehr[ns9_histposr + 6]
-				- ns9_coef[5] * ns9_ehr[ns9_histposr + 5]
-				- ns9_coef[4] * ns9_ehr[ns9_histposr + 4]
-				- ns9_coef[3] * ns9_ehr[ns9_histposr + 3]
-				- ns9_coef[2] * ns9_ehr[ns9_histposr + 2]
-				- ns9_coef[1] * ns9_ehr[ns9_histposr + 1]
-				- ns9_coef[0] * ns9_ehr[ns9_histposr];
+		sample = lp[i] - ns9_coef[8] * c->ns9_ehr[c->ns9_histposr + 8]
+				- ns9_coef[7] * c->ns9_ehr[c->ns9_histposr + 7]
+				- ns9_coef[6] * c->ns9_ehr[c->ns9_histposr + 6]
+				- ns9_coef[5] * c->ns9_ehr[c->ns9_histposr + 5]
+				- ns9_coef[4] * c->ns9_ehr[c->ns9_histposr + 4]
+				- ns9_coef[3] * c->ns9_ehr[c->ns9_histposr + 3]
+				- ns9_coef[2] * c->ns9_ehr[c->ns9_histposr + 2]
+				- ns9_coef[1] * c->ns9_ehr[c->ns9_histposr + 1]
+				- ns9_coef[0] * c->ns9_ehr[c->ns9_histposr];
 #endif
 		l = sample >> (32 - 16 - GUARD_BITS);
 		output = l * (1U << (32 - 16 - GUARD_BITS))
-				+ ((ns9_r1r - ns9_r2r) >> 30);
-		ns9_histposr = my_mod((ns9_histposr + 8), ns9_order);
-		ns9_ehr[ns9_histposr + 9] = ns9_ehr[ns9_histposr] = output - sample;
+				+ ((c->ns9_r1r - c->ns9_r2r) >> 30);
+		c->ns9_histposr = my_mod((c->ns9_histposr + 8), ns9_order);
+		c->ns9_ehr[c->ns9_histposr + 9] = c->ns9_ehr[c->ns9_histposr] = output - sample;
 		lp[i] = output;
 	}
 }
 
-static inline unsigned long frand(void)
+static inline unsigned long frand(struct timiditycontext_t *c)
 {
-	return genrand_int32();
+	return genrand_int32(c);
 }
 
 static inline int32 my_mod(int32 x, int32 n)

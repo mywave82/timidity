@@ -222,7 +222,7 @@ void fill_vol_nonlin_to_lin_table(void)
     /* derive the power used to generate the user volume table */
     log_127 = log(127);
     for (i = 1; i <= 126; i++)
-	power += (log(user_vol_table[i]) - log_127) / (log(i) - log_127);
+	power += (log(c->user_vol_table[i]) - log_127) / (log(i) - log_127);
     power /= 126;
 
     /* use the inverse of the power to generate the new table */
@@ -277,7 +277,7 @@ static int auto_names(const char *input_filename)
 
 
 
-void initialize_m2m_stuff(void)
+static void initialize_m2m_stuff(struct timiditycontext_t *c)
 {
 
     int i;
@@ -346,14 +346,14 @@ void initialize_m2m_stuff(void)
 
     for (i = 1, maxsample = 0; i < 256; i++)
     {
-	if (special_patch[i])
+	if (c->special_patch[i])
 	    maxsample = i;
     }
 }
 
 
 
-int create_m2m_cfg_file(char *cfgname)
+static int create_m2m_cfg_file(struct timiditycontext_t *c, char *cfgname)
 {
 
     FILE *cfgout;
@@ -377,7 +377,7 @@ int create_m2m_cfg_file(char *cfgname)
     {
 	memset(chord_str, 0, 3 * sizeof(char));
 
-	if (special_patch[i])
+	if (c->special_patch[i])
 	{
 	    chord = sample_chords[i];
 	    if (chord >= 0)
@@ -409,7 +409,7 @@ int create_m2m_cfg_file(char *cfgname)
 
 
 
-void read_m2m_cfg_file(void)
+static void read_m2m_cfg_file(struct timiditycontext_t *c)
 {
 
     FILE *mod_cfg_file;
@@ -431,10 +431,10 @@ void read_m2m_cfg_file(void)
 		  cfgname);
 	for (i = 1; i <= maxsample; i++)
 	{
-	    if (special_patch[i])
+	    if (c->special_patch[i])
 	    {
-		chord = special_patch[i]->sample->chord;
-		freq = special_patch[i]->sample->root_freq_detected;
+		chord = c->special_patch[i]->sample->chord;
+		freq = c->special_patch[i]->sample->root_freq_detected;
 		pitch = assign_pitch_to_freq(freq);
 		fine_tune[i] = (-36.37631656f +
 				 17.31234049f * log(freq) - pitch) *
@@ -443,7 +443,7 @@ void read_m2m_cfg_file(void)
 		sprintf(line,
 			"Sample %3d Freq %10.4f Pitch %3d Transpose %4d",
 			i, freq, pitch,
-			special_patch[i]->sample->transpose_detected);
+			c->special_patch[i]->sample->transpose_detected);
 		if (chord >= 0)
 		{
 		    sprintf(line, "%s Chord %c Subtype %d",
@@ -452,11 +452,11 @@ void read_m2m_cfg_file(void)
 
 		ctl->cmsg(CMSG_INFO, VERB_NORMAL, "%s", line);
 
-		transpose[i] = special_patch[i]->sample->transpose_detected;
+		transpose[i] = c->special_patch[i]->sample->transpose_detected;
 		sample_chords[i] = chord;
 	    }
 	}
-	create_m2m_cfg_file(cfgname);
+	create_m2m_cfg_file(c, cfgname);
 	mod_cfg_file = fopen(cfgname, "rb");
     }
 
@@ -579,8 +579,8 @@ int set_dt_array(unsigned char *dt_array, int32 delta_time)
 
 
 
-void scan_ahead_for_m2m_tweaks(MidiEvent * ev, int midi_ch, int midi_note,
-			       int samplenum)
+static void scan_ahead_for_m2m_tweaks(struct timiditycontext_t *c, MidiEvent * ev, int midi_ch,
+                                      int midi_note, int samplenum)
 {
 
     int ch, event_type, init_ch, init_note, init_velocity;
@@ -597,7 +597,7 @@ void scan_ahead_for_m2m_tweaks(MidiEvent * ev, int midi_ch, int midi_note,
     init_ch = ev->channel;
     init_note = ev->a;
     init_velocity = ev->b;
-    sp = special_patch[samplenum]->sample;
+    sp = c->special_patch[samplenum]->sample;
     root_freq = pitch_freq_table[36];
     length = sp->data_length >> FRACTION_BITS;
 
@@ -954,7 +954,7 @@ void m2m_prescan(MidiEvent * ev)
 
 
 
-void m2m_process_events(MidiEvent * ev)
+static void m2m_process_events(struct timiditycontext_t *c, MidiEvent * ev)
 {
 
     int i;
@@ -1067,7 +1067,7 @@ void m2m_process_events(MidiEvent * ev)
 	    else
 	    {
 		newnote = ev->a + transpose[mod_sample];
-		scan_ahead_for_m2m_tweaks(ev, ch, newnote, mod_sample);
+		scan_ahead_for_m2m_tweaks(c, ev, ch, newnote, mod_sample);
 		newnote += tweak_note_offset[ch];
 	    }
 	    while (newnote > 127)
@@ -1536,7 +1536,7 @@ void m2m_output_midi_file(void)
 
 
 
-int convert_mod_to_midi_file(MidiEvent * ev)
+int convert_mod_to_midi_file(struct timiditycontext_t *c, MidiEvent * ev)
 {
 
     int i;
@@ -1547,7 +1547,7 @@ int convert_mod_to_midi_file(MidiEvent * ev)
     if (opt_user_volume_curve)
 	fill_vol_nonlin_to_lin_table();
 
-    initialize_m2m_stuff();
+    initialize_m2m_stuff(c);
 
     /* this either isn't a MOD, or it doesn't have any samples... */
     if (!maxsample)
@@ -1557,7 +1557,7 @@ int convert_mod_to_midi_file(MidiEvent * ev)
 	return 1;
     }
 
-    read_m2m_cfg_file();
+    read_m2m_cfg_file(c);
 
     m2m_prescan(ev);
     m2m_process_events(ev);

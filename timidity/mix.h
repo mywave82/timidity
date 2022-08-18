@@ -24,11 +24,13 @@
 
 #ifndef ___MIX_H_
 #define ___MIX_H_
-extern void mix_voice(int32 *, int, int32);
-extern int recompute_envelope(int);
-extern int apply_envelope_to_amp(int);
-extern int recompute_modulation_envelope(int);
-extern int apply_modulation_envelope(int);
-/* time (ms) for full vol note to sustain */
-extern int min_sustain_time;
+
+struct timiditycontext_t;
+
+extern void mix_voice(struct timiditycontext_t *c, int32 *, int, int32);
+extern int recompute_envelope(struct timiditycontext_t *c, int);
+extern int apply_envelope_to_amp(struct timiditycontext_t *c, int);
+extern int recompute_modulation_envelope(struct timiditycontext_t *c, int);
+extern int apply_modulation_envelope(struct timiditycontext_t *c, int);
+
 #endif /* ___MIX_H_ */

@@ -33,7 +33,7 @@
 #include "sfitem.h"
 
 /* layer type definitions */
-LayerItem layer_items[SF_EOF] = {
+const LayerItem layer_items_default[SF_EOF] = {
 	{L_INHRT, T_OFFSET, 0, 0, 0}, /* startAddrs */
 	{L_INHRT, T_OFFSET, 0, 0, 0}, /* endAddrs */
 	{L_INHRT, T_OFFSET, 0, 0, 0}, /* startloopAddrs */

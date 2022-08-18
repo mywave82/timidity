@@ -45,9 +45,9 @@
 #include "smplfile.h"
 #include "tables.h"
 
-typedef int (*SampleImporterDiscriminateProc)(char *sample_file);
+typedef int (*SampleImporterDiscriminateProc)(struct timiditycontext_t *c, char *sample_file);
 	/* returns 0 if file may be loadable */
-typedef int (*SampleImporterSampleLoaderProc)(char *sample_file, Instrument *inst);
+typedef int (*SampleImporterSampleLoaderProc)(struct timiditycontext_t *c, char *sample_file, Instrument *inst);
 	/* sets inst->samples, inst->sample and returns 0 if loaded */
 	/* inst is pre-allocated, and is freed by caller if loading failed */
 	/* -1 to let caller give up testing other importers */
@@ -60,15 +60,16 @@ typedef struct {
 	int					added;			/* for get_importers()'s internal use */
 } SampleImporter, *SampleImporterRef;
 
+
 static int get_importers(const char *sample_file, int limit, SampleImporter **importers);
-static int get_next_importer(char *sample_file, int start, int count, SampleImporter **importers);
+static int get_next_importer(struct timiditycontext_t *c, char *sample_file, int start, int count, SampleImporter **importers);
 
 static double ConvertFromIeeeExtended(const char *);
 
-static int import_wave_discriminant(char *sample_file);
-static int import_wave_load(char *sample_file, Instrument *inst);
-static int import_aiff_discriminant(char *sample_file);
-static int import_aiff_load(char *sample_file, Instrument *inst);
+static int import_wave_discriminant(struct timiditycontext_t *c, char *sample_file);
+static int import_wave_load(struct timiditycontext_t *c, char *sample_file, Instrument *inst);
+static int import_aiff_discriminant(struct timiditycontext_t *c, char *sample_file);
+static int import_aiff_load(struct timiditycontext_t *c, char *sample_file, Instrument *inst);
 
 static SampleImporter	sample_importers[] = {
 	{"wav", import_wave_discriminant, import_wave_load},
@@ -76,7 +77,7 @@ static SampleImporter	sample_importers[] = {
 	{NULL, NULL, NULL},
 };
 
-Instrument *extract_sample_file(char *sample_file)
+Instrument *extract_sample_file(struct timiditycontext_t *c, char *sample_file)
 {
 	Instrument		*inst;
 	SampleImporter	*importers[10], *importer;
@@ -92,9 +93,9 @@ Instrument *extract_sample_file(char *sample_file)
 	inst->sample = NULL;
 	i = 0;
 	importer = NULL;
-	while ((i = get_next_importer(sample_file, i, count, importers)) < count)
+	while ((i = get_next_importer(c, sample_file, i, count, importers)) < count)
 	{
-		if ((result = importers[i]->load(sample_file, inst)) == 0)
+		if ((result = importers[i]->load(c, sample_file, inst)) == 0)
 		{
 			importer = importers[i];
 			break;
@@ -131,13 +132,13 @@ Instrument *extract_sample_file(char *sample_file)
 	{
 		sample = &inst->sample[i];
 		/* If necessary do some anti-aliasing filtering  */
-		if (antialiasing_allowed)
+		if (c->antialiasing_allowed)
 			antialiasing((int16 *)sample->data,
 				sample->data_length >> FRACTION_BITS,
 				sample->sample_rate, play_mode->rate);
 		/* resample it if possible */
 		if (sample->note_to_use && !(sample->modes & MODES_LOOPING))
-			pre_resample(sample);
+			pre_resample(c, sample);
 #ifdef LOOKUP_HACK
 		squash_sample_16to8(sample);
 #endif
@@ -200,7 +201,7 @@ static int get_importers(const char *sample_file, int limit, SampleImporter **im
 
 /* returns importer index for the file */
 /* returns count if no importer available */
-static int get_next_importer(char *sample_file, int start, int count, SampleImporter **importers)
+static int get_next_importer(struct timiditycontext_t *c, char *sample_file, int start, int count, SampleImporter **importers)
 {
 	int					i;
 
@@ -208,7 +209,7 @@ static int get_next_importer(char *sample_file, int start, int count, SampleImpo
 	{
 		if (importers[i]->discriminant != NULL)
 		{
-			if (importers[i]->discriminant(sample_file) != 0)
+			if (importers[i]->discriminant(c, sample_file) != 0)
 				continue;
 		}
 		return i;
@@ -222,20 +223,20 @@ static int get_next_importer(char *sample_file, int start, int count, SampleImpo
 
 /* from instrum.c */
 #define READ_CHAR(thing) \
-      if (1 != tf_read(&tmpchar, 1, 1, tf)) goto fail; \
+      if (1 != tf_read(c, &tmpchar, 1, 1, tf)) goto fail; \
       thing = tmpchar;
 
 #define READ_SHORT_LE(thing) \
-      if (1 != tf_read(&tmpshort, 2, 1, tf)) goto fail; \
+      if (1 != tf_read(c, &tmpshort, 2, 1, tf)) goto fail; \
       thing = LE_SHORT(tmpshort);
 #define READ_LONG_LE(thing) \
-      if (1 != tf_read(&tmplong, 4, 1, tf)) goto fail; \
+      if (1 != tf_read(c, &tmplong, 4, 1, tf)) goto fail; \
       thing = LE_LONG(tmplong);
 #define READ_SHORT_BE(thing) \
-      if (1 != tf_read(&tmpshort, 2, 1, tf)) goto fail; \
+      if (1 != tf_read(c, &tmpshort, 2, 1, tf)) goto fail; \
       thing = BE_SHORT(tmpshort);
 #define READ_LONG_BE(thing) \
-      if (1 != tf_read(&tmplong, 4, 1, tf)) goto fail; \
+      if (1 != tf_read(c, &tmplong, 4, 1, tf)) goto fail; \
       thing = BE_LONG(tmplong);
 
 const uint8		pan_mono[] = {64};	/* center */
@@ -260,14 +261,14 @@ typedef struct {
 	int16	gain;
 } GeneralInstrumentInfo;
 
-static void initialize_sample(Instrument *inst, int frames, int sample_bits, int sample_rate);
-static void apply_GeneralInstrumentInfo(int samples, Sample *sample, const GeneralInstrumentInfo *info);
+static void initialize_sample(struct timiditycontext_t *c, Instrument *inst, int frames, int sample_bits, int sample_rate);
+static void apply_GeneralInstrumentInfo(struct timiditycontext_t *c, int samples, Sample *sample, const GeneralInstrumentInfo *info);
 
 /* read_sample_data() flags */
 #define SAMPLE_BIG_ENDIAN		(1 << 0)
 #define SAMPLE_8BIT_UNSIGNED	(1 << 1)
 
-static int read_sample_data(int32 flags, struct timidity_file *tf, int bits, int samples, int frames, sample_t **sdata);
+static int read_sample_data(struct timiditycontext_t *c, int32 flags, struct timidity_file *tf, int bits, int samples, int frames, sample_t **sdata);
 
 /*************** WAV Importer ***************/
 
@@ -288,31 +289,31 @@ typedef struct {
 	int32	loop_dwStart, loop_dwEnd, loop_dwFraction;
 } WAVSamplerChunk;
 
-static int read_WAVFormatChunk(struct timidity_file *tf, WAVFormatChunk *fmt, int psize);
-static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl, int psize);
-static int read_WAVInstrumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, int psize);
+static int read_WAVFormatChunk(struct timiditycontext_t *c, struct timidity_file *tf, WAVFormatChunk *fmt, int psize);
+static int read_WAVSamplerChunk(struct timiditycontext_t *c, struct timidity_file *tf, WAVSamplerChunk *smpl, int psize);
+static int read_WAVInstrumentChunk(struct timiditycontext_t *c, struct timidity_file *tf, GeneralInstrumentInfo *inst, int psize);
 
-static int import_wave_discriminant(char *sample_file)
+static int import_wave_discriminant(struct timiditycontext_t *c, char *sample_file)
 {
 	struct timidity_file	*tf;
 	char				buf[12];
 
-	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
+	if ((tf = open_file(c, sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
-	if (tf_read(buf, 12, 1, tf) != 1
+	if (tf_read(c, buf, 12, 1, tf) != 1
 			|| memcmp(&buf[0], "RIFF", 4) != 0 || memcmp(&buf[8], "WAVE", 4) != 0)
 	{
-		close_file(tf);
+		close_file(c, tf);
 		return 1;
 	}
-	close_file(tf);
+	close_file(c, tf);
 	return 0;
 }
 
 #define WAVE_CHUNKFLAG_SAMPLER		(1 << 0)
 #define WAVE_CHUNKFLAG_INSTRUMENT	(1 << 1)
 
-static int import_wave_load(char *sample_file, Instrument *inst)
+static int import_wave_load(struct timiditycontext_t *c, char *sample_file, Instrument *inst)
 {
 	struct timidity_file	*tf;
 	union {
@@ -328,19 +329,19 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 	WAVSamplerChunk	samplerc = {0,};
 	GeneralInstrumentInfo	instc = {0,};
 
-	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
+	if ((tf = open_file(c, sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
-	if (tf_read(buf, 12, 1, tf) != 1
+	if (tf_read(c, buf, 12, 1, tf) != 1
 			|| memcmp(&buf[0], "RIFF", 4) != 0 || memcmp(&buf[8], "WAVE", 4) != 0)
 	{
-		close_file(tf);
+		close_file(c, tf);
 		return 1;
 	}
 	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading WAV: %s", sample_file);
 	state = chunk_flags = 0;
 	type_index = 4, type_size = 8;
 	for(;;) {
-		if (tf_read(&buf[type_index], type_size, 1, tf) != 1)
+		if (tf_read(c, &buf[type_index], type_size, 1, tf) != 1)
 			break;
 		chunk_size = LE_LONG(xbuf.i[2]);
 		if (memcmp(&buf[4 + 0], "fmt ", 4) == 0)
@@ -348,7 +349,7 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 			if (state != 0					/* only one format chunk is required */
 					|| chunk_size < 0x10)	/* too small */
 				break;
-			if (!read_WAVFormatChunk(tf, &format, chunk_size))
+			if (!read_WAVFormatChunk(c, tf, &format, chunk_size))
 				break;
 			if (format.wChannels < 1				/* invalid range */
 					|| format.wChannels > MAX_SAMPLE_CHANNELS
@@ -370,35 +371,35 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 			inst->sample = (Sample *)safe_malloc(sizeof(Sample) * samples);
 			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Format: %d-bits %dHz %dch, %d frames",
 					format.wBitsPerSample, format.dwSamplesPerSec, samples, frames);
-			initialize_sample(inst, frames, format.wBitsPerSample, format.dwSamplesPerSec);
+			initialize_sample(c, inst, frames, format.wBitsPerSample, format.dwSamplesPerSec);
 			/* load waveform data */
 			for(i = 0; i < samples; i++)
 			{
 				inst->sample[i].data = sdata[i] = (sample_t *)safe_malloc(sizeof(sample_t) * frames);
 				inst->sample[i].data_alloced = 1;
 			}
-			if (!read_sample_data(SAMPLE_8BIT_UNSIGNED, tf, format.wBitsPerSample, samples, frames, sdata))
+			if (!read_sample_data(c, SAMPLE_8BIT_UNSIGNED, tf, format.wBitsPerSample, samples, frames, sdata))
 				break;
 			state++;
 		}
 		else if (!(chunk_flags & WAVE_CHUNKFLAG_SAMPLER) && memcmp(&buf[4 + 0], "smpl", 4) == 0)
 		{
-			if (!read_WAVSamplerChunk(tf, &samplerc, chunk_size))
+			if (!read_WAVSamplerChunk(c, tf, &samplerc, chunk_size))
 				break;
 			chunk_flags |= WAVE_CHUNKFLAG_SAMPLER;
 		}
 		else if (!(chunk_flags & WAVE_CHUNKFLAG_INSTRUMENT) && memcmp(&buf[4 + 0], "inst", 4) == 0)
 		{
-			if (!read_WAVInstrumentChunk(tf, &instc, chunk_size))
+			if (!read_WAVInstrumentChunk(c, tf, &instc, chunk_size))
 				break;
 			chunk_flags |= WAVE_CHUNKFLAG_INSTRUMENT;
 		}
-		else if (tf_seek(tf, chunk_size, SEEK_CUR) == -1)
+		else if (tf_seek(c, tf, chunk_size, SEEK_CUR) == -1)
 			break;
 		type_index = 4 - (chunk_size & 1);
 		type_size = 8 + (chunk_size & 1);
 	}
-	close_file(tf);
+	close_file(c, tf);
 	if (chunk_flags & WAVE_CHUNKFLAG_SAMPLER)
 	{
 		uint8		modes;
@@ -406,13 +407,13 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 		uint32		loopStart = 0, loopEnd = 0;
 
 		sample_rate = samplerc.dwSamplePeriod == 0 ? 0 : 1000000000 / samplerc.dwSamplePeriod;
-		root_freq = freq_table[samplerc.dwMIDIUnityNote];
+		root_freq = c->freq_table[samplerc.dwMIDIUnityNote];
 		if (samplerc.dwMIDIPitchFraction != 0
 				&& samplerc.dwMIDIUnityNote != 127)	/* no table data */
 		{
 			int32		diff;
 
-			diff = freq_table[samplerc.dwMIDIUnityNote + 1] - root_freq;
+			diff = c->freq_table[samplerc.dwMIDIUnityNote + 1] - root_freq;
 			root_freq += (float)samplerc.dwMIDIPitchFraction * diff / (float)UINT32_MAX;
 		}
 		if (samplerc.hasLoop)
@@ -440,11 +441,11 @@ static int import_wave_load(char *sample_file, Instrument *inst)
 		}
 	}
 	if (chunk_flags & WAVE_CHUNKFLAG_INSTRUMENT)
-		apply_GeneralInstrumentInfo(samples, inst->sample, &instc);
+		apply_GeneralInstrumentInfo(c, samples, inst->sample, &instc);
 	return (state != 2);
 }
 
-static int read_WAVFormatChunk(struct timidity_file *tf, WAVFormatChunk *fmt, int csize)
+static int read_WAVFormatChunk(struct timiditycontext_t *c, struct timidity_file *tf, WAVFormatChunk *fmt, int csize)
 {
 	int32		tmplong;
 	int16		tmpshort;
@@ -455,7 +456,7 @@ static int read_WAVFormatChunk(struct timidity_file *tf, WAVFormatChunk *fmt, in
 	READ_LONG_LE(fmt->dwAvgBytesPerSec);
 	READ_SHORT_LE(fmt->wBlockAlign);
 	READ_SHORT_LE(fmt->wBitsPerSample);
-	if (tf_seek(tf, csize - 0x10, SEEK_CUR) == -1)
+	if (tf_seek(c, tf, csize - 0x10, SEEK_CUR) == -1)
 		goto fail;
 	return 1;
 	fail:
@@ -463,7 +464,7 @@ static int read_WAVFormatChunk(struct timidity_file *tf, WAVFormatChunk *fmt, in
 		return 0;
 }
 
-static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl, int psize)
+static int read_WAVSamplerChunk(struct timiditycontext_t *c, struct timidity_file *tf, WAVSamplerChunk *smpl, int psize)
 {
 	int32		tmplong;
 	int			i, loopCount, cbSamplerData, dwPlayCount;
@@ -471,13 +472,13 @@ static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl,
 
 	smpl->hasLoop = 0;
 	/* skip dwManufacturer, dwProduct */
-	if (tf_seek(tf, 4 + 4, SEEK_CUR) == -1)
+	if (tf_seek(c, tf, 4 + 4, SEEK_CUR) == -1)
 		goto fail;
 	READ_LONG_LE(smpl->dwSamplePeriod);
 	READ_LONG_LE(smpl->dwMIDIUnityNote);
 	READ_LONG_LE(smpl->dwMIDIPitchFraction);
 	/* skip dwSMPTEFormat, dwSMPTEOffset */
-	if (tf_seek(tf, 4 + 4, SEEK_CUR) == -1)
+	if (tf_seek(c, tf, 4 + 4, SEEK_CUR) == -1)
 		goto fail;
 	READ_LONG_LE(loopCount);
 	READ_LONG_LE(cbSamplerData);
@@ -485,7 +486,7 @@ static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl,
 	for(i = 0; i < loopCount; i++)
 	{
 		/* skip dwIdentifier */
-		if (tf_seek(tf, 4, SEEK_CUR) == -1)
+		if (tf_seek(c, tf, 4, SEEK_CUR) == -1)
 			goto fail;
 		READ_LONG_LE(loopType);	/* dwType */
 		if (!smpl->hasLoop && loopType <= 2)
@@ -500,13 +501,13 @@ static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl,
 		}
 		else
 		{
-			if (tf_seek(tf, 4 * 4, SEEK_CUR) == -1)
+			if (tf_seek(c, tf, 4 * 4, SEEK_CUR) == -1)
 				goto fail;
 		}
 	}
 	if (psize != cbSamplerData)
 		ctl->cmsg(CMSG_WARNING, VERB_NOISY, "Bad sampler chunk length");
-	if (tf_seek(tf, psize, SEEK_CUR) == -1)
+	if (tf_seek(c, tf, psize, SEEK_CUR) == -1)
 		goto fail;
 	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Sampler: %dns/frame, note=%d, loops=%d",
 				smpl->dwSamplePeriod, smpl->dwMIDIUnityNote, loopCount);
@@ -516,7 +517,7 @@ static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl,
 		return 0;
 }
 
-static int read_WAVInstrumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, int psize)
+static int read_WAVInstrumentChunk(struct timiditycontext_t *c, struct timidity_file *tf, GeneralInstrumentInfo *inst, int psize)
 {
 	int8		tmpchar;
 
@@ -563,28 +564,28 @@ typedef struct {
 	uint32			position;
 } AIFFMarkerData;
 
-static int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm, int csize, int compressed);
-static int read_AIFFSoundDataChunk(struct timidity_file *tf, AIFFSoundDataChunk *sound, int csize, int mode);
-static int read_AIFFSoundData(struct timidity_file *tf, Instrument *inst, AIFFCommonChunk *common);
-static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, AIFFLoopInfo *loop, int csize);
-static int read_AIFFMarkerChunk(struct timidity_file *tf, AIFFMarkerData **markers, int csize);
+static int read_AIFFCommonChunk(struct timiditycontext_t *c, struct timidity_file *tf, AIFFCommonChunk *comm, int csize, int compressed);
+static int read_AIFFSoundDataChunk(struct timiditycontext_t *c, struct timidity_file *tf, AIFFSoundDataChunk *sound, int csize, int mode);
+static int read_AIFFSoundData(struct timiditycontext_t *c, struct timidity_file *tf, Instrument *inst, AIFFCommonChunk *common);
+static int read_AIFFInstrumentChunk(struct timiditycontext_t *c, struct timidity_file *tf, GeneralInstrumentInfo *inst, AIFFLoopInfo *loop, int csize);
+static int read_AIFFMarkerChunk(struct timiditycontext_t *c, struct timidity_file *tf, AIFFMarkerData **markers, int csize);
 static int AIFFGetMarkerPosition(int16 id, const AIFFMarkerData *markers, uint32 *position);
 
-static int import_aiff_discriminant(char *sample_file)
+static int import_aiff_discriminant(struct timiditycontext_t *c, char *sample_file)
 {
 	struct timidity_file	*tf;
 	char				buf[12];
 
-	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
+	if ((tf = open_file(c, sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
-	if (tf_read(buf, 12, 1, tf) != 1
+	if (tf_read(c, buf, 12, 1, tf) != 1
 			|| memcmp(&buf[0], "FORM", 4) != 0 || memcmp(&buf[8], "AIF", 3) != 0
 			|| (buf[8 + 3] != 'F' && buf[8 + 3] != 'C'))
 	{
-		close_file(tf);
+		close_file(c, tf);
 		return 1;
 	}
-	close_file(tf);
+	close_file(c, tf);
 	return 0;
 }
 
@@ -598,7 +599,7 @@ static int import_aiff_discriminant(char *sample_file)
 #define AIFF_CHUNKFLAG_REQUIRED		(AIFF_CHUNKFLAG_COMMON | AIFF_CHUNKFLAG_SOUND)
 #define AIFF_CHUNKFLAG_FAILED		(AIFF_CHUNKFLAG_READERR | AIFF_CHUNKFLAG_DUPCHUNK)
 
-static int import_aiff_load(char *sample_file, Instrument *inst)
+static int import_aiff_load(struct timiditycontext_t *c, char *sample_file, Instrument *inst)
 {
 	struct timidity_file	*tf;
 	union {
@@ -615,13 +616,13 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 	AIFFLoopInfo	loop_info = {0,0,0};
 	AIFFMarkerData	*marker_data;
 
-	if ((tf = open_file(sample_file, 1, OF_NORMAL)) == NULL)
+	if ((tf = open_file(c, sample_file, 1, OF_NORMAL)) == NULL)
 		return 1;
-	if (tf_read(buf, 12, 1, tf) != 1
+	if (tf_read(c, buf, 12, 1, tf) != 1
 			|| memcmp(&buf[0], "FORM", 4) != 0 || memcmp(&buf[8], "AIF", 3) != 0
 			|| (buf[8 + 3] != 'F' && buf[8 + 3] != 'C'))
 	{
-		close_file(tf);
+		close_file(c, tf);
 		return 1;
 	}
 	compressed = buf[8 + 3] == 'C';
@@ -632,7 +633,7 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 	sound.common = &common;
 	marker_data = NULL;
 	for(;;) {
-		if (tf_read(&buf[type_index], type_size, 1, tf) != 1)
+		if (tf_read(c, &buf[type_index], type_size, 1, tf) != 1)
 			break;
 		chunk_size = BE_LONG(xbuf.i[2]);
 		if (memcmp(&buf[4 + 0], "COMM", 4) == 0)
@@ -644,7 +645,7 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 			}
 			if (chunk_size < 18)	/* too small */
 				break;
-			if (!read_AIFFCommonChunk(tf, &common, chunk_size, compressed))
+			if (!read_AIFFCommonChunk(c, tf, &common, chunk_size, compressed))
 				break;
 			chunk_flags |= AIFF_CHUNKFLAG_COMMON;
 		}
@@ -657,11 +658,11 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 			}
 			if (chunk_flags & AIFF_CHUNKFLAG_COMMON)
 			{
-				if (!read_AIFFSoundDataChunk(tf, &sound, chunk_size, 0))
+				if (!read_AIFFSoundDataChunk(c, tf, &sound, chunk_size, 0))
 					break;
 				chunk_flags |= AIFF_CHUNKFLAG_SOUNDREAD;
 			}
-			else if (!read_AIFFSoundDataChunk(tf, &sound, chunk_size, 1))
+			else if (!read_AIFFSoundDataChunk(c, tf, &sound, chunk_size, 1))
 				break;
 			chunk_flags |= AIFF_CHUNKFLAG_SOUND;
 		}
@@ -672,7 +673,7 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 				chunk_flags |= AIFF_CHUNKFLAG_DUPCHUNK;
 				break;
 			}
-			else if (!read_AIFFInstumentChunk(tf, &inst_info, &loop_info, chunk_size))
+			else if (!read_AIFFInstrumentChunk(c, tf, &inst_info, &loop_info, chunk_size))
 				break;
 			chunk_flags |= AIFF_CHUNKFLAG_INSTRUMENT;
 		}
@@ -683,21 +684,21 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 				chunk_flags |= AIFF_CHUNKFLAG_DUPCHUNK;
 				break;
 			}
-			else if (chunk_size < 2 || !read_AIFFMarkerChunk(tf, &marker_data, chunk_size))
+			else if (chunk_size < 2 || !read_AIFFMarkerChunk(c, tf, &marker_data, chunk_size))
 				break;
 			chunk_flags |= AIFF_CHUNKFLAG_MARKER;
 		}
 		else if (inst->instname == NULL && memcmp(&buf[4 + 0], "NAME", 4) == 0)
 		{
 			inst->instname = malloc(chunk_size + 1);
-			if (tf_read(inst->instname, chunk_size, 1, tf) != 1)
+			if (tf_read(c, inst->instname, chunk_size, 1, tf) != 1)
 			{
 				chunk_flags |= AIFF_CHUNKFLAG_READERR;
 				break;
 			}
 			inst->instname[chunk_size] = '\0';
 		}
-		else if (tf_seek(tf, chunk_size, SEEK_CUR) == -1)
+		else if (tf_seek(c, tf, chunk_size, SEEK_CUR) == -1)
 			break;
 		/* no need to check format version chunk */
 		type_index = 4 - (chunk_size & 1);
@@ -708,22 +709,22 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 	{
 		if (marker_data != NULL)
 			free(marker_data);
-		close_file(tf);
+		close_file(c, tf);
 		return -1;
 	}
 	if (!(chunk_flags & AIFF_CHUNKFLAG_SOUNDREAD))
 	{
-		if (!read_AIFFSoundDataChunk(tf, &sound, 0, 2))
+		if (!read_AIFFSoundDataChunk(c, tf, &sound, 0, 2))
 		{
 			if (marker_data != NULL)
 				free(marker_data);
-			close_file(tf);
+			close_file(c, tf);
 			return 1;
 		}
 	}
 	if (chunk_flags & AIFF_CHUNKFLAG_INSTRUMENT)
 	{
-		apply_GeneralInstrumentInfo(inst->samples, inst->sample, &inst_info);
+		apply_GeneralInstrumentInfo(c, inst->samples, inst->sample, &inst_info);
 		if ((loop_info.mode == 1 || loop_info.mode == 2)
 				&& chunk_flags & AIFF_CHUNKFLAG_MARKER && marker_data != NULL)
 		{
@@ -753,11 +754,11 @@ static int import_aiff_load(char *sample_file, Instrument *inst)
 	}
 	if (marker_data != NULL)
 		free(marker_data);
-	close_file(tf);
+	close_file(c, tf);
 	return 0;
 }
 
-static int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm, int csize, int compressed)
+static int read_AIFFCommonChunk(struct timiditycontext_t *c, struct timidity_file *tf, AIFFCommonChunk *comm, int csize, int compressed)
 {
 	int32		tmplong;
 	int16		tmpshort;
@@ -768,7 +769,7 @@ static int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm,
 	READ_SHORT_BE(comm->numChannels);
 	READ_LONG_BE(comm->numSampleFrames);
 	READ_SHORT_BE(comm->sampleSize);
-	if (tf_read(sampleRate, 10, 1, tf) != 1)
+	if (tf_read(c, sampleRate, 10, 1, tf) != 1)
 		goto fail;
 	comm->sampleRate = ConvertFromIeeeExtended(sampleRate);
 	csize -= 8 + 10;
@@ -783,7 +784,7 @@ static int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm,
 			uint8		compressionNameLength;
 
 			READ_CHAR(compressionNameLength);
-			if (tf_read(compressionName, compressionNameLength, 1, tf) != 1)
+			if (tf_read(c, compressionName, compressionNameLength, 1, tf) != 1)
 				goto fail;
 			compressionName[compressionNameLength] = '\0';
 			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "AIFF-C unknown compression type: %s", compressionName);
@@ -792,7 +793,7 @@ static int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm,
 		csize -= 4;
 		/* ignore compressionName and its padding */
 	}
-	if (tf_seek(tf, csize, SEEK_CUR) == -1)
+	if (tf_seek(c, tf, csize, SEEK_CUR) == -1)
 		goto fail;
 	return 1;
 	fail:
@@ -800,7 +801,7 @@ static int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm,
 		return 0;
 }
 
-static int read_AIFFSoundDataChunk(struct timidity_file *tf, AIFFSoundDataChunk *sound, int csize, int mode)
+static int read_AIFFSoundDataChunk(struct timiditycontext_t *c, struct timidity_file *tf, AIFFSoundDataChunk *sound, int csize, int mode)
 {
 	int32		tmplong;
 	uint32		offset, blockSize;
@@ -812,28 +813,28 @@ static int read_AIFFSoundDataChunk(struct timidity_file *tf, AIFFSoundDataChunk 
 		if (blockSize != 0)		/* not implemented */
 			goto fail;
 		if (mode == 0)		/* read both information and data */
-			return read_AIFFSoundData(tf, sound->inst, sound->common);
+			return read_AIFFSoundData(c, tf, sound->inst, sound->common);
 		/* read information only */
-		if ((sound->position = tf_tell(tf)) == -1)
+		if ((sound->position = tf_tell(c, tf)) == -1)
 			goto fail;
 		sound->position += offset;
 		csize -= 8;
-		if (tf_seek(tf, csize, SEEK_CUR) == -1)
+		if (tf_seek(c, tf, csize, SEEK_CUR) == -1)
 			goto fail;
 		return 1;
 	}
 	else if (mode == 2)		/* read data using information previously read */
 	{
-		if (tf_seek(tf, sound->position, SEEK_SET) == -1)
+		if (tf_seek(c, tf, sound->position, SEEK_SET) == -1)
 			goto fail;
-		return read_AIFFSoundData(tf, sound->inst, sound->common);
+		return read_AIFFSoundData(c, tf, sound->inst, sound->common);
 	}
 	fail:
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read sound data chunk");
 		return 0;
 }
 
-static int read_AIFFSoundData(struct timidity_file *tf, Instrument *inst, AIFFCommonChunk *common)
+static int read_AIFFSoundData(struct timiditycontext_t *c, struct timidity_file *tf, Instrument *inst, AIFFCommonChunk *common)
 {
 	int				i, samples;
 	Sample			*sample;
@@ -843,14 +844,14 @@ static int read_AIFFSoundData(struct timidity_file *tf, Instrument *inst, AIFFCo
 		goto fail;
 	inst->samples = samples;
 	inst->sample = sample = (Sample *)safe_malloc(sizeof(Sample) * samples);
-	initialize_sample(inst, common->numSampleFrames, common->sampleSize, (int)common->sampleRate);
+	initialize_sample(c, inst, common->numSampleFrames, common->sampleSize, (int)common->sampleRate);
 	/* load samples */
 	for(i = 0; i < samples; i++)
 	{
 		sample[i].data = sdata[i] = (sample_t *)safe_malloc(sizeof(sample_t) * common->numSampleFrames);
 		sample[i].data_alloced = 1;
 	}
-	if (!read_sample_data(SAMPLE_BIG_ENDIAN, tf, common->sampleSize, samples, common->numSampleFrames, sdata))
+	if (!read_sample_data(c, SAMPLE_BIG_ENDIAN, tf, common->sampleSize, samples, common->numSampleFrames, sdata))
 		goto fail;
 	return 1;
 	fail:
@@ -858,7 +859,7 @@ static int read_AIFFSoundData(struct timidity_file *tf, Instrument *inst, AIFFCo
 		return 0;
 }
 
-static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, AIFFLoopInfo *loop, int csize)
+static int read_AIFFInstrumentChunk(struct timiditycontext_t *c, struct timidity_file *tf, GeneralInstrumentInfo *inst, AIFFLoopInfo *loop, int csize)
 {
 	int8		tmpchar;
 	int16		tmpshort;
@@ -866,7 +867,7 @@ static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentIn
 	if (csize != 20)
 	{
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Bad instrument chunk length");
-		if (tf_seek(tf, csize, SEEK_CUR) == -1)
+		if (tf_seek(c, tf, csize, SEEK_CUR) == -1)
 			goto fail;
 		return 1;
 	}
@@ -880,7 +881,7 @@ static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentIn
 	READ_SHORT_BE(loop->mode);	/* sustain loop */
 	READ_SHORT_BE(loop->beginID);
 	READ_SHORT_BE(loop->endID);
-	if (tf_seek(tf, 2 + 2 + 2, SEEK_CUR) == -1)	/* release loop */
+	if (tf_seek(c, tf, 2 + 2 + 2, SEEK_CUR) == -1)	/* release loop */
 		goto fail;
 	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Instrument: note=%d (%d-%d), gain=%ddb, velocity=%d-%d",
 				inst->baseNote, inst->lowNote, inst->highNote, inst->gain,
@@ -891,7 +892,7 @@ static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentIn
 		return 0;
 }
 
-static int read_AIFFMarkerChunk(struct timidity_file *tf, AIFFMarkerData **markers, int csize)
+static int read_AIFFMarkerChunk(struct timiditycontext_t *c, struct timidity_file *tf, AIFFMarkerData **markers, int csize)
 {
 	int32		tmplong;
 	int16		tmpshort;
@@ -904,7 +905,7 @@ static int read_AIFFMarkerChunk(struct timidity_file *tf, AIFFMarkerData **marke
 	if (csize != 2 + markerCount * (2 + 4))
 	{
 		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Bad marker chunk length");
-		if (tf_seek(tf, csize, SEEK_CUR) == -1)
+		if (tf_seek(c, tf, csize, SEEK_CUR) == -1)
 			goto fail;
 		return 1;
 	}
@@ -948,7 +949,7 @@ static int AIFFGetMarkerPosition(int16 id, const AIFFMarkerData *markers, uint32
 
 #define WAVE_BUF_SIZE		(1 << 11)	/* should be power of 2 */
 #define READ_WAVE_SAMPLE(dest, b, s)	\
-				if (tf_read(dest, (b) * (s), 1, tf) != 1)	\
+				if (tf_read(c, dest, (b) * (s), 1, tf) != 1)	\
 					goto fail
 #define READ_WAVE_FRAME(dest, b, f)	\
 				READ_WAVE_SAMPLE(dest, b, (f) * channels)
@@ -964,7 +965,7 @@ static int AIFFGetMarkerPosition(int16 id, const AIFFMarkerData *markers, uint32
 					for(j = 0; j < (block_frame_count * (fch)); i++)
 #define BLOCK_READ_END		} } }
 
-static int read_sample_data(int32 flags, struct timidity_file *tf, int bits, int channels, int frames, sample_t **sdata)
+static int read_sample_data(struct timiditycontext_t *c, int32 flags, struct timidity_file *tf, int bits, int channels, int frames, sample_t **sdata)
 {
 	int				i, block_frame_count;
 
@@ -1049,7 +1050,7 @@ static int read_sample_data(int32 flags, struct timidity_file *tf, int bits, int
 }
 
 /* from instrum.c */
-static int32 convert_envelope_rate(uint8 rate)
+static int32 convert_envelope_rate(struct timiditycontext_t *c, uint8 rate)
 {
   int32 r;
 
@@ -1058,8 +1059,8 @@ static int32 convert_envelope_rate(uint8 rate)
   r = (int32)(rate & 0x3f) << r; /* 6.9 fixed point */
 
   /* 15.15 fixed point. */
-  return (((r * 44100) / play_mode->rate) * control_ratio)
-    << ((fast_decay) ? 10 : 9);
+  return (((r * 44100) / play_mode->rate) * c->control_ratio)
+    << ((c->fast_decay) ? 10 : 9);
 }
 
 /* from instrum.c */
@@ -1072,7 +1073,7 @@ static int32 convert_envelope_offset(uint8 offset)
   return offset << (7+15);
 }
 
-static void initialize_sample(Instrument *inst, int frames, int sample_bits, int sample_rate)
+static void initialize_sample(struct timiditycontext_t *c, Instrument *inst, int frames, int sample_bits, int sample_rate)
 {
 	int				i, j, samples;
 	Sample			*sample;
@@ -1086,9 +1087,9 @@ static void initialize_sample(Instrument *inst, int frames, int sample_bits, int
 		sample->loop_start = 0;
 		sample->loop_end = sample->data_length = frames << FRACTION_BITS;
 		sample->sample_rate = sample_rate;
-		sample->low_freq = freq_table[0];
-		sample->high_freq = freq_table[127];
-		sample->root_freq = freq_table[60];
+		sample->low_freq = c->freq_table[0];
+		sample->high_freq = c->freq_table[127];
+		sample->root_freq = c->freq_table[60];
 		sample->panning = 64;
 		sample->note_to_use = 0;
 		sample->volume = 1.0;
@@ -1128,7 +1129,7 @@ static void initialize_sample(Instrument *inst, int frames, int sample_bits, int
 	{
 		int32			envelope_rate, envelope_offset;
 
-		envelope_rate = convert_envelope_rate(63);	/* wav2pat.c */
+		envelope_rate = convert_envelope_rate(c, 63);	/* wav2pat.c */
 		envelope_offset = convert_envelope_offset(240);	/* wav2pat.c */
 		for(j = 0; j < samples; j++)
 		{
@@ -1139,28 +1140,28 @@ static void initialize_sample(Instrument *inst, int frames, int sample_bits, int
 	}
 }
 
-static void apply_GeneralInstrumentInfo(int samples, Sample *sample, const GeneralInstrumentInfo *info)
+static void apply_GeneralInstrumentInfo(struct timiditycontext_t *c, int samples, Sample *sample, const GeneralInstrumentInfo *info)
 {
 	int32		root_freq;
 	FLOAT_T		gain;
 	int			i;
 
-	root_freq = freq_table[info->baseNote];
+	root_freq = c->freq_table[info->baseNote];
 	if (info->detune < 0)
 	{
 		if (info->baseNote != 0)	/* no table data */
-			root_freq += (root_freq - freq_table[info->baseNote - 1]) * 50 / info->detune;
+			root_freq += (root_freq - c->freq_table[info->baseNote - 1]) * 50 / info->detune;
 	}
 	else if (info->detune > 0)
 	{
 		if (info->baseNote != 127)	/* no table data */
-			root_freq += (freq_table[info->baseNote + 1] - root_freq) * 50 / info->detune;
+			root_freq += (c->freq_table[info->baseNote + 1] - root_freq) * 50 / info->detune;
 	}
 	gain = pow(10, info->gain / 20.0);
 	for(i = 0; i < samples; i++)
 	{
-		sample[i].low_freq = freq_table[info->lowNote];
-		sample[i].high_freq = freq_table[info->highNote];
+		sample[i].low_freq = c->freq_table[info->lowNote];
+		sample[i].high_freq = c->freq_table[info->highNote];
 		sample[i].root_freq = root_freq;
 		sample[i].volume *= gain;
 		sample[i].low_vel = info->lowVelocity;

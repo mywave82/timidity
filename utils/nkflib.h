@@ -26,9 +26,16 @@
 #define ___NKFLIB_H_
 
 #ifdef JAPANESE
-extern char *nkf_convert(char *si,char *so,int maxsize,
+struct timiditycontext_t;
+extern char *nkf_convert(struct timiditycontext_t *c,
+                         char *si,char *so,int maxsize,
 			 char *in_mode, char *out_mode);
-extern char *nkf_conv(char *si,char *so,char *mode);
+extern char *nkf_conv(struct timiditycontext_t *c, char *si,char *so,char *mode);
+
+#define         HOLD_SIZE       32
+#define MIME_BUF_SIZE   (1024)    /* 2^n ring buffer */
+
+
 #endif /* JAPANESE */
 
 #endif /* ___NKFLIB_H_ */

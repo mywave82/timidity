@@ -57,67 +57,67 @@
 
 /*************** conversion functions ***************/
 
-static int32 convert_DIRECT_INT_NUM(int32 value, int32 param)
+static int32 convert_DIRECT_INT_NUM(struct timiditycontext_t *c, int32 value, int32 param)
 {
 	return value;
 }
 
-static FLOAT_T convert_DIRECT_FLOAT_NUM(FLOAT_T value, int32 param)
+static FLOAT_T convert_DIRECT_FLOAT_NUM(struct timiditycontext_t *c, FLOAT_T value, int32 param)
 {
 	return value;
 }
 
 /* from instrum.c, convert_tremolo_sweep() */
-static int32 convert_TREMOLO_SWEEP_NUM(int32 value, int32 param)
+static int32 convert_TREMOLO_SWEEP_NUM(struct timiditycontext_t *c, int32 value, int32 param)
 {
 	uint8	sweep = value;
   if (!sweep)
     return 0;
 
   return
-    ((control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) /
+    ((c->control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) /
       (play_mode->rate * sweep);
 }
 
-static int32 convert_TREMOLO_SWEEP_MS(int32 value, int32 param)
+static int32 convert_TREMOLO_SWEEP_MS(struct timiditycontext_t *c, int32 value, int32 param)
 {
 	if (value <= 0)
 		return 0;
 	#if SWEEP_SHIFT <= 16
-	return ((uint32)(control_ratio * (1000 >> 2)) << SWEEP_SHIFT) / ((play_mode->rate * value) >> 2);
+	return ((uint32)(c->control_ratio * (1000 >> 2)) << SWEEP_SHIFT) / ((play_mode->rate * value) >> 2);
 	#else
 		#error "overflow"
 	#endif
 }
 
 /* from instrum.c, convert_tremolo_rate() */
-static int32 convert_TREMOLO_RATE_NUM(int32 value, int32 param)
+static int32 convert_TREMOLO_RATE_NUM(struct timiditycontext_t *c, int32 value, int32 param)
 {
 	uint8	rate = value;
   return
-    ((SINE_CYCLE_LENGTH * control_ratio * rate) << RATE_SHIFT) /
+    ((SINE_CYCLE_LENGTH * c->control_ratio * rate) << RATE_SHIFT) /
       (TREMOLO_RATE_TUNING * play_mode->rate);
 }
 
-static int32 convert_TREMOLO_RATE_MS(int32 value, int32 param)
+static int32 convert_TREMOLO_RATE_MS(struct timiditycontext_t *c, int32 value, int32 param)
 {
 	#if RATE_SHIFT <= 5
-	return ((SINE_CYCLE_LENGTH * control_ratio * (1000 >> 1)) << RATE_SHIFT) /
+	return ((SINE_CYCLE_LENGTH * c->control_ratio * (1000 >> 1)) << RATE_SHIFT) /
 		((play_mode->rate * (uint32)value) >> 1);
 	#else
 		#error "overflow"
 	#endif
 }
 
-static FLOAT_T convert_TREMOLO_RATE_HZ(FLOAT_T value, int32 param)
+static FLOAT_T convert_TREMOLO_RATE_HZ(struct timiditycontext_t *c, FLOAT_T value, int32 param)
 {
 	if (value <= 0)
 		return 0;
-	return ((SINE_CYCLE_LENGTH * control_ratio) << RATE_SHIFT) * value / play_mode->rate;
+	return ((SINE_CYCLE_LENGTH * c->control_ratio) << RATE_SHIFT) * value / play_mode->rate;
 }
 
 /* from instrum.c, convert_vibrato_sweep() */
-static int32 convert_VIBRATO_SWEEP_NUM(int32 value, int32 vib_control_ratio)
+static int32 convert_VIBRATO_SWEEP_NUM(struct timiditycontext_t *c, int32 value, int32 vib_control_ratio)
 {
 	uint8	sweep = value;
   if (!sweep)
@@ -133,7 +133,7 @@ static int32 convert_VIBRATO_SWEEP_NUM(int32 value, int32 vib_control_ratio)
       (play_mode->rate * sweep); */
 }
 
-static int32 convert_VIBRATO_SWEEP_MS(int32 value, int32 vib_control_ratio)
+static int32 convert_VIBRATO_SWEEP_MS(struct timiditycontext_t *c, int32 value, int32 vib_control_ratio)
 {
 	if (value <= 0)
 		return 0;
@@ -142,17 +142,17 @@ static int32 convert_VIBRATO_SWEEP_MS(int32 value, int32 vib_control_ratio)
 }
 
 /* from instrum.c, to_control() */
-static int32 convert_VIBRATO_RATE_NUM(int32 control, int32 param)
+static int32 convert_VIBRATO_RATE_NUM(struct timiditycontext_t *c, int32 control, int32 param)
 {
 	return (int32) (0x2000 / pow(2.0, control / 31.0));
 }
 
-static int32 convert_VIBRATO_RATE_MS(int32 value, int32 param)
+static int32 convert_VIBRATO_RATE_MS(struct timiditycontext_t *c, int32 value, int32 param)
 {
 	return 1000 * play_mode->rate / ((2 * VIBRATO_SAMPLE_INCREMENTS) * value);
 }
 
-static FLOAT_T convert_VIBRATO_RATE_HZ(FLOAT_T value, int32 param)
+static FLOAT_T convert_VIBRATO_RATE_HZ(struct timiditycontext_t *c, FLOAT_T value, int32 param)
 {
 	return play_mode->rate / ((2 * VIBRATO_SAMPLE_INCREMENTS) * value);
 }
@@ -161,13 +161,14 @@ static FLOAT_T convert_VIBRATO_RATE_HZ(FLOAT_T value, int32 param)
 
 #define MAX_QUANTITY_UNITS_PER_UNIT_TYPES	8
 
-static int GetQuantityHints(uint16 type, QuantityHint *units)
+static int GetQuantityHints(struct timiditycontext_t *c, uint16 type, QuantityHint *units)
 {
 	QuantityHint		*unit;
 
 	unit = units;
 	#define QUANTITY_TYPE_INT(type)	\
 			case QUANTITY_UNIT_TYPE(type):		REGISTER_TYPE_INT("", type##_NUM)
+
 	#define QUANTITY_TYPE_FLOAT(type)	\
 			case QUANTITY_UNIT_TYPE(type):		REGISTER_TYPE_FLOAT("", type##_NUM)
 	#define REGISTER_TYPE_INT(ustr, utype)					REGISTER_TYPE_ENTITY_INT(ustr, utype, convert_##utype)
@@ -207,11 +208,11 @@ static int GetQuantityHints(uint16 type, QuantityHint *units)
 }
 
 /* quantity is unchanged if an error occurred */
-static const char *number_to_quantity(int32 number_i, const char *suffix_i, FLOAT_T number_f, const char *suffix_f, Quantity *quantity, uint16 type)
+static const char *number_to_quantity(struct timiditycontext_t *c, int32 number_i, const char *suffix_i, FLOAT_T number_f, const char *suffix_f, Quantity *quantity, uint16 type)
 {
 	QuantityHint		units[MAX_QUANTITY_UNITS_PER_UNIT_TYPES], *unit;
 
-	if (!GetQuantityHints(type, units))
+	if (!GetQuantityHints(c, type, units))
 		return "Parameter error";
 	unit = units;
 	while(unit->suffix != NULL)
@@ -243,7 +244,7 @@ static const char *number_to_quantity(int32 number_i, const char *suffix_i, FLOA
 	return "invalid parameter";
 }
 
-const char *string_to_quantity(const char *string, Quantity *quantity, uint16 type)
+const char *string_to_quantity(struct timiditycontext_t *c, const char *string, Quantity *quantity, uint16 type)
 {
 	int32				number_i;
 	FLOAT_T				number_f;
@@ -253,13 +254,13 @@ const char *string_to_quantity(const char *string, Quantity *quantity, uint16 ty
 	if (string == suffix_i)	/* doesn't start with valid character */
 		return "Number expected";
 	number_f = strtod(string, &suffix_f);
-	return number_to_quantity(number_i, suffix_i, number_f, suffix_f, quantity, type);
+	return number_to_quantity(c, number_i, suffix_i, number_f, suffix_f, quantity, type);
 }
 
-void int_to_quantity(int32 number, Quantity *quantity, uint16 type)
+void int_to_quantity(struct timiditycontext_t *c, int32 number, Quantity *quantity, uint16 type)
 {
 	/* pass suffix_f NULL to warn if unit type is float type */
-	if (number_to_quantity(number, "", number, NULL, quantity, type) != NULL)	/* error */
+	if (number_to_quantity(c, number, "", number, NULL, quantity, type) != NULL)	/* error */
 	{
 		quantity->type = QUANTITY_UNIT_TYPE(DIRECT_INT);
 		quantity->unit = QUANTITY_UNIT_NAME(DIRECT_INT_NUM);
@@ -267,10 +268,10 @@ void int_to_quantity(int32 number, Quantity *quantity, uint16 type)
 	}
 }
 
-void float_to_quantity(FLOAT_T number, Quantity *quantity, uint16 type)
+void float_to_quantity(struct timiditycontext_t *c, FLOAT_T number, Quantity *quantity, uint16 type)
 {
 	/* pass suffix_i NULL to warn if unit type is integer type */
-	if (number_to_quantity(number, NULL, number, "", quantity, type) != NULL)	/* error */
+	if (number_to_quantity(c, number, NULL, number, "", quantity, type) != NULL)	/* error */
 	{
 		quantity->type = QUANTITY_UNIT_TYPE(DIRECT_FLOAT);
 		quantity->unit = QUANTITY_UNIT_NAME(DIRECT_FLOAT_NUM);
@@ -278,11 +279,11 @@ void float_to_quantity(FLOAT_T number, Quantity *quantity, uint16 type)
 	}
 }
 
-static int GetQuantityConvertProc(const Quantity *quantity, QuantityConvertProc *proc)
+static int GetQuantityConvertProc(struct timiditycontext_t *c, const Quantity *quantity, QuantityConvertProc *proc)
 {
 	QuantityHint		units[MAX_QUANTITY_UNITS_PER_UNIT_TYPES], *unit;
 
-	if (!GetQuantityHints(quantity->type, units))
+	if (!GetQuantityHints(c, quantity->type, units))
 		return -1;	/* already warned */
 	unit = units;
 	while(unit->suffix != NULL)
@@ -298,30 +299,30 @@ static int GetQuantityConvertProc(const Quantity *quantity, QuantityConvertProc 
 	return -1;
 }
 
-int32 quantity_to_int(const Quantity *quantity, int32 param)
+int32 quantity_to_int(struct timiditycontext_t *c, const Quantity *quantity, int32 param)
 {
 	QuantityConvertProc	proc;
 
-	switch (GetQuantityConvertProc(quantity, &proc))
+	switch (GetQuantityConvertProc(c, quantity, &proc))
 	{
 		case 0:
-			return (*proc.i)(quantity->value.i, param);
+			return (*proc.i)(c, quantity->value.i, param);
 		case 1:
-			return (*proc.f)(quantity->value.f, param);
+			return (*proc.f)(c, quantity->value.f, param);
 	}
 	return 0;
 }
 
-FLOAT_T quantity_to_float(const Quantity *quantity, int32 param)
+FLOAT_T quantity_to_float(struct timiditycontext_t *c, const Quantity *quantity, int32 param)
 {
 	QuantityConvertProc	proc;
 
-	switch (GetQuantityConvertProc(quantity, &proc))
+	switch (GetQuantityConvertProc(c, quantity, &proc))
 	{
 		case 0:
-			return (*proc.i)(quantity->value.i, param);
+			return (*proc.i)(c, quantity->value.i, param);
 		case 1:
-			return (*proc.f)(quantity->value.f, param);
+			return (*proc.f)(c, quantity->value.f, param);
 	}
 	return 0;
 }

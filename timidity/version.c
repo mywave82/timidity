@@ -25,4 +25,4 @@
 #ifndef PACKAGE_VERSION
 #define PACKAGE_VERSION TIMID_VERSION
 #endif
-char *timidity_version = PACKAGE_VERSION;
+const char *timidity_version = PACKAGE_VERSION;

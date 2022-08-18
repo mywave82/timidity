@@ -51,71 +51,59 @@
 #include "recache.h"
 #include "resample.h"
 
-#define HASH_TABLE_SIZE 251
 #define MIXLEN 256
 
 #define MIN_LOOPSTART MIXLEN
 #define MIN_LOOPLEN 1024
 #define MAX_EXPANDLEN (1024 * 32)
-#define CACHE_DATA_LEN (allocate_cache_size / sizeof(sample_t))
+#define CACHE_DATA_LEN (c->allocate_cache_size / sizeof(sample_t))
 
 #define sp_hash(sp, note) ((unsigned long) (sp) + (unsigned int) (note))
 #define CACHE_RESAMPLING_OK 0
 #define CACHE_RESAMPLING_NOTOK 1
 #define SORT_THRESHOLD 20
-#define RESAMPLATION_CACHE _x = do_resamplation(src, ofs, &resrc); \
+#define RESAMPLATION_CACHE _x = do_resamplation(c, src, ofs, &resrc); \
 		dest[i] = (int16) ((_x > 32767) ? 32767 \
 				: ((_x < -32768) ? -32768 : _x))
 
-static sample_t *cache_data = NULL;
-int32 allocate_cache_size = DEFAULT_CACHE_DATA_SIZE;
-static splen_t cache_data_len;
-static struct cache_hash *cache_hash_table[HASH_TABLE_SIZE];
-static MBlockList hash_entry_pool;
-
-static struct {
-	int32 on[128];
-	struct cache_hash *cache[128];
-} channel_note_table[MAX_CHANNELS];
-
-static double sample_resamp_info(Sample *, int,
+static double sample_resamp_info(struct timiditycontext_t *c, Sample *, int,
 		splen_t *, splen_t *, splen_t *);
 static void qsort_cache_array(struct cache_hash **, long, long);
 static void insort_cache_array(struct cache_hash **, long);
-static int cache_resampling(struct cache_hash *);
+static int cache_resampling(struct timiditycontext_t *c, struct cache_hash *);
 static void loop_connect(sample_t *, int32, int32);
 
-void free_cache_data(void) {
-	free(cache_data);
-	cache_data = 0;
-	reuse_mblock(&hash_entry_pool);
+void free_cache_data(struct timiditycontext_t *c) {
+	free(c->cache_data);
+	c->cache_data = 0;
+	reuse_mblock(c, &c->hash_entry_pool);
 }
 
-void resamp_cache_reset(void)
+void resamp_cache_reset(struct timiditycontext_t *c)
 {
-	if (cache_data == NULL) {
-		cache_data = (sample_t *)
+	if (c->cache_data == NULL) {
+		c->cache_data = (sample_t *)
 				safe_large_malloc((CACHE_DATA_LEN + 1) * sizeof(sample_t));
-		memset(cache_data, 0, (CACHE_DATA_LEN + 1) * sizeof(sample_t));
-		init_mblock(&hash_entry_pool);
+		memset(c->cache_data, 0, (CACHE_DATA_LEN + 1) * sizeof(sample_t));
+		init_mblock(&c->hash_entry_pool);
 	}
-	cache_data_len = 0;
-	memset(cache_hash_table, 0, sizeof(cache_hash_table));
-	memset(channel_note_table, 0, sizeof(channel_note_table));
-	reuse_mblock(&hash_entry_pool);
+	c->cache_data_len = 0;
+	memset(c->cache_hash_table, 0, sizeof(c->cache_hash_table));
+	memset(c->channel_note_table, 0, sizeof(c->channel_note_table));
+	reuse_mblock(c, &c->hash_entry_pool);
 }
 
-struct cache_hash *resamp_cache_fetch(Sample *sp, int note)
+struct cache_hash *resamp_cache_fetch(struct timiditycontext_t *c, Sample *sp, int note)
 {
 	unsigned int addr;
 	struct cache_hash *p;
 
 	if (sp->vibrato_control_ratio || (sp->modes & MODES_PINGPONG)
 			|| (sp->sample_rate == play_mode->rate
-			&& sp->root_freq == get_note_freq(sp, sp->note_to_use)))
+			&& sp->root_freq == get_note_freq(c, sp, sp->note_to_use)))
 		return NULL;
 	addr = sp_hash(sp, note) % HASH_TABLE_SIZE;
-	p = cache_hash_table[addr];
+	p = c->cache_hash_table[addr];
 	while (p && (p->note != note || p->sp != sp))
 		p = p->next;
 	if (p && p->resampled != NULL)
@@ -123,58 +111,58 @@ struct cache_hash *resamp_cache_fetch(Sample *sp, int note)
 	return NULL;
 }
 
-void resamp_cache_refer_on(Voice *vp, int32 sample_start)
+void resamp_cache_refer_on(struct timiditycontext_t *c, Voice *vp, int32 sample_start)
 {
 	unsigned int addr;
 	struct cache_hash *p;
 	int note, ch;
 
 	ch = vp->channel;
-	if (vp->vibrato_control_ratio || channel[ch].portamento
+	if (vp->vibrato_control_ratio || c->channel[ch].portamento
 			|| (vp->sample->modes & MODES_PINGPONG)
 			|| vp->orig_frequency != vp->frequency
 			|| (vp->sample->sample_rate == play_mode->rate
 			&& vp->sample->root_freq
-			== get_note_freq(vp->sample, vp->sample->note_to_use)))
+			== get_note_freq(c, vp->sample, vp->sample->note_to_use)))
 		return;
 	note = vp->note;
-	if (channel_note_table[ch].cache[note])
-		resamp_cache_refer_off(ch, note, sample_start);
+	if (c->channel_note_table[ch].cache[note])
+		resamp_cache_refer_off(c, ch, note, sample_start);
 	addr = sp_hash(vp->sample, note) % HASH_TABLE_SIZE;
-	p = cache_hash_table[addr];
+	p = c->cache_hash_table[addr];
 	while (p && (p->note != note || p->sp != vp->sample))
 		p = p->next;
 	if (! p) {
 		p = (struct cache_hash *)
-		new_segment(&hash_entry_pool, sizeof(struct cache_hash));
+		new_segment(c, &c->hash_entry_pool, sizeof(struct cache_hash));
 		p->cnt = 0;
 		p->note = vp->note;
 		p->sp = vp->sample;
 		p->resampled = NULL;
-		p->next = cache_hash_table[addr];
-		cache_hash_table[addr] = p;
+		p->next = c->cache_hash_table[addr];
+		c->cache_hash_table[addr] = p;
 	}
-	channel_note_table[ch].cache[note] = p;
-	channel_note_table[ch].on[note] = sample_start;
+	c->channel_note_table[ch].cache[note] = p;
+	c->channel_note_table[ch].on[note] = sample_start;
 }
 
-void resamp_cache_refer_off(int ch, int note, int32 sample_end)
+void resamp_cache_refer_off(struct timiditycontext_t *c, int ch, int note, int32 sample_end)
 {
 	int32 sample_start, len;
 	struct cache_hash *p;
 	Sample *sp;
 
-	p = channel_note_table[ch].cache[note];
+	p = c->channel_note_table[ch].cache[note];
 	if (p == NULL)
 		return;
 	sp = p->sp;
 	if (sp->sample_rate == play_mode->rate
-			&& sp->root_freq == get_note_freq(sp, sp->note_to_use))
+			&& sp->root_freq == get_note_freq(c, sp, sp->note_to_use))
 		return;
-	sample_start = channel_note_table[ch].on[note];
+	sample_start = c->channel_note_table[ch].on[note];
 	len = sample_end - sample_start;
 	if (len < 0) {
-		channel_note_table[ch].cache[note] = NULL;
+		c->channel_note_table[ch].cache[note] = NULL;
 		return;
 	}
 	if (! (sp->modes & MODES_LOOPING)) {
@@ -182,24 +170,24 @@ void resamp_cache_refer_off(int ch, int note, int32 sample_end)
 		int32 slen;
 
 		a = ((double) sp->root_freq * play_mode->rate)
-				/ ((double) sp->sample_rate * get_note_freq(sp, note));
+				/ ((double) sp->sample_rate * get_note_freq(c, sp, note));
 		slen = (int32) ((sp->data_length >> FRACTION_BITS) * a);
 		if (len > slen)
 			len = slen;
 	}
 	p->cnt += len;
-	channel_note_table[ch].cache[note] = NULL;
+	c->channel_note_table[ch].cache[note] = NULL;
 }
 
-void resamp_cache_refer_alloff(int ch, int32 sample_end)
+void resamp_cache_refer_alloff(struct timiditycontext_t *c, int ch, int32 sample_end)
 {
 	int i;
 
 	for (i = 0; i < 128; i++)
-		resamp_cache_refer_off(ch, i, sample_end);
+		resamp_cache_refer_off(c, ch, i, sample_end);
 }
 
-void resamp_cache_create(void)
+void resamp_cache_create(struct timiditycontext_t *c)
 {
 	int i, skip;
 	int32 n, t1, t2, total;
@@ -215,7 +203,7 @@ void resamp_cache_create(void)
 	for (i = 0; i < HASH_TABLE_SIZE; i++) {
 		struct cache_hash *p, *q;
 
-		p = cache_hash_table[i], q = NULL;
+		p = c->cache_hash_table[i], q = NULL;
 		while (p) {
 			struct cache_hash *tmp;
 
@@ -226,7 +214,7 @@ void resamp_cache_create(void)
 				splen_t newlen;
 
 				sp = tmp->sp;
-				sample_resamp_info(sp, tmp->note, NULL, NULL, &newlen);
+				sample_resamp_info(c, sp, tmp->note, NULL, NULL, &newlen);
 				if (newlen > 0) {
 					total += tmp->cnt;
 					tmp->r = (double) newlen / tmp->cnt;
@@ -235,19 +223,19 @@ void resamp_cache_create(void)
 				}
 			}
 		}
-		cache_hash_table[i] = q;
+		c->cache_hash_table[i] = q;
 	}
 	if (n == 0) {
 		ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "No pre-resampling cache hit");
 		return;
 	}
-	array = (struct cache_hash **) new_segment(&hash_entry_pool,
+	array = (struct cache_hash **) new_segment(c, &c->hash_entry_pool,
 			n * sizeof(struct cache_hash *));
 	n = 0;
 	for (i = 0; i < HASH_TABLE_SIZE; i++) {
 		struct cache_hash *p;
 
-		for (p = cache_hash_table[i]; p; p = p->next)
+		for (p = c->cache_hash_table[i]; p; p = p->next)
 			array[n++] = p;
 	}
 	if (total > CACHE_DATA_LEN)
@@ -255,7 +243,7 @@ void resamp_cache_create(void)
 	skip = 0;
 	for (i = 0; i < n; i++) {
 		if (array[i]->r != 0
-				&& cache_resampling(array[i]) == CACHE_RESAMPLING_OK)
+				&& cache_resampling(c, array[i]) == CACHE_RESAMPLING_OK)
 			t2 += array[i]->cnt;
 		else
 			skip++;
@@ -273,7 +261,7 @@ void resamp_cache_create(void)
 		for (i = 0; i < HASH_TABLE_SIZE; i++) {
 			struct cache_hash *p, *q;
 
-			p = cache_hash_table[i], q = NULL;
+			p = c->cache_hash_table[i], q = NULL;
 			while (p) {
 				struct cache_hash *tmp;
 
@@ -281,17 +269,17 @@ void resamp_cache_create(void)
 				if (tmp->resampled)
 					tmp->next = q, q = tmp;
 			}
-			cache_hash_table[i] = q;
+			c->cache_hash_table[i] = q;
 		}
 }
 
-static double sample_resamp_info(Sample *sp, int note,
+static double sample_resamp_info(struct timiditycontext_t *c, Sample *sp, int note,
 		splen_t *loop_start, splen_t *loop_end, splen_t *data_length)
 {
 	splen_t xls, xle, ls, le, ll, newlen;
 	double a, xxls, xxle, xn;
 
-	a = ((double) sp->sample_rate * get_note_freq(sp, note))
+	a = ((double) sp->sample_rate * get_note_freq(c, sp, note))
 			/ ((double) sp->root_freq * play_mode->rate);
 	a = TIM_FSCALENEG((double) (int32) TIM_FSCALE(a, FRACTION_BITS),
 			FRACTION_BITS);
@@ -391,7 +379,7 @@ static void insort_cache_array(struct cache_hash **data, long n)
 	}
 }
 
-static int cache_resampling(struct cache_hash *p)
+static int cache_resampling(struct timiditycontext_t *c, struct cache_hash *p)
 {
 	Sample *sp, *newsp;
 	sample_t *src, *dest;
@@ -406,19 +394,19 @@ static int cache_resampling(struct cache_hash *p)
 		note = sp->note_to_use;
 	else
 		note = p->note;
-	a = sample_resamp_info(sp, note, &xls, &xle, &newlen);
+	a = sample_resamp_info(c, sp, note, &xls, &xle, &newlen);
 	if (newlen == 0)
 		return CACHE_RESAMPLING_NOTOK;
 	newlen >>= FRACTION_BITS;
-	if (cache_data_len + newlen + 1 > CACHE_DATA_LEN)
+	if (c->cache_data_len + newlen + 1 > CACHE_DATA_LEN)
 		return CACHE_RESAMPLING_NOTOK;
 	resrc.loop_start = ls = sp->loop_start;
 	resrc.loop_end = le = sp->loop_end;
 	resrc.data_length = sp->data_length;
 	ll = sp->loop_end - sp->loop_start;
-	dest = cache_data + cache_data_len;
+	dest = c->cache_data + c->cache_data_len;
 	src = sp->data;
-	newsp = (Sample *) new_segment(&hash_entry_pool, sizeof(Sample));
+	newsp = (Sample *) new_segment(c, &c->hash_entry_pool, sizeof(Sample));
 	memcpy(newsp, sp, sizeof(Sample));
 	newsp->data = dest;
 	ofs = 0;
@@ -442,10 +430,10 @@ static int cache_resampling(struct cache_hash *p)
 		loop_connect(dest, (int32) (xls >> FRACTION_BITS),
 				(int32) (xle >> FRACTION_BITS));
 	dest[xle >> FRACTION_BITS] = dest[xls >> FRACTION_BITS];
-	newsp->root_freq = get_note_freq(newsp, note);
+	newsp->root_freq = get_note_freq(c, newsp, note);
 	newsp->sample_rate = play_mode->rate;
 	p->resampled = newsp;
-	cache_data_len += newlen + 1;
+	c->cache_data_len += newlen + 1;
 	return CACHE_RESAMPLING_OK;
 }
 

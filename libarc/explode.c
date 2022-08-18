@@ -120,7 +120,7 @@
 struct _ExplodeHandler
 {
     void *user_val;
-    long (* read_func)(char *buf, long size, void *user_val);
+    long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val);
     int method;
 
     int initflag;
@@ -150,12 +150,12 @@ struct _ExplodeHandler
 };
 
 /* routines here */
-static int get_tree(ExplodeHandler decoder, unsigned *l, unsigned n);
-static int fill_inbuf(ExplodeHandler decoder);
-static long explode_lit8(ExplodeHandler decoder,  char *buff, long size);
-static long explode_lit4(ExplodeHandler decoder,  char *buff, long size);
-static long explode_nolit8(ExplodeHandler decoder,char *buff, long size);
-static long explode_nolit4(ExplodeHandler decoder,char *buff, long size);
+static int get_tree(struct timiditycontext_t *c, ExplodeHandler decoder, unsigned *l, unsigned n);
+static int fill_inbuf(struct timiditycontext_t *c, ExplodeHandler decoder);
+static long explode_lit8(struct timiditycontext_t *c, ExplodeHandler decoder,  char *buff, long size);
+static long explode_lit4(struct timiditycontext_t *c, ExplodeHandler decoder,  char *buff, long size);
+static long explode_nolit8(struct timiditycontext_t *c, ExplodeHandler decoder,char *buff, long size);
+static long explode_nolit4(struct timiditycontext_t *c, ExplodeHandler decoder,char *buff, long size);
 
 
 /* The implode algorithm uses a sliding 4K or 8K byte window on the
@@ -216,7 +216,7 @@ static const ush cpdist8[] =
    variables for speed.
  */
 
-#define NEXTBYTE (decoder->inptr < decoder->insize ? decoder->inbuf[decoder->inptr++] : fill_inbuf(decoder))
+#define NEXTBYTE (decoder->inptr < decoder->insize ? decoder->inbuf[decoder->inptr++] : fill_inbuf(c, decoder))
 #define MASK_BITS(n) ((((ulg)1)<<(n))-1)
 #define NEEDBITS(n) {while(decoder->bit_len<(n)){decoder->bit_buf|=((ulg)NEXTBYTE)<<decoder->bit_len;decoder->bit_len+=8;}}
 #define GETBITS(n)  ((ulg)decoder->bit_buf & MASK_BITS(n))
@@ -225,13 +225,13 @@ static const ush cpdist8[] =
 
 
 /*ARGSUSED*/
-static long default_read_func(char *buf, long size, void *v)
+static long default_read_func(struct timiditycontext_t *c, char *buf, long size, void *v)
 {
     return (long)fread(buf, 1, size, stdin);
 }
 
 ExplodeHandler open_explode_handler(
-	long (* read_func)(char *buf, long size, void *user_val),
+	long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val),
 	int method,
 	long compsize, long origsize,
 	void *user_val)
@@ -279,7 +279,7 @@ ExplodeHandler open_explode_handler(
     return decoder;
 }
 
-static int explode_start(ExplodeHandler decoder)
+static int explode_start(struct timiditycontext_t *c, ExplodeHandler decoder)
 {
     int method;
 
@@ -289,57 +289,57 @@ static int explode_start(ExplodeHandler decoder)
     if(method == EXPLODE_LIT8 || method == EXPLODE_LIT4)
     {
 	decoder->bb = 9;	/* base table size for literals */
-	if(get_tree(decoder, decoder->l, 256) != 0)
+	if(get_tree(c, decoder, decoder->l, 256) != 0)
 	    return 1;
 
-	if(huft_build(decoder->l, 256, 256, NULL, NULL,
+	if(huft_build(c, decoder->l, 256, 256, NULL, NULL,
 		      &decoder->tb, &decoder->bb, &decoder->pool) != 0)
 	    return 1;
 
-	if(get_tree(decoder, decoder->l, 64) != 0)
+	if(get_tree(c, decoder, decoder->l, 64) != 0)
 	    return 1;
 
-	if(huft_build(decoder->l, 64, 0, cplen3, extra,
+	if(huft_build(c, decoder->l, 64, 0, cplen3, extra,
 		      &decoder->tl, &decoder->bl, &decoder->pool) != 0)
 	    return 1;
 
-	if(get_tree(decoder, decoder->l, 64) != 0)
+	if(get_tree(c, decoder, decoder->l, 64) != 0)
 	    return 1;
 
 	if(method == EXPLODE_LIT8)
 	{
-	    if(huft_build(decoder->l, 64, 0, cpdist8, extra,
+	    if(huft_build(c, decoder->l, 64, 0, cpdist8, extra,
 			  &decoder->td, &decoder->bd, &decoder->pool) != 0)
 		return 1;
 	}
 	else
 	{
-	    if(huft_build(decoder->l, 64, 0, cpdist4, extra,
+	    if(huft_build(c, decoder->l, 64, 0, cpdist4, extra,
 			  &decoder->td, &decoder->bd, &decoder->pool) != 0)
 		return 1;
 	}
     }
     else /* EXPLODE_NOLIT8 or EXPLODE_NOLIT4 */
     {
-	if(get_tree(decoder, decoder->l, 64) != 0)
+	if(get_tree(c, decoder, decoder->l, 64) != 0)
 	    return 1;
 
-	if(huft_build(decoder->l, 64, 0, cplen2, extra,
+	if(huft_build(c, decoder->l, 64, 0, cplen2, extra,
 		      &decoder->tl, &decoder->bl, &decoder->pool) != 0)
 	    return 1;
 
-	if(get_tree(decoder, decoder->l, 64) != 0)
+	if(get_tree(c, decoder, decoder->l, 64) != 0)
 	    return 1;
 
 	if(method == EXPLODE_NOLIT8)
 	{
-	    if(huft_build(decoder->l, 64, 0, cpdist8, extra,
+	    if(huft_build(c, decoder->l, 64, 0, cpdist8, extra,
 			  &decoder->td, &decoder->bd, &decoder->pool) != 0)
 		return 1;
 	}
 	else
 	{
-	    if(huft_build(decoder->l, 64, 0, cpdist4, extra,
+	    if(huft_build(c, decoder->l, 64, 0, cpdist4, extra,
 			  &decoder->td, &decoder->bd, &decoder->pool) != 0)
 		return 1;
 	}
@@ -356,6 +356,7 @@ void close_explode_handler(ExplodeHandler decoder)
 
 
 static int get_tree(
+    struct timiditycontext_t *c,
     ExplodeHandler decoder,
     unsigned *l,		/* bit lengths */
     unsigned n)			/* number expected */
@@ -386,7 +387,7 @@ static int get_tree(
 
 
 
-static long explode_lit8(ExplodeHandler decoder, char *buff, long size)
+static long explode_lit8(struct timiditycontext_t *c, ExplodeHandler decoder, char *buff, long size)
 /* Decompress the imploded data using coded literals and an 8K sliding
    window. */
 {
@@ -527,7 +528,7 @@ static long explode_lit8(ExplodeHandler decoder, char *buff, long size)
 
 
 
-static long explode_lit4(ExplodeHandler decoder, char *buff, long size)
+static long explode_lit4(struct timiditycontext_t *c, ExplodeHandler decoder, char *buff, long size)
 /* Decompress the imploded data using coded literals and a 4K sliding
    window. */
 {
@@ -667,7 +668,7 @@ static long explode_lit4(ExplodeHandler decoder, char *buff, long size)
 
 
 
-static long explode_nolit8(ExplodeHandler decoder, char *buff, long size)
+static long explode_nolit8(struct timiditycontext_t *c, ExplodeHandler decoder, char *buff, long size)
 /* Decompress the imploded data using uncoded literals and an 8K sliding
    window. */
 {
@@ -802,7 +803,7 @@ static long explode_nolit8(ExplodeHandler decoder, char *buff, long size)
 
 
 
-static long explode_nolit4(ExplodeHandler decoder, char *buff, long size)
+static long explode_nolit4(struct timiditycontext_t *c, ExplodeHandler decoder, char *buff, long size)
 /* Decompress the imploded data using uncoded literals and a 4K sliding
    window. */
 {
@@ -940,7 +941,7 @@ static long explode_nolit4(ExplodeHandler decoder, char *buff, long size)
 
 
 
-long explode(ExplodeHandler decoder, char *buff, long size)
+long explode(struct timiditycontext_t *c, ExplodeHandler decoder, char *buff, long size)
 /* Explode an imploded compressed stream.  Based on the general purpose
    bit flag, decide on coded or uncoded literals, and an 8K or 4K sliding
    window.  Construct the literal (if any), length, and distance codes and
@@ -958,7 +959,7 @@ long explode(ExplodeHandler decoder, char *buff, long size)
     if(!decoder->initflag)
     {
 	decoder->initflag = 1;
-	if(explode_start(decoder) != 0)
+	if(explode_start(c, decoder) != 0)
 	    return 0;
     }
 
@@ -1005,16 +1006,16 @@ long explode(ExplodeHandler decoder, char *buff, long size)
 	switch(decoder->method)
 	{
 	  case EXPLODE_LIT8:
-	    i = explode_lit8(decoder, buff + j, size - j);
+	    i = explode_lit8(c, decoder, buff + j, size - j);
 	    break;
 	  case EXPLODE_LIT4:
-	    i = explode_lit4(decoder, buff + j, size - j);
+	    i = explode_lit4(c, decoder, buff + j, size - j);
 	    break;
 	  case EXPLODE_NOLIT8:
-	    i = explode_nolit8(decoder, buff + j, size - j);
+	    i = explode_nolit8(c, decoder, buff + j, size - j);
 	    break;
 	  case EXPLODE_NOLIT4:
-	    i = explode_nolit4(decoder, buff + j, size - j);
+	    i = explode_nolit4(c, decoder, buff + j, size - j);
 	    break;
 	  default:
 	    i = -1;
@@ -1029,7 +1030,7 @@ long explode(ExplodeHandler decoder, char *buff, long size)
 
 
 
-static int fill_inbuf(ExplodeHandler decoder)
+static int fill_inbuf(struct timiditycontext_t *c, ExplodeHandler decoder)
 {
     int len;
 
@@ -1037,7 +1038,7 @@ static int fill_inbuf(ExplodeHandler decoder)
     decoder->insize = 0;
     errno = 0;
     do {
-	len = decoder->read_func((char*)decoder->inbuf + decoder->insize,
+	len = decoder->read_func(c, (char*)decoder->inbuf + decoder->insize,
 				 (long)(INBUFSIZ - decoder->insize),
 				 decoder->user_val);
 	if(len == 0 || len == EOF) break;

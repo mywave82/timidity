@@ -497,7 +497,7 @@ void main(int argc, char **argv)
     while((c = url_getc(url)) != EOF)
 	putchar(c);
 #else
-    while((c = url_read(url, buff, sizeof(buff))) > 0)
+    while((c = url_read(c, url, buff, sizeof(buff))) > 0)
 	write(1, buff, c);
 #endif
     url_close(url);

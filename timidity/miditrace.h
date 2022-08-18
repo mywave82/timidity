@@ -23,6 +23,7 @@
 #include "mblock.h"
 #include "controls.h"
 
+struct timiditycontext_t;
 typedef struct _MidiTrace
 {
     int offset;		/* sample offset */
@@ -39,22 +40,20 @@ typedef struct _MidiTrace
     MBlockList pool;
 } MidiTrace;
 
-extern void init_midi_trace(void);
+extern void init_midi_trace(struct timiditycontext_t *c);
 
-extern void push_midi_trace0(void (*f)(void));
-extern void push_midi_trace1(void (*f)(int), int arg1);
-extern void push_midi_trace2(void (*f)(int, int), int arg1, int arg2);
-extern void push_midi_trace_ce(void (*f)(CtlEvent *), CtlEvent *ce);
-extern void push_midi_time_vp(int32 start, void (*f)(void *), void *vp);
+extern void push_midi_trace0(struct timiditycontext_t *c, void (*f)(void));
+extern void push_midi_trace1(struct timiditycontext_t *c, void (*f)(struct timiditycontext_t *c, int), int arg1);
+extern void push_midi_trace2(struct timiditycontext_t *c, void (*f)(struct timiditycontext_t *c, int, int), int arg1, int arg2);
+extern void push_midi_trace_ce(struct timiditycontext_t *c, void (*f)(CtlEvent *), CtlEvent *ce);
+extern void push_midi_time_vp(struct timiditycontext_t *c, int32 start, void (*f)(void *), void *vp);
 
-extern int32 trace_loop(void);
-extern void trace_flush(void);
-extern void trace_offset(int offset);
+extern int32 trace_loop(struct timiditycontext_t *c);
+extern void trace_flush(struct timiditycontext_t *c);
+extern void trace_offset(struct timiditycontext_t *c, int offset);
 extern void trace_nodelay(int nodelay);
-extern void set_trace_loop_hook(void (* f)(void));
-extern int32 current_trace_samples(void);
-extern int32 trace_wait_samples(void);
-
-extern MidiTrace midi_trace;
+extern void set_trace_loop_hook(struct timiditycontext_t *c, void (* f)(void));
+extern int32 current_trace_samples(struct timiditycontext_t *c);
+extern int32 trace_wait_samples(struct timiditycontext_t *c);
 
 #endif /* ___MIDITRACE_H_ */

@@ -78,6 +78,7 @@ timidity_SOURCES = \
 	quantity.h \
 	raw_a.c \
 	rcp.c \
+	rcp.h \
 	readmidi.c \
 	readmidi.h \
 	recache.c \
@@ -97,6 +98,7 @@ timidity_SOURCES = \
 	smplfile.c \
 	smplfile.h \
 	sndfont.c \
+	sndfont.h \
 	sysdep.h \
 	tables.c \
 	tables.h \
@@ -106,6 +108,7 @@ timidity_SOURCES = \
 	wave_a.c \
 	wrd.h \
 	wrd_read.c \
+	wrdi.h \
 	wrdt.c
 
 EXTRA_timidity_SOURCES = \

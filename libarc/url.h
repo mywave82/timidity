@@ -52,12 +52,12 @@ typedef struct _URL
 {
     int   type;								/* M */
 
-    long  (* url_read)(struct _URL *url, void *buff, long n);		/* M */
+    long  (* url_read)(struct timiditycontext_t *c, struct _URL *url, void *buff, long n);		/* M */
     char *(* url_gets)(struct _URL *url, char *buff, int n);		/* O */
-    int   (* url_fgetc)(struct _URL *url);				/* O */
-    long  (* url_seek)(struct _URL *url, long offset, int whence);	/* O */
-    long  (* url_tell)(struct _URL *url);				/* O */
-    void  (* url_close)(struct _URL *url);				/* M */
+    int   (* url_fgetc)(struct timiditycontext_t *c, struct _URL *url);				/* O */
+    long  (* url_seek)(struct timiditycontext_t *c, struct _URL *url, long offset, int whence);	/* O */
+    long  (* url_tell)(struct timiditycontext_t *c, struct _URL *url);				/* O */
+    void  (* url_close)(struct timiditycontext_t *c, struct _URL *url);				/* M */
 
     unsigned long nread;	/* Reset in url_seek, url_rewind,
 				   url_set_readlimit */
@@ -69,48 +69,48 @@ typedef struct _URL
 #define url_eof(url) URLm((url), eof)
 
 /* open URL stream */
-extern URL url_open(const char *url_string);
+extern URL url_open(struct timiditycontext_t *c, const char *url_string);
 
 /* close URL stream */
-extern void url_close(URL url);
+extern void url_close(struct timiditycontext_t *c, URL url);
 
 /* read n bytes */
-extern long url_read(URL url, void *buff, long n);
-extern long url_safe_read(URL url, void *buff, long n);
-extern long url_nread(URL url, void *buff, long n);
+extern long url_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+extern long url_safe_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+extern long url_nread(struct timiditycontext_t *c, URL url, void *buff, long n);
 
 /* read a line */
 /* Like a fgets */
-extern char *url_gets(URL url, char *buff, int n);
+extern char *url_gets(struct timiditycontext_t *c, URL url, char *buff, int n);
 
 /* Allow termination by CR or LF or both. Ignored empty lines.
  * CR or LF is truncated.
  * Success: length of the line.
  * EOF or Error: EOF
  */
-extern int url_readline(URL url, char *buff, int n);
+extern int url_readline(struct timiditycontext_t *c, URL url, char *buff, int n);
 
 /* read a byte */
-extern int url_fgetc(URL url);
+extern int url_fgetc(struct timiditycontext_t *c, URL url);
 #define url_getc(url) \
     ((url)->nread >= (url)->readlimit ? ((url)->eof = 1, EOF) : \
-     (url)->url_fgetc != NULL ? ((url)->nread++, (url)->url_fgetc(url)) : \
-      url_fgetc(url))
+     (url)->url_fgetc != NULL ? ((url)->nread++, (url)->url_fgetc(c, url)) : \
+      url_fgetc(c, url))
 
 /* seek position */
-extern long url_seek(URL url, long offset, int whence);
+extern long url_seek(struct timiditycontext_t *c, URL url, long offset, int whence);
 
 /* get the current position */
-extern long url_tell(URL url);
+extern long url_tell(struct timiditycontext_t *c, URL url);
 
 /* skip n bytes */
-extern void url_skip(URL url, long n);
+extern void url_skip(struct timiditycontext_t *c, URL url, long n);
 
 /* seek to first position */
-extern void url_rewind(URL url);
+extern void url_rewind(struct timiditycontext_t *c, URL url);
 
 /* dump */
-void *url_dump(URL url, long nbytes, long *real_read);
+void *url_dump(struct timiditycontext_t *c, URL url, long nbytes, long *real_read);
 
 /* set read limit */
 void url_set_readlimit(URL url, long readlimit);
@@ -119,16 +119,15 @@ void url_set_readlimit(URL url, long readlimit);
 extern const char *url_strerror(int no);
 
 /* allocate URL structure */
-extern URL alloc_url(int size);
+extern URL alloc_url(struct timiditycontext_t *c, int size);
 
 /* Check URL type. */
-extern int url_check_type(const char *url_string);
+extern int url_check_type(struct timiditycontext_t *c, const char *url_string);
 
 /* replace `~' to user directory */
-extern const char *url_expand_home_dir(const char *filename);
-extern const char *url_unexpand_home_dir(const char *filename);
+extern const char *url_expand_home_dir(struct timiditycontext_t *c, const char *filename);
+extern const char *url_unexpand_home_dir(struct timiditycontext_t *c, const char *filename);
 
-extern int url_errno;
 enum url_errtypes
 {
     URLERR_NONE = 10000,	/* < 10000 represent system call's errno */
@@ -153,34 +152,34 @@ struct URL_module
     int (* url_init)(void);
 
     /* Open specified URL */
-    URL (* url_open)(const char *url_string);
+    URL (* url_open)(struct timiditycontext_t *c, const char *url_string);
 
     /* chain next modules */
     struct URL_module *chain;
 };
 
-extern void url_add_module(struct URL_module *m);
-extern void url_add_modules(struct URL_module *m, ...);
+extern void url_add_module(struct timiditycontext_t *c, struct URL_module *m);
+extern void url_add_modules(struct timiditycontext_t *c, struct URL_module *m, ...);
 
-extern URL url_file_open(const char *filename);
-extern URL url_dir_open(const char *directory_name);
+extern URL url_file_open(struct timiditycontext_t *c, const char *filename);
+extern URL url_dir_open(struct timiditycontext_t *c, const char *directory_name);
 extern URL url_http_open(const char *url_string);
 extern URL url_ftp_open(const char *url_string);
 extern URL url_newsgroup_open(const char *url_string);
 extern URL url_news_open(const char *url_string);
-extern URL url_pipe_open(const char *command);
+extern URL url_pipe_open(struct timiditycontext_t *c, const char *command);
 
 /* No URL_module */
-extern URL url_mem_open(char *memory, long memsiz, int autofree);
-extern URL url_inflate_open(URL instream, long compsize, int autoclose);
-extern URL url_buff_open(URL url, int autoclose);
-extern URL url_cache_open(URL url, int autoclose);
-extern void url_cache_detach(URL url);
+extern URL url_mem_open(struct timiditycontext_t *c, char *memory, long memsiz, int autofree);
+extern URL url_inflate_open(struct timiditycontext_t *c, URL instream, long compsize, int autoclose);
+extern URL url_buff_open(struct timiditycontext_t *c, URL url, int autoclose);
+extern URL url_cache_open(struct timiditycontext_t *c, URL url, int autoclose);
+extern void url_cache_detach(struct timiditycontext_t *c, URL url);
 extern void url_cache_disable(URL url);
-extern URL url_uudecode_open(URL reader, int autoclose);
-extern URL url_b64decode_open(URL reader, int autoclose);
-extern URL url_hqxdecode_open(URL reader, int dataonly, int autoclose);
-extern URL url_qsdecode_open(URL reader, int autoclose);
+extern URL url_uudecode_open(struct timiditycontext_t *c, URL reader, int autoclose);
+extern URL url_b64decode_open(struct timiditycontext_t *c, URL reader, int autoclose);
+extern URL url_hqxdecode_open(struct timiditycontext_t *c, URL reader, int dataonly, int autoclose);
+extern URL url_qsdecode_open(struct timiditycontext_t *c, URL reader, int autoclose);
 extern URL url_cgi_escape_open(URL reader, int autoclose);
 extern URL url_cgi_unescape_open(URL reader, int autoclose);
 
@@ -189,14 +188,7 @@ extern char *url_newsgroup_name(URL url);
 extern int url_news_connection_cache(int flag);
 
 extern const char * const url_lib_version;
-extern char *user_mailaddr;
-extern char *url_user_agent;
-extern char *url_http_proxy_host;
-extern unsigned short url_http_proxy_port;
-extern char *url_ftp_proxy_host;
-extern unsigned short url_ftp_proxy_port;
-extern int url_newline_code;
-extern int uudecode_unquote_html;
+#define url_newline_code '\n'
 
 enum url_types
 {

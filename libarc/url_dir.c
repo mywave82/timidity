@@ -86,7 +86,6 @@ struct dir_cache_t
     time_t dir_mtime;
     struct dir_cache_t *next;
 };
-static struct dir_cache_t *dir_cache = NULL;
 
 #ifdef INODE_AVAILABLE
 #define REMOVE_CACHE_ENT(p, isalloced) if(isalloced) free(p); else (p)->ino = 0
@@ -94,7 +93,7 @@ static struct dir_cache_t *dir_cache = NULL;
 #define REMOVE_CACHE_ENT(p, isalloced) free((p)->dirname); if(isalloced) free(p); else p->dirname = NULL
 #endif /* INODE_AVAILABLE */
 
-static struct dir_cache_t *scan_cached_files(struct dir_cache_t *p,
+static struct dir_cache_t *scan_cached_files(struct timiditycontext_t *c, struct dir_cache_t *p,
 					     struct stat *s,
 					     char *dirname)
 {
@@ -123,9 +122,9 @@ static struct dir_cache_t *scan_cached_files(struct dir_cache_t *p,
 
     if((dirp = opendir(dirname)) == NULL)
     {
-	url_errno = errno;
+	c->url_errno = errno;
 	REMOVE_CACHE_ENT(p, allocated);
-	errno = url_errno;
+	errno = c->url_errno;
 	return NULL;
     }
 
@@ -142,32 +141,32 @@ static struct dir_cache_t *scan_cached_files(struct dir_cache_t *p,
 	    continue;
 
 	/* put into string table */
-	if(put_string_table(&stab, d->d_name, dlen) == NULL)
+	if(put_string_table(c, &stab, d->d_name, dlen) == NULL)
 	{
-	    url_errno = errno;
-	    delete_string_table(&stab);
+	    c->url_errno = errno;
+	    delete_string_table(c, &stab);
 	    REMOVE_CACHE_ENT(p, allocated);
 	    closedir(dirp);
-	    errno = url_errno;
+	    errno = c->url_errno;
 	    return NULL;
 	}
     }
     closedir(dirp);
 
     /* make string array */
-    p->fnames = make_string_array(&stab);
+    p->fnames = make_string_array(c, &stab);
     if(p->fnames == NULL)
     {
-	url_errno = errno;
-	delete_string_table(&stab);
+	c->url_errno = errno;
+	delete_string_table(c, &stab);
 	REMOVE_CACHE_ENT(p, allocated);
-	errno = url_errno;
+	errno = c->url_errno;
 	return NULL;
     }
     return p;
 }
 
-static struct dir_cache_t *read_cached_files(char *dirname)
+static struct dir_cache_t *read_cached_files(struct timiditycontext_t *c, char *dirname)
 {
     struct dir_cache_t *p, *q;
     struct stat s;
@@ -176,12 +175,12 @@ static struct dir_cache_t *read_cached_files(char *dirname)
 	return NULL;
     if(!S_ISDIR(s.st_mode))
     {
-	errno = url_errno = ENOTDIR;
+	errno = c->url_errno = ENOTDIR;
 	return NULL;
     }
 
     q = NULL;
-    for(p = dir_cache; p; p = p->next)
+    for(p = c->url_dir_cache; p; p = p->next)
     {
 #ifdef INODE_AVAILABLE
 	if(p->ino == 0)
@@ -214,14 +213,14 @@ static struct dir_cache_t *read_cached_files(char *dirname)
 #ifndef INODE_AVAILABLE
 	    free(p->dirname);
 #endif /* !INODE_AVAILABLE */
-	    return scan_cached_files(p, &s, dirname);
+	    return scan_cached_files(c, p, &s, dirname);
 	}
     }
     /* New directory */
-    if((p = scan_cached_files(q, &s, dirname)) == NULL)
+    if((p = scan_cached_files(c, q, &s, dirname)) == NULL)
 	return NULL;
-    p->next = dir_cache;
-    dir_cache = p;
+    p->next = c->url_dir_cache;
+    c->url_dir_cache = p;
     return p;
 }
 #endif /* URL_DIR_CACHE_ENABLE */
@@ -244,10 +243,10 @@ typedef struct _URL_dir
 } URL_dir;
 
 static int name_dir_check(const char *url_string);
-static long url_dir_read(URL url, void *buff, long n);
+static long url_dir_read(struct timiditycontext_t *c, URL url, void *buff, long n);
 static char *url_dir_gets(URL url, char *buff, int n);
-static long url_dir_tell(URL url);
-static void url_dir_close(URL url);
+static long url_dir_tell(struct timiditycontext_t *c, URL url);
+static void url_dir_close(struct timiditycontext_t *c, URL url);
 
 struct URL_module URL_module_dir =
 {
@@ -267,7 +266,7 @@ static int name_dir_check(const char *url_string)
 }
 
 #ifdef URL_DIR_CACHE_ENABLE
-URL url_dir_open(const char *dname)
+URL url_dir_open(struct timiditycontext_t *c, const char *dname)
 {
     struct dir_cache_t *d;
     URL_dir *url;
@@ -283,7 +282,7 @@ URL url_dir_open(const char *dname)
 	if(*dname == '\0')
 	    dname = ".";
 	else
-	    dname = url_expand_home_dir(dname);
+	    dname = url_expand_home_dir(c, dname);
     }
     tmp = safe_strdup(dname);
 
@@ -295,19 +294,19 @@ URL url_dir_open(const char *dname)
     if(dlen == 0)
 	strcpy(tmp, PATH_STRING); /* root */
 
-    d = read_cached_files(tmp);
+    d = read_cached_files(c, tmp);
     if(d == NULL)
     {
 	free(tmp);
 	return NULL;
     }
 
-    url = (URL_dir *)alloc_url(sizeof(URL_dir));
+    url = (URL_dir *)alloc_url(c, sizeof(URL_dir));
     if(url == NULL)
     {
-	url_errno = errno;
+	c->url_errno = errno;
 	free(tmp);
-	errno = url_errno; /* restore errno */
+	errno = c->url_errno; /* restore errno */
 	return NULL;
     }
 
@@ -331,7 +330,7 @@ URL url_dir_open(const char *dname)
     return (URL)url;
 }
 #else
-URL url_dir_open(const char *dname)
+URL url_dir_open(struct timiditycontext_t *c, const char *dname)
 {
     URL_dir *url;
     DIR *dirp;
@@ -347,7 +346,7 @@ URL url_dir_open(const char *dname)
 	if(*dname == '\0')
 	    dname = ".";
 	else
-	    dname = url_expand_home_dir(dname);
+	    dname = url_expand_home_dir(c, dname);
     }
     tmp = safe_strdup(dname);
 
@@ -361,19 +360,19 @@ URL url_dir_open(const char *dname)
 
     if((dirp = opendir(tmp)) == NULL)
     {
-	url_errno = errno;
+	c->url_errno = errno;
 	free(tmp);
-	errno = url_errno;
+	errno = c->url_errno;
 	return NULL;
     }
 
-    url = (URL_dir *)alloc_url(sizeof(URL_dir));
+    url = (URL_dir *)alloc_url(c, sizeof(URL_dir));
     if(url == NULL)
     {
-	url_errno = errno;
+	c->url_errno = errno;
 	closedir(dirp);
 	free(tmp);
-	errno = url_errno;
+	errno = c->url_errno;
 	return NULL;
     }
 
@@ -399,7 +398,7 @@ URL url_dir_open(const char *dname)
 }
 #endif /* URL_DIR_CACHE_ENABLE */
 
-static long url_dir_tell(URL url)
+static long url_dir_tell(struct timiditycontext_t *c, URL url)
 {
     return ((URL_dir *)url)->total;
 }
@@ -411,7 +410,7 @@ char *url_dir_name(URL url)
     return ((URL_dir *)url)->dirname;
 }
 
-static void url_dir_close(URL url)
+static void url_dir_close(struct timiditycontext_t *c, URL url)
 {
     URL_dir *urlp = (URL_dir *)url;
 #ifndef URL_DIR_CACHE_ENABLE
@@ -421,7 +420,7 @@ static void url_dir_close(URL url)
     free(urlp);
 }
 
-static long url_dir_read(URL url, void *buff, long n)
+static long url_dir_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     char *p;
 

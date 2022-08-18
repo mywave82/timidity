@@ -142,7 +142,7 @@
   decoder->bit_len = bit_len;
 
 #define MASK_BITS(n) ((((ulg)1)<<(n))-1)
-#define GET_BYTE()  (decoder->inptr < decoder->insize ? decoder->inbuf[decoder->inptr++] : fill_inbuf(decoder))
+#define GET_BYTE()  (decoder->inptr < decoder->insize ? decoder->inbuf[decoder->inptr++] : fill_inbuf(c, decoder))
 #define NEEDBITS(n) {while(bit_len<(n)){bit_buf|=((ulg)GET_BYTE())<<bit_len;bit_len+=8;}}
 #define GETBITS(n)  (bit_buf & MASK_BITS(n))
 #define DUMPBITS(n) {bit_buf>>=(n);bit_len-=(n);}
@@ -151,7 +151,7 @@
 struct _InflateHandler
 {
     void *user_val;
-    long (* read_func)(char *buf, long size, void *user_val);
+    long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val);
 
     uch slide[2L * WSIZE];
     uch inbuf[INBUFSIZ + INBUF_EXTRA];
@@ -173,12 +173,12 @@ struct _InflateHandler
 };
 
 /* Function prototypes */
-local int fill_inbuf(InflateHandler);
+local int fill_inbuf(struct timiditycontext_t *c, InflateHandler);
 local int huft_free(struct huft *);
-local long inflate_codes(InflateHandler, char *, long);
-local long inflate_stored(InflateHandler, char *, long);
-local long inflate_fixed(InflateHandler, char *, long);
-local long inflate_dynamic(InflateHandler, char *, long);
+local long inflate_codes(struct timiditycontext_t *c, InflateHandler, char *, long);
+local long inflate_stored(struct timiditycontext_t *c, InflateHandler, char *, long);
+local long inflate_fixed(struct timiditycontext_t *c, InflateHandler, char *, long);
+local long inflate_dynamic(struct timiditycontext_t *c, InflateHandler, char *, long);
 local void inflate_start(InflateHandler);
 
 /* The inflate algorithm uses a sliding 32K byte window on the uncompressed
@@ -247,6 +247,7 @@ local const ush cpdext[] = {		/* Extra bits for distance codes */
 #define N_MAX 288	/* maximum number of codes in any set */
 
 int huft_build(
+    struct timiditycontext_t *c,
     unsigned *b,	/* code lengths in bits (all assumed <= BMAX) */
     unsigned n,		/* number of codes (assumed <= N_MAX) */
     unsigned s,		/* number of simple-valued codes (0..s-1) */
@@ -265,7 +266,7 @@ int huft_build(
    decoded. */
 {
     unsigned a;			/* counter for codes of length k */
-    unsigned c[BMAX+1];		/* bit length count table */
+    unsigned C[BMAX+1];	/* bit length count table */
     unsigned el;		/* length of EOB code (value 256) */
     unsigned f;			/* i repeats in table every f entries */
     int g;			/* maximum code length */
@@ -275,7 +276,7 @@ int huft_build(
     register int k;		/* number of bits in current code */
     int lx[BMAX+1];		/* memory for l[-1..BMAX-1] */
     int *l = lx+1;		/* stack of bits per table */
-    register unsigned *p;	/* pointer into c[], b[], or v[] */
+    register unsigned *p;	/* pointer into C[], b[], or v[] */
     register struct huft *q;	/* points to current table */
     struct huft r;		/* table entry for structure assignment */
     struct huft *u[BMAX];	/* table stack */
@@ -288,17 +289,17 @@ int huft_build(
 
     /* Generate counts for each bit length */
     el = n > 256 ? b[256] : BMAX; /* set length of EOB code, if any */
-    memset(c, 0, sizeof(c));
+    memset(C, 0, sizeof(C));
     p = b;
     i = n;
     do
     {
 	Tracecv(*p, (stderr, (n-i >= ' ' && n-i <= '~' ? "%c %d\n" :
 			      "0x%x %d\n"), n-i, *p));
-	c[*p]++;	/* assume all entries <= BMAX */
+	C[*p]++;	/* assume all entries <= BMAX */
 	p++;		/* Can't combine with above line (Solaris bug) */
     } while(--i);
-    if(c[0] == n)	/* null input--all zero length codes */
+    if(C[0] == n)	/* null input--all zero length codes */
     {
 	*t = (struct huft *)NULL;
 	*m = 0;
@@ -307,13 +308,13 @@ int huft_build(
 
     /* Find minimum and maximum length, bound *m by those */
     for(j = 1; j <= BMAX; j++)
-	if(c[j])
+	if(C[j])
 	    break;
     k = j;			/* minimum code length */
     if((unsigned)*m < j)
 	*m = j;
     for(i = BMAX; i; i--)
-	if(c[i])
+	if(C[i])
 	    break;
     g = i;			/* maximum code length */
     if((unsigned)*m > i)
@@ -321,15 +322,15 @@ int huft_build(
 
     /* Adjust last length count to fill out codes, if needed */
     for(y = 1 << j; j < i; j++, y <<= 1)
-	if((y -= c[j]) < 0)
+	if((y -= C[j]) < 0)
 	    return 2;		/* bad input: more codes than bits */
-    if((y -= c[i]) < 0)
+    if((y -= C[i]) < 0)
 	return 2;
-    c[i] += y;
+    C[i] += y;
 
     /* Generate starting offsets into the value table for each length */
     x[1] = j = 0;
-    p = c + 1;  xp = x + 2;
+    p = C + 1;  xp = x + 2;
     while(--i)			/* note that i == g from above */
 	*xp++ = (j += *p++);
 
@@ -356,7 +357,7 @@ int huft_build(
     /* go through the bit lengths (k already is bits in shortest code) */
     for(; k <= g; k++)
     {
-	a = c[k];
+	a = C[k];
 	while(a--)
 	{
 	    /* here i is the Huffman code of length k bits for value *p */
@@ -370,7 +371,7 @@ int huft_build(
 		if((f = 1 << (j = k - w)) > a + 1) /* try a k-w bit table */
 		{		/* too few codes for k-w bit table */
 		    f -= a + 1;	/* deduct codes from patterns left */
-		    xp = c + k;
+		    xp = C + k;
 		    while(++j < z)/* try smaller tables up to z bits */
 		    {
 			if((f <<= 1) <= *++xp)
@@ -388,7 +389,7 @@ int huft_build(
 		    q = (struct huft *)malloc((z + 1)*sizeof(struct huft));
 		else
 		    q = (struct huft *)
-			new_segment(pool, (z + 1)*sizeof(struct huft));
+			new_segment(c, pool, (z + 1)*sizeof(struct huft));
 		if(q == NULL)
 		{
 		    if(h && pool == NULL)
@@ -468,7 +469,7 @@ local int huft_free(struct huft *t)
     return 0;
 }
 
-local long inflate_codes(InflateHandler decoder, char *buff, long size)
+local long inflate_codes(struct timiditycontext_t *c, InflateHandler decoder, char *buff, long size)
 /* inflate (decompress) the codes in a deflated (compressed) block.
    Return an error code or zero if it all goes ok. */
 {
@@ -588,7 +589,7 @@ local long inflate_codes(InflateHandler decoder, char *buff, long size)
     return n;
 }
 
-local long inflate_stored(InflateHandler decoder, char *buff, long size)
+local long inflate_stored(struct timiditycontext_t *c, InflateHandler decoder, char *buff, long size)
 /* "decompress" an inflated type 0 (stored) block. */
 {
     unsigned n, l, w;
@@ -632,7 +633,7 @@ local long inflate_stored(InflateHandler decoder, char *buff, long size)
     return (long)n;
 }
 
-local long inflate_fixed(InflateHandler decoder, char *buff, long size)
+local long inflate_fixed(struct timiditycontext_t *c, InflateHandler decoder, char *buff, long size)
 /* decompress an inflated type 1 (fixed Huffman codes) block.  We should
    either replace this with a custom decoder, or at least precompute the
    Huffman tables. */
@@ -653,7 +654,7 @@ local long inflate_fixed(InflateHandler decoder, char *buff, long size)
 	for(; i < 288; i++)	  /* make a complete, but wrong code set */
 	    l[i] = 8;
 	decoder->fixed_bl = 7;
-	if((i = huft_build(l, 288, 257, cplens, cplext,
+	if((i = huft_build(c, l, 288, 257, cplens, cplext,
 			   &decoder->fixed_tl, &decoder->fixed_bl, NULL))
 	    != 0)
 	{
@@ -665,7 +666,7 @@ local long inflate_fixed(InflateHandler decoder, char *buff, long size)
 	for(i = 0; i < 30; i++)	  /* make an incomplete code set */
 	    l[i] = 5;
 	decoder->fixed_bd = 5;
-	if((i = huft_build(l, 30, 0, cpdist, cpdext,
+	if((i = huft_build(c, l, 30, 0, cpdist, cpdext,
 			   &decoder->fixed_td, &decoder->fixed_bd, NULL)) > 1)
 	{
 	    huft_free(decoder->fixed_tl);
@@ -678,10 +679,10 @@ local long inflate_fixed(InflateHandler decoder, char *buff, long size)
     decoder->td = decoder->fixed_td;
     decoder->bl = decoder->fixed_bl;
     decoder->bd = decoder->fixed_bd;
-    return inflate_codes(decoder, buff, size);
+    return inflate_codes(c, decoder, buff, size);
 }
 
-local long inflate_dynamic(InflateHandler decoder, char *buff, long size)
+local long inflate_dynamic(struct timiditycontext_t *c, InflateHandler decoder, char *buff, long size)
 /* decompress an inflated type 2 (dynamic Huffman codes) block. */
 {
     int i;		/* temporary variables */
@@ -704,7 +705,7 @@ local long inflate_dynamic(InflateHandler decoder, char *buff, long size)
 	16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
     BITS_SAVE;
 
-    reuse_mblock(&decoder->pool);
+    reuse_mblock(c, &decoder->pool);
 
     /* read in table lengths */
     NEEDBITS(5);
@@ -738,9 +739,9 @@ local long inflate_dynamic(InflateHandler decoder, char *buff, long size)
 
     /* build decoding table for trees--single level, 7 bit lookup */
     bl = 7;
-    if((i = huft_build(ll, 19, 19, NULL, NULL, &tl, &bl, &decoder->pool)) != 0)
+    if((i = huft_build(c, ll, 19, 19, NULL, NULL, &tl, &bl, &decoder->pool)) != 0)
     {
-	reuse_mblock(&decoder->pool);
+	reuse_mblock(c, &decoder->pool);
 	BITS_RESTORE;
 	return -1;		/* incomplete code set */
     }
@@ -802,26 +803,26 @@ local long inflate_dynamic(InflateHandler decoder, char *buff, long size)
     BITS_RESTORE;
 
     /* free decoding table for trees */
-    reuse_mblock(&decoder->pool);
+    reuse_mblock(c, &decoder->pool);
 
     /* build the decoding tables for literal/length and distance codes */
     bl = lbits;
-    i = huft_build(ll, nl, 257, cplens, cplext, &tl, &bl, &decoder->pool);
+    i = huft_build(c, ll, nl, 257, cplens, cplext, &tl, &bl, &decoder->pool);
     if(bl == 0)			      /* no literals or lengths */
       i = 1;
     if(i)
     {
 	if(i == 1)
 	    fprintf(stderr, " incomplete literal tree\n");
-	reuse_mblock(&decoder->pool);
+	reuse_mblock(c, &decoder->pool);
 	return -1;		/* incomplete code set */
     }
     bd = dbits;
-    i = huft_build(ll + nl, nd, 0, cpdist, cpdext, &td, &bd, &decoder->pool);
+    i = huft_build(c, ll + nl, nd, 0, cpdist, cpdext, &td, &bd, &decoder->pool);
     if(bd == 0 && nl > 257)    /* lengths but no distances */
     {
 	fprintf(stderr, " incomplete distance tree\n");
-	reuse_mblock(&decoder->pool);
+	reuse_mblock(c, &decoder->pool);
 	return -1;
     }
 
@@ -834,7 +835,7 @@ local long inflate_dynamic(InflateHandler decoder, char *buff, long size)
     }
     if(i)
     {
-	reuse_mblock(&decoder->pool);
+	reuse_mblock(c, &decoder->pool);
 	return -1;
     }
 
@@ -844,11 +845,11 @@ local long inflate_dynamic(InflateHandler decoder, char *buff, long size)
     decoder->bl = bl;
     decoder->bd = bd;
 
-    i = inflate_codes(decoder, buff, size);
+    i = inflate_codes(c, decoder, buff, size);
 
     if(i == -1) /* error */
     {
-	reuse_mblock(&decoder->pool);
+	reuse_mblock(c, &decoder->pool);
 	return -1;
     }
 
@@ -873,13 +874,13 @@ local void inflate_start(InflateHandler decoder)
 }
 
 /*ARGSUSED*/
-static long default_read_func(char *buf, long size, void *v)
+static long default_read_func(struct timiditycontext_t *c, char *buf, long size, void *v)
 {
     return (long)fread(buf, 1, size, stdin);
 }
 
 InflateHandler open_inflate_handler(
-    long (* read_func)(char *buf, long size, void *user_val),
+    long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val),
     void *user_val)
 {
     InflateHandler decoder;
@@ -895,7 +896,7 @@ InflateHandler open_inflate_handler(
     return decoder;
 }
 
-void close_inflate_handler(InflateHandler decoder)
+void close_inflate_handler(struct timiditycontext_t *c, InflateHandler decoder)
 {
     if(decoder->fixed_tl != NULL)
     {
@@ -903,12 +904,13 @@ void close_inflate_handler(InflateHandler decoder)
 	huft_free(decoder->fixed_tl);
 	decoder->fixed_td = decoder->fixed_tl = NULL;
     }
-    reuse_mblock(&decoder->pool);
+    reuse_mblock(c, &decoder->pool);
     free(decoder);
 }
 
 /* decompress an inflated entry */
 long zip_inflate(
+    struct timiditycontext_t *c,
     InflateHandler decoder,
     char *buff,
     long size)
@@ -987,21 +989,21 @@ long zip_inflate(
 	switch(decoder->method)
 	{
 	  case STORED_BLOCK:
-	    i = inflate_stored(decoder, buff + n, size - n);
+	    i = inflate_stored(c, decoder, buff + n, size - n);
 	    break;
 
 	  case STATIC_TREES:
 	    if(decoder->tl != NULL)
-		i = inflate_codes(decoder, buff + n, size - n);
+		i = inflate_codes(c, decoder, buff + n, size - n);
 	    else
-		i = inflate_fixed(decoder, buff + n, size - n);
+		i = inflate_fixed(c, decoder, buff + n, size - n);
 	    break;
 
 	  case DYN_TREES:
 	    if(decoder->tl != NULL)
-		i = inflate_codes(decoder, buff + n, size - n);
+		i = inflate_codes(c, decoder, buff + n, size - n);
 	    else
-		i = inflate_dynamic(decoder, buff + n, size - n);
+		i = inflate_dynamic(c, decoder, buff + n, size - n);
 	    break;
 
 	  default: /* error */
@@ -1023,7 +1025,7 @@ long zip_inflate(
 /* ===========================================================================
  * Fill the input buffer. This is called only when the buffer is empty.
  */
-local int fill_inbuf(InflateHandler decoder)
+local int fill_inbuf(struct timiditycontext_t *c, InflateHandler decoder)
 {
     int len;
 
@@ -1031,7 +1033,7 @@ local int fill_inbuf(InflateHandler decoder)
     decoder->insize = 0;
     errno = 0;
     do {
-	len = decoder->read_func((char*)decoder->inbuf + decoder->insize,
+	len = decoder->read_func(c, (char*)decoder->inbuf + decoder->insize,
 				 (long)(INBUFSIZ - decoder->insize),
 				 decoder->user_val);
 	if(len == 0 || len == EOF) break;

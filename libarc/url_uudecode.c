@@ -41,21 +41,21 @@ typedef struct _URL_uudecode
     int autoclose;
 } URL_uudecode;
 
-static long url_uudecode_read(URL url, void *buff, long n);
-static int  url_uudecode_fgetc(URL url);
-static long url_uudecode_tell(URL url);
-static void url_uudecode_close(URL url);
+static long url_uudecode_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+static int  url_uudecode_fgetc(struct timiditycontext_t *c, URL url);
+static long url_uudecode_tell(struct timiditycontext_t *c, URL url);
+static void url_uudecode_close(struct timiditycontext_t *c, URL url);
 
-URL url_uudecode_open(URL reader, int autoclose)
+URL url_uudecode_open(struct timiditycontext_t *c, URL reader, int autoclose)
 {
     URL_uudecode *url;
 
-    url = (URL_uudecode *)alloc_url(sizeof(URL_uudecode));
+    url = (URL_uudecode *)alloc_url(c, sizeof(URL_uudecode));
     if(url == NULL)
     {
 	if(autoclose)
-	    url_close(reader);
-	url_errno = errno;
+	    url_close(c, reader);
+	c->url_errno = errno;
 	return NULL;
     }
 
@@ -81,12 +81,12 @@ URL url_uudecode_open(URL reader, int autoclose)
 }
 
 #define	DEC(c)	(((c) - ' ') & 077)		/* single character decode */
-static int uudecodeline(URL_uudecode *urlp)
+static int uudecodeline(struct timiditycontext_t *c, URL_uudecode *urlp)
 {
     unsigned char inbuf[BUFSIZ], *p, *q, ch;
     int n;
 
-    if(url_gets(urlp->reader, (char *)inbuf, sizeof(inbuf)) == NULL)
+    if(url_gets(c, urlp->reader, (char *)inbuf, sizeof(inbuf)) == NULL)
     {
 	urlp->eof = 1;
 	return 1;
@@ -98,7 +98,7 @@ static int uudecodeline(URL_uudecode *urlp)
 	return 1;
     }
 
-    if(uudecode_unquote_html)
+    if(c->uudecode_unquote_html)
     {
 	int i, j, len;
 
@@ -179,7 +179,7 @@ static int uudecodeline(URL_uudecode *urlp)
     return 0;
 }
 
-static long url_uudecode_read(URL url, void *buff, long size)
+static long url_uudecode_read(struct timiditycontext_t *c, URL url, void *buff, long size)
 {
     URL_uudecode *urlp = (URL_uudecode *)url;
     unsigned char *p = (unsigned char *)buff;
@@ -194,7 +194,7 @@ static long url_uudecode_read(URL url, void *buff, long size)
 	int i;
 
 	if(urlp->beg == urlp->end)
-	    if(uudecodeline(urlp))
+	    if(uudecodeline(c, urlp))
 		break;
 	i = urlp->end - urlp->beg;
 	if(i > size - n)
@@ -206,32 +206,32 @@ static long url_uudecode_read(URL url, void *buff, long size)
     return n;
 }
 
-static int url_uudecode_fgetc(URL url)
+static int url_uudecode_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_uudecode *urlp = (URL_uudecode *)url;
 
     if(urlp->eof)
 	return EOF;
     if(urlp->beg == urlp->end)
-	if(uudecodeline(urlp))
+	if(uudecodeline(c, urlp))
 	    return EOF;
 
     return (int)urlp->decodebuf[urlp->beg++];
 }
 
-static long url_uudecode_tell(URL url)
+static long url_uudecode_tell(struct timiditycontext_t *c, URL url)
 {
     URL_uudecode *urlp = (URL_uudecode *)url;
 
     return urlp->rpos + urlp->beg;
 }
 
-static void url_uudecode_close(URL url)
+static void url_uudecode_close(struct timiditycontext_t *c, URL url)
 {
     URL_uudecode *urlp = (URL_uudecode *)url;
 
     if(urlp->autoclose)
-	url_close(urlp->reader);
+	url_close(c, urlp->reader);
     free(url);
 }
 
@@ -249,7 +249,7 @@ void main(int argc, char** argv)
     }
     filename = argv[1];
 
-    if((uudecoder = url_file_open(filename)) == NULL)
+    if((uudecoder = url_file_open(c, filename)) == NULL)
     {
 	perror(argv[1]);
 	exit(1);
@@ -257,7 +257,7 @@ void main(int argc, char** argv)
 
     for(;;)
     {
-	if(url_readline(uudecoder, buff, sizeof(buff)) == EOF)
+	if(url_readline(c, uudecoder, buff, sizeof(buff)) == EOF)
 	{
 	    fprintf(stderr, "%s: Not a hqx-file\n", filename);
 	    url_close(uudecoder);
@@ -267,12 +267,12 @@ void main(int argc, char** argv)
 	    break;
     }
 
-    uudecoder = url_uudecode_open(uudecoder, 1);
+    uudecoder = url_uudecode_open(c, uudecoder, 1);
 #if UUDECODE_MAIN
-    while((c = url_getc(uudecoder)) != EOF)
+    while((c = url_getc(c, uudecoder)) != EOF)
 	putchar(c);
 #else
-    while((c = url_read(uudecoder, buff, sizeof(buff))) > 0)
+    while((c = url_read(c, uudecoder, buff, sizeof(buff))) > 0)
 	write(1, buff, c);
 #endif
     url_close(uudecoder);

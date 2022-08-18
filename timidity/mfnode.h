@@ -69,9 +69,8 @@ EXTERN char *comment_indicator_buffer
  #endif
  ;
 
-MFnode	*make_new_MFnode_entry(char *file);
+MFnode	*make_new_MFnode_entry(struct timiditycontext_t *c, char *file);
 void	indicator_set_prog(int ch, int val, char *comm);
 void	reset_indicator(void);
-char	*channel_instrum_name(int ch);
 
 #endif // MFNODE_H

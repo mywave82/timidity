@@ -139,8 +139,19 @@ typedef struct _SFInfo {
  *----------------------------------------------------------------*/
 
 /* sffile.c */
-extern int load_soundfont(SFInfo *sf, struct timidity_file *fp);
+extern int load_soundfont(struct timiditycontext_t *c, SFInfo *sf, struct timidity_file *fp);
 extern void free_soundfont(SFInfo *sf);
 extern void correct_samples(SFInfo *sf);
+
+/*================================================================
+ * preset / instrument bag record
+ *================================================================*/
+
+typedef struct _SFBags {
+	int nbags;
+	uint16 *bag;
+	int ngens;
+	SFGenRec *gen;
+} SFBags;
 
 #endif

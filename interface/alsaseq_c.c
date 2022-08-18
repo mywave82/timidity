@@ -177,7 +177,7 @@ static void ctl_close(void);
 static int ctl_read(int32 *valp);
 static int cmsg(int type, int verbosity_level, char *fmt, ...);
 static void ctl_event(CtlEvent *e);
-static int ctl_pass_playing_list(int n, char *args[]);
+static int ctl_pass_playing_list(struct timiditycontext_t *c, int n, char *args[]);
 
 /**********************************/
 /* export the interface functions */
@@ -198,10 +198,6 @@ ControlMode ctl=
     cmsg,
     ctl_event
 };
-
-/* options */
-int opt_realtime_priority = 0;
-int opt_sequencer_ports = 4;
 
 static int buffer_time_advance;
 static long buffer_time_offset;
@@ -310,7 +306,7 @@ static int set_realtime_priority(void)
         return 0;
 }
 
-static int ctl_pass_playing_list(int n, char *args[])
+static int ctl_pass_playing_list(struct timiditycontext_t *c, int n, char *args[])
 {
 	double btime;
 	int i, j;
@@ -332,12 +328,12 @@ static int ctl_pass_playing_list(int n, char *args[])
 	alsactx.fd = snd_seq_file_descriptor(alsactx.handle);
 	snd_seq_set_client_name(alsactx.handle, "TiMidity");
 	snd_seq_set_client_pool_input(alsactx.handle, 1000); /* enough? */
-	if (opt_sequencer_ports < 1)
+	if (c->opt_sequencer_ports < 1)
 		alsactx.num_ports = 1;
-	else if (opt_sequencer_ports > MAX_PORTS)
+	else if (c->opt_sequencer_ports > MAX_PORTS)
 		alsactx.num_ports = MAX_PORTS;
 	else
-		alsactx.num_ports = opt_sequencer_ports;
+		alsactx.num_ports = c->opt_sequencer_ports;
 
 	printf("Opening sequencer port:");
 	for (i = 0; i < alsactx.num_ports; i++) {

@@ -30,23 +30,14 @@
 #ifndef ___REVERB_H_
 #define ___REVERB_H_
 
-#ifndef REVERB_PRIVATE
-#define EXTERN extern
-#else
-#define EXTERN
-#endif
-
 #define DEFAULT_REVERB_SEND_LEVEL 40
 
-extern int opt_reverb_control;
-extern FLOAT_T reverb_predelay_factor;
-extern FLOAT_T freeverb_scaleroom;
-extern FLOAT_T freeverb_offsetroom;
+struct timiditycontext_t;
 
-extern void set_dry_signal(int32 *, int32);
-extern void set_dry_signal_xg(int32 *, int32, int32);
-extern void mix_dry_signal(int32 *, int32);
-extern void free_effect_buffers(void);
+extern void set_dry_signal(struct timiditycontext_t *c, int32 *, int32);
+extern void set_dry_signal_xg(struct timiditycontext_t *c, int32 *, int32, int32);
+extern void mix_dry_signal(struct timiditycontext_t *c, int32 *, int32);
+extern void free_effect_buffers(struct timiditycontext_t *c);
 
 /*                    */
 /*  Effect Utitities  */
@@ -62,8 +53,8 @@ typedef struct {
 } pink_noise;
 
 extern void init_pink_noise(pink_noise *);
-extern float get_pink_noise(pink_noise *);
-extern float get_pink_noise_light(pink_noise *);
+extern float get_pink_noise(struct timiditycontext_t *c, pink_noise *);
+extern float get_pink_noise_light(struct timiditycontext_t *c, pink_noise *);
 
 #ifndef SINE_CYCLE_LENGTH
 #define SINE_CYCLE_LENGTH 1024
@@ -189,10 +180,10 @@ struct effect_xg_t {
 	struct _EffectList *ef;
 };
 
-extern void do_insertion_effect_gs(int32*, int32);
-extern void do_insertion_effect_xg(int32*, int32, struct effect_xg_t *);
-extern void do_variation_effect1_xg(int32*, int32);
-extern void init_ch_effect_xg(void);
+extern void do_insertion_effect_gs(struct timiditycontext_t *c, int32*, int32);
+extern void do_insertion_effect_xg(struct timiditycontext_t *c, int32*, int32, struct effect_xg_t *);
+extern void do_variation_effect1_xg(struct timiditycontext_t *c, int32*, int32);
+extern void init_ch_effect_xg(struct timiditycontext_t *c);
 
 enum {
 	EFFECT_NONE,
@@ -228,13 +219,13 @@ enum {
 #define MAGIC_INIT_EFFECT_INFO -1
 #define MAGIC_FREE_EFFECT_INFO -2
 
-EXTERN struct insertion_effect_gs_t {
+struct insertion_effect_gs_t {
 	int32 type;
 	int8 type_lsb, type_msb, parameter[20], send_reverb,
 		send_chorus, send_delay, control_source1, control_depth1,
 		control_source2, control_depth2, send_eq_switch;
 	struct _EffectList *ef;
-} insertion_effect_gs;
+};
 
 enum {
 	XG_CONN_INSERTION = 0,
@@ -246,9 +237,6 @@ enum {
 #define XG_INSERTION_EFFECT_NUM 2
 #define XG_VARIATION_EFFECT_NUM 1
 
-EXTERN struct effect_xg_t insertion_effect_xg[XG_INSERTION_EFFECT_NUM],
-	variation_effect_xg[XG_VARIATION_EFFECT_NUM], reverb_status_xg, chorus_status_xg;
-
 typedef struct _EffectList {
 	int type;
 	void *info;
@@ -259,7 +247,7 @@ typedef struct _EffectList {
 struct _EffectEngine {
 	int type;
 	char *name;
-	void (*do_effect)(int32 *, int32, struct _EffectList *);
+	void (*do_effect)(struct timiditycontext_t *c, int32 *, int32, struct _EffectList *);
 	void (*conv_gs)(struct insertion_effect_gs_t *, struct _EffectList *);
 	void (*conv_xg)(struct effect_xg_t *, struct _EffectList *);
 	int info_size;
@@ -286,8 +274,7 @@ struct effect_parameter_xg_t {
 extern const struct effect_parameter_xg_t effect_parameter_xg[];
 
 extern EffectList *push_effect(EffectList *, int);
-extern void do_effect_list(int32 *, int32, EffectList *);
-extern void free_effect_list(EffectList *);
+extern void free_effect_list(struct timiditycontext_t *c, EffectList *);
 
 /*! 2-Band EQ */
 typedef struct {
@@ -506,33 +493,33 @@ typedef struct {
 /*        System Effect        */
 /*                             */
 /* Reverb Effect */
-extern void do_ch_reverb(int32 *, int32);
-extern void do_mono_reverb(int32 *, int32);
-extern void set_ch_reverb(int32 *, int32, int32);
-extern void init_reverb(void);
+extern void do_ch_reverb(struct timiditycontext_t *c, int32 *, int32);
+extern void do_mono_reverb(struct timiditycontext_t *c, int32 *, int32);
+extern void set_ch_reverb(struct timiditycontext_t *c, int32 *, int32, int32);
+extern void init_reverb(struct timiditycontext_t *c);
 extern void reverb_rc_event(int, int32);
-extern void do_ch_reverb_xg(int32 *, int32);
+extern void do_ch_reverb_xg(struct timiditycontext_t *c, int32 *, int32);
 
 /* Chorus Effect */
-extern void do_ch_chorus(int32 *, int32);
-extern void set_ch_chorus(int32 *, int32, int32);
-extern void init_ch_chorus(void);
-extern void do_ch_chorus_xg(int32 *, int32);
+extern void do_ch_chorus(struct timiditycontext_t *c, int32 *, int32);
+extern void set_ch_chorus(struct timiditycontext_t *c, int32 *, int32, int32);
+extern void init_ch_chorus(struct timiditycontext_t *c);
+extern void do_ch_chorus_xg(struct timiditycontext_t *c, int32 *, int32);
 
 /* Delay (Celeste) Effect */
-extern void do_ch_delay(int32 *, int32);
-extern void set_ch_delay(int32 *, int32, int32);
-extern void init_ch_delay(void);
+extern void do_ch_delay(struct timiditycontext_t *c, int32 *, int32);
+extern void set_ch_delay(struct timiditycontext_t *c, int32 *, int32, int32);
+extern void init_ch_delay(struct timiditycontext_t *c);
 
 /* EQ */
-extern void init_eq_gs(void);
-extern void set_ch_eq_gs(int32 *, int32);
-extern void do_ch_eq_gs(int32 *, int32);
+extern void init_eq_gs(struct timiditycontext_t *c);
+extern void set_ch_eq_gs(struct timiditycontext_t *c, int32 *, int32);
+extern void do_ch_eq_gs(struct timiditycontext_t *c, int32 *, int32);
 extern void do_ch_eq_xg(int32 *, int32, struct part_eq_xg *);
-extern void do_multi_eq_xg(int32 *, int32);
+extern void do_multi_eq_xg(struct timiditycontext_t *c, int32 *, int32);
 
 /* GS parameters of reverb effect */
-EXTERN struct reverb_status_gs_t
+struct reverb_status_gs_t
 {
 	/* GS parameters */
 	int8 character, pre_lpf, level, time, delay_feedback, pre_delay_time;
@@ -542,7 +529,7 @@ EXTERN struct reverb_status_gs_t
 	InfoFreeverb info_freeverb;
 	InfoDelay3 info_reverb_delay;
 	filter_lowpass1 lpf;
-} reverb_status_gs;
+};
 
 struct chorus_text_gs_t
 {
@@ -552,7 +539,7 @@ struct chorus_text_gs_t
 };
 
 /* GS parameters of chorus effect */
-EXTERN struct chorus_status_gs_t
+struct chorus_status_gs_t
 {
 	/* GS parameters */
 	int8 macro, pre_lpf, level, feedback, delay, rate, depth, send_reverb, send_delay;
@@ -561,10 +548,10 @@ EXTERN struct chorus_status_gs_t
 
 	InfoStereoChorus info_stereo_chorus;
 	filter_lowpass1 lpf;
-} chorus_status_gs;
+};
 
 /* GS parameters of delay effect */
-EXTERN struct delay_status_gs_t
+struct delay_status_gs_t
 {
 	/* GS parameters */
 	int8 type, level, level_center, level_left, level_right,
@@ -579,19 +566,19 @@ EXTERN struct delay_status_gs_t
 
 	filter_lowpass1 lpf;
 	InfoDelay3 info_delay;
-} delay_status_gs;
+};
 
 /* GS parameters of channel EQ */
-EXTERN struct eq_status_gs_t
+struct eq_status_gs_t
 {
 	/* GS parameters */
     int8 low_freq, high_freq, low_gain, high_gain;
 
 	filter_shelving hsf, lsf;
-} eq_status_gs;
+};
 
 /* XG parameters of Multi EQ */
-EXTERN struct multi_eq_xg_t
+struct multi_eq_xg_t
 {
 	/* XG parameters */
 	int8 type, gain1, gain2, gain3, gain4, gain5,
@@ -601,10 +588,6 @@ EXTERN struct multi_eq_xg_t
 	int8 valid, valid1, valid2, valid3, valid4, valid5;
 	filter_shelving eq1s, eq5s;
 	filter_peaking eq1p, eq2p, eq3p, eq4p, eq5p;
-} multi_eq_xg;
-
-EXTERN pink_noise global_pink_noise_light;
-
-#undef EXTERN
+};
 
 #endif /* ___REVERB_H_ */

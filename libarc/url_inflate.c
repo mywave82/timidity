@@ -38,21 +38,21 @@ typedef struct _URL_inflate
     int autoclose;
 } URL_inflate;
 
-static long url_inflate_read_func(char *buf, long size, void *v);
-static long url_inflate_read(URL url, void *buff, long n);
-static long url_inflate_tell(URL url);
-static void url_inflate_close(URL url);
+static long url_inflate_read_func(struct timiditycontext_t *c, char *buf, long size, void *v);
+static long url_inflate_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+static long url_inflate_tell(struct timiditycontext_t *c, URL url);
+static void url_inflate_close(struct timiditycontext_t *c, URL url);
 
-URL url_inflate_open(URL instream, long compsize, int autoclose)
+URL url_inflate_open(struct timiditycontext_t *c, URL instream, long compsize, int autoclose)
 {
     URL_inflate *url;
 
-    url = (URL_inflate *)alloc_url(sizeof(URL_inflate));
+    url = (URL_inflate *)alloc_url(c, sizeof(URL_inflate));
     if(url == NULL)
     {
 	if(autoclose)
-	    url_close(instream);
-	url_errno = errno;
+	    url_close(c, instream);
+	c->url_errno = errno;
 	return NULL;
     }
 
@@ -77,59 +77,59 @@ URL url_inflate_open(URL instream, long compsize, int autoclose)
     if(url->decoder == NULL)
     {
 	if(autoclose)
-	    url_close(instream);
-	url_inflate_close((URL)url);
-	url_errno = errno;
+	    url_close(c, instream);
+	url_inflate_close(c, (URL)url);
+	c->url_errno = errno;
 	return NULL;
     }
 
     return (URL)url;
 }
 
-static long url_inflate_read_func(char *buf, long size, void *v)
+static long url_inflate_read_func(struct timiditycontext_t *c, char *buf, long size, void *v)
 {
     URL_inflate *urlp = (URL_inflate *)v;
     long n;
 
     if(urlp->compsize == -1) /* size if unknown */
-	return url_read(urlp->instream, buf, size);
+	return url_read(c, urlp->instream, buf, size);
 
     if(urlp->compsize == 0)
 	return 0;
     n = size;
     if(n > urlp->compsize)
 	n = urlp->compsize;
-    n = url_read(urlp->instream, buf, n);
+    n = url_read(c, urlp->instream, buf, n);
     if(n == -1)
 	return -1;
     urlp->compsize -= n;
     return n;
 }
 
-static long url_inflate_read(URL url, void *buff, long n)
+static long url_inflate_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     URL_inflate *urlp = (URL_inflate *)url;
 
-    n = zip_inflate(urlp->decoder, (char *)buff, n);
+    n = zip_inflate(c, urlp->decoder, (char *)buff, n);
     if(n <= 0)
 	return n;
     urlp->pos += n;
     return n;
 }
 
-static long url_inflate_tell(URL url)
+static long url_inflate_tell(struct timiditycontext_t *c, URL url)
 {
     return ((URL_inflate *)url)->pos;
 }
 
-static void url_inflate_close(URL url)
+static void url_inflate_close(struct timiditycontext_t *c, URL url)
 {
     int save_errno = errno;
     URL_inflate *urlp = (URL_inflate *)url;
     if(urlp->decoder)
-	close_inflate_handler(urlp->decoder);
+	close_inflate_handler(c, urlp->decoder);
     if(urlp->autoclose)
-	url_close(urlp->instream);
+	url_close(c, urlp->instream);
     free(url);
     errno = save_errno;
 }

@@ -22,6 +22,7 @@
 #ifndef ___MBLOCK_H_
 #define ___MBLOCK_H_
 
+struct timiditycontext_t;
 
 /* Memory block for decreasing malloc
  *
@@ -66,9 +67,9 @@ typedef struct _MBlockList
 } MBlockList;
 
 extern void init_mblock(MBlockList *mblock);
-extern void *new_segment(MBlockList *mblock, size_t nbytes);
-extern void reuse_mblock(MBlockList *mblock);
-extern char *strdup_mblock(MBlockList *mblock, const char *str);
-extern int free_global_mblock(void);
+extern void *new_segment(struct timiditycontext_t *c, MBlockList *mblock, size_t nbytes);
+extern void reuse_mblock(struct timiditycontext_t *c, MBlockList *mblock);
+extern char *strdup_mblock(struct timiditycontext_t *c, MBlockList *mblock, const char *str);
+extern int free_global_mblock(struct timiditycontext_t *c);
 
 #endif /* ___MBLOCK_H_ */

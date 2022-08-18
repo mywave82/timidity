@@ -21,6 +21,8 @@
 #ifndef ___EXPLODE_H_
 #define ___EXPLODE_H_
 
+struct timiditycontext_t;
+
 typedef struct _ExplodeHandler *ExplodeHandler;
 
 enum explode_method_t
@@ -32,12 +34,12 @@ enum explode_method_t
 };
 
 extern ExplodeHandler open_explode_handler(
-	long (* read_func)(char *buf, long size, void *user_val),
+	long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val),
 	int method,
 	long compsize, long origsize,
 	void *user_val);
 
-extern long explode(ExplodeHandler decoder,
+extern long explode(struct timiditycontext_t *c, ExplodeHandler decoder,
 		    char *decode_buff,
 		    long decode_buff_size);
 

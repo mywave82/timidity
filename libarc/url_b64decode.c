@@ -43,21 +43,21 @@ typedef struct _URL_b64decode
     int autoclose;
 } URL_b64decode;
 
-static long url_b64decode_read(URL url, void *buff, long n);
-static int  url_b64decode_fgetc(URL url);
-static long url_b64decode_tell(URL url);
-static void url_b64decode_close(URL url);
+static long url_b64decode_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+static int  url_b64decode_fgetc(struct timiditycontext_t *c, URL url);
+static long url_b64decode_tell(struct timiditycontext_t *c, URL url);
+static void url_b64decode_close(struct timiditycontext_t *c, URL url);
 
-URL url_b64decode_open(URL reader, int autoclose)
+URL url_b64decode_open(struct timiditycontext_t *c, URL reader, int autoclose)
 {
     URL_b64decode *url;
 
-    url = (URL_b64decode *)alloc_url(sizeof(URL_b64decode));
+    url = (URL_b64decode *)alloc_url(c, sizeof(URL_b64decode));
     if(url == NULL)
     {
 	if(autoclose)
-	    url_close(reader);
-	url_errno = errno;
+	    url_close(c, reader);
+	c->url_errno = errno;
 	return NULL;
     }
 
@@ -82,9 +82,9 @@ URL url_b64decode_open(URL reader, int autoclose)
     return (URL)url;
 }
 
-static int b64getchar(URL reader)
+static int b64getchar(struct timiditycontext_t *c, URL reader)
 {
-    int c;
+    int ch;
     static const int b64_decode_table[256] =
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -98,13 +98,13 @@ static int b64getchar(URL reader)
 
     do
     {
-	if((c = url_getc(reader)) == EOF)
+	if((ch = url_getc(reader)) == EOF)
 	    return EOF;
-    } while(c == '\r' || c == '\n');
-    return b64_decode_table[c];
+    } while(ch == '\r' || ch == '\n');
+    return b64_decode_table[ch];
 }
 
-static int b64decode(URL_b64decode *urlp)
+static int b64decode(struct timiditycontext_t *c, URL_b64decode *urlp)
 {
     int c1, c2, c3, c4;
     int n;
@@ -122,26 +122,26 @@ static int b64decode(URL_b64decode *urlp)
     n = 0;
     while(n < DECODEBUFSIZ)
     {
-	if((c1 = b64getchar(url)) == EOF)
+	if((c1 = b64getchar(c, url)) == EOF)
 	{
 	    urlp->eod = 1;
 	    break;
 	}
-	if((c2 = b64getchar(url)) == EOF)
+	if((c2 = b64getchar(c, url)) == EOF)
 	{
 	    urlp->eod = 1;
 	    break;
 	}
 	p[n++] = ((c1 << 2) | ((c2 & 0x30) >> 4));
 
-	if((c3 = b64getchar(url)) == EOF)
+	if((c3 = b64getchar(c, url)) == EOF)
 	{
 	    urlp->eod = 1;
 	    break;
 	}
 	p[n++] = (((c2 & 0xf) << 4) | ((c3 & 0x3c) >> 2));
 
-	if((c4 = b64getchar(url)) == EOF)
+	if((c4 = b64getchar(c, url)) == EOF)
 	{
 	    urlp->eod = 1;
 	    break;
@@ -162,7 +162,7 @@ static int b64decode(URL_b64decode *urlp)
     return 0;
 }
 
-static long url_b64decode_read(URL url, void *buff, long size)
+static long url_b64decode_read(struct timiditycontext_t *c, URL url, void *buff, long size)
 {
     URL_b64decode *urlp = (URL_b64decode *)url;
     unsigned char *p = (unsigned char *)buff;
@@ -177,7 +177,7 @@ static long url_b64decode_read(URL url, void *buff, long size)
 	int i;
 
 	if(urlp->beg == urlp->end)
-	    if(b64decode(urlp))
+	    if(b64decode(c, urlp))
 		break;
 	i = urlp->end - urlp->beg;
 	if(i > size - n)
@@ -189,32 +189,32 @@ static long url_b64decode_read(URL url, void *buff, long size)
     return n;
 }
 
-static int url_b64decode_fgetc(URL url)
+static int url_b64decode_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_b64decode *urlp = (URL_b64decode *)url;
 
     if(urlp->eof)
 	return EOF;
     if(urlp->beg == urlp->end)
-	if(b64decode(urlp))
+	if(b64decode(c, urlp))
 	    return EOF;
 
     return (int)urlp->decodebuf[urlp->beg++];
 }
 
-static long url_b64decode_tell(URL url)
+static long url_b64decode_tell(struct timiditycontext_t *c, URL url)
 {
     URL_b64decode *urlp = (URL_b64decode *)url;
 
     return urlp->rpos + urlp->beg;
 }
 
-static void url_b64decode_close(URL url)
+static void url_b64decode_close(struct timiditycontext_t *c, URL url)
 {
     URL_b64decode *urlp = (URL_b64decode *)url;
 
     if(urlp->autoclose)
-	url_close(urlp->reader);
+	url_close(c, urlp->reader);
     free(url);
 }
 
@@ -232,14 +232,14 @@ void main(int argc, char** argv)
     }
     filename = argv[1];
 
-    if((b64decoder = url_file_open(filename)) == NULL)
+    if((b64decoder = url_file_open(c, filename)) == NULL)
     {
 	perror(argv[1]);
 	url_close(b64decoder);
 	exit(1);
     }
 
-    b64decoder = url_b64decode_open(b64decoder, 1);
+    b64decoder = url_b64decode_open(c, b64decoder, 1);
 #if B64DECODE_MAIN
     while((c = url_getc(b64decoder)) != EOF)
 	putchar(c);

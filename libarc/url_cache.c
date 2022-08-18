@@ -38,29 +38,29 @@ typedef struct _URL_cache
     int autoclose;
 } URL_cache;
 
-static long url_cache_read(URL url, void *buff, long n);
-static int url_cache_fgetc(URL url);
-static long url_cache_seek(URL url, long offset, int whence);
-static long url_cache_tell(URL url);
-static void url_cache_close(URL url);
+static long url_cache_read(struct timiditycontext_t *c, URL url, void *buff, long n);
+static int url_cache_fgetc(struct timiditycontext_t *c, URL url);
+static long url_cache_seek(struct timiditycontext_t *c, URL url, long offset, int whence);
+static long url_cache_tell(struct timiditycontext_t *c, URL url);
+static void url_cache_close(struct timiditycontext_t *c, URL url);
 
-URL url_cache_open(URL url, int autoclose)
+URL url_cache_open(struct timiditycontext_t *c, URL url, int autoclose)
 {
     URL_cache *urlp;
 
     if(url->type == URL_cache_t && autoclose)
     {
 	if(((URL_cache *)url)->memb_ok)
-	    delete_memb(&((URL_cache *)url)->b);
+	    delete_memb(c, &((URL_cache *)url)->b);
 	urlp = (URL_cache *)url;
 	url = urlp->reader;
     }
     else
     {
-	if((urlp = (URL_cache *)alloc_url(sizeof(URL_cache))) == NULL)
+	if((urlp = (URL_cache *)alloc_url(c, sizeof(URL_cache))) == NULL)
 	{
 	    if(autoclose)
-		url_close(url);
+		url_close(c, url);
 	    return NULL;
 	}
     }
@@ -90,18 +90,18 @@ void url_cache_disable(URL url)
 	url->url_seek = NULL;
 }
 
-void url_cache_detach(URL url)
+void url_cache_detach(struct timiditycontext_t *c, URL url)
 {
     if(url != NULL && url->type == URL_cache_t)
     {
 	URL_cache *urlp = (URL_cache *)url;
 	if(urlp->autoclose && urlp->reader != NULL)
-	    url_close(urlp->reader);
+	    url_close(c, urlp->reader);
 	urlp->reader = NULL;
     }
 }
 
-static long url_cache_read(URL url, void *buff, long n)
+static long url_cache_read(struct timiditycontext_t *c, URL url, void *buff, long n)
 {
     URL_cache *urlp = (URL_cache *)url;
     MemBuffer *b = &urlp->b;
@@ -110,7 +110,7 @@ static long url_cache_read(URL url, void *buff, long n)
     {
 	if(urlp->reader == NULL)
 	    return 0;
-	n = url_read(urlp->reader, buff, n);
+	n = url_read(c, urlp->reader, buff, n);
 	if(n > 0)
 	    urlp->pos += n;
 	return n;
@@ -126,11 +126,11 @@ static long url_cache_read(URL url, void *buff, long n)
 
     if(url->url_seek == NULL)
     {
-	delete_memb(b);
+	delete_memb(c, b);
 	urlp->memb_ok = 0;
 	if(urlp->reader == NULL)
 	    return 0;
-	n = url_read(urlp->reader, buff, n);
+	n = url_read(c, urlp->reader, buff, n);
 	if(n > 0)
 	    urlp->pos += n;
 	return n;
@@ -138,10 +138,10 @@ static long url_cache_read(URL url, void *buff, long n)
 
     if(urlp->reader == NULL)
 	return 0;
-    n = url_read(urlp->reader, buff, n);
+    n = url_read(c, urlp->reader, buff, n);
     if(n > 0)
     {
-	push_memb(b, buff, n);
+	push_memb(c, b, buff, n);
 	b->cur = b->tail;
 	b->cur->pos = b->cur->size;
 	urlp->pos += n;
@@ -149,11 +149,11 @@ static long url_cache_read(URL url, void *buff, long n)
     return n;
 }
 
-static int url_cache_fgetc(URL url)
+static int url_cache_fgetc(struct timiditycontext_t *c, URL url)
 {
     URL_cache *urlp = (URL_cache *)url;
     MemBuffer *b = &urlp->b;
-    char c;
+    char ch;
     int i;
 
     if(!urlp->memb_ok)
@@ -168,14 +168,14 @@ static int url_cache_fgetc(URL url)
 
     if(urlp->pos < b->total_size)
     {
-	read_memb(b, &c, 1);
+	read_memb(b, &ch, 1);
 	urlp->pos++;
-	return (int)(unsigned char)c;
+	return (int)(unsigned char)ch;
     }
 
     if(url->url_seek == NULL)
     {
-	delete_memb(b);
+	delete_memb(c, b);
 	urlp->memb_ok = 0;
 	if(urlp->reader == NULL)
 	    return EOF;
@@ -189,15 +189,15 @@ static int url_cache_fgetc(URL url)
 	return EOF;
     if((i = url_getc(urlp->reader)) == EOF)
 	return EOF;
-    c = (char)i;
-    push_memb(b, &c, 1);
+    ch = (char)i;
+    push_memb(c, b, &ch, 1);
     b->cur = b->tail;
     b->cur->pos = b->cur->size;
     urlp->pos++;
     return i;
 }
 
-static long url_cache_seek(URL url, long offset, int whence)
+static long url_cache_seek(struct timiditycontext_t *c, URL url, long offset, int whence)
 {
     URL_cache *urlp = (URL_cache *)url;
     MemBuffer *b = &urlp->b;
@@ -213,12 +213,12 @@ static long url_cache_seek(URL url, long offset, int whence)
 	newpos = ret + offset;
 	break;
       case SEEK_END:
-	while(url_cache_fgetc(url) != EOF)
+	while(url_cache_fgetc(c, url) != EOF)
 	    ;
 	newpos = b->total_size + whence;
 	break;
       default:
-	url_errno = errno = EPERM;
+	c->url_errno = errno = EPERM;
 	return -1;
     }
     if(newpos < 0)
@@ -234,22 +234,22 @@ static long url_cache_seek(URL url, long offset, int whence)
 
     s = skip_read_memb(b, n);
     urlp->pos += s;
-    while(s++ < n && url_cache_fgetc(url) != EOF)
+    while(s++ < n && url_cache_fgetc(c, url) != EOF)
 	;
     return ret;
 }
 
-static long url_cache_tell(URL url)
+static long url_cache_tell(struct timiditycontext_t *c, URL url)
 {
     return ((URL_cache *)url)->pos;
 }
 
-static void url_cache_close(URL url)
+static void url_cache_close(struct timiditycontext_t *c, URL url)
 {
     URL_cache *urlp = (URL_cache *)url;
     if(urlp->autoclose && urlp->reader != NULL)
-	url_close(urlp->reader);
+	url_close(c, urlp->reader);
     if(urlp->memb_ok)
-	delete_memb(&urlp->b);
+	delete_memb(c, &urlp->b);
     free(urlp);
 }

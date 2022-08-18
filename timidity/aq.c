@@ -50,50 +50,25 @@
 #include "instrum.h"
 #include "playmidi.h"
 
-
 #define TEST_SPARE_RATE 0.9
 #define MAX_BUCKET_TIME 0.2
 #define MAX_FILLED_TIME 2.0
 
-static int32 device_qsize;
-static int Bps;	/* Bytes per sample frame */
-static int bucket_size;
-static int nbuckets = 0;
-static double bucket_time;
-int aq_fill_buffer_flag = 0;
-static int32 aq_start_count;
-static int32 aq_add_count;
-
-static int32 play_counter, play_offset_counter;
-static double play_start_time;
-
-typedef struct _AudioBucket
-{
-    char *data;
-    int len;
-    struct _AudioBucket *next;
-} AudioBucket;
-
-static AudioBucket *base_buckets = NULL;
-static AudioBucket *allocated_bucket_list = NULL;
-static AudioBucket *head = NULL;
-static AudioBucket *tail = NULL;
-
-static void alloc_soft_queue(void);
-static void set_bucket_size(int size);
-static int add_play_bucket(const char *buf, int n);
-static void reuse_audio_bucket(AudioBucket *bucket);
-static AudioBucket *next_allocated_bucket(void);
-static void flush_buckets(void);
-static int aq_fill_one(void);
-static void aq_wait_ticks(void);
-static int32 estimate_queue_size(void);
+static void alloc_soft_queue(struct timiditycontext_t *c);
+static void set_bucket_size(struct timiditycontext_t *c, int size);
+static int add_play_bucket(struct timiditycontext_t *c, const char *buf, int n);
+static void reuse_audio_bucket(struct timiditycontext_t *c, AudioBucket *bucket);
+static AudioBucket *next_allocated_bucket(struct timiditycontext_t *c);
+static void flush_buckets(struct timiditycontext_t *c);
+static int aq_fill_one(struct timiditycontext_t *c);
+static void aq_wait_ticks(struct timiditycontext_t *c);
+static int32 estimate_queue_size(struct timiditycontext_t *c);
 
 /* effect.c */
-extern void init_effect(void);
-extern void do_effect(int32* buf, int32 count);
+extern void init_effect(struct timiditycontext_t *c);
+extern void do_effect(struct timiditycontext_t *c, int32* buf, int32 count);
 
-int aq_calc_fragsize(void)
+int aq_calc_fragsize(struct timiditycontext_t *c)
 {
     int ch, bps, bs;
     double dq, bt;
@@ -124,7 +99,7 @@ int aq_calc_fragsize(void)
     return bs;
 }
 
-void aq_setup(void)
+void aq_setup(struct timiditycontext_t *c)
 {
     int ch, frag_size;
 
@@ -135,94 +110,93 @@ void aq_setup(void)
     else
 	ch = 2;
     if(play_mode->encoding & PE_24BIT)
-	Bps = 3 * ch;
+	c->Bps = 3 * ch;
     else if(play_mode->encoding & PE_16BIT)
-	Bps = 2 * ch;
+	c->Bps = 2 * ch;
     else
-	Bps = ch;
+	c->Bps = ch;
 
     if(play_mode->acntl(PM_REQ_GETFRAGSIZ, &frag_size) == -1)
-	frag_size = audio_buffer_size * Bps;
-    set_bucket_size(frag_size);
-    bucket_time = (double)bucket_size / Bps / play_mode->rate;
+	frag_size = audio_buffer_size * c->Bps;
+    set_bucket_size(c, frag_size);
+    c->bucket_time = (double)c->bucket_size / c->Bps / play_mode->rate;
 
     if(IS_STREAM_TRACE)
     {
-	if(play_mode->acntl(PM_REQ_GETQSIZ, &device_qsize) == -1)
-	    device_qsize = estimate_queue_size();
-	if(bucket_size * 2 > device_qsize) {
+	if(play_mode->acntl(PM_REQ_GETQSIZ, &c->device_qsize) == -1)
+	    c->device_qsize = estimate_queue_size(c);
+	if(c->bucket_size * 2 > c->device_qsize) {
 	  ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
-		    "Warning: Audio buffer is too small.");
-	  device_qsize = 0;
+		    "Warning: Audio buffer is too small. (bucket_size %d * 2 > device_qsize %d)", (int)c->bucket_size, (int)c->device_qsize);
+	  c->device_qsize = 0;
 	} else {
-	  device_qsize -= device_qsize % Bps; /* Round Bps */
+	  c->device_qsize -= c->device_qsize % c->Bps; /* Round Bps */
 	  ctl->cmsg(CMSG_INFO, VERB_DEBUG,
-		    "Audio device queue size: %d bytes", device_qsize);
+		    "Audio device queue size: %d bytes", c->device_qsize);
 	  ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 		    "Write bucket size: %d bytes (%d msec)",
-		    bucket_size, (int)(bucket_time * 1000 + 0.5));
+		    c->bucket_size, (int)(c->bucket_time * 1000 + 0.5));
 	}
     }
     else
     {
-	device_qsize = 0;
-	free_soft_queue();
-	nbuckets = 0;
+	c->device_qsize = 0;
+	free_soft_queue(c);
+	c->nbuckets = 0;
     }
 
-    init_effect();
-    aq_add_count = 0;
+    init_effect(c);
+    c->aq_add_count = 0;
 }
 
-void aq_set_soft_queue(double soft_buff_time, double fill_start_time)
+void aq_set_soft_queue(struct timiditycontext_t *c, double soft_buff_time, double fill_start_time)
 {
-    static double last_soft_buff_time, last_fill_start_time;
     int nb;
 
     /* for re-initialize */
     if(soft_buff_time < 0)
-	soft_buff_time = last_soft_buff_time;
+	soft_buff_time = c->aq__last_soft_buff_time;
     if(fill_start_time < 0)
-	fill_start_time = last_fill_start_time;
+	fill_start_time = c->aq__last_fill_start_time;
 
-    nb = (int)(soft_buff_time / bucket_time);
+    nb = (int)(soft_buff_time / c->bucket_time);
     if(nb == 0)
-	aq_start_count = 0;
+	c->aq_start_count = 0;
     else
-	aq_start_count = (int32)(fill_start_time * play_mode->rate);
-    aq_fill_buffer_flag = (aq_start_count > 0);
+	c->aq_start_count = (int32)(fill_start_time * play_mode->rate);
+    c->aq_fill_buffer_flag = (c->aq_start_count > 0);
 
-    if(nbuckets != nb)
+    if(c->nbuckets != nb)
     {
-	nbuckets = nb;
-	alloc_soft_queue();
+	c->nbuckets = nb;
+	alloc_soft_queue(c);
     }
 
-    last_soft_buff_time = soft_buff_time;
-    last_fill_start_time = fill_start_time;
+    c->aq__last_soft_buff_time = soft_buff_time;
+    c->aq__last_fill_start_time = fill_start_time;
 }
 
 /* Estimates the size of audio device queue.
  * About sun audio, there are long-waiting if buffer of device audio is full.
  * So it is impossible to completely estimate the size.
  */
-static int32 estimate_queue_size(void)
+static int32 estimate_queue_size(struct timiditycontext_t *c)
 {
     char *nullsound;
     double tb, init_time, chunktime;
     int32 qbytes, max_qbytes;
     int ntries;
 
-    nullsound = (char *)safe_malloc(bucket_size);
-    memset(nullsound, 0, bucket_size);
+    nullsound = (char *)safe_malloc(c->bucket_size);
+    memset(nullsound, 0, c->bucket_size);
     if(play_mode->encoding & (PE_ULAW|PE_ALAW))
-	general_output_convert((int32 *)nullsound, bucket_size/Bps);
-    tb = play_mode->rate * Bps * TEST_SPARE_RATE;
+	general_output_convert((int32 *)nullsound, c->bucket_size/c->Bps);
+    tb = play_mode->rate * c->Bps * TEST_SPARE_RATE;
     ntries = 1;
-    max_qbytes = play_mode->rate * MAX_FILLED_TIME * Bps;
+    max_qbytes = play_mode->rate * MAX_FILLED_TIME * c->Bps;
 
   retry:
-    chunktime = (double)bucket_size / Bps / play_mode->rate;
+    chunktime = (double)c->bucket_size / c->Bps / play_mode->rate;
     qbytes = 0;
 
     init_time = get_current_calender_time();	/* Start */
@@ -237,7 +211,7 @@ static int32 estimate_queue_size(void)
 		      "Warning: Audio test is terminated");
 	    break;
 	}
-	play_mode->output_data(nullsound, bucket_size);
+	play_mode->output_data(c, nullsound, c->bucket_size);
 	diff = get_current_calender_time() - start;
 
 	if(diff > chunktime/2 || qbytes > 1024*512 || chunktime < diff)
@@ -252,21 +226,21 @@ static int32 estimate_queue_size(void)
     }
     play_mode->acntl(PM_REQ_DISCARD, NULL);
 
-    if(bucket_size * 2 > qbytes)
+    if(c->bucket_size * 2 > qbytes)
     {
 	if(ntries == 4)
 	{
 	    ctl->cmsg(CMSG_ERROR, VERB_NOISY,
 		      "Can't estimate audio queue length");
-	    set_bucket_size(audio_buffer_size * Bps);
+	    set_bucket_size(c, audio_buffer_size * c->Bps);
 	    free(nullsound);
-	    return 2 * audio_buffer_size * Bps;
+	    return 2 * audio_buffer_size * c->Bps;
 	}
 
 	ctl->cmsg(CMSG_WARNING, VERB_DEBUG,
 		  "Retry to estimate audio queue length (%d times)",
 		  ntries);
-	set_bucket_size(bucket_size / 2);
+	set_bucket_size(c, c->bucket_size / 2);
 	ntries++;
 	goto retry;
     }
@@ -277,18 +251,18 @@ static int32 estimate_queue_size(void)
 }
 
 /* Send audio data to play_mode->output_data() */
-static int aq_output_data(char *buff, int nbytes)
+static int aq_output_data(struct timiditycontext_t *c, char *buff, int nbytes)
 {
     int i;
 
-    play_counter += nbytes / Bps;
+    c->aq_play_counter += nbytes / c->Bps;
 
     while(nbytes > 0)
     {
 	i = nbytes;
-	if(i > bucket_size)
-	    i = bucket_size;
-	if(play_mode->output_data(buff, i) == -1)
+	if(i > c->bucket_size)
+	    i = c->bucket_size;
+	if(play_mode->output_data(c, buff, i) == -1)
 	    return -1;
 	nbytes -= i;
 	buff += i;
@@ -297,7 +271,7 @@ static int aq_output_data(char *buff, int nbytes)
     return 0;
 }
 
-int aq_add(int32 *samples, int32 count)
+int aq_add(struct timiditycontext_t *c, int32 *samples, int32 count)
 {
     int32 nbytes, i;
     char *buff;
@@ -307,104 +281,104 @@ int aq_add(int32 *samples, int32 count)
 
     if(!count)
     {
-	if(!aq_fill_buffer_flag)
-	    return aq_fill_nonblocking();
+	if(!c->aq_fill_buffer_flag)
+	    return aq_fill_nonblocking(c);
 	return 0;
     }
 
-    aq_add_count += count;
-    do_effect(samples, count);
+    c->aq_add_count += count;
+    do_effect(c, samples, count);
     nbytes = general_output_convert(samples, count);
     buff = (char *)samples;
 
-    if(device_qsize == 0)
-      return play_mode->output_data(buff, nbytes);
+    if(c->device_qsize == 0)
+      return play_mode->output_data(c, buff, nbytes);
 
-    aq_fill_buffer_flag = (aq_add_count <= aq_start_count);
+    c->aq_fill_buffer_flag = (c->aq_add_count <= c->aq_start_count);
 
-    if(!aq_fill_buffer_flag)
-	if(aq_fill_nonblocking() == -1)
+    if(!c->aq_fill_buffer_flag)
+	if(aq_fill_nonblocking(c) == -1)
 	    return -1;
 
     if(!ctl->trace_playing)
     {
-	while((i = add_play_bucket(buff, nbytes)) < nbytes)
+	while((i = add_play_bucket(c, buff, nbytes)) < nbytes)
 	{
 	    buff += i;
 	    nbytes -= i;
-	    if(head && head->len == bucket_size)
+	    if(c->aq_head && c->aq_head->len == c->bucket_size)
 	    {
-		if(aq_fill_one() == -1)
+		if(aq_fill_one(c) == -1)
 		    return -1;
 	    }
-	    aq_fill_buffer_flag = 0;
+	    c->aq_fill_buffer_flag = 0;
 	}
 	return 0;
     }
 
-    trace_loop();
-    while((i = add_play_bucket(buff, nbytes)) < nbytes)
+    trace_loop(c);
+    while((i = add_play_bucket(c, buff, nbytes)) < nbytes)
     {
 	/* Software buffer is full.
 	 * Write one bucket to audio device.
 	 */
 	buff += i;
 	nbytes -= i;
-	aq_wait_ticks();
-	trace_loop();
-	if(aq_fill_nonblocking() == -1)
+	aq_wait_ticks(c);
+	trace_loop(c);
+	if(aq_fill_nonblocking(c) == -1)
 	    return -1;
-	aq_fill_buffer_flag = 0;
+	c->aq_fill_buffer_flag = 0;
     }
     return 0;
 }
 
-static void set_bucket_size(int size)
+static void set_bucket_size(struct timiditycontext_t *c, int size)
 {
-    if (size == bucket_size)
+    if (size == c->bucket_size)
 	return;
-    bucket_size = size;
-    if (nbuckets != 0)
-	alloc_soft_queue();
+    c->bucket_size = size;
+    if (c->nbuckets != 0)
+	alloc_soft_queue(c);
 }
 
 /* alloc_soft_queue() (re-)initializes audio buckets. */
-static void alloc_soft_queue(void)
+static void alloc_soft_queue(struct timiditycontext_t *c)
 {
     int i;
     char *base;
 
-    free_soft_queue();
+    free_soft_queue(c);
 
-    base_buckets = (AudioBucket *)safe_malloc(nbuckets * sizeof(AudioBucket));
-    base = (char *)safe_malloc(nbuckets * bucket_size);
-    for(i = 0; i < nbuckets; i++)
-	base_buckets[i].data = base + i * bucket_size;
-    flush_buckets();
+    c->aq_base_buckets = (AudioBucket *)safe_malloc(c->nbuckets * sizeof(AudioBucket));
+    base = (char *)safe_malloc(c->nbuckets * c->bucket_size);
+    for(i = 0; i < c->nbuckets; i++)
+	c->aq_base_buckets[i].data = base + i * c->bucket_size;
+    flush_buckets(c);
 }
 
-void free_soft_queue(void)
+void free_soft_queue(struct timiditycontext_t *c)
 {
-    if(base_buckets)
+    if(c->aq_base_buckets)
     {
-	free(base_buckets[0].data);
-	free(base_buckets);
-	base_buckets = NULL;
+	free(c->aq_base_buckets[0].data);
+	free(c->aq_base_buckets);
+	c->aq_base_buckets = NULL;
     }
 }
 
 /* aq_fill_one() transfers one audio bucket to device. */
-static int aq_fill_one(void)
+static int aq_fill_one(struct timiditycontext_t *c)
 {
     AudioBucket *tmp;
 
-    if(head == NULL)
+    if(c->aq_head == NULL)
 	return 0;
-    if(aq_output_data(head->data, bucket_size) == -1)
+    if(aq_output_data(c, c->aq_head->data, c->bucket_size) == -1)
 	return -1;
-    tmp = head;
-    head = head->next;
-    reuse_audio_bucket(tmp);
+    tmp = c->aq_head;
+    c->aq_head = c->aq_head->next;
+    reuse_audio_bucket(c, tmp);
     return 0;
 }
 
@@ -412,29 +386,29 @@ static int aq_fill_one(void)
  * This function is non-blocking.  But it is possible to block because
  * of miss-estimated aq_fillable() calculation.
  */
-int aq_fill_nonblocking(void)
+int aq_fill_nonblocking(struct timiditycontext_t *c)
 {
     int32 i, nfills;
     AudioBucket *tmp;
 
-    if(head == NULL || head->len != bucket_size || !IS_STREAM_TRACE)
+    if(c->aq_head == NULL || c->aq_head->len != c->bucket_size || !IS_STREAM_TRACE)
 	return 0;
 
-    nfills = (aq_fillable() * Bps) / bucket_size;
+    nfills = (aq_fillable(c) * c->Bps) / c->bucket_size;
     for(i = 0; i < nfills; i++)
     {
-	if(head == NULL || head->len != bucket_size)
+	if(c->aq_head == NULL || c->aq_head->len != c->bucket_size)
 	    break;
-	if(aq_output_data(head->data, bucket_size) == -1)
+	if(aq_output_data(c, c->aq_head->data, c->bucket_size) == -1)
 	    return RC_ERROR;
-	tmp = head;
-	head = head->next;
-	reuse_audio_bucket(tmp);
+	tmp = c->aq_head;
+	c->aq_head = c->aq_head->next;
+	reuse_audio_bucket(c, tmp);
     }
     return 0;
 }
 
-int32 aq_samples(void)
+int32 aq_samples(struct timiditycontext_t *c)
 {
     double realtime, es;
     int s;
@@ -442,11 +416,11 @@ int32 aq_samples(void)
     if(play_mode->acntl(PM_REQ_GETSAMPLES, &s) != -1)
     {
 	/* Reset counter & timer */
-	if(play_counter)
+	if(c->aq_play_counter)
 	{
-	    play_start_time = get_current_calender_time();
-	    play_offset_counter = s;
-	    play_counter = 0;
+	    c->aq_play_start_time = get_current_calender_time();
+	    c->aq_play_offset_counter = s;
+	    c->aq_play_counter = 0;
 	}
 	return s;
     }
@@ -455,29 +429,29 @@ int32 aq_samples(void)
 	return -1;
 
     realtime = get_current_calender_time();
-    if(play_counter == 0)
+    if(c->aq_play_counter == 0)
     {
-	play_start_time = realtime;
-	return play_offset_counter;
+	c->aq_play_start_time = realtime;
+	return c->aq_play_offset_counter;
     }
-    es = play_mode->rate * (realtime - play_start_time);
-    if(es >= play_counter)
+    es = play_mode->rate * (realtime - c->aq_play_start_time);
+    if(es >= c->aq_play_counter)
     {
 	/* Ouch!
 	 * Audio device queue may be empty!
 	 * Reset counters.
 	 */
 
-	play_offset_counter += play_counter;
-	play_counter = 0;
-	play_start_time = realtime;
-	return play_offset_counter;
+	c->aq_play_offset_counter += c->aq_play_counter;
+	c->aq_play_counter = 0;
+	c->aq_play_start_time = realtime;
+	return c->aq_play_offset_counter;
     }
 
-    return (int32)es + play_offset_counter;
+    return (int32)es + c->aq_play_offset_counter;
 }
 
-int32 aq_filled(void)
+int32 aq_filled(struct timiditycontext_t *c)
 {
     double realtime, es;
     int filled;
@@ -489,83 +463,83 @@ int32 aq_filled(void)
       return filled;
 
     realtime = get_current_calender_time();
-    if(play_counter == 0)
+    if(c->aq_play_counter == 0)
     {
-	play_start_time = realtime;
+	c->aq_play_start_time = realtime;
 	return 0;
     }
-    es = play_mode->rate * (realtime - play_start_time);
-    if(es >= play_counter)
+    es = play_mode->rate * (realtime - c->aq_play_start_time);
+    if(es >= c->aq_play_counter)
     {
 	/* out of play counter */
-	play_offset_counter += play_counter;
-	play_counter = 0;
-	play_start_time = realtime;
+	c->aq_play_offset_counter += c->aq_play_counter;
+	c->aq_play_counter = 0;
+	c->aq_play_start_time = realtime;
 	return 0;
     }
-    return play_counter - (int32)es;
+    return c->aq_play_counter - (int32)es;
 }
 
-int32 aq_soft_filled(void)
+int32 aq_soft_filled(struct timiditycontext_t *c)
 {
     int32 bytes;
     AudioBucket *cur;
 
     bytes = 0;
-    for(cur = head; cur != NULL; cur = cur->next)
+    for(cur = c->aq_head; cur != NULL; cur = cur->next)
 	bytes += cur->len;
-    return bytes / Bps;
+    return bytes / c->Bps;
 }
 
-int32 aq_fillable(void)
+int32 aq_fillable(struct timiditycontext_t *c)
 {
     int fillable;
     if(!IS_STREAM_TRACE)
 	return 0;
     if(play_mode->acntl(PM_REQ_GETFILLABLE, &fillable) != -1)
 	return fillable;
-    return device_qsize / Bps - aq_filled();
+    return c->device_qsize / c->Bps - aq_filled(c);
 }
 
-double aq_filled_ratio(void)
+double aq_filled_ratio(struct timiditycontext_t *c)
 {
     double ratio;
 
     if(!IS_STREAM_TRACE)
 	return 1.0;
-    ratio = (double)aq_filled() * Bps / device_qsize;
+    ratio = (double)aq_filled(c) * c->Bps / c->device_qsize;
     if(ratio > 1.0)
 	return 1.0; /* for safety */
     return ratio;
 }
 
-int aq_get_dev_queuesize(void)
+int aq_get_dev_queuesize(struct timiditycontext_t *c)
 {
     if(!IS_STREAM_TRACE)
 	return 0;
-    return device_qsize / Bps;
+    return c->device_qsize / c->Bps;
 }
 
-int aq_soft_flush(void)
+int aq_soft_flush(struct timiditycontext_t *c)
 {
     int rc;
 
-    while(head)
+    while(c->aq_head)
     {
-	if(head->len < bucket_size)
+	if(c->aq_head->len < c->bucket_size)
 	{
 	    /* Add silence code */
-	    memset (head->data + head->len, 0, bucket_size - head->len);
-	    head->len = bucket_size;
+	    memset (c->aq_head->data + c->aq_head->len, 0, c->bucket_size - c->aq_head->len);
+	    c->aq_head->len = c->bucket_size;
 	}
-	if(aq_fill_one() == -1)
+	if(aq_fill_one(c) == -1)
 	    return RC_ERROR;
-	trace_loop();
-	rc = check_apply_control();
+	trace_loop(c);
+	rc = check_apply_control(c);
 	if(RC_IS_SKIP_FILE(rc))
 	{
 	    play_mode->acntl(PM_REQ_DISCARD, NULL);
-	    flush_buckets();
+	    flush_buckets(c);
 	    return rc;
 	}
     }
@@ -573,7 +547,7 @@ int aq_soft_flush(void)
     return RC_NONE;
 }
 
-int aq_flush(int discard)
+int aq_flush(struct timiditycontext_t *c, int discard)
 {
     int rc;
     int more_trace;
@@ -581,15 +555,15 @@ int aq_flush(int discard)
     /* to avoid infinite loop */
     double t, timeout_expect;
 
-    aq_add_count = 0;
-    init_effect();
+    c->aq_add_count = 0;
+    init_effect(c);
 
     if(discard)
     {
-	trace_flush();
+	trace_flush(c);
 	if(play_mode->acntl(PM_REQ_DISCARD, NULL) != -1)
 	{
-	    flush_buckets();
+	    flush_buckets(c);
 	    return RC_NONE;
 	}
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
@@ -599,28 +573,28 @@ int aq_flush(int discard)
     if(!IS_STREAM_TRACE)
     {
 	play_mode->acntl(PM_REQ_FLUSH, NULL);
-	play_counter = play_offset_counter = 0;
+	c->aq_play_counter = c->aq_play_offset_counter = 0;
 	return RC_NONE;
     }
 
-    rc = aq_soft_flush();
+    rc = aq_soft_flush(c);
     if(RC_IS_SKIP_FILE(rc))
 	return rc;
 
     more_trace = 1;
     t = get_current_calender_time();
-    timeout_expect = t + (double)aq_filled() / play_mode->rate;
+    timeout_expect = t + (double)aq_filled(c) / play_mode->rate;
 
-    while(more_trace || aq_filled() > 0)
+    while(more_trace || aq_filled(c) > 0)
     {
-	rc = check_apply_control();
+	rc = check_apply_control(c);
 	if(RC_IS_SKIP_FILE(rc))
 	{
 	    play_mode->acntl(PM_REQ_DISCARD, NULL);
-	    flush_buckets();
+	    flush_buckets(c);
 	    return rc;
 	}
-	more_trace = trace_loop();
+	more_trace = trace_loop(c);
 
 	t = get_current_calender_time();
 	if(t >= timeout_expect - 0.1)
@@ -629,24 +603,24 @@ int aq_flush(int discard)
 	if(!more_trace)
 	  usleep((unsigned long)((timeout_expect - t) * 1000000));
 	else
-	  aq_wait_ticks();
+	  aq_wait_ticks(c);
     }
 
-    trace_flush();
+    trace_flush(c);
     play_mode->acntl(PM_REQ_FLUSH, NULL);
-    flush_buckets();
+    flush_buckets(c);
     return RC_NONE;
 }
 
 /* Wait a moment */
-static void aq_wait_ticks(void)
+static void aq_wait_ticks(struct timiditycontext_t *c)
 {
     int32 trace_wait, wait_samples;
 
-    if(device_qsize == 0 ||
-       (trace_wait = trace_wait_samples()) == 0)
+    if(c->device_qsize == 0 ||
+       (trace_wait = trace_wait_samples(c)) == 0)
 	return; /* No wait */
-    wait_samples = (device_qsize / Bps) / 5; /* 20% */
+    wait_samples = (c->device_qsize / c->Bps) / 5; /* 20% */
     if(trace_wait != -1 && /* There are more trace events */
        trace_wait < wait_samples)
 	wait_samples = trace_wait;
@@ -656,81 +630,81 @@ static void aq_wait_ticks(void)
 /* add_play_bucket() attempts to add buf to audio bucket.
  * It returns actually added bytes.
  */
-static int add_play_bucket(const char *buf, int n)
+static int add_play_bucket(struct timiditycontext_t *c, const char *buf, int n)
 {
     int total;
 
     if(n == 0)
 	return 0;
 
-    if(!nbuckets) {
-      play_mode->output_data((char *)buf, n);
+    if(!c->nbuckets) {
+      play_mode->output_data(c, (char *)buf, n);
       return n;
     }
 
-    if(head == NULL)
-	head = tail = next_allocated_bucket();
+    if(c->aq_head == NULL)
+	c->aq_head = c->aq_tail = next_allocated_bucket(c);
 
     total = 0;
     while(n > 0)
     {
 	int i;
 
-	if(tail->len == bucket_size)
+	if(c->aq_tail->len == c->bucket_size)
 	{
 	    AudioBucket *b;
-	    if((b = next_allocated_bucket()) == NULL)
+	    if((b = next_allocated_bucket(c)) == NULL)
 		break;
-	    if(head == NULL)
-		head = tail = b;
+	    if(c->aq_head == NULL)
+		c->aq_head = c->aq_tail = b;
 	    else
-		tail = tail->next = b;
+		c->aq_tail = c->aq_tail->next = b;
 	}
 
-	i = bucket_size - tail->len;
+	i = c->bucket_size - c->aq_tail->len;
 	if(i > n)
 	    i = n;
-	memcpy(tail->data + tail->len, buf + total, i);
+	memcpy(c->aq_tail->data + c->aq_tail->len, buf + total, i);
 	total += i;
 	n     -= i;
-	tail->len += i;
+	c->aq_tail->len += i;
     }
 
     return total;
 }
 
 /* Flush and clear audio bucket */
-static void flush_buckets(void)
+static void flush_buckets(struct timiditycontext_t *c)
 {
     int i;
 
-    allocated_bucket_list = NULL;
-    for(i = 0; i < nbuckets; i++)
-	reuse_audio_bucket(&base_buckets[i]);
-    head = tail = NULL;
-    aq_fill_buffer_flag = (aq_start_count > 0);
-    play_counter = play_offset_counter = 0;
+    c->aq_allocated_bucket_list = NULL;
+    for(i = 0; i < c->nbuckets; i++)
+	reuse_audio_bucket(c, &c->aq_base_buckets[i]);
+    c->aq_head = c->aq_tail = NULL;
+    c->aq_fill_buffer_flag = (c->aq_start_count > 0);
+    c->aq_play_counter = c->aq_play_offset_counter = 0;
 }
 
 /* next_allocated_bucket() gets free bucket.  If all buckets is used, it
  * returns NULL.
  */
-static AudioBucket *next_allocated_bucket(void)
+static AudioBucket *next_allocated_bucket(struct timiditycontext_t *c)
 {
     AudioBucket *b;
 
-    if(allocated_bucket_list == NULL)
+    if(c->aq_allocated_bucket_list == NULL)
 	return NULL;
-    b = allocated_bucket_list;
-    allocated_bucket_list = allocated_bucket_list->next;
+    b = c->aq_allocated_bucket_list;
+    c->aq_allocated_bucket_list = c->aq_allocated_bucket_list->next;
     b->len = 0;
     b->next = NULL;
     return b;
 }
 
 /* Reuse specified bucket */
-static void reuse_audio_bucket(AudioBucket *bucket)
+static void reuse_audio_bucket(struct timiditycontext_t *c, AudioBucket *bucket)
 {
-    bucket->next = allocated_bucket_list;
-    allocated_bucket_list = bucket;
+    bucket->next = c->aq_allocated_bucket_list;
+    c->aq_allocated_bucket_list = bucket;
 }
