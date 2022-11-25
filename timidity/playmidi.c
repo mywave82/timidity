@@ -7736,7 +7736,7 @@ int play_event(struct timiditycontext_t *c, MidiEvent *ev)
       case ME_TEXT:
       case ME_KARAOKE_LYRIC:
 	i = ev->a | ((int)ev->b << 8);
-	ctl_mode_event(c, CTLE_LYRIC, 1, i, 0);
+	ctl_mode_event(c, CTLE_LYRIC, 1, i, ev->time);
 	break;
 
       case ME_GSLCD:
