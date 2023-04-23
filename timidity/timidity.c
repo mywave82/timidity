@@ -588,8 +588,9 @@ static char *dynamic_lib_root = NULL;
 #ifdef __W32__
 CRITICAL_SECTION critSect;
 
+#if 0
 #pragma argsused
-static BOOL WINAPI handler(struct timiditycontext_t *c, DWORD dw)
+static BOOL WINAPI handler(DWORD dw)
 {
 #if defined(IA_WINSYN) || defined(IA_PORTMIDISYN)
 	if (ctl->id_character == 'W' || ctl->id_character == 'P')
@@ -606,6 +607,7 @@ static BOOL WINAPI handler(struct timiditycontext_t *c, DWORD dw)
 	c->intr++;
 	return TRUE;
 }
+#endif
 #endif
 
 #ifndef atof
@@ -5484,7 +5486,7 @@ MAIN_INTERFACE int timidity_pre_load_configuration(struct timiditycontext_t *c)
     if(GetModuleFileName(NULL, local, 1023))
     {
         local[1023] = '\0';
-	if(strp = strrchr(local, '\\'))
+	if((strp = strrchr(local, '\\')))
 	{
 	    *(++strp)='\0';
 	    strncat(local,"TIMIDITY.CFG",sizeof(local)-strlen(local)-1);
@@ -5758,7 +5760,9 @@ MAIN_INTERFACE int timidity_play_main(struct timiditycontext_t *c, int nfiles, c
 #ifdef HAVE_SIGNAL
 	signal(SIGTERM, sigterm_exit);
 #endif
+#if 0
 	SetConsoleCtrlHandler(handler, TRUE);
+#endif
 
 	ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
 		  "Initialize for Critical Section");
@@ -5909,7 +5913,7 @@ static int w32_reset_dll_directory(void)
 static int CoInitializeOK = 0;
 #endif
 
-#if !defined(ANOTHER_MAIN) || defined(__W32__)
+#if !defined(ANOTHER_MAIN)// || defined(__W32__)
 #ifdef __W32__ /* Windows */
 #if defined(IA_W32GUI) && !defined(__CYGWIN32__) && !defined(__MINGW32__) \
 		|| defined(IA_W32G_SYN) /* _MSC_VER, _BORLANDC_, __WATCOMC__ */

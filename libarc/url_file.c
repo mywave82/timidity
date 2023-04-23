@@ -37,8 +37,10 @@
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
-#ifdef __W32__
+#if defined(__W32__)||defined(__WIN32)
 #include <windows.h>
+#include <winnt.h>
+#include <fileapi.h>
 #endif /* __W32__ */
 
 #include "timidity.h"
@@ -162,7 +164,7 @@ static char *try_mmap(const char *path, long *size)
     return p;
 }
 #elif defined(__W32__)
-static void *w32_mmap(char *fname, long *size_ret, HANDLE *hFilePtr, HANDLE *hMapPtr)
+static void *w32_mmap(const char *fname, long *size_ret, HANDLE *hFilePtr, HANDLE *hMapPtr)
 {
     void *map;
 
