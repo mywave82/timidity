@@ -25,7 +25,7 @@
 #include <limits.h>
 #endif
 
-#if defined(__WIN32__) && !defined(__W32__)
+#if defined(_WIN32) && !defined(__W32__)
 #define __W32__
 #endif
 

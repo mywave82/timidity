@@ -37,7 +37,7 @@
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
-#if defined(__W32__)||defined(__WIN32)
+#if defined(__W32__)||defined(_WIN32)
 #include <windows.h>
 #include <winnt.h>
 #include <fileapi.h>
