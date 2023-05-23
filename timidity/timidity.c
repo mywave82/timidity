@@ -526,7 +526,7 @@ static inline int y_or_n_p(const char *);
 static inline int set_flag(int32 *, int32, const char *);
 static inline FILE *open_pager(void);
 static inline void close_pager(FILE *);
-#if !defined(ANOTHER_MAIN) || defined(__W32__)
+#if !defined(ANOTHER_MAIN) && defined(__W32__)
 static void interesting_message(void);
 #endif
 
@@ -5266,7 +5266,7 @@ static inline void close_pager(FILE *fp)
 #endif
 }
 
-#if !defined(ANOTHER_MAIN) || defined(__W32__)
+#if !defined(ANOTHER_MAIN) && defined(__W32__)
 static void interesting_message(void)
 {
 	printf(
@@ -5892,7 +5892,7 @@ int w32gSaveDefaultPlaylist(void);
 extern int volatile save_playlist_once_before_exit_flag;
 #endif /* IA_W32GUI */
 
-#if defined(__W32__) && !defined(WINDRV)
+#if !defined(ANOTHER_MAIN) && defined(__W32__) && !defined(WINDRV)
 typedef BOOL (WINAPI *SetDllDirectoryAProc)(LPCSTR lpPathName);
 
 /*! Remove the current directory for the search path of LoadLibrary. Returns 0 if failed. */
