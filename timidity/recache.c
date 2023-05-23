@@ -58,7 +58,7 @@
 #define MAX_EXPANDLEN (1024 * 32)
 #define CACHE_DATA_LEN (c->allocate_cache_size / sizeof(sample_t))
 
-#define sp_hash(sp, note) ((unsigned long) (sp) + (unsigned int) (note))
+#define sp_hash(sp, note) ((u_ptr_size_t) (sp) + (u_ptr_size_t) (note))
 #define CACHE_RESAMPLING_OK 0
 #define CACHE_RESAMPLING_NOTOK 1
 #define SORT_THRESHOLD 20
@@ -95,7 +95,7 @@ void resamp_cache_reset(struct timiditycontext_t *c)
 
 struct cache_hash *resamp_cache_fetch(struct timiditycontext_t *c, Sample *sp, int note)
 {
-	unsigned int addr;
+	u_ptr_size_t addr;
 	struct cache_hash *p;
 
 	if (sp->vibrato_control_ratio || (sp->modes & MODES_PINGPONG)
@@ -113,7 +113,7 @@ struct cache_hash *resamp_cache_fetch(struct timiditycontext_t *c, Sample *sp, i
 
 void resamp_cache_refer_on(struct timiditycontext_t *c, Voice *vp, int32 sample_start)
 {
-	unsigned int addr;
+	u_ptr_size_t addr;
 	struct cache_hash *p;
 	int note, ch;
 

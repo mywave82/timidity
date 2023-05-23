@@ -8314,7 +8314,7 @@ static int play_midi_load_file(struct timiditycontext_t *c, char *fn,
     else
 	c->file_from_stdin = 0;
 
-    ctl_mode_event(c, CTLE_NOW_LOADING, 0, (long)fn, 0);
+    ctl_mode_event(c, CTLE_NOW_LOADING, 0, (u_ptr_size_t)fn, 0);
     ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "MIDI file: %s", fn);
     if((tf = open_midi_file(c, fn, 1, OF_VERBOSE)) == NULL)
     {
