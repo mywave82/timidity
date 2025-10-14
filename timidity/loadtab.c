@@ -44,7 +44,14 @@ int load_table(struct timiditycontext_t *c, char *file)
 	char tmp[1024], *value;
 	int i = 0;
 
+#ifdef _WIN32
+	uint16_t *file2 = c->utf8_to_utf16_LFN (c, file);
+	fp = _wfopen(file2, L"r");
+	free (file2);
+	if (fp == NULL) {
+#else
 	if ((fp = fopen(file, "r")) == NULL) {
+#endif
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				"Can't read %s %s\n", file, strerror(errno));
 		return -1;

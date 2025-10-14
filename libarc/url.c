@@ -409,7 +409,7 @@ void url_close(struct timiditycontext_t *c, URL url)
 #define path (c->url_expand_home_dir_path)
 const char *url_expand_home_dir(struct timiditycontext_t *c, const char *fname)
 {
-    char *dir;
+    const char *dir;
     int dirlen;
 
     if(fname[0] != '~')
@@ -426,29 +426,37 @@ const char *url_expand_home_dir(struct timiditycontext_t *c, const char *fname)
     {
 	struct passwd *pw;
 	int i;
+        char *username = 0;
 
 	fname++;
-	for(i = 0; i < sizeof(path) - 1 && fname[i] && !IS_PATH_SEP(fname[i]); i++)
-	    path[i] = fname[i];
-	path[i] = '\0';
-	if((pw = getpwnam(path)) == NULL)
+	for(i = 0; fname[i] && !IS_PATH_SEP(fname[i]); i++)
+        {
+        }
+        username = malloc (i + 1);
+        if (!username)
+            return fname - 1;
+        strncpy (username, fname, i);
+        username[i] = 0;
+	pw = getpwnam(username);
+        free (username);
+	if(pw == NULL)
 	    return fname - 1;
 	fname += i;
 	dir = pw->pw_dir;
     }
     dirlen = strlen(dir);
-    strncpy(path, dir, sizeof(path) - 1);
-    if(sizeof(path) > dirlen)
-	strncat(path, fname, sizeof(path) - dirlen - 1);
-    path[sizeof(path) - 1] = '\0';
+    free (path);
+    path = malloc (dirlen + strlen (fname) + 1);
+    if (!path)
+        return fname;
+    sprintf (path, "%s%s", dir, fname + (fname[0] && dir[0] && dir[1] && IS_PATH_SEP(dir[dirlen-1])) /* if dir ends with '/', skip the first '/ in fname, if it exists */);
     return path;
 }
 #undef path
 #define path (c->url_unexpand_home_dir_path)
 const char *url_unexpand_home_dir(struct timiditycontext_t *c, const char *fname)
 {
-    char *dir;
-    const char *p;
+    const char *dir;
     int dirlen;
 
     if(!IS_PATH_SEP(fname[0]))
@@ -458,27 +466,30 @@ const char *url_unexpand_home_dir(struct timiditycontext_t *c, const char *fname
 	if((dir = getenv("home")) == NULL)
 	    return fname;
     dirlen = strlen(dir);
-    if(dirlen == 0 || dirlen >= sizeof(path) - 2)
+    if(dirlen == 0 || dirlen > strlen (fname))
 	return fname;
-    memcpy(path, dir, dirlen);
-    if(!IS_PATH_SEP(path[dirlen - 1]))
-	path[dirlen++] = PATH_SEP;
-
-#ifndef __W32__
-    if(strncmp(path, fname, dirlen) != 0)
-#else
-    if(strncasecmp(path, fname, dirlen) != 0)
-#endif /* __W32__ */
-	return fname;
-
-    path[0] = '~';
-    path[1] = '/';
-    p = fname + dirlen;
-    if(strlen(p) >= sizeof(path) - 3)
-	return fname;
-    path[2] = '\0';
-    strcat(path, p);
-    return path;
+    if(!IS_PATH_SEP(dir[dirlen - 1]))
+    {
+        if(strncmp(dir, fname, dirlen) != 0)
+	    return fname;
+        if (!IS_PATH_SEP(fname[dirlen]))
+            return fname;
+        free (path);
+        path = malloc (2 + strlen(fname) - dirlen + 1 + 1);
+        if (!path)
+            return fname;
+        sprintf (path, "~/%s", fname + dirlen - 1);
+        return path;
+    } else {
+        if(strncmp(dir, fname, dirlen) != 0)
+	    return fname;
+        free (path);
+        path = malloc (2 + strlen(fname) - dirlen + 1);
+        if (!path)
+            return fname;
+        sprintf (path, "~/%s", fname + dirlen);
+        return path;
+    }
 }
 #undef path
 #else

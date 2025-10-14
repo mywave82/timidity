@@ -5460,11 +5460,11 @@ MAIN_INTERFACE int timidity_pre_load_configuration(struct timiditycontext_t *c)
 {
 #if defined(__W32__)
     /* Windows */
-    char *strp;
     int check;
-    char local[1024];
+    int len = 8192;
 
 #if defined ( IA_W32GUI ) || defined ( IA_W32G_SYN )
+    char local[1024];
     if(!ConfigFile[0]) {
       GetWindowsDirectory(ConfigFile, 1023 - 13);
       strcat(ConfigFile, "\\TIMIDITY.CFG");
@@ -5480,42 +5480,106 @@ MAIN_INTERFACE int timidity_pre_load_configuration(struct timiditycontext_t *c)
     }
 #endif
 
-	/* First, try read configuration file which is in the
+    /* First, try read configuration file which is in the
      * TiMidity directory.
      */
-    if(GetModuleFileName(NULL, local, 1023))
+    while (1)
     {
-        local[1023] = '\0';
-	if((strp = strrchr(local, '\\')))
+	uint16_t *wpath = calloc (len, 2);
+	if (!wpath)
+	    break; /* calloc() failed, give up */
+	if(GetModuleFileNameW(NULL, wpath, len))
 	{
-	    *(++strp)='\0';
-	    strncat(local,"TIMIDITY.CFG",sizeof(local)-strlen(local)-1);
-	    if((check = open(local, 0)) >= 0)
-	    {
-		close(check);
-		if(!read_config_file(c, local, 0, 0)) {
-		    c->got_a_configuration = 1;
-			return 0;
+	    char *path, *strp;
+	    if (wpath[len-2])
+	    { /* buffer probably not big enough, since we filled it up until the termination marker (Windows XP will even fill that character) */
+		len += 8192;
+		free (wpath);
+		continue;
+	    }
+	    path = c->utf16_to_utf8 (c, wpath + (wcsncmp (wpath, L"\\\\?\\", 4) ? 0 : 4)); /* skip \\?\ if that is present */
+	    if (!path)
+	    { /* utf16_to_utf8 failed, give up */
+		free (wpath);
+		break;
+	    }
+	    if((strp = strrchr(path, '\\')))
+	    { /* the very last \ has been located */
+		char *path2;
+		*(++strp)='\0';
+		path2 = malloc (strlen (path) + 12 + 1);
+		if (path2)
+		{
+		    sprintf (path2, "%sTIMIDITY.CFG", path);
+		    if((check = open(path2, 0)) >= 0)
+		    {
+			close(check);
+			if(!read_config_file(c, path2, 0, 0))
+			{
+			    c->got_a_configuration = 1;
+			    free (path2);
+			    free (path);
+			    free (wpath);
+			    return 0;
+			}
+		    }
+		    free (path2);
 		}
 	    }
+	    free (path);
 	}
+	free (wpath);
+    }
+
 #if !defined ( IA_W32GUI ) && !defined ( IA_W32G_SYN )
     /* Next, try read system configuration file.
      * Default is C:\WINDOWS\TIMIDITY.CFG
      */
-    GetWindowsDirectory(local, 1023 - 13);
-    strcat(local, "\\TIMIDITY.CFG");
-    if((check = open(local, 0)) >= 0)
-    {
-	close(check);
-	if(!read_config_file(c, local, 0, 0)) {
-	    c->got_a_configuration = 1;
-		return 0;
+    do {
+	DWORD length;
+	uint16_t *wpath;
+	char *path, *filepath;
+	if (!(length = GetWindowsDirectoryW (NULL, 0)))
+	{
+	    break;
 	}
-    }
+	if (!(wpath = calloc (length, sizeof (uint16_t))))
+	{
+	    break;
+	}
+	if (GetWindowsDirectoryW (wpath, length) != (length-1))
+	{
+	    free (wpath);
+	    break;
+	}
+	path = c->utf16_to_utf8 (c, wpath);
+	free (wpath); wpath = 0;
+	if (!path)
+	{
+	    break;
+	}
+	length = strlen (path) + 13 + 1;
+	filepath = malloc (length);
+	if (!filepath)
+	{
+	    free (path);
+	    break;
+	}
+	snprintf (filepath, length, "%s\\TIMIDITY.CFG", path);
+	free (path);
+	if ((check = open(filepath, 0)) >= 0)
+	{
+	    close (check);
+	    if (!read_config_file(c, filepath, 0, 0)) // C:\WINDOWS\timidity.cfg
+	    {
+		free (filepath);
+		c->got_a_configuration = 1;
+		break;
+	    }
+	}
+	free (filepath);
+    } while (0);
 #endif
-
-    }
 
 #else
     /* UNIX */

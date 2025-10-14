@@ -503,7 +503,7 @@ struct timiditycontext_t /* all data should be initialized to 0 unless told othe
 
 	/* common.h */
 	char *program_name;
-	char current_filename[1024];
+	char *current_filename;
 	MBlockList tmpbuffer;
 	char *output_text_code;
 #ifdef DEFAULT_PATH
@@ -1025,8 +1025,8 @@ struct timiditycontext_t /* all data should be initialized to 0 unless told othe
 	/* url.c private */
 	struct URL_module *url_mod_list;
 #if defined(TILD_SCHEME_ENABLE)
-	char url_expand_home_dir_path[BUFSIZ];
-	char url_unexpand_home_dir_path[BUFSIZ];
+	char *url_expand_home_dir_path;
+	char *url_unexpand_home_dir_path;
 #endif
 
 	/* url_dir.c private */
@@ -1069,6 +1069,11 @@ struct timiditycontext_t /* all data should be initialized to 0 unless told othe
 	StringTable wrdt_default_path_list;
 	int wrd_midi_event_argc;
 	int wrd_midi_event_args[WRD_MAXPARAM];
+
+#ifdef _WIN32
+	uint16_t *(*utf8_to_utf16_LFN)(struct timiditycontext_t *c, const char *src);
+	char *(*utf16_to_utf8)(struct timiditycontext_t *c, const uint16_t *src);
+#endif
 };
 
 static inline int get_module(struct timiditycontext_t *c) {return c->opt_default_module;}

@@ -376,15 +376,13 @@ struct timidity_file *open_with_mem(struct timiditycontext_t *c, char *mem, int3
     return tf;
 }
 
-/*
- * This is meant to find and open files for reading, possibly piping
- * them through a decompressor.
- */
-struct timidity_file *open_file(struct timiditycontext_t *c, const char *name, int decompress, int noise_mode)
+static struct timidity_file *open_file_common(struct timiditycontext_t *c, const char *name, int decompress, int noise_mode, int dofilearchives)
 {
+	struct stat st;
 	struct timidity_file *tf;
 	const PathList *plp = c->pathlist;
 	int l;
+	const char *temp;
 
 	c->open_file_noise_mode = noise_mode;
 	if (!name || !(*name)) {
@@ -393,14 +391,44 @@ struct timidity_file *open_file(struct timiditycontext_t *c, const char *name, i
 					"Attempted to open nameless file.");
 		return 0;
 	}
+	if (c->current_filename)
+	{
+		free (c->current_filename);
+		c->current_filename = 0;
+	}
 	/* First try the given name */
-	strncpy(c->current_filename, url_unexpand_home_dir(c, name), 1023);
-	c->current_filename[1023] = '\0';
+	temp = url_unexpand_home_dir(c, name);
+	if (!temp)
+	{
+		if (noise_mode)
+			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+					"url_nexpand_home_dir() failed.");
+		return 0;
+
+	}
+	c->current_filename = strdup (temp);
+	if (!c->current_filename)
+	{
+		if (noise_mode)
+			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+					"strdup() failed.");
+		return 0;
+
+	}
 	if (noise_mode)
 		ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s",
 				c->current_filename);
-	if ((tf = try_to_open(c, c->current_filename, decompress)))
-		return tf;
+	if (dofilearchives)
+	{
+		if (!stat(c->current_filename, &st))
+			if (!S_ISDIR(st.st_mode))
+				if ((tf = try_to_open(c, c->current_filename, decompress)))
+					return tf;
+	} else {
+		if ((tf = try_to_open(c, c->current_filename, decompress)))
+			return tf;
+	}
+
 #ifdef __MACOS__
 	if (errno) {
 #else
@@ -413,24 +441,38 @@ struct timidity_file *open_file(struct timiditycontext_t *c, const char *name, i
 	}
 	if (!is_abs_path(name))
 		while (plp) {	/* Try along the path then */
-			*c->current_filename = 0;
+			free (c->current_filename);
+			c->current_filename = 0;
+			c->current_filename = malloc(strlen (plp->path) + 1 /* strlen (PATH_STRING) */ + strlen(name) + 1);
+			if (!c->current_filename)
+			{
+				if (noise_mode)
+					ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+							"malloc() failed.");
+				return 0;
+			}
+
 			if((l = strlen(plp->path))) {
-				strncpy(c->current_filename, plp->path,
-						sizeof(c->current_filename));
+				strcpy(c->current_filename, plp->path);
 				if (!IS_PATH_SEP(c->current_filename[l - 1])
 						&& c->current_filename[l - 1] != '#'
 						&& name[0] != '#')
-					strncat(c->current_filename, PATH_STRING,
-							sizeof(c->current_filename)
-							- strlen(c->current_filename) - 1);
+					strcat(c->current_filename, PATH_STRING);
 			}
-			strncat(c->current_filename, name, sizeof(c->current_filename)
-					- strlen(c->current_filename) - 1);
+			strcat(c->current_filename, name);
 			if (noise_mode)
 				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
 						"Trying to open %s", c->current_filename);
-			if ((tf = try_to_open(c, c->current_filename, decompress)))
-				 return tf;
+			if (dofilearchives)
+			{
+				if (!stat(c->current_filename, &st))
+					if (!S_ISDIR(st.st_mode))
+						if ((tf = try_to_open(c, c->current_filename, decompress)))
+							 return tf;
+			} else {
+				if ((tf = try_to_open(c, c->current_filename, decompress)))
+					 return tf;
+			}
 #ifdef __MACOS__
 			if(errno) {
 #else
@@ -444,11 +486,22 @@ struct timidity_file *open_file(struct timiditycontext_t *c, const char *name, i
 			plp = plp->next;
 		}
 	/* Nothing could be opened. */
-	*c->current_filename = 0;
+	free (c->current_filename);
+	c->current_filename = 0;
+
 	if (noise_mode >= 2)
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", name,
 				(errno) ? strerror(errno) : "Can't open file");
 	return 0;
+}
+
+/*
+ * This is meant to find and open files for reading, possibly piping
+ * them through a decompressor.
+ */
+struct timidity_file *open_file(struct timiditycontext_t *c, const char *name, int decompress, int noise_mode)
+{
+	return open_file_common (c, name, decompress, noise_mode, 0);
 }
 
 /*
@@ -457,78 +510,7 @@ struct timidity_file *open_file(struct timiditycontext_t *c, const char *name, i
  */
 struct timidity_file *open_file_r(struct timiditycontext_t *c, const char *name, int decompress, int noise_mode)
 {
-	struct stat st;
-	struct timidity_file *tf;
-	const PathList *plp = c->pathlist;
-	int l;
-
-	c->open_file_noise_mode = noise_mode;
-	if (!name || !(*name)) {
-		if (noise_mode)
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
-					"Attempted to open nameless file.");
-		return 0;
-	}
-	/* First try the given name */
-	strncpy(c->current_filename, url_unexpand_home_dir(c, name), 1023);
-	c->current_filename[1023] = '\0';
-	if (noise_mode)
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s",
-				c->current_filename);
-	if (!stat(c->current_filename, &st))
-		if (!S_ISDIR(st.st_mode))
-			if ((tf = try_to_open(c, c->current_filename, decompress)))
-				return tf;
-#ifdef __MACOS__
-	if (errno) {
-#else
-	if (errno && errno != ENOENT) {
-#endif
-		if (noise_mode)
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
-					c->current_filename, strerror(errno));
-		return 0;
-	}
-	if (!is_abs_path(name))
-		while (plp) {	/* Try along the path then */
-			*c->current_filename = 0;
-			if((l = strlen(plp->path))) {
-				strncpy(c->current_filename, plp->path,
-						sizeof(c->current_filename));
-				if (!IS_PATH_SEP(c->current_filename[l - 1])
-						&& c->current_filename[l - 1] != '#'
-						&& name[0] != '#')
-					strncat(c->current_filename, PATH_STRING,
-							sizeof(c->current_filename)
-							- strlen(c->current_filename) - 1);
-			}
-			strncat(c->current_filename, name, sizeof(c->current_filename)
-					- strlen(c->current_filename) - 1);
-			if (noise_mode)
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
-						"Trying to open %s", c->current_filename);
-			if (!stat(c->current_filename, &st))
-				if (!S_ISDIR(st.st_mode))
-					if ((tf = try_to_open(c, c->current_filename, decompress)))
-						 return tf;
-#ifdef __MACOS__
-			if(errno) {
-#else
-			if(errno && errno != ENOENT) {
-#endif
-				if (noise_mode)
-					ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
-							c->current_filename, strerror(errno));
-				return 0;
-			}
-			plp = plp->next;
-		}
-	/* Nothing could be opened. */
-	*c->current_filename = 0;
-	if (noise_mode >= 2)
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", name,
-				(errno) ? strerror(errno) : "Can't open file");
-	return 0;
+	return open_file_common (c, name, decompress, noise_mode, 1);
 }
 
 /* This closes files opened with open_file */

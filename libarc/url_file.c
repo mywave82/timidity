@@ -56,7 +56,7 @@
 #else
 /* mmap is not supported */
 #ifdef __W32__
-#define try_mmap(fname, size_ret) w32_mmap(fname, size_ret, &hFile, &hMap)
+#define try_mmap(fname, size_ret) w32_mmap(c, fname, size_ret, &hFile, &hMap)
 #define munmap(addr, size)        w32_munmap(addr, size, hFile, hMap)
 #else
 #define try_mmap(dmy1, dmy2) NULL
@@ -164,12 +164,15 @@ static char *try_mmap(const char *path, long *size)
     return p;
 }
 #elif defined(__W32__)
-static void *w32_mmap(const char *fname, long *size_ret, HANDLE *hFilePtr, HANDLE *hMapPtr)
+static void *w32_mmap(struct timiditycontext_t *c, const char *fname, long *size_ret, HANDLE *hFilePtr, HANDLE *hMapPtr)
 {
     void *map;
 
-    *hFilePtr = CreateFile(fname, GENERIC_READ, FILE_SHARE_READ	, NULL,
+    uint16_t *fname2 = c->utf8_to_utf16_LFN(c, fname);
+    *hFilePtr = CreateFileW(fname2, GENERIC_READ, FILE_SHARE_READ, NULL,
 			   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    free (fname2);
+
     if(*hFilePtr == INVALID_HANDLE_VALUE)
 	return NULL;
     *size_ret = GetFileSize(*hFilePtr, NULL);
@@ -209,7 +212,7 @@ URL url_file_open(struct timiditycontext_t *c, const char *fname)
     long mapsize;
     FILE *fp;			/* Non NULL if mmap is failure */
 #ifdef __W32__
-    HANDLE hFile, hMap;
+    HANDLE hFile=0, hMap=0;
 #endif /* __W32__ */
 
 #ifdef DEBUG
@@ -266,6 +269,10 @@ URL url_file_open(struct timiditycontext_t *c, const char *fname)
 	if( fp==NULL ){ /*try original name*/
 		fp = fopen(fname, "rb");
 	}
+#elif defined(_WIN32)
+	uint16_t *fname2 = c->utf8_to_utf16_LFN(c, fname);
+	fp = _wfopen(fname2, L"rb");
+	free (fname2);
 #else
 	fp = fopen(fname, "rb");
 #endif
