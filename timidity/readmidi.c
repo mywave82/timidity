@@ -4639,7 +4639,7 @@ MidiEvent *read_midi_file(struct timiditycontext_t *c, struct timidity_file *tf,
     int err, macbin_check, mtype, i;
 
     macbin_check = 1;
-    c->current_file_info = get_midi_file_info(c, c->current_filename, 1);
+    c->current_file_info = get_midi_file_info(c, fn, 1);
     COPY_CHANNELMASK(c->drumchannels, c->current_file_info->drumchannels);
     COPY_CHANNELMASK(c->drumchannel_mask, c->current_file_info->drumchannel_mask);
 
