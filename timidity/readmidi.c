@@ -4891,6 +4891,10 @@ struct timidity_file *open_midi_file(struct timiditycontext_t *c, const char *fn
 	tf = open_file(c, fn, decompress, noise_mode);
     else
     {
+        /* open_file is normally responsible for keeping current_filename up to date, which we now just skipped */
+        free (c->current_filename);
+        c->current_filename = strdup (fn);
+
 	tf = open_with_mem(c, infop->midi_data, infop->midi_data_size,
 			   noise_mode);
 	if(infop->compressed)
