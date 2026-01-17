@@ -478,7 +478,7 @@ const char *url_unexpand_home_dir(struct timiditycontext_t *c, const char *fname
         path = malloc (2 + strlen(fname) - dirlen + 1 + 1);
         if (!path)
             return fname;
-        sprintf (path, "~/%s", fname + dirlen - 1);
+        sprintf (path, "~/%s", fname + dirlen + 1);
         return path;
     } else {
         if(strncmp(dir, fname, dirlen) != 0)
