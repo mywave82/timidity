@@ -1013,6 +1013,24 @@ static int set_gus_patchconf(struct timiditycontext_t *c, char *name, int line,
     {
 	tone->instype = 0;
 	tone->name = safe_strdup(pat);
+	if ((c->pathlist == &c->defaultpathlist) && (!tone->comment))
+	{ /* fill in comment with just the filename if the "dir" syntax has not been used, the full path can be overwhelming long and already present in tone->name */
+	    const char *forward = strrchr (pat, '/');
+	    const char *backward = strrchr (pat, '\\');
+	    const char *afterslash = 0;
+	    if (forward && forward[1])
+	    {
+		afterslash = forward + 1;
+	    }
+	    if (backward && backward[1])
+	    {
+		if ((!afterslash) || (afterslash < (backward + 1)))
+		{
+		    afterslash = backward + 1;
+		}
+	    }
+	    tone->comment = safe_strdup(afterslash ? afterslash : pat);
+	}
     }
 
     for(j = 0; opts[j] != NULL; j++)
