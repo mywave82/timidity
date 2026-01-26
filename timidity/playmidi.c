@@ -7406,6 +7406,11 @@ int play_event(struct timiditycontext_t *c, MidiEvent *ev)
 	    return rc;
 	}
 
+   if (ev->type == ME_EOT)
+   { /* ev-type does not initialize all fields in the event, causing SUPPRESS_CHANNEL_LAYER to perform uninitialized data jumps, marked by valgrind */
+	return midi_play_end(c);
+   }
+
 #ifndef SUPPRESS_CHANNEL_LAYER
 	orig_ch = ev->channel;
 	layered = ! IS_SYSEX_EVENT_TYPE(ev);
@@ -7937,8 +7942,9 @@ int play_event(struct timiditycontext_t *c, MidiEvent *ev)
 		set_cuepoint(c, ch, c->current_event->a, c->current_event->b);
 		break;
 
-      case ME_EOT:
-	return midi_play_end(c);
+	/* case ME_EOT: is moved outside the switch case block due to SUPPRESS_CHANNEL_LAYER logic */
+	case ME_EOT: /* not reachable */
+		break;
     }
 #ifndef SUPPRESS_CHANNEL_LAYER
 		}

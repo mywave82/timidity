@@ -4840,21 +4840,28 @@ void free_all_midi_file_info(struct timiditycontext_t *c)
   info = c->midi_file_info;
   while (info) {
     next = info->next;
+
     free(info->filename);
-    if (info->seq_name)
-      free(info->seq_name);
+    info->filename = 0;
+
+    free(info->seq_name);
+    info->seq_name = 0;
+
     if (info->karaoke_title != NULL && info->karaoke_title == info->first_text)
       free(info->karaoke_title);
     else {
-      if (info->karaoke_title)
-	free(info->karaoke_title);
-      if (info->first_text)
-	free(info->first_text);
-      if (info->midi_data)
-	free(info->midi_data);
-      if (info->pcm_filename)
-	free(info->pcm_filename); /* Note: this memory is freed in playmidi.c*/
+      free(info->karaoke_title);
+      free(info->first_text);
     }
+    info->karaoke_title = 0;
+    info->first_text = 0;
+
+    free(info->midi_data);
+    info->midi_data = 0;
+
+    free(info->pcm_filename); /* Note: this memory is freed in playmidi.c*/
+    info->pcm_filename = 0;
+
     free(info);
     info = next;
   }
