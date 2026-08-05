@@ -1393,17 +1393,31 @@ static void realloc_freeverb_buf(struct timiditycontext_t *c, InfoFreeverb *rev)
 	int32 tmpL, tmpR;
 	double time, samplerate = play_mode->rate;
 
+fprintf(stderr, "realloc_freeverb_buf:\n");
+fprintf(stderr, "c->reverb_status_gs.time=%d\n", (int)(c->reverb_status_gs.time));
+fprintf(stderr, "c->reverb_status_gs.character=%d\n", (int)(c->reverb_status_gs.character));
+fprintf(stderr, "reverb_time_table[%d]=%f\n", (int)(c->reverb_status_gs.time), reverb_time_table[c->reverb_status_gs.time]);
+fprintf(stderr, "gs_revchar_to_rt(%d)=>%lf\n", (int)(c->reverb_status_gs.character), gs_revchar_to_rt(c->reverb_status_gs.character));
+fprintf(stderr, "combtunings[%d-1]=%d\n", numcombs, combtunings[numcombs - 1]);
+fprintf(stderr, "log10(%lf)=%f\n", rev->roomsize1, log10(rev->roomsize1));
+
 	time = reverb_time_table[c->reverb_status_gs.time] * gs_revchar_to_rt(c->reverb_status_gs.character) * combfbk
 		/ (60 * combtunings[numcombs - 1] / (-20 * log10(rev->roomsize1) * 44100.0));
+
+fprintf(stderr, "time=%lf\n", time);
 
 	for(i = 0; i < numcombs; i++)
 	{
 		tmpL = combtunings[i] * samplerate * time / 44100.0;
 		tmpR = (combtunings[i] + stereospread) * samplerate * time / 44100.0;
+fprintf(stderr, "tmpL.%d=%"PRId32"\n", i, tmpL);
+fprintf(stderr, "tmpR.%d=%"PRId32"\n", i, tmpR);
 		if(tmpL < 10) tmpL = 10;
 		if(tmpR < 10) tmpR = 10;
 		while(!isprime(tmpL)) tmpL++;
 		while(!isprime(tmpR)) tmpR++;
+fprintf(stderr, "=>tmpL=%"PRId32"\n", tmpL);
+fprintf(stderr, "=>tmpR=%"PRId32"\n", tmpR);
 		rev->combL[i].size = tmpL;
 		rev->combR[i].size = tmpR;
 fprintf(stderr, "realloc_freeverb_buf => set_freeverb_comb(&rev->combL[i], rev->combL[i].size);\n");
@@ -1437,6 +1451,10 @@ static void update_freeverb(struct timiditycontext_t *c, InfoFreeverb *rev)
 	rev->wet = (double)c->reverb_status_gs.level / 127.0 * gs_revchar_to_level(c->reverb_status_gs.character) * fixedgain;
 	rev->roomsize = gs_revchar_to_roomsize(c->reverb_status_gs.character) * scaleroom + offsetroom;
 	rev->width = 0.5;
+
+fprintf(stderr, "update_freeverb:\n");
+fprintf(stderr, "c->reverb_status_gs.level=%d\n", (int)c->reverb_status_gs.level);
+fprintf(stderr, "c->reverb_status_gs.character=%d\n", (int)c->reverb_status_gs.character);
 
 	rev->wet1 = rev->width / 2.0 + 0.5;
 	rev->wet2 = (1.0 - rev->width) / 2.0;
