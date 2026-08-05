@@ -46,6 +46,9 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include <stdio.h>
+#include <inttypes.h>
+
 #define SYS_EFFECT_PRE_LPF
 
 /* #define SYS_EFFECT_CLIP */
@@ -214,6 +217,7 @@ static void set_delay(simple_delay *delay, int32 size)
 {
 	if(size < 1) {size = 1;}
 	free_delay(delay);
+fprintf(stderr, " set_delay, size=%"PRId32" delay->buf=safe_malloc(sizeof(int32) * size)\n", size);
 	delay->buf = (int32 *)safe_malloc(sizeof(int32) * size);
 	if(delay->buf == NULL) {return;}
 	delay->index = 0;
@@ -327,6 +331,7 @@ static void set_mod_allpass(mod_allpass *delay, int32 ndelay, int32 depth, doubl
 {
 	int32 size = ndelay + depth + 1;
 	free_mod_allpass(delay);
+fprintf(stderr, " set_mod_allpass, ndelay=%"PRId32" + depth=%"PRId32" + 1 => size=%"PRId32" delay->buf=safe_malloc(sizeof(int32) * size)\n", ndelay, depth, size);
 	delay->buf = (int32 *)safe_malloc(sizeof(int32) * size);
 	if(delay->buf == NULL) {return;}
 	delay->rindex = 0;
@@ -371,6 +376,7 @@ static void set_allpass(allpass *allpass, int32 size, double feedback)
 		free(allpass->buf);
 		allpass->buf = NULL;
 	}
+fprintf(stderr, " set_allpass, size=%"PRId32" allpass->buf=safe_malloc(sizeof(int32) * size)\n", size);
 	allpass->buf = (int32 *)safe_malloc(sizeof(int32) * size);
 	if(allpass->buf == NULL) {return;}
 	allpass->index = 0;
@@ -1046,13 +1052,21 @@ static void init_standard_reverb(struct timiditycontext_t *c, InfoStandardReverb
 	while (!isprime(info->rpt1)) {info->rpt1++;}
 	while (!isprime(info->rpt2)) {info->rpt2++;}
 	while (!isprime(info->rpt3)) {info->rpt3++;}
+fprintf(stderr, "init_standard_reverb => set_delay (&(info->buf0_L), info->rpt0 + 1);\n");
 	set_delay(&(info->buf0_L), info->rpt0 + 1);
+fprintf(stderr, "init_standard_reverb => set_delay(&(info->buf0_R), info->rpt0 + 1);\n");
 	set_delay(&(info->buf0_R), info->rpt0 + 1);
+fprintf(stderr, "init_standard_reverb => set_delay(&(info->buf1_L), info->rpt1 + 1);\n");
 	set_delay(&(info->buf1_L), info->rpt1 + 1);
+fprintf(stderr, "init_standard_reverb => set_delay(&(info->buf1_R), info->rpt1 + 1);\n");
 	set_delay(&(info->buf1_R), info->rpt1 + 1);
+fprintf(stderr, "init_standard_reverb => set_delay(&(info->buf2_L), info->rpt2 + 1);\n");
 	set_delay(&(info->buf2_L), info->rpt2 + 1);
+fprintf(stderr, "init_standard_reverb => set_delay(&(info->buf2_R), info->rpt2 + 1);\n");
 	set_delay(&(info->buf2_R), info->rpt2 + 1);
+fprintf(stderr, "init_standard_reverb => set_delay(&(info->buf3_L), info->rpt3 + 1);\n");
 	set_delay(&(info->buf3_L), info->rpt3 + 1);
+fprintf(stderr, "init_standard_reverb => set_delay(&(info->buf3_R), info->rpt3 + 1);\n");
 	set_delay(&(info->buf3_R), info->rpt3 + 1);
 	info->fbklev = 0.12;
 	info->nmixlev = 0.7;
@@ -1326,6 +1340,7 @@ static void set_freeverb_allpass(allpass *allpass, int32 size)
 		free(allpass->buf);
 		allpass->buf = NULL;
 	}
+fprintf(stderr, " set_freeverb_allpass, size=%"PRId32" allpass->buf=safe_malloc(sizeof(int32) * size)\n", size);
 	allpass->buf = (int32 *)safe_malloc(sizeof(int32) * size);
 	if(allpass->buf == NULL) {return;}
 	allpass->index = 0;
@@ -1343,6 +1358,7 @@ static void set_freeverb_comb(comb *comb, int32 size)
 		free(comb->buf);
 		comb->buf = NULL;
 	}
+fprintf(stderr, " set_freeverb_comb, size=%"PRId32" allpass->buf=safe_malloc(sizeof(int32) * size)\n", size);
 	comb->buf = (int32 *)safe_malloc(sizeof(int32) * size);
 	if(comb->buf == NULL) {return;}
 	comb->index = 0;
@@ -1390,7 +1406,9 @@ static void realloc_freeverb_buf(struct timiditycontext_t *c, InfoFreeverb *rev)
 		while(!isprime(tmpR)) tmpR++;
 		rev->combL[i].size = tmpL;
 		rev->combR[i].size = tmpR;
+fprintf(stderr, "realloc_freeverb_buf => set_freeverb_comb(&rev->combL[i], rev->combL[i].size);\n");
 		set_freeverb_comb(&rev->combL[i], rev->combL[i].size);
+fprintf(stderr, "realloc_freeverb_buf => set_freeverb_comb(&rev->combR[i], rev->combR[i].size);\n");
 		set_freeverb_comb(&rev->combR[i], rev->combR[i].size);
 	}
 
@@ -1404,7 +1422,9 @@ static void realloc_freeverb_buf(struct timiditycontext_t *c, InfoFreeverb *rev)
 		while(!isprime(tmpR)) tmpR++;
 		rev->allpassL[i].size = tmpL;
 		rev->allpassR[i].size = tmpR;
+fprintf(stderr, "realloc_freeverb_buf => set_freeverb_allpass(&rev->allpassL[i], rev->allpassL[i].size);\n");
 		set_freeverb_allpass(&rev->allpassL[i], rev->allpassL[i].size);
+fprintf(stderr, "realloc_freeverb_buf => set_freeverb_allpass(&rev->allpassR[i], rev->allpassR[i].size);\n");
 		set_freeverb_allpass(&rev->allpassR[i], rev->allpassR[i].size);
 	}
 }
@@ -1455,6 +1475,7 @@ static void update_freeverb(struct timiditycontext_t *c, InfoFreeverb *rev)
 	rev->wet1i = TIM_FSCALE(rev->wet1, 24);
 	rev->wet2i = TIM_FSCALE(rev->wet2, 24);
 
+fprintf(stderr, "update_freeverb => c->reverb_status_gs.pre_delay_time=%d c->reverb_predelay_factor=%d play_mode->rate=%d => set_delay()\n", (int)(c->reverb_status_gs.pre_delay_time), (int)(c->reverb_predelay_factor), (int)(play_mode->rate));
 	set_delay(&(rev->pdelay), (int32)((FLOAT_T)c->reverb_status_gs.pre_delay_time * c->reverb_predelay_factor * play_mode->rate / 1000.0));
 }
 
@@ -1476,11 +1497,15 @@ static void alloc_freeverb_buf(struct timiditycontext_t *c, InfoFreeverb *rev)
 	int i;
 	if(rev->alloc_flag) {return;}
 	for (i = 0; i < numcombs; i++) {
+fprintf(stderr, "alloc_freeverb_buf => set_freeverb_comb(&rev->combL[i], combtunings[i]);\n");
 		set_freeverb_comb(&rev->combL[i], combtunings[i]);
+fprintf(stderr, "alloc_freeverb_buf => set_freeverb_comb(&rev->combR[i], combtunings[i] + stereospread);\n");
 		set_freeverb_comb(&rev->combR[i], combtunings[i] + stereospread);
 	}
 	for (i = 0; i < numallpasses; i++) {
+fprintf(stderr, "alloc_freeverb_buf => set_freeverb_allpass(&rev->allpassL[i], allpasstunings[i]);\n");
 		set_freeverb_allpass(&rev->allpassL[i], allpasstunings[i]);
+fprintf(stderr, "set_freeverb_allpass(&rev->allpassR[i], allpasstunings[i] + stereospread);\n");
 		set_freeverb_allpass(&rev->allpassR[i], allpasstunings[i] + stereospread);
 		rev->allpassL[i].feedback = initialallpassfbk;
 		rev->allpassR[i].feedback = initialallpassfbk;
@@ -1593,7 +1618,9 @@ static void init_ch_reverb_delay(struct timiditycontext_t *c, InfoDelay3 *info)
 	int32 x;
 	info->size[0] = (double)c->reverb_status_gs.time * 3.75 * play_mode->rate / 1000.0;
 	x = info->size[0] + 1;	/* allowance */
+fprintf(stderr, "init_ch_reverb_delay => set_delay(&(info->delayL), x);\n");
 	set_delay(&(info->delayL), x);
+fprintf (stderr, "set_delay(&(info->delayR), x);\n");
 	set_delay(&(info->delayR), x);
 	info->index[0] = x - info->size[0];
 	if (info->index[0] >= info->size[0]) {
@@ -1726,32 +1753,59 @@ static void do_ch_plate_reverb(struct timiditycontext_t *c, int32 *buf, int32 co
 		init_lfo(c, lfo1d, 1.30, LFO_SINE, 0);
 		t = reverb_time_table[c->reverb_status_gs.time] / reverb_time_table[64] - 1.0;
 		t = 1.0 + t / 2;
+fprintf (stderr, "do_ch_plate_reverb => set_delay(pd, c->reverb_status_gs.pre_delay_time * play_mode->rate / 1000);\n");
 		set_delay(pd, c->reverb_status_gs.pre_delay_time * play_mode->rate / 1000);
-		set_delay(td1, get_plate_delay(4453, t)),
+fprintf (stderr, "do_ch_plate_reverb => set_delay(td1, get_plate_delay(4453, t));\n");
+		set_delay(td1, get_plate_delay(4453, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(td1d, get_plate_delay(4217, t))\n");;
 		set_delay(td1d, get_plate_delay(4217, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(td2, get_plate_delay(3720, t));\n");
 		set_delay(td2, get_plate_delay(3720, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(td2d, get_plate_delay(3163, t));\n");
 		set_delay(td2d, get_plate_delay(3163, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od1l, get_plate_delay(266, t));\n");
 		set_delay(od1l, get_plate_delay(266, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od2l, get_plate_delay(2974, t));\n");
 		set_delay(od2l, get_plate_delay(2974, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od3l, get_plate_delay(1913, t));\n");
 		set_delay(od3l, get_plate_delay(1913, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od4l, get_plate_delay(1996, t));\n");
 		set_delay(od4l, get_plate_delay(1996, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od5l, get_plate_delay(1990, t));\n");
 		set_delay(od5l, get_plate_delay(1990, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od6l, get_plate_delay(187, t));\n");
 		set_delay(od6l, get_plate_delay(187, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od7l, get_plate_delay(1066, t));\n");
 		set_delay(od7l, get_plate_delay(1066, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od1r, get_plate_delay(353, t));\n");
 		set_delay(od1r, get_plate_delay(353, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od2r, get_plate_delay(3627, t));\n");
 		set_delay(od2r, get_plate_delay(3627, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od3r, get_plate_delay(1228, t));\n");
 		set_delay(od3r, get_plate_delay(1228, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od4r, get_plate_delay(2673, t));\n");
 		set_delay(od4r, get_plate_delay(2673, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od5r, get_plate_delay(2111, t));\n");
 		set_delay(od5r, get_plate_delay(2111, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od6r, get_plate_delay(335, t));\n");
 		set_delay(od6r, get_plate_delay(335, t));
+fprintf (stderr, "do_ch_plate_reverb => set_delay(od7r, get_plate_delay(121, t));\n");
 		set_delay(od7r, get_plate_delay(121, t));
+fprintf (stderr, "do_ch_plate_reverb => set_allpass(ap1, get_plate_delay(142, t), PLATE_INPUT_DIFFUSION1);\n");
 		set_allpass(ap1, get_plate_delay(142, t), PLATE_INPUT_DIFFUSION1);
+fprintf (stderr, "do_ch_plate_reverb => set_allpass(ap2, get_plate_delay(107, t), PLATE_INPUT_DIFFUSION1);\n");
 		set_allpass(ap2, get_plate_delay(107, t), PLATE_INPUT_DIFFUSION1);
+fprintf (stderr, "do_ch_plate_reverb => set_allpass(ap3, get_plate_delay(379, t), PLATE_INPUT_DIFFUSION2);\n");
 		set_allpass(ap3, get_plate_delay(379, t), PLATE_INPUT_DIFFUSION2);
+fprintf (stderr, "do_ch_plate_reverb => set_allpass(ap4, get_plate_delay(277, t), PLATE_INPUT_DIFFUSION2);\n");
 		set_allpass(ap4, get_plate_delay(277, t), PLATE_INPUT_DIFFUSION2);
+fprintf (stderr, "do_ch_plate_reverb => set_allpass(ap6, get_plate_delay(1800, t), PLATE_DECAY_DIFFUSION2);\n");
 		set_allpass(ap6, get_plate_delay(1800, t), PLATE_DECAY_DIFFUSION2);
+fprintf (stderr, "do_ch_plate_reverb => set_allpass(ap6d, get_plate_delay(2656, t), PLATE_DECAY_DIFFUSION2);\n");
 		set_allpass(ap6d, get_plate_delay(2656, t), PLATE_DECAY_DIFFUSION2);
+fprintf(stderr, "do_ch_plate_reverb => set_mod_allpass(ap5, get_plate_delay(672, t), get_plate_delay(16, t), PLATE_DECAY_DIFFUSION1);\n");
 		set_mod_allpass(ap5, get_plate_delay(672, t), get_plate_delay(16, t), PLATE_DECAY_DIFFUSION1);
+fprintf(stderr, "do_ch_plate_reverb => set_mod_allpass(ap5d, get_plate_delay(908, t), get_plate_delay(16, t), PLATE_DECAY_DIFFUSION1);\n");
 		set_mod_allpass(ap5d, get_plate_delay(908, t), get_plate_delay(16, t), PLATE_DECAY_DIFFUSION1);
 		lpf1->a = PLATE_BANDWIDTH, lpf2->a = 1.0 - PLATE_DAMPING;
 		init_filter_lowpass1(lpf1);
@@ -2031,7 +2085,9 @@ static void init_ch_3tap_delay(struct timiditycontext_t *c, InfoDelay3 *info)
 		if (info->size[i] > x) {x = info->size[i];}
 	}
 	x += 1;	/* allowance */
+fprintf(stderr, "init_ch_3tap_delay => set_delay(&(info->delayL), x);\n");
 	set_delay(&(info->delayL), x);
+fprintf(stderr, "init_ch_3tap_delay => set_delay(&(info->delayR), x);\n");
 	set_delay(&(info->delayR), x);
 	for (i = 0; i < 3; i++) {
 		info->index[i] = (x - info->size[i]) % x;	/* set start-point */
@@ -2192,7 +2248,9 @@ static void do_ch_stereo_chorus(struct timiditycontext_t *c, int32 *buf, int32 c
 		info->pdelay -= info->depth / 2;	/* NOMINAL_DELAY to delay */
 		if (info->pdelay < 1) {info->pdelay = 1;}
 		info->rpt0 = info->pdelay + info->depth + 2;	/* allowance */
+fprintf(stderr, "do_ch_stereo_chorus => set_delay(&(info->delayL), info->rpt0);\n");
 		set_delay(&(info->delayL), info->rpt0);
+fprintf(stderr, "do_ch_stereo_chorus => set_delay(&(info->delayR), info->rpt0);\n");
 		set_delay(&(info->delayR), info->rpt0);
 		info->feedback = (double)c->chorus_status_gs.feedback * 0.763 / 100.0;
 		info->level = (double)c->chorus_status_gs.level / 127.0 * MASTER_CHORUS_LEVEL;
@@ -2522,6 +2580,7 @@ void alloc_effect(EffectList *ef)
 		free(ef->info);
 		ef->info = NULL;
 	}
+fprintf(stderr, " alloc_effect, ef->engine->info_size=%d ef->info = safe_malloc(ef->engine->info_size)\n", (int)(ef->engine->info_size));
 	ef->info = safe_malloc(ef->engine->info_size);
 	memset(ef->info, 0, ef->engine->info_size);
 
@@ -2541,6 +2600,7 @@ EffectList *push_effect(EffectList *efc, int type)
 	efn->type = type;
 	efn->next_ef = NULL;
 	efn->info = NULL;
+fprintf(stderr, "push_effect => alloc_effect(efn);\n");
 	alloc_effect(efn);
 
 	if(efc == NULL) {
@@ -2854,6 +2914,7 @@ void do_hexa_chorus(struct timiditycontext_t *c, int32 *buf, int32 count, Effect
 		v0, v1, v2, v3, v4, v5, f0, f1, f2, f3, f4, f5;
 
 	if(count == MAGIC_INIT_EFFECT_INFO) {
+fprintf(stderr, "do_hexa_chorus => set_delay(buf0, (int32)(9600.0 * play_mode->rate / 44100.0));\n");
 		set_delay(buf0, (int32)(9600.0 * play_mode->rate / 44100.0));
 		init_lfo(c, lfo, lfo->freq, LFO_TRIANGULAR, 0);
 		info->dryi = TIM_FSCALE(info->level * info->dry, 24);
@@ -3285,7 +3346,9 @@ static void do_chorus(struct timiditycontext_t *c, int32 *buf, int32 count, Effe
 		info->pdelay -= info->depth / 2;	/* NOMINAL_DELAY to delay */
 		if (info->pdelay < 1) {info->pdelay = 1;}
 		info->rpt0 = info->pdelay + info->depth + 2;	/* allowance */
+fprintf(stderr, "do_chorus => set_delay(&(info->delayL), info->rpt0);\n");
 		set_delay(&(info->delayL), info->rpt0);
+fprintf(stderr, "do_chorus => set_delay(&(info->delayL), info->rpt0);\n");
 		set_delay(&(info->delayR), info->rpt0);
 		info->feedbacki = TIM_FSCALE(info->feedback, 24);
 		info->dryi = TIM_FSCALE(info->dry, 24);
@@ -3466,7 +3529,9 @@ static void do_delay_lcr(struct timiditycontext_t *c, int32 *buf, int32 count, E
 			if (info->size[i] > x) {info->size[i] = x;}
 		}
 		x += 1;	/* allowance */
+fprintf(stderr, "do_delay_lcr => set_delay(&(info->delayL), x);\n");
 		set_delay(&(info->delayL), x);
+fprintf(stderr, "do_delay_lcr => set_delay(&(info->delayR), x);\n");
 		set_delay(&(info->delayR), x);
 		for (i = 0; i < 3; i++) {	/* set start-point */
 			info->index[i] = x - info->size[i];
@@ -3566,12 +3631,14 @@ static void do_delay_lr(struct timiditycontext_t *c, int32 *buf, int32 count, Ef
 		x = info->fdelay1 * play_mode->rate / 1000.0;
 		if (info->size[0] > x) {info->size[0] = x;}
 		x++;
+fprintf(stderr, "do_delay_lr => set_delay(&(info->delayL), x);\n");
 		set_delay(&(info->delayL), x);
 		info->index[0] = x - info->size[0];
 		info->size[1] = info->rdelay * play_mode->rate / 1000.0;
 		x = info->fdelay2 * play_mode->rate / 1000.0;
 		if (info->size[1] > x) {info->size[1] = x;}
 		x++;
+fprintf(stderr, "do_delay_lr => set_delay(&(info->delayR), x);\n");
 		set_delay(&(info->delayR), x);
 		info->index[1] = x - info->size[1];
 		info->feedbacki = TIM_FSCALE(info->feedback, 24);
@@ -3643,12 +3710,14 @@ static void do_echo(struct timiditycontext_t *c, int32 *buf, int32 count, Effect
 		x = info->ldelay1 * play_mode->rate / 1000.0;
 		if (info->size[0] > x) {info->size[0] = x;}
 		x++;
+fprintf(stderr, "do_echo => set_delay(&(info->delayL), x);\n");
 		set_delay(&(info->delayL), x);
 		info->index[0] = x - info->size[0];
 		info->size[1] = info->rdelay2 * play_mode->rate / 1000.0;
 		x = info->rdelay1 * play_mode->rate / 1000.0;
 		if (info->size[1] > x) {info->size[1] = x;}
 		x++;
+fprintf(stderr, "do_echo => set_delay(&(info->delayR), x);\n");
 		set_delay(&(info->delayR), x);
 		info->index[1] = x - info->size[1];
 		info->lfeedbacki = TIM_FSCALE(info->lfeedback, 24);
@@ -3716,7 +3785,9 @@ static void do_cross_delay(struct timiditycontext_t *c, int32 *buf, int32 count,
 		dryi = info->dryi, weti = info->weti, ai = lpf->ai, iai = lpf->iai;
 
 	if(count == MAGIC_INIT_EFFECT_INFO) {
+fprintf(stderr, "do_cross_delay => set_delay(&(info->delayL), (int32)(info->lrdelay * play_mode->rate / 1000.0));\n");
 		set_delay(&(info->delayL), (int32)(info->lrdelay * play_mode->rate / 1000.0));
+fprintf(stderr, "do_cross_delay => set_delay(&(info->delayR), (int32)(info->rldelay * play_mode->rate / 1000.0));\n");
 		set_delay(&(info->delayR), (int32)(info->rldelay * play_mode->rate / 1000.0));
 		info->feedbacki = TIM_FSCALE(info->feedback, 24);
 		info->dryi = TIM_FSCALE(info->dry, 24);
