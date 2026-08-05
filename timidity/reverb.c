@@ -1418,6 +1418,11 @@ static void update_freeverb(struct timiditycontext_t *c, InfoFreeverb *rev)
 	rev->roomsize = gs_revchar_to_roomsize(c->reverb_status_gs.character) * scaleroom + offsetroom;
 	rev->width = 0.5;
 
+	if (rev->roomsize < 0.0001)
+	{ /* avoid zero, later calls to log10() will yield inf */
+		rev->roomsize = 0.0001;
+	}
+
 	rev->wet1 = rev->width / 2.0 + 0.5;
 	rev->wet2 = (1.0 - rev->width) / 2.0;
 	rev->roomsize1 = rev->roomsize;
