@@ -121,7 +121,7 @@ void *new_segment(struct timiditycontext_t *c, MBlockList *mblock, size_t nbytes
 #ifdef DEBUG
     if(((unsigned long)addr) & (ADDRALIGN-1))
     {
-	fprintf(stderr, "Bad address: 0x%x\n", addr);
+	fprintf(stderr, "Bad address: %p\n", addr);
 	exit(1);
     }
 #endif /* DEBUG */

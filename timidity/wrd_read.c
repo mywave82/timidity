@@ -277,7 +277,7 @@ int import_wrd_file(struct timiditycontext_t *c, char *fn)
 	       c->wrd_bugstatus,
 	       wrd_name_string(c->wrd_tok));
 	if(c->wrd_tok == WRD_COMMAND)
-	    printf("%s(%s)", wrd_name_string(c->wrd_tokval[0]), wrd_tokval + 1);
+	    printf("%s(%s)", wrd_name_string(c->wrd_tokval[0]), c->wrd_tokval + 1);
 	else if(c->wrd_tok == WRD_LYRIC)
 	    printf("<%s>", c->wrd_tokval);
 	printf("\n");

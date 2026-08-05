@@ -248,7 +248,7 @@ URL url_file_open(struct timiditycontext_t *c, const char *fname)
 
 #ifdef DEBUG
     if(mapptr != NULL)
-	fprintf(stderr, "mmap - success. size=%d\n", mapsize);
+	fprintf(stderr, "mmap - success. size=%ld\n", mapsize);
 #ifdef HAVE_MMAP
     else
 	fprintf(stderr, "mmap - failure.\n");
