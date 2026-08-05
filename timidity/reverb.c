@@ -1450,6 +1450,10 @@ static void update_freeverb(struct timiditycontext_t *c, InfoFreeverb *rev)
 
 	rev->wet = (double)c->reverb_status_gs.level / 127.0 * gs_revchar_to_level(c->reverb_status_gs.character) * fixedgain;
 	rev->roomsize = gs_revchar_to_roomsize(c->reverb_status_gs.character) * scaleroom + offsetroom;
+	if (rev->roomsize < 0.0001)
+	{ /* avoid zero */
+		rev->roomsize = 0.0001;
+	}
 	rev->width = 0.5;
 
 fprintf(stderr, "update_freeverb:\n");
