@@ -104,7 +104,7 @@ static struct dir_cache_t *scan_cached_files(struct timiditycontext_t *c, struct
 
     if(p == NULL)
     {
-	if((p = (struct dir_cache_t *)safe_malloc(sizeof(struct dir_cache_t))) ==
+	if((p = (struct dir_cache_t *)safe_malloc(c, sizeof(struct dir_cache_t))) ==
 	   NULL)
 	    return NULL;
 	allocated = 1;
@@ -116,7 +116,7 @@ static struct dir_cache_t *scan_cached_files(struct timiditycontext_t *c, struct
     p->ino = s->st_ino;
     p->dev = s->st_dev;
 #else
-    p->dirname = safe_strdup(dirname);
+    p->dirname = safe_strdup(c, dirname);
 #endif /* INODE_AVAILABLE */
     p->dir_mtime = s->st_mtime;
 
@@ -284,7 +284,7 @@ URL url_dir_open(struct timiditycontext_t *c, const char *dname)
 	else
 	    dname = url_expand_home_dir(c, dname);
     }
-    tmp = safe_strdup(dname);
+    tmp = safe_strdup(c, dname);
 
     /* Remove tail of path sep. */
     dlen = strlen(tmp);
@@ -348,7 +348,7 @@ URL url_dir_open(struct timiditycontext_t *c, const char *dname)
 	else
 	    dname = url_expand_home_dir(c, dname);
     }
-    tmp = safe_strdup(dname);
+    tmp = safe_strdup(c, dname);
 
     /* Remove tail of path sep. */
     dlen = strlen(tmp);

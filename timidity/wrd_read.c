@@ -58,10 +58,10 @@
 #define MAXTIMESIG 256
 
 #ifdef DEBUG
-#define WRD_BUGEMUINFO(code) ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, \
+#define WRD_BUGEMUINFO(code) ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, \
     "WRD: Try to emulate bug of MIMPI at line %d (code=%d)", c->wrd_lineno, code)
 #else
-#define WRD_BUGEMUINFO(code) ctl->cmsg(CMSG_WARNING, VERB_NOISY, \
+#define WRD_BUGEMUINFO(code) ctl->cmsg(c, CMSG_WARNING, VERB_NOISY, \
     "WRD: Try to emulate bug of MIMPI at line %d", c->wrd_lineno)
 #endif /* DEBUG */
 /* Current max code: 13 */
@@ -180,13 +180,13 @@ int import_wrd_file(struct timiditycontext_t *c, char *fn)
 		{
 		    if(c->import_wrd_file_default_wrd_file1 != NULL)
 			free(c->import_wrd_file_default_wrd_file1);
-		    c->import_wrd_file_default_wrd_file1 = (b ? safe_strdup(b) : NULL);
+		    c->import_wrd_file_default_wrd_file1 = (b ? safe_strdup(c, b) : NULL);
 		}
 		else if(strcmp(a, "F") == 0)
 		{
 		    if(c->import_wrd_file_default_wrd_file2 != NULL)
 			free(c->import_wrd_file_default_wrd_file2);
-		    c->import_wrd_file_default_wrd_file2 = (b ? safe_strdup(b) : NULL);
+		    c->import_wrd_file_default_wrd_file2 = (b ? safe_strdup(c, b) : NULL);
 		}
 		else if(strcmp(a, "p") == 0)
 		{
@@ -264,7 +264,7 @@ int import_wrd_file(struct timiditycontext_t *c, char *fn)
 	   (c->wrd_tok != WRD_COMMAND || c->wrd_tokval[0] != WRD_STARTUP))
 	{
 	    /* WRD_STARTUP must be first */
-	    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "WRD: No @STARTUP");
+	    ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "WRD: No @STARTUP");
 	    c->wrd_version = 0;
 	    WRD_ADDEVENT(0, WRD_STARTUP, 0);
 	}
@@ -610,7 +610,7 @@ int import_wrd_file(struct timiditycontext_t *c, char *fn)
 		{
 		    if(wrdstep.wmode0 <= 0 || wrdstep.wmode0 >= 256)
 		    {
-			ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 				  "WRD: Out of value range: "
 				  "@WMODE(%d,%d) at line %d",
 				  wrdstep.wmode0,wrdstep.wmode1,c->wrd_lineno);
@@ -772,7 +772,7 @@ int import_wrd_file(struct timiditycontext_t *c, char *fn)
 		WRD_ADDEVENT(step_at, WRD_eXCOPY, num);
 		break;
 	      default:
-		ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 			  "WRD: Unknown WRD command at line %d (Ignored)",
 			  c->wrd_lineno);
 		break;
@@ -1755,19 +1755,19 @@ static int32 sry_getVariableLength(struct timidity_file	*tf)
   return value;
 }
 
-static int sry_check_head(struct timidity_file	*tf)
+static int sry_check_head(struct timiditycontext_t *c, struct timidity_file	*tf)
 {
 	char	magic[12];
 	uint8	version[4];
 
 	tf_read(c, magic, 12,1,tf);
 	if( memcmp(magic, "Sherry WRD\0\0", 12) ){
-		ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 			  "Sherry open::Header NG." );
 		return 1;
 	}
 	tf_read(c, version, 1, 4, tf);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "Sherry WRD version: %02x %02x %02x %02x",
 		  version[0], version[1], version[2], version[3]);
 
@@ -1828,7 +1828,7 @@ static void sry_regist_datapacket(struct timiditycontext_t *c, struct wrd_step_t
 	c->datapacket_cnt++;
 }
 
-static int sry_read_datapacket(struct timidity_file	*tf, sry_datapacket* packet)
+static int sry_read_datapacket(struct timiditycontext_t *c, struct timidity_file *tf, sry_datapacket* packet)
 {
 	int	len;
 	uint8	*data;
@@ -1838,7 +1838,7 @@ static int sry_read_datapacket(struct timidity_file	*tf, sry_datapacket* packet)
 	    len = sry_getVariableLength(tf);
 	    if(len < 0)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "Warning: Too shorten Sherry WRD file.");
 		return 1;
 	    }
@@ -1846,7 +1846,7 @@ static int sry_read_datapacket(struct timidity_file	*tf, sry_datapacket* packet)
 	data =	(uint8 *)new_segment(c, &c->sry_pool, len + 1);
 	if(tf_read(c, data, 1, len, tf) < len)
 	{
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		      "Warning: Too shorten Sherry WRD file.");
 	    return 1;
 	}
@@ -1902,11 +1902,11 @@ static void sry_timebase22(struct timiditycontext_t *c, struct wrd_step_tracer* 
 {
     c->sry_timebase_mode = mode;
     if(c->sry_timebase_mode)
-	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 		  "Sherry time synchronize mode is not supported");
 }
 
-static void sry_wrdinfo(uint8 *info, int len)
+static void sry_wrdinfo(struct timiditycontext_t *c, uint8 *info, int len)
 {
     uint8 *info1, *info2, *desc;
     int i;
@@ -1929,22 +1929,22 @@ static void sry_wrdinfo(uint8 *info, int len)
 	return;
     desc = info + i;
 
-    ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+    ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 	      "Sherry WRD: %s: %s: %s", info1, info2, desc);
 }
 
-static void sry_show_debug(uint8 *data)
+static void sry_show_debug(struct timiditycontext_t *c, uint8 *data)
 {
     switch(data[0])
     {
       case 0x71: /* Compiler name */
 	if(data[1])
-	    ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	    ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 		      "Sherry WRD Compiler: %s", data + 1);
 	break;
       case 0x72: /* Source Name */
 	if(data[1])
-	    ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	    ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 		      "Sherry WRD Compiled from %s", data + 1);
 	break;
       case 0x7f: /* Compiler Private */
@@ -1964,7 +1964,7 @@ static void sry_read_headerblock(struct timiditycontext_t *c, struct wrd_step_tr
 	sry_regist_datapacket(c, wrdstep , &packet);
 
 	for(;;){
-		err= sry_read_datapacket(tf, &packet);
+		err= sry_read_datapacket(c, tf, &packet);
 		if( err ) break;
 		sry_regist_datapacket(c, wrdstep , &packet);
 		switch(packet.data[0])
@@ -1983,11 +1983,11 @@ static void sry_read_headerblock(struct timiditycontext_t *c, struct wrd_step_tr
 		    sry_timebase22(c, wrdstep, packet.data[1]);
 		    break;
 		  case 0x61:
-		    sry_wrdinfo(packet.data + 1, packet.len - 1);
+		    sry_wrdinfo(c, packet.data + 1, packet.len - 1);
 		    break;
 		  default:
 		    if((packet.data[0] & 0x70) == 0x70)
-			sry_show_debug(packet.data);
+			sry_show_debug(c, packet.data);
 		    break;
 		}
 	}
@@ -2009,7 +2009,7 @@ static void sry_read_datablock(struct timiditycontext_t *c, struct wrd_step_trac
 		    WRD_ADDEVENT(wrdstep->at, WRD_SHERRY_UPDATE, WRD_NOARG);
 		    need_update = 0;
 		}
-		err = sry_read_datapacket(tf, &packet);
+		err = sry_read_datapacket(c, tf, &packet);
 		if( err ) break;
 		/* cur_time =+ delta_time;*/
 		/* wrdstep_wait(wrdstep, delta_time,0); */
@@ -2025,7 +2025,7 @@ static void sry_read_datablock(struct timiditycontext_t *c, struct wrd_step_trac
 			c->sherry_started=1;
 			continue;
 		} else if( (packet.data[0]&0x70) == 0x70) {
-		    sry_show_debug(packet.data);
+		    sry_show_debug(c, packet.data);
 		}
 
 		sry_regist_datapacket(c, wrdstep , &packet);
@@ -2057,8 +2057,8 @@ static int import_sherrywrd_file(struct timiditycontext_t *c, const char * fn)
 	strncpy(cp+1, "sry", sizeof(sry_fn) - (cp - sry_fn) - 1);
 	tf= open_file(c, sry_fn, 0, OF_NORMAL);
 	if( tf==NULL ) return 0;
-	if( sry_check_head(tf)!=0 ) return 0;
-	ctl->cmsg(CMSG_INFO, VERB_NORMAL,
+	if( sry_check_head(c, tf)!=0 ) return 0;
+	ctl->cmsg(c, CMSG_INFO, VERB_NORMAL,
 		  "%s: reading sherry data...", sry_fn);
 
 	wrd_readinit(c);

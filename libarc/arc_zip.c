@@ -200,7 +200,7 @@ ArchiveEntryNode *next_zip_entry(struct timiditycontext_t *c)
 	goto retry_read;
     }
 
-    entry = new_entry_node(buff, flen);
+    entry = new_entry_node(c, buff, flen);
     if(entry == NULL)
 	return NULL;
 

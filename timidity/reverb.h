@@ -273,7 +273,7 @@ struct effect_parameter_xg_t {
 
 extern const struct effect_parameter_xg_t effect_parameter_xg[];
 
-extern EffectList *push_effect(EffectList *, int);
+extern EffectList *push_effect(struct timiditycontext_t *c, EffectList *, int);
 extern void free_effect_list(struct timiditycontext_t *c, EffectList *);
 
 /*! 2-Band EQ */

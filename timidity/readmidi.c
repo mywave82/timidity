@@ -133,7 +133,7 @@ void readmidi_add_event(struct timiditycontext_t *c, MidiEvent *a_event)
 	if(!c->readmidi_error_flag)
 	{
 	    c->readmidi_error_flag = 1;
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		      "Maxmum number of events is exceeded");
 	}
 	return;
@@ -188,7 +188,7 @@ void readmidi_add_ctl_event(struct timiditycontext_t *c, int32 at, int ch, int a
 	readmidi_add_event(c, &ev);
     }
     else
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "(Control ch=%d %d: %d)", ch, a, b);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "(Control ch=%d %d: %d)", ch, a, b);
 }
 
 char *readmidi_make_string_event(struct timiditycontext_t *c, int type, char *string, MidiEvent *ev,
@@ -279,7 +279,7 @@ static void compute_sample_increment(struct timiditycontext_t *c, int32 tempo, i
   c->sample_correction = (int32)(a) & 0xFFFF;
   c->sample_increment = (int32)(a) >> 16;
 
-  ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Samples per delta-t: %d (correction %d)",
+  ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Samples per delta-t: %d (correction %d)",
        c->sample_increment, c->sample_correction);
 }
 
@@ -316,36 +316,36 @@ static int32 getvl(struct timiditycontext_t *c, struct timidity_file *tf)
     if(!(ch & 0x80)) return l | ch;
 
     /* Error */
-    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 	      "%s: Illigal Variable-length quantity format.",
 	      c->current_filename);
     return -2;
 
   eof:
     if(errno)
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "%s: read_midi_event: %s",
 		  c->current_filename, strerror(errno));
     else
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "Warning: %s: Too shorten midi file.",
 		  c->current_filename);
     return -1;
 }
 
-static char *add_karaoke_title(char *s1, char *s2)
+static char *add_karaoke_title(struct timiditycontext_t *c, char *s1, char *s2)
 {
     char *ks;
     int k1, k2;
 
     if(s1 == NULL)
-	return safe_strdup(s2);
+	return safe_strdup(c, s2);
 
     k1 = strlen(s1);
     k2 = strlen(s2);
     if(k2 == 0)
 	return s1;
-    ks = (char *)safe_malloc(k1 + k2 + 2);
+    ks = (char *)safe_malloc(c, k1 + k2 + 2);
     memcpy(ks, s1, k1);
     ks[k1++] = ' ';
     memcpy(ks + k1, s2, k2 + 1);
@@ -367,7 +367,7 @@ static char *dumpstring(struct timiditycontext_t *c, int type, int32 len, const 
 
     if(len <= 0)
     {
-	ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "%s", label);
+	ctl->cmsg(c, CMSG_TEXT, VERB_VERBOSE, "%s", label);
 	return NULL;
     }
 
@@ -394,11 +394,11 @@ static char *dumpstring(struct timiditycontext_t *c, int type, int32 len, const 
     if(llen + solen >= MIN_MBLOCK_SIZE)
 	so[MIN_MBLOCK_SIZE - llen - 1] = '\0';
 
-    ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "%s%s", label, so);
+    ctl->cmsg(c, CMSG_TEXT, VERB_VERBOSE, "%s%s", label, so);
 
     if(allocp)
     {
-	so = safe_strdup(so);
+	so = safe_strdup(c, so);
 	reuse_mblock(c, &c->tmpbuffer);
 	return so;
     }
@@ -431,7 +431,7 @@ static void check_chorus_text_start(struct timiditycontext_t *c)
        p->feed_back[2] && p->delay[2] && p->rate[2] &&
        p->depth[2] && p->send_level[2])
     {
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Chorus text start");
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Chorus text start");
 	p->status = CHORUS_ST_OK;
     }
 }
@@ -531,7 +531,7 @@ static int block_to_part(int block, int port)
 }
 
 /* Map XG types onto GS types.  XG should eventually have its own tables */
-static int set_xg_reverb_type(int msb, int lsb)
+static int set_xg_reverb_type(struct timiditycontext_t *c, int msb, int lsb)
 {
 	int type = 4;
 
@@ -539,7 +539,7 @@ static int set_xg_reverb_type(int msb, int lsb)
 	    (msb >= 0x05 && msb <= 0x0F) ||
 	    (msb >= 0x14))			/* NO EFFECT */
 	{
-		ctl->cmsg(CMSG_INFO,VERB_NOISY,"XG Set Reverb Type (NO EFFECT %d %d)", msb, lsb);
+		ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"XG Set Reverb Type (NO EFFECT %d %d)", msb, lsb);
 		return -1;
 	}
 
@@ -581,12 +581,12 @@ static int set_xg_reverb_type(int msb, int lsb)
 	if (lsb == 0x02 && msb == 0x02)
 	    type = 2;				/* Room 3 */
 
-	ctl->cmsg(CMSG_INFO,VERB_NOISY,"XG Set Reverb Type (%d)", type);
+	ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"XG Set Reverb Type (%d)", type);
 	return type;
 }
 
 /* Map XG types onto GS types.  XG should eventually have its own tables */
-static int set_xg_chorus_type(int msb, int lsb)
+static int set_xg_chorus_type(struct timiditycontext_t *c, int msb, int lsb)
 {
 	int type = 2;
 
@@ -594,7 +594,7 @@ static int set_xg_chorus_type(int msb, int lsb)
 	    (msb >= 0x45 && msb <= 0x47) ||
 	    (msb >= 0x49))			/* NO EFFECT */
 	{
-		ctl->cmsg(CMSG_INFO,VERB_NOISY,"XG Set Chorus Type (NO EFFECT %d %d)", msb, lsb);
+		ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"XG Set Chorus Type (NO EFFECT %d %d)", msb, lsb);
 		return -1;
 	}
 
@@ -656,7 +656,7 @@ static int set_xg_chorus_type(int msb, int lsb)
 	    }
 	}
 
-	ctl->cmsg(CMSG_INFO,VERB_NOISY,"XG Set Chorus Type (%d)", type);
+	ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"XG Set Chorus Type (%d)", type);
 	return type;
 }
 
@@ -725,7 +725,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 		    SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_XG_LSB, 0, *body, ent);
 			num_events++;
 #else
-		    v = set_xg_reverb_type(c->xg_reverb_type_msb, c->xg_reverb_type_lsb);
+		    v = set_xg_reverb_type(c, c->xg_reverb_type_msb, c->xg_reverb_type_lsb);
 		    if (v >= 0) {
 			SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_GS_LSB, 0, v, 0x05);
 			num_events++;
@@ -752,7 +752,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 		    SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_XG_LSB, 0, *body, ent);
 			num_events++;
 #else
-		    v = set_xg_chorus_type(c->xg_chorus_type_msb, c->xg_chorus_type_lsb);
+		    v = set_xg_chorus_type(c, c->xg_chorus_type_msb, c->xg_chorus_type_lsb);
 		    if (v >= 0) {
 			SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_GS_LSB, 0, v, 0x0D);
 			num_events++;
@@ -949,7 +949,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 	for (ent = addlow; body <= body_end; body++, ent++) {
 	    switch(ent) {
 		case 0x00:	/* Element Reserve */
-/*			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Element Reserve is not supported. (CH:%d VAL:%d)", p, *body); */
+/*			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Element Reserve is not supported. (CH:%d VAL:%d)", p, *body); */
 		    break;
 
 		case 0x01:	/* bank select MSB */
@@ -995,11 +995,11 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 		    break;
 
 		case 0x09:	/* Detune 1st bit */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Detune 1st bit is not supported. (CH:%d VAL:%d)", p, *body);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Detune 1st bit is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x0A:	/* Detune 2nd bit */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Detune 2nd bit is not supported. (CH:%d VAL:%d)", p, *body);
+		    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Detune 2nd bit is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x0B:	/* volume */
@@ -1274,7 +1274,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 		case 0x4c:
 		    SETMIDIEVENT(evm[num_events], 0, ME_SCALE_TUNING, p, ent - 0x41, *body - 64);
 		    num_events++;
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Scale Tuning %s (CH:%d %d cent)",
+		    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Scale Tuning %s (CH:%d %d cent)",
 			      note_name[ent - 0x41], p, *body - 64);
 		    break;
 
@@ -1339,7 +1339,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 			break;
 
 		case 0x59:	/* AC1 Controller Number */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "AC1 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "AC1 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
 			break;
 
 		case 0x5A:	/* AC1 Pitch Control */
@@ -1373,7 +1373,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 			break;
 
 		case 0x60:	/* AC2 Controller Number */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "AC2 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "AC2 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
 			break;
 
 		case 0x61:	/* AC2 Pitch Control */
@@ -1415,19 +1415,19 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 		    num_events++;
 
 		case 0x69:	/* Pitch EG Initial Level */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Initial Level is not supported. (CH:%d VAL:%d)", p, *body);
+		    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Pitch EG Initial Level is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x6A:	/* Pitch EG Attack Time */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Attack Time is not supported. (CH:%d VAL:%d)", p, *body);
+		    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Pitch EG Attack Time is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x6B:	/* Pitch EG Release Level */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Release Level is not supported. (CH:%d VAL:%d)", p, *body);
+		    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Pitch EG Release Level is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x6C:	/* Pitch EG Release Time */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Release Time is not supported. (CH:%d VAL:%d)", p, *body);
+		    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Pitch EG Release Time is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x6D:	/* Velocity Limit Low */
@@ -1441,11 +1441,11 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 		    break;
 
 		case 0x70:	/* Bend Pitch Low Control */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Bend Pitch Low Control is not supported. (CH:%d VAL:%d)", p, *body);
+		    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Bend Pitch Low Control is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x71:	/* Filter EG Depth */
-		    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Filter EG Depth is not supported. (CH:%d VAL:%d)", p, *body);
+		    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Filter EG Depth is not supported. (CH:%d VAL:%d)", p, *body);
 		    break;
 
 		case 0x72:	/* EQ BASS */
@@ -1477,7 +1477,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 			break;
 
 		default:
-		    ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported XG Bulk Dump SysEx. (ADDR:%02X %02X %02X VAL:%02X)",addhigh,addlow,ent,*body);
+		    ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported XG Bulk Dump SysEx. (ADDR:%02X %02X %02X VAL:%02X)",addhigh,addlow,ent,*body);
 		    continue;
 		    break;
 	    }
@@ -1542,7 +1542,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 			num_events += 3;
 			break;
 		case 0x03:	/* Alternate Group */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Alternate Group is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Alternate Group is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 			break;
 		case 0x04:	/* Pan */
 			SETMIDIEVENT(evm[num_events], 0, ME_NRPN_MSB, dp, 0x1C, SYSEX_TAG);
@@ -1569,7 +1569,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 			num_events += 3;
 			break;
 		case 0x08:	/* Key Assign */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Key Assign is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Key Assign is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 			break;
 		case 0x09:	/* Rcv Note Off */
 			SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_MSB, dp, note, 0);
@@ -1632,16 +1632,16 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 			num_events += 3;
 			break;
 		case 0x50:	/* High Pass Filter Cutoff Frequency */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "High Pass Filter Cutoff Frequency is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "High Pass Filter Cutoff Frequency is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 			break;
 		case 0x60:	/* Velocity Pitch Sense */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Velocity Pitch Sense is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Velocity Pitch Sense is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 			break;
 		case 0x61:	/* Velocity LPF Cutoff Sense */
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Velocity LPF Cutoff Sense is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Velocity LPF Cutoff Sense is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 			break;
 		default:
-			ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported XG Bulk Dump SysEx. (ADDR:%02X %02X %02X VAL:%02X)",addhigh,addmid,ent,*body);
+			ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported XG Bulk Dump SysEx. (ADDR:%02X %02X %02X VAL:%02X)",addhigh,addmid,ent,*body);
 			break;
 	    }
 	}
@@ -1674,7 +1674,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 			checksum += val[i];
 		}
 		if(((128 - (checksum & 0x7F)) & 0x7F) != val[gslen-1]) {
-			ctl->cmsg(CMSG_INFO,VERB_NOISY,"GS SysEx: Checksum Error.");
+			ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"GS SysEx: Checksum Error.");
 			return num_events;
 		}
 
@@ -1834,10 +1834,10 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					num_events++;
 					break;
 				case 0x1F:	/* CC1 Controller Number */
-					ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC1 Controller Number is not supported. (CH:%d VAL:%d)", p, val[7]);
+					ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "CC1 Controller Number is not supported. (CH:%d VAL:%d)", p, val[7]);
 					break;
 				case 0x20:	/* CC2 Controller Number */
-					ctl->cmsg(CMSG_INFO, VERB_NOISY, "CC2 Controller Number is not supported. (CH:%d VAL:%d)", p, val[7]);
+					ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "CC2 Controller Number is not supported. (CH:%d VAL:%d)", p, val[7]);
 					break;
 				case 0x21:	/* Chorus Send Level */
 					SETMIDIEVENT(evm[0], 0, ME_CHORUS_EFFECT, p, val[7], SYSEX_TAG);
@@ -1918,14 +1918,14 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					for (i = 0; i < 12; i++) {
 						SETMIDIEVENT(evm[i],
 								0, ME_SCALE_TUNING, p, i, val[i + 7] - 64);
-						ctl->cmsg(CMSG_INFO, VERB_NOISY,
+						ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 								"Scale Tuning %s (CH:%d %d cent)",
 								note_name[i], p, val[i + 7] - 64);
 					}
 					num_events += 12;
 					break;
 				default:
-					ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+					ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 					break;
 				}
 			} else if((addr & 0xFFF000) == 0x402000) {
@@ -2198,7 +2198,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					num_events++;
 					break;
 				default:
-					ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+					ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 					break;
 				}
 			} else if((addr & 0xFFFF00) == 0x400100) {
@@ -2314,7 +2314,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					num_events++;
 					break;
 				default:
-					ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+					ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 					break;
 				}
 			} else if((addr & 0xFFFF00) == 0x400200) {
@@ -2336,7 +2336,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					num_events++;
 					break;
 				default:
-					ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+					ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 					break;
 				}
 			} else if((addr & 0xFFFF00) == 0x400300) {
@@ -2459,7 +2459,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					num_events++;
 					break;
 				default:
-					ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+					ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 					break;
 				}
 			} else if((addr & 0xFFF000) == 0x404000) {
@@ -2481,7 +2481,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					num_events++;
 					break;
 				default:
-					ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+					ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 					break;
 				}
 			}
@@ -2534,7 +2534,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 				num_events += 3;
 				break;
 			default:
-				ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+				ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 				break;
 			}
 			break;
@@ -2553,7 +2553,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					break;
 #endif
 				default:
-					ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+					ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 					break;
 			}
 			break;
@@ -2629,7 +2629,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 					break;
 #endif
 				default:
-					ctl->cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
+					ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)",addr_h,addr_m,addr_l,val[7],val[8]);
 					break;
 			}
 			break;
@@ -2646,7 +2646,7 @@ int parse_sysex_event_multi(struct timiditycontext_t *c, uint8 *val, int32 len, 
 				num_events++;
 				break;
 			default:
-			/*	ctl->cmsg(CMSG_INFO,VERB_NOISY, "Unsupported GS SysEx. "
+			/*	ctl->cmsg(c, CMSG_INFO,VERB_NOISY, "Unsupported GS SysEx. "
 						"(ADDR:%02X %02X %02X VAL:%02X %02X)",
 						addr_h, addr_m, addr_l, val[7], val[8]);*/
 				break;
@@ -3145,13 +3145,13 @@ int parse_sysex_event(struct timiditycontext_t *c, uint8 *val, int32 len, MidiEv
 		case 0x09:	/* General MIDI Message */
 			/* GM System Enable/Disable */
 			if(val[3] == 1) {
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG, "SysEx: GM System On");
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "SysEx: GM System On");
 				SETMIDIEVENT(*ev, 0, ME_RESET, 0, GM_SYSTEM_MODE, 0);
 			} else if(val[3] == 3) {
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG, "SysEx: GM2 System On");
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "SysEx: GM2 System On");
 				SETMIDIEVENT(*ev, 0, ME_RESET, 0, GM2_SYSTEM_MODE, 0);
 			} else {
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG, "SysEx: GM System Off");
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "SysEx: GM System Off");
 				SETMIDIEVENT(*ev, 0, ME_RESET, 0, DEFAULT_SYSTEM_MODE, 0);
 			}
 			return 1;
@@ -3252,7 +3252,7 @@ static void smf_time_signature(struct timiditycontext_t *c, int32 at, struct tim
 
     if(len != 4)
     {
-	ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid time signature");
+	ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Invalid time signature");
 	skip(c, tf, len);
 	return;
     }
@@ -3264,13 +3264,13 @@ static void smf_time_signature(struct timiditycontext_t *c, int32 at, struct tim
 
     if(n == 0 || (uint8) d == 0)
     {
-	ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid time signature");
+	ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Invalid time signature");
 	return;
     }
 
     MIDIEVENT(at, ME_TIMESIG, 0, n, d);
     MIDIEVENT(at, ME_TIMESIG, 1, C, b);
-    ctl->cmsg(CMSG_INFO, VERB_NOISY,
+    ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 	      "Time signature: %d/%d %d clock %d q.n.", n, d, C, b);
     if(c->current_file_info->time_sig_n == -1)
     {
@@ -3295,22 +3295,22 @@ static void smf_key_signature(struct timiditycontext_t *c, int32 at, struct timi
 	 */
 
 	if (len != 2) {
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid key signature");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Invalid key signature");
 		skip(c, tf, len);
 		return;
 	}
 	sf = tf_getc(tf);
 	mi = tf_getc(tf);
 	if (sf < -7 || sf > 7) {
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid key signature");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Invalid key signature");
 		return;
 	}
 	if (mi != 0 && mi != 1) {
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid key signature");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Invalid key signature");
 		return;
 	}
 	MIDIEVENT(at, ME_KEYSIG, 0, sf, mi);
-	ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 			"Key signature: %d %s %s", abs(sf),
 			(sf < 0) ? "flat(s)" : "sharp(s)", (mi) ? "minor" : "major");
 }
@@ -3368,7 +3368,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
     /* Check the formalities */
     if((tf_read(c, tmp, 1, 4, tf) != 4) || (tf_read(c, &len, 4, 1, tf) != 1))
     {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "%s: Can't read track header.", c->current_filename);
 	return -1;
     }
@@ -3376,7 +3376,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
     next_pos = tf_tell(c, tf) + len;
     if(strncmp(tmp, "MTrk", 4))
     {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "%s: Corrupt MIDI file.", c->current_filename);
 	return -2;
     }
@@ -3394,11 +3394,11 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	if((i = tf_getc(tf)) == EOF)
 	{
 	    if(errno)
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: read_midi_event: %s",
 			  c->current_filename, strerror(errno));
 	    else
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "Warning: %s: Too shorten midi file.",
 			  c->current_filename);
 	    return -1;
@@ -3452,7 +3452,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 
 		    if(i != len)
 		    {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				  "Warning: %s: Too shorten midi file.",
 				  c->current_filename);
 			reuse_mblock(c, &c->tmpbuffer);
@@ -3485,7 +3485,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 			    if(c->karaoke_title_flag == 0 &&
 			       strncmp(str, "@T", 2) == 0)
 				c->current_file_info->karaoke_title =
-				    add_karaoke_title(c->current_file_info->
+				    add_karaoke_title(c, c->current_file_info->
 						      karaoke_title, str + 2);
 			    ev.type = ME_KARAOKE_LYRIC;
 			    readmidi_add_event(c, &ev);
@@ -3522,7 +3522,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		{
 		  if(c->current_file_info->seq_name == NULL) {
 		    char *name = dumpstring(c, 3, len, "Sequence: ", 1, tf);
-		    c->current_file_info->seq_name = safe_strdup(fix_string(name));
+		    c->current_file_info->seq_name = safe_strdup(c, fix_string(name));
 		    free(name);
 		  }
 		    else
@@ -3534,7 +3534,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 			 (c->current_file_info->format == 1 &&
 			  c->current_read_track == 0))) {
 		  char *name = dumpstring(c, 1, len, "Text: ", 1, tf);
-		  c->current_file_info->first_text = safe_strdup(fix_string(name));
+		  c->current_file_info->first_text = safe_strdup(c, fix_string(name));
 		  free(name);
 		}
 		else
@@ -3549,11 +3549,11 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		    {
 			a = tf_getc(tf);
 			b = tf_getc(tf);
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 				  "(Sequence Number %02x %02x)", a, b);
 		    }
 		    else
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 				  "(Sequence Number len=%d)", len);
 		    break;
 
@@ -3584,7 +3584,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		     * fr: frames [0..29]
 		     * ff: fractional frames [0..99]
 		     */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(SMPTE Offset meta event)");
 		    skip(c, tf, len);
 		    break;
@@ -3598,7 +3598,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		    break;
 
 		  case 0x7f: /* Sequencer-Specific Meta-Event */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sequencer-Specific meta event, length %ld)",
 			      len);
 		    skip(c, tf, len);
@@ -3608,7 +3608,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		    if(len == 1)
 		    {
 			int midi_channel_prefix = tf_getc(tf);
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 				  "(MIDI channel prefix %d)",
 				  midi_channel_prefix);
 		    }
@@ -3622,13 +3622,13 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 			if((c->midi_port_number = tf_getc(tf))
 			   == EOF)
 			{
-			    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				      "Warning: %s: Too shorten midi file.",
 				      c->current_filename);
 			    return -1;
 			}
 			c->midi_port_number &= 0xF;
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 				  "(MIDI port number %d)", c->midi_port_number);
 		    }
 		    else
@@ -3636,7 +3636,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		    break;
 
 		  default:
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Meta event type 0x%02x, length %ld)",
 			      type, len);
 		    skip(c, tf, len);
@@ -3707,40 +3707,40 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		switch(lastchan & 0xF)
 		{
 		  case 2: /* Sys Com Song Position Pntr */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sys Com Song Position Pntr)");
 		    tf_getc(tf);
 		    tf_getc(tf);
 		    break;
 
 		  case 3: /* Sys Com Song Select(Song #) */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sys Com Song Select(Song #))");
 		    tf_getc(tf);
 		    break;
 
 		  case 6: /* Sys Com tune request */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sys Com tune request)");
 		    break;
 		  case 8: /* Sys real time timing clock */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sys real time timing clock)");
 		    break;
 		  case 10: /* Sys real time start */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sys real time start)");
 		    break;
 		  case 11: /* Sys real time continue */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sys real time continue)");
 		    break;
 		  case 12: /* Sys real time stop */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sys real time stop)");
 		    break;
 		  case 14: /* Sys real time active sensing */
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			      "(Sys real time active sensing)");
 		    break;
 #if 0
@@ -3749,7 +3749,7 @@ static int read_smf_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		  case 7: /* SysEx */
 #endif
 		  default: /* 1, 4, 5, 9, 13 */
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "*** Can't happen: status 0x%02X channel 0x%02X",
 			      laststatus, lastchan & 0xF);
 		    break;
@@ -3796,7 +3796,7 @@ static void move_channels(struct timiditycontext_t *c, int *chidx)
 						newch = ch % REDUCE_CHANNELS;
 						while (newch < ch && newch < MAX_CHANNELS) {
 							if (chidx[newch] == -1) {
-								ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+								ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 										"channel %d => %d", ch, newch);
 								ch = e->event.channel = chidx[ch] = newch;
 								break;
@@ -3809,7 +3809,7 @@ static void move_channels(struct timiditycontext_t *c, int *chidx)
 							chidx[ch] = ch;
 						else {
 							newch = ch % MAX_CHANNELS;
-							ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+							ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 									"channel %d => %d (mixed)", ch, newch);
 							ch = e->event.channel = chidx[ch] = newch;
 						}
@@ -3960,7 +3960,7 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 	    {
 		if (warn_tonebank[newbank] == 0)
 		{
-		    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		    ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			      "Tone bank %d is undefined", newbank);
 		    warn_tonebank[newbank] = 1;
 		}
@@ -3980,7 +3980,7 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 
     /* This may allocate a bit more than we need */
     groomed_list = lp =
-	(MidiEvent *)safe_malloc(sizeof(MidiEvent) * (c->event_count + 1));
+	(MidiEvent *)safe_malloc(c, sizeof(MidiEvent) * (c->event_count + 1));
     meep = c->evlist;
 
     our_event_count = 0;
@@ -4009,7 +4009,7 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 	    break;
 	  case ME_RESET:
 	    change_system_mode(c, meep->event.a);
-	    ctl->cmsg(CMSG_INFO, VERB_NOISY, "MIDI reset at %d sec",
+	    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "MIDI reset at %d sec",
 		      (int)((double)st / play_mode->rate + 0.5));
 	    for(j = 0; j < MAX_CHANNELS; j++)
 	    {
@@ -4047,31 +4047,31 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 					case 0:		/* No change */
 						break;
 					case 1:
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(GS ch=%d SC-55 MAP)", ch);
 						mapID[ch] = (ISDRUMCHANNEL(ch)) ? SC_55_DRUM_MAP
 								: SC_55_TONE_MAP;
 						break;
 					case 2:
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(GS ch=%d SC-88 MAP)", ch);
 						mapID[ch] = (ISDRUMCHANNEL(ch)) ? SC_88_DRUM_MAP
 								: SC_88_TONE_MAP;
 						break;
 					case 3:
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(GS ch=%d SC-88Pro MAP)", ch);
 						mapID[ch] = (ISDRUMCHANNEL(ch)) ? SC_88PRO_DRUM_MAP
 								: SC_88PRO_TONE_MAP;
 						break;
 					case 4:
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(GS ch=%d SC-8820/SC-8850 MAP)", ch);
 						mapID[ch] = (ISDRUMCHANNEL(ch)) ? SC_8850_DRUM_MAP
 								: SC_8850_TONE_MAP;
 						break;
 					default:
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(GS: ch=%d Strange bank LSB %d)",
 								ch, bank_lsb[ch]);
 						break;
@@ -4084,36 +4084,36 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 						if (ch == 9 && bank_lsb[ch] == 127
 								&& mapID[ch] == XG_DRUM_MAP)
 							/* FIXME: Why this part is drum?  Is this correct? */
-							ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+							ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 									"Warning: XG bank 0/127 is found. "
 									"It may be not correctly played.");
 						else {
-							ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+							ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 									"(XG ch=%d Normal voice)", ch);
 							midi_drumpart_change(c, ch, 0);
 							mapID[ch] = XG_NORMAL_MAP;
 						}
 						break;
 					case 64:	/* SFX voice */
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(XG ch=%d SFX voice)", ch);
 						midi_drumpart_change(c, ch, 0);
 						mapID[ch] = XG_SFX64_MAP;
 						break;
 					case 126:	/* SFX kit */
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(XG ch=%d SFX kit)", ch);
 						midi_drumpart_change(c, ch, 1);
 						mapID[ch] = XG_SFX126_MAP;
 						break;
 					case 127:	/* Drum kit */
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(XG ch=%d Drum kit)", ch);
 						midi_drumpart_change(c, ch, 1);
 						mapID[ch] = XG_DRUM_MAP;
 						break;
 					default:
-						ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+						ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 								"(XG: ch=%d Strange bank MSB %d)",
 								ch, bank_msb[ch]);
 						break;
@@ -4121,7 +4121,7 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 					newbank = bank_lsb[ch];
 					break;
 				case GM2_SYSTEM_MODE:	/* GM2 */
-					ctl->cmsg(CMSG_INFO, VERB_DEBUG, "(GM2 ch=%d)", ch);
+					ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "(GM2 ch=%d)", ch);
 					if ((bank_msb[ch] & 0xfe) == 0x78)	/* 0x78/0x79 */
 						midi_drumpart_change(c, ch, bank_msb[ch] == 0x78);
 					mapID[ch] = (ISDRUMCHANNEL(ch)) ? GM2_DRUM_MAP
@@ -4157,7 +4157,7 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 		{
 		    if(warn_drumset[newbank] == 0)
 		    {
-			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+			ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 				  "Drum set %d is undefined", newbank);
 			warn_drumset[newbank] = 1;
 		    }
@@ -4180,7 +4180,7 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 		{
 		    if(warn_tonebank[newbank] == 0)
 		    {
-			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+			ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 				  "Tone bank %d is undefined", newbank);
 			warn_tonebank[newbank] = 1;
 		    }
@@ -4273,7 +4273,7 @@ static MidiEvent *groom_list(struct timiditycontext_t *c, int32 divisions, int32
 	    st += samples_to_do;
 	    if(st < 0)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "Overflow the sample counter");
 		free(groomed_list);
 		return NULL;
@@ -4328,10 +4328,10 @@ static int read_smf_file(struct timiditycontext_t *c, struct timidity_file *tf)
     if(tf_read(c, &len, 4, 1, tf) != 1)
     {
 	if(errno)
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", c->current_filename,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: %s", c->current_filename,
 		      strerror(errno));
 	else
-	    ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 		      "%s: Not a MIDI file!", c->current_filename);
 	return 1;
     }
@@ -4358,18 +4358,18 @@ static int read_smf_file(struct timiditycontext_t *c, struct timidity_file *tf)
 
     if(len > 6)
     {
-	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 		  "%s: MIDI file header size %ld bytes",
 		  c->current_filename, len);
 	skip(c, tf, len - 6); /* skip the excess */
     }
     if(format < 0 || format > 2)
     {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "%s: Unknown MIDI file format %d", c->current_filename, format);
 	return 1;
     }
-    ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Format: %d  Tracks: %d  Divisions: %d",
+    ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "Format: %d  Tracks: %d  Divisions: %d",
 	      format, tracks, divisions);
 
     c->current_file_info->format = format;
@@ -4686,10 +4686,10 @@ MidiEvent *read_midi_file(struct timiditycontext_t *c, struct timidity_file *tf,
     if(tf_read(c, magic, 1, 4, tf) != 4)
     {
 	if(errno)
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", c->current_filename,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: %s", c->current_filename,
 		      strerror(errno));
 	else
-	    ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 		      "%s: Not a MIDI file!", c->current_filename);
 	return NULL;
     }
@@ -4714,7 +4714,7 @@ MidiEvent *read_midi_file(struct timiditycontext_t *c, struct timidity_file *tf,
            goto retry_read;
        } else {
            err = 1;
-           ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+           ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
                      "%s: Not a MIDI file!", c->current_filename);
        }
     }
@@ -4739,7 +4739,7 @@ MidiEvent *read_midi_file(struct timiditycontext_t *c, struct timidity_file *tf,
 	    goto retry_read;
 	}
 	err = 1;
-	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 		  "%s: Not a MIDI file!", c->current_filename);
     }
 
@@ -4800,7 +4800,7 @@ MidiEvent *read_midi_file(struct timiditycontext_t *c, struct timidity_file *tf,
     }
     c->current_file_info->samples = *sp;
     if(c->current_file_info->first_text == NULL)
-	c->current_file_info->first_text = safe_strdup("");
+	c->current_file_info->first_text = safe_strdup(c, "");
     c->current_file_info->readflag = 1;
     return ev;
 }
@@ -4809,7 +4809,7 @@ MidiEvent *read_midi_file(struct timiditycontext_t *c, struct timidity_file *tf,
 struct midi_file_info *new_midi_file_info(struct timiditycontext_t *c, const char *filename)
 {
     struct midi_file_info *p;
-    p = (struct midi_file_info *)safe_malloc(sizeof(struct midi_file_info));
+    p = (struct midi_file_info *)safe_malloc(c, sizeof(struct midi_file_info));
 
     /* Initialize default members */
     memset(p, 0, sizeof(struct midi_file_info));
@@ -4822,7 +4822,7 @@ struct midi_file_info *new_midi_file_info(struct timiditycontext_t *c, const cha
     p->max_channel = -1;
     p->file_type = IS_OTHER_FILE;
     if(filename != NULL)
-	p->filename = safe_strdup(filename);
+	p->filename = safe_strdup(c, filename);
     COPY_CHANNELMASK(p->drumchannels, c->default_drumchannels);
     COPY_CHANNELMASK(p->drumchannel_mask, c->default_drumchannel_mask);
 
@@ -4949,7 +4949,7 @@ static void url_make_file_data(struct timiditycontext_t *c, URL url, struct midi
     init_memb(&b);
 
     /* url => b */
-    if((compressor = open_deflate_handler(deflate_url_reader, url,
+    if((compressor = open_deflate_handler(c, deflate_url_reader, url,
 					  ARC_DEFLATE_LEVEL)) == NULL)
 	return;
     while((n = zip_deflate(c, compressor, buff, sizeof(buff))) > 0)
@@ -4960,7 +4960,7 @@ static void url_make_file_data(struct timiditycontext_t *c, URL url, struct midi
     /* b => mem */
     infop->midi_data_size = b.total_size;
     rewind_memb(&b);
-    infop->midi_data = (void *)safe_malloc(infop->midi_data_size);
+    infop->midi_data = (void *)safe_malloc(c, infop->midi_data_size);
     read_memb(&b, infop->midi_data, infop->midi_data_size);
     delete_memb(c, &b);
 }
@@ -5180,7 +5180,7 @@ char *get_midi_title(struct timiditycontext_t *c, const char *filename)
 	len = SAFE_CONVERT_LENGTH(len);
 	str = (char *)new_segment(c, &c->tmpbuffer, len);
 	code_convert(c, title, str, len, NULL, NULL);
-	p->seq_name = (char *)safe_strdup(str);
+	p->seq_name = (char *)safe_strdup(c, str);
 	reuse_mblock(c, &c->tmpbuffer);
 	p->format = 0;
 	free (title);
@@ -5226,7 +5226,7 @@ char *get_midi_title(struct timiditycontext_t *c, const char *filename)
 	i = SAFE_CONVERT_LENGTH(i + 1);
 	str = (char *)new_segment(c, &c->tmpbuffer, i);
 	code_convert(c, local, str, i, NULL, NULL);
-	p->seq_name = (char *)safe_strdup(str);
+	p->seq_name = (char *)safe_strdup(c, str);
 	reuse_mblock(c, &c->tmpbuffer);
 	p->format = 1;
 	goto end_of_parse;
@@ -5242,12 +5242,12 @@ char *get_midi_title(struct timiditycontext_t *c, const char *filename)
 	    i = SAFE_CONVERT_LENGTH(strlen(master) + 1);
 	    converted = (char *)new_segment(c, &c->tmpbuffer, i);
 	    code_convert(c, master, converted, i, NULL, NULL);
-	    p->seq_name = (char *)safe_strdup(converted);
+	    p->seq_name = (char *)safe_strdup(c, converted);
 	    reuse_mblock(c, &c->tmpbuffer);
 	}
 	else
 	{
-	    p->seq_name = (char *)safe_malloc(1);
+	    p->seq_name = (char *)safe_malloc(c, 1);
 	    p->seq_name[0] = '\0';
 	}
 	p->format = 0;
@@ -5381,8 +5381,8 @@ char *get_midi_title(struct timiditycontext_t *c, const char *filename)
 		    if(trk == 0 && type == 3)
 		    {
 		      if(p->seq_name == NULL) {
-			char *name = safe_strdup(so);
-			p->seq_name = safe_strdup(fix_string(name));
+			char *name = safe_strdup(c, so);
+			p->seq_name = safe_strdup(c, fix_string(name));
 			free(name);
 		      }
 		      reuse_mblock(c, &c->tmpbuffer);
@@ -5391,8 +5391,8 @@ char *get_midi_title(struct timiditycontext_t *c, const char *filename)
 		    }
 		    if(p->first_text == NULL) {
 		      char *name;
-		      name = safe_strdup(so);
-		      p->first_text = safe_strdup(fix_string(name));
+		      name = safe_strdup(c, so);
+		      p->first_text = safe_strdup(c, fix_string(name));
 		      free(name);
 		    }
 		    if(c->karaoke_format != -1)
@@ -5406,7 +5406,7 @@ char *get_midi_title(struct timiditycontext_t *c, const char *filename)
 		    {
 			if(strncmp(si, "@T", 2) == 0)
 			    p->karaoke_title =
-				add_karaoke_title(p->karaoke_title, si + 2);
+				add_karaoke_title(c, p->karaoke_title, si + 2);
 			else if(si[0] == '\\')
 			    goto end_of_parse;
 		    }
@@ -5469,7 +5469,7 @@ char *get_midi_title(struct timiditycontext_t *c, const char *filename)
     }
     close_file(c, tf);
     if(p->first_text == NULL)
-	p->first_text = safe_strdup("");
+	p->first_text = safe_strdup(c, "");
     return get_midi_title1(p);
 }
 
@@ -5488,12 +5488,12 @@ int midi_file_save_as(struct timiditycontext_t *c, char *in_name, char *out_name
     }
     out_name = (char *)url_expand_home_dir(c, out_name);
 
-    ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Save as %s...", out_name);
+    ctl->cmsg(c, CMSG_INFO, VERB_NORMAL, "Save as %s...", out_name);
 
     errno = 0;
     if((tf = open_midi_file(c, in_name, 1, 0)) == NULL)
     {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "%s: %s", out_name,
 		  errno ? strerror(errno) : "Can't save file");
 	return -1;
@@ -5502,7 +5502,7 @@ int midi_file_save_as(struct timiditycontext_t *c, char *in_name, char *out_name
     errno = 0;
     if((ofp = fopen(out_name, "wb")) == NULL)
     {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "%s: %s", out_name,
 		  errno ? strerror(errno) : "Can't save file");
 	close_file(c, tf);
@@ -5512,7 +5512,7 @@ int midi_file_save_as(struct timiditycontext_t *c, char *in_name, char *out_name
     while((n = tf_read(c, buff, 1, sizeof(buff), tf)) > 0) {
 	size_t dummy = fwrite(buff, 1, n, ofp); ++dummy;
 	}
-    ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Save as %s...Done", out_name);
+    ctl->cmsg(c, CMSG_INFO, VERB_NORMAL, "Save as %s...Done", out_name);
 
     fclose(ofp);
     close_file(c, tf);
@@ -5843,7 +5843,7 @@ static void recompute_userdrum_altassign(struct timiditycontext_t *c, int bank, 
 	for(p = c->userdrum_first; p != NULL; p = p->next) {
 		if(p->assign_group == group) {
 			sprintf(param, "%d", p->prog);
-			params[number] = safe_strdup(param);
+			params[number] = safe_strdup(c, param);
 			number++;
 		}
 	}
@@ -5851,7 +5851,7 @@ static void recompute_userdrum_altassign(struct timiditycontext_t *c, int bank, 
 
 	alloc_instrument_bank(c, 1, bank);
 	bk = c->drumset[bank];
-	bk->alt = add_altassign_string(bk->alt, params, number);
+	bk->alt = add_altassign_string(c, bk->alt, params, number);
 	for (i = number - 1; i >= 0; i--)
 		free(params[i]);
 }
@@ -5865,7 +5865,7 @@ static void init_userdrum(struct timiditycontext_t *c)
 	free_userdrum(c);
 
 	for(i=0;i<2;i++) {	/* allocate alternative assign */
-		alt = (AlternateAssign *)safe_malloc(sizeof(AlternateAssign));
+		alt = (AlternateAssign *)safe_malloc(c, sizeof(AlternateAssign));
 		memset(alt, 0, sizeof(AlternateAssign));
 		alloc_instrument_bank(c, 1, 64 + i);
 		c->drumset[64 + i]->alt = alt;
@@ -5892,13 +5892,13 @@ Instrument *recompute_userdrum(struct timiditycontext_t *c, int bank, int prog)
 			source_tone->instrument = ip;
 		}
 		if(source_tone->name) {
-			copy_tone_bank_element(&c->drumset[bank]->tone[prog], source_tone);
-			ctl->cmsg(CMSG_INFO,VERB_NOISY,"User Drumset (%d %d -> %d %d)", p->source_prog, p->source_note, bank, prog);
+			copy_tone_bank_element(c, &c->drumset[bank]->tone[prog], source_tone);
+			ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"User Drumset (%d %d -> %d %d)", p->source_prog, p->source_note, bank, prog);
 		} else if(c->drumset[0]->tone[p->source_note].name) {
-			copy_tone_bank_element(&c->drumset[bank]->tone[prog], &c->drumset[0]->tone[p->source_note]);
-			ctl->cmsg(CMSG_INFO,VERB_NOISY,"User Drumset (%d %d -> %d %d)", 0, p->source_note, bank, prog);
+			copy_tone_bank_element(c, &c->drumset[bank]->tone[prog], &c->drumset[0]->tone[p->source_note]);
+			ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"User Drumset (%d %d -> %d %d)", 0, p->source_note, bank, prog);
 		} else {
-			ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Referring user drum set %d, note %d not found - this instrument will not be heard as expected", bank, prog);
+			ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Referring user drum set %d, note %d not found - this instrument will not be heard as expected", bank, prog);
 		}
 	}
 	return ip;
@@ -5914,7 +5914,7 @@ static UserDrumset *get_userdrum(struct timiditycontext_t *c, int bank, int prog
 		if(p->bank == bank && p->prog == prog) {return p;}
 	}
 
-	p = (UserDrumset *)safe_malloc(sizeof(UserDrumset));
+	p = (UserDrumset *)safe_malloc(c, sizeof(UserDrumset));
 	memset(p, 0, sizeof(UserDrumset));
 	p->next = NULL;
 	if(c->userdrum_first == NULL) {
@@ -5958,11 +5958,11 @@ void recompute_userinst(struct timiditycontext_t *c, int bank, int prog)
 	free_tone_bank_element(&c->tonebank[bank]->tone[prog]);
 	if(c->tonebank[p->source_bank]) {
 		if(c->tonebank[p->source_bank]->tone[p->source_prog].name) {
-			copy_tone_bank_element(&c->tonebank[bank]->tone[prog], &c->tonebank[p->source_bank]->tone[p->source_prog]);
-			ctl->cmsg(CMSG_INFO,VERB_NOISY,"User Instrument (%d %d -> %d %d)", p->source_bank, p->source_prog, bank, prog);
+			copy_tone_bank_element(c, &c->tonebank[bank]->tone[prog], &c->tonebank[p->source_bank]->tone[p->source_prog]);
+			ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"User Instrument (%d %d -> %d %d)", p->source_bank, p->source_prog, bank, prog);
 		} else if(c->tonebank[0]->tone[p->source_prog].name) {
-			copy_tone_bank_element(&c->tonebank[bank]->tone[prog], &c->tonebank[0]->tone[p->source_prog]);
-			ctl->cmsg(CMSG_INFO,VERB_NOISY,"User Instrument (%d %d -> %d %d)", 0, p->source_prog, bank, prog);
+			copy_tone_bank_element(c, &c->tonebank[bank]->tone[prog], &c->tonebank[0]->tone[p->source_prog]);
+			ctl->cmsg(c, CMSG_INFO,VERB_NOISY,"User Instrument (%d %d -> %d %d)", 0, p->source_prog, bank, prog);
 		}
 	}
 }
@@ -5977,7 +5977,7 @@ static UserInstrument *get_userinst(struct timiditycontext_t *c, int bank, int p
 		if(p->bank == bank && p->prog == prog) {return p;}
 	}
 
-	p = (UserInstrument *)safe_malloc(sizeof(UserInstrument));
+	p = (UserInstrument *)safe_malloc(c, sizeof(UserInstrument));
 	memset(p, 0, sizeof(UserInstrument));
 	p->next = NULL;
 	if(c->userinst_first == NULL) {
@@ -6005,7 +6005,7 @@ void free_userinst(struct timiditycontext_t *c)
 	c->userinst_first = c->userinst_last = NULL;
 }
 
-static void set_effect_param_xg(struct effect_xg_t *st, int type_msb, int type_lsb)
+static void set_effect_param_xg(struct timiditycontext_t *c, struct effect_xg_t *st, int type_msb, int type_lsb)
 {
 	int i, j;
 	for (i = 0; effect_parameter_xg[i].type_msb != -1
@@ -6018,7 +6018,7 @@ static void set_effect_param_xg(struct effect_xg_t *st, int type_msb, int type_l
 			for (j = 0; j < 10; j++) {
 				st->param_msb[j] = effect_parameter_xg[i].param_msb[j];
 			}
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "XG EFX: %s", effect_parameter_xg[i].name);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "XG EFX: %s", effect_parameter_xg[i].name);
 			return;
 		}
 	}
@@ -6032,7 +6032,7 @@ static void set_effect_param_xg(struct effect_xg_t *st, int type_msb, int type_l
 				for (j = 0; j < 10; j++) {
 					st->param_msb[j] = effect_parameter_xg[i].param_msb[j];
 				}
-				ctl->cmsg(CMSG_INFO, VERB_NOISY, "XG EFX: %s", effect_parameter_xg[i].name);
+				ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "XG EFX: %s", effect_parameter_xg[i].name);
 				return;
 			}
 		}
@@ -6064,73 +6064,73 @@ void realloc_effect_xg(struct timiditycontext_t *c, struct effect_xg_t *st)
 	switch(type_msb) {
 	case 0x05:
 		st->use_msb = 1;
-		st->ef = push_effect(st->ef, EFFECT_DELAY_LCR);
-		st->ef = push_effect(st->ef, EFFECT_DELAY_EQ2);
+		st->ef = push_effect(c, st->ef, EFFECT_DELAY_LCR);
+		st->ef = push_effect(c, st->ef, EFFECT_DELAY_EQ2);
 		break;
 	case 0x06:
 		st->use_msb = 1;
-		st->ef = push_effect(st->ef, EFFECT_DELAY_LR);
-		st->ef = push_effect(st->ef, EFFECT_DELAY_EQ2);
+		st->ef = push_effect(c, st->ef, EFFECT_DELAY_LR);
+		st->ef = push_effect(c, st->ef, EFFECT_DELAY_EQ2);
 		break;
 	case 0x07:
 		st->use_msb = 1;
-		st->ef = push_effect(st->ef, EFFECT_ECHO);
-		st->ef = push_effect(st->ef, EFFECT_DELAY_EQ2);
+		st->ef = push_effect(c, st->ef, EFFECT_ECHO);
+		st->ef = push_effect(c, st->ef, EFFECT_DELAY_EQ2);
 		break;
 	case 0x08:
 		st->use_msb = 1;
-		st->ef = push_effect(st->ef, EFFECT_CROSS_DELAY);
-		st->ef = push_effect(st->ef, EFFECT_DELAY_EQ2);
+		st->ef = push_effect(c, st->ef, EFFECT_CROSS_DELAY);
+		st->ef = push_effect(c, st->ef, EFFECT_DELAY_EQ2);
 		break;
 	case 0x41:
 	case 0x42:
-		st->ef = push_effect(st->ef, EFFECT_CHORUS);
-		st->ef = push_effect(st->ef, EFFECT_CHORUS_EQ3);
+		st->ef = push_effect(c, st->ef, EFFECT_CHORUS);
+		st->ef = push_effect(c, st->ef, EFFECT_CHORUS_EQ3);
 		break;
 	case 0x43:
-		st->ef = push_effect(st->ef, EFFECT_FLANGER);
-		st->ef = push_effect(st->ef, EFFECT_CHORUS_EQ3);
+		st->ef = push_effect(c, st->ef, EFFECT_FLANGER);
+		st->ef = push_effect(c, st->ef, EFFECT_CHORUS_EQ3);
 		break;
 	case 0x44:
-		st->ef = push_effect(st->ef, EFFECT_SYMPHONIC);
-		st->ef = push_effect(st->ef, EFFECT_CHORUS_EQ3);
+		st->ef = push_effect(c, st->ef, EFFECT_SYMPHONIC);
+		st->ef = push_effect(c, st->ef, EFFECT_CHORUS_EQ3);
 		break;
 	case 0x49:
-		st->ef = push_effect(st->ef, EFFECT_STEREO_DISTORTION);
-		st->ef = push_effect(st->ef, EFFECT_OD_EQ3);
+		st->ef = push_effect(c, st->ef, EFFECT_STEREO_DISTORTION);
+		st->ef = push_effect(c, st->ef, EFFECT_OD_EQ3);
 		break;
 	case 0x4A:
-		st->ef = push_effect(st->ef, EFFECT_STEREO_OVERDRIVE);
-		st->ef = push_effect(st->ef, EFFECT_OD_EQ3);
+		st->ef = push_effect(c, st->ef, EFFECT_STEREO_OVERDRIVE);
+		st->ef = push_effect(c, st->ef, EFFECT_OD_EQ3);
 		break;
 	case 0x4B:
-		st->ef = push_effect(st->ef, EFFECT_STEREO_AMP_SIMULATOR);
+		st->ef = push_effect(c, st->ef, EFFECT_STEREO_AMP_SIMULATOR);
 		break;
 	case 0x4C:
-		st->ef = push_effect(st->ef, EFFECT_EQ3);
+		st->ef = push_effect(c, st->ef, EFFECT_EQ3);
 		break;
 	case 0x4D:
-		st->ef = push_effect(st->ef, EFFECT_EQ2);
+		st->ef = push_effect(c, st->ef, EFFECT_EQ2);
 		break;
 	case 0x4E:
 		if (type_lsb == 0x01 || type_lsb == 0x02) {
-			st->ef = push_effect(st->ef, EFFECT_XG_AUTO_WAH);
-			st->ef = push_effect(st->ef, EFFECT_XG_AUTO_WAH_EQ2);
-			st->ef = push_effect(st->ef, EFFECT_XG_AUTO_WAH_OD);
-			st->ef = push_effect(st->ef, EFFECT_XG_AUTO_WAH_OD_EQ3);
+			st->ef = push_effect(c, st->ef, EFFECT_XG_AUTO_WAH);
+			st->ef = push_effect(c, st->ef, EFFECT_XG_AUTO_WAH_EQ2);
+			st->ef = push_effect(c, st->ef, EFFECT_XG_AUTO_WAH_OD);
+			st->ef = push_effect(c, st->ef, EFFECT_XG_AUTO_WAH_OD_EQ3);
 		} else {
-			st->ef = push_effect(st->ef, EFFECT_XG_AUTO_WAH);
-			st->ef = push_effect(st->ef, EFFECT_XG_AUTO_WAH_EQ2);
+			st->ef = push_effect(c, st->ef, EFFECT_XG_AUTO_WAH);
+			st->ef = push_effect(c, st->ef, EFFECT_XG_AUTO_WAH_EQ2);
 		}
 		break;
 	case 0x5E:
-		st->ef = push_effect(st->ef, EFFECT_LOFI);
+		st->ef = push_effect(c, st->ef, EFFECT_LOFI);
 		break;
 	default:	/* Not Supported */
 		type_msb = type_lsb = 0;
 		break;
 	}
-	set_effect_param_xg(st, type_msb, type_lsb);
+	set_effect_param_xg(c, st, type_msb, type_lsb);
 	recompute_effect_xg(c, st);
 }
 
@@ -6200,7 +6200,7 @@ static void init_insertion_effect_gs(struct timiditycontext_t *c)
 	st->send_eq_switch = 0x01;
 }
 
-static void set_effect_param_gs(struct insertion_effect_gs_t *st, int msb, int lsb)
+static void set_effect_param_gs(struct timiditycontext_t *c, struct insertion_effect_gs_t *st, int msb, int lsb)
 {
 	int i, j;
 	for (i = 0; effect_parameter_gs[i].type_msb != -1
@@ -6210,7 +6210,7 @@ static void set_effect_param_gs(struct insertion_effect_gs_t *st, int msb, int l
 			for (j = 0; j < 20; j++) {
 				st->parameter[j] = effect_parameter_gs[i].param[j];
 			}
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "GS EFX: %s", effect_parameter_gs[i].name);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "GS EFX: %s", effect_parameter_gs[i].name);
 			break;
 		}
 	}
@@ -6244,27 +6244,27 @@ void realloc_insertion_effect_gs(struct timiditycontext_t *c)
 	case 0x01:
 		switch(type_lsb) {
 		case 0x00: /* Stereo-EQ */
-			st->ef = push_effect(st->ef, EFFECT_STEREO_EQ);
+			st->ef = push_effect(c, st->ef, EFFECT_STEREO_EQ);
 			break;
 		case 0x10: /* Overdrive */
-			st->ef = push_effect(st->ef, EFFECT_EQ2);
-			st->ef = push_effect(st->ef, EFFECT_OVERDRIVE1);
+			st->ef = push_effect(c, st->ef, EFFECT_EQ2);
+			st->ef = push_effect(c, st->ef, EFFECT_OVERDRIVE1);
 			break;
 		case 0x11: /* Distortion */
-			st->ef = push_effect(st->ef, EFFECT_EQ2);
-			st->ef = push_effect(st->ef, EFFECT_DISTORTION1);
+			st->ef = push_effect(c, st->ef, EFFECT_EQ2);
+			st->ef = push_effect(c, st->ef, EFFECT_DISTORTION1);
 			break;
 		case 0x40: /* Hexa Chorus */
-			st->ef = push_effect(st->ef, EFFECT_EQ2);
-			st->ef = push_effect(st->ef, EFFECT_HEXA_CHORUS);
+			st->ef = push_effect(c, st->ef, EFFECT_EQ2);
+			st->ef = push_effect(c, st->ef, EFFECT_HEXA_CHORUS);
 			break;
 		case 0x72: /* Lo-Fi 1 */
-			st->ef = push_effect(st->ef, EFFECT_EQ2);
-			st->ef = push_effect(st->ef, EFFECT_LOFI1);
+			st->ef = push_effect(c, st->ef, EFFECT_EQ2);
+			st->ef = push_effect(c, st->ef, EFFECT_LOFI1);
 			break;
 		case 0x73: /* Lo-Fi 2 */
-			st->ef = push_effect(st->ef, EFFECT_EQ2);
-			st->ef = push_effect(st->ef, EFFECT_LOFI2);
+			st->ef = push_effect(c, st->ef, EFFECT_EQ2);
+			st->ef = push_effect(c, st->ef, EFFECT_LOFI2);
 			break;
 		default: break;
 		}
@@ -6272,7 +6272,7 @@ void realloc_insertion_effect_gs(struct timiditycontext_t *c)
 	case 0x11:
 		switch(type_lsb) {
 		case 0x03: /* OD1 / OD2 */
-			st->ef = push_effect(st->ef, EFFECT_OD1OD2);
+			st->ef = push_effect(c, st->ef, EFFECT_OD1OD2);
 			break;
 		default: break;
 		}
@@ -6280,7 +6280,7 @@ void realloc_insertion_effect_gs(struct timiditycontext_t *c)
 	default: break;
 	}
 
-	set_effect_param_gs(st, type_msb, type_lsb);
+	set_effect_param_gs(c, st, type_msb, type_lsb);
 
 	recompute_insertion_effect_gs(c);
 }
@@ -6303,7 +6303,7 @@ void add_channel_layer(struct timiditycontext_t *c, int to_ch, int from_ch)
 	/* add a channel layer */
 	UNSET_CHANNELMASK(c->channel[to_ch].channel_layer, to_ch);
 	SET_CHANNELMASK(c->channel[to_ch].channel_layer, from_ch);
-	ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 			"Channel Layer (CH:%d -> CH:%d)", from_ch, to_ch);
 }
 

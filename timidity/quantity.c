@@ -201,7 +201,7 @@ static int GetQuantityHints(struct timiditycontext_t *c, uint16 type, QuantityHi
 			REGISTER_TYPE_INT("ms", VIBRATO_SWEEP_MS);
 			END_QUANTITY_TYPE;
 		default:
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Internal parameter error (%d)", type);
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Internal parameter error (%d)", type);
 			return 0;
 	}
 	return 1;
@@ -295,7 +295,7 @@ static int GetQuantityConvertProc(struct timiditycontext_t *c, const Quantity *q
 		}
 		unit++;
 	}
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Internal parameter error");
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Internal parameter error");
 	return -1;
 }
 

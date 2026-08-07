@@ -145,7 +145,7 @@ typedef struct _ModVoice
 ModVoice;
 
 static void mod_change_tempo (int32 at, int bpm);
-static int period2note (int period, int *finetune);
+static int period2note (struct timiditycontext_t *c, int period, int *finetune);
 
 static ModVoice ModV[MOD_NUM_VOICES];
 static int at;
@@ -197,8 +197,8 @@ mod_change_tempo (int32 at, int bpm)
   MIDIEVENT (at, ME_TEMPO, c, b, a);
 }
 
-int
-period2note (int period, int *finetune)
+static int
+period2note (struct timiditycontext_t *c, int period, int *finetune)
 {
   static int period_table[121] =
   {
@@ -222,7 +222,7 @@ period2note (int period, int *finetune)
 
   if (period < 14 || period > 13696)
   {
-    ctl->cmsg(CMSG_WARNING, VERB_NOISY, "BAD period %d", period);
+    ctl->cmsg(c, CMSG_WARNING, VERB_NOISY, "BAD period %d", period);
     *finetune = 0;
     return -1;
   }
@@ -282,7 +282,7 @@ Voice_SetVolume (UBYTE v, UWORD vol)
 }
 
 void
-Voice_SetPeriod (UBYTE v, ULONG period)
+Voice_SetPeriod (struct timiditycontext_t *c, UBYTE v, ULONG period)
 {
   int new_noteon, bend;
 
@@ -293,7 +293,7 @@ Voice_SetPeriod (UBYTE v, ULONG period)
   if (ModV[v].noteon < 0)
     return;
 
-  new_noteon = period2note (ModV[v].period, &bend);
+  new_noteon = period2note (c, ModV[v].period, &bend);
   if (new_noteon >= 0) {
  #ifndef TRACE_SLIDE_NOTES
     bend += (new_noteon - ModV[v].noteon) << 13;
@@ -311,7 +311,7 @@ Voice_SetPeriod (UBYTE v, ULONG period)
 
       if (new_noteon < 0)
         {
-	  ctl->cmsg(CMSG_WARNING, VERB_NOISY,
+	  ctl->cmsg(c, CMSG_WARNING, VERB_NOISY,
 			  "Strange period %d",
 			  ModV[v].period);
 	  return;
@@ -358,7 +358,7 @@ Voice_SetPanning (UBYTE v, ULONG pan)
 }
 
 void
-Voice_Play (UBYTE v, SAMPLE * s, ULONG start)
+Voice_Play (struct timiditycontext_t *c, UBYTE v, SAMPLE * s, ULONG start)
 {
   int new_noteon, bend;
   if (v >= MOD_NUM_VOICES)
@@ -369,7 +369,7 @@ Voice_Play (UBYTE v, SAMPLE * s, ULONG start)
 
   new_noteon = period2note (ModV[v].period, &bend);
   if (new_noteon < 0) {
-    ctl->cmsg(CMSG_WARNING, VERB_NOISY,
+    ctl->cmsg(c, CMSG_WARNING, VERB_NOISY,
 			  "Strange period %d",
 			  ModV[v].period);
     return;
@@ -524,7 +524,7 @@ static int32 env_rate(struct timiditycontext_t *c, int diff, double msec)
     return (int32)rate;
 }
 
-void shrink_huge_sample (Sample *sp)
+static void shrink_huge_sample (struct timiditycontext_t *c, Sample *sp)
 {
     sample_t *orig_data;
     sample_t *new_data;
@@ -553,7 +553,7 @@ void shrink_huge_sample (Sample *sp)
     loop_start *= scale;
     loop_end *= scale;
 
-    ctl->cmsg(CMSG_INFO, VERB_NORMAL,
+    ctl->cmsg(c, CMSG_INFO, VERB_NORMAL,
         "Sample too large (%ld): resampling down to %ld samples",
         data_length, new_data_length);
 
@@ -618,7 +618,7 @@ void load_module_samples (struct timiditycontext_t *c, SAMPLE * s, int numsample
 	if(!s->data)
 	    continue;
 
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 		  "MOD Sample %d (%.22s)", i, s->samplename);
 
 	c->special_patch[i] =
@@ -717,7 +717,7 @@ void load_module_samples (struct timiditycontext_t *c, SAMPLE * s, int numsample
 	sp->sf_sample_index = 0;
 
 	if (sp->data_length >= (1 << (31 - FRACTION_BITS)) - 1)
-	    shrink_huge_sample(sp);
+	    shrink_huge_sample(c, sp);
 	else
 	{
 	    sp->data_length <<= FRACTION_BITS;

@@ -224,14 +224,14 @@ extern void set_instrument_map(struct timiditycontext_t *c, int mapID,
 			       int set_from, int elem_from,
 			       int set_to, int elem_to);
 extern void free_instrument_map(struct timiditycontext_t *c);
-extern AlternateAssign *add_altassign_string(AlternateAssign *old,
+extern AlternateAssign *add_altassign_string(struct timiditycontext_t *c, AlternateAssign *old,
 					     char **params, int n);
 extern AlternateAssign *find_altassign(AlternateAssign *altassign, int note);
-extern void copy_tone_bank_element(ToneBankElement *elm, const ToneBankElement *src);
+extern void copy_tone_bank_element(struct timiditycontext_t *c, ToneBankElement *elm, const ToneBankElement *src);
 extern void free_tone_bank_element(ToneBankElement *elm);
 extern void free_tone_bank(struct timiditycontext_t *c);
 extern void free_instrument(Instrument *ip);
-extern void squash_sample_16to8(Sample *sp);
+extern void squash_sample_16to8(struct timiditycontext_t *c, Sample *sp);
 
 #define MAX_MREL 5000
 #define DEFAULT_MREL 800

@@ -398,7 +398,7 @@ static inline int parse_opt_B(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_C(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_c(struct timiditycontext_t *c, char *);
 static inline int parse_opt_D(struct timiditycontext_t *c, const char *);
-static inline int parse_opt_d(const char *);
+static inline int parse_opt_d(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_E(struct timiditycontext_t *c, char *);
 static inline int parse_opt_mod_wheel(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_portamento(struct timiditycontext_t *c, const char *);
@@ -422,16 +422,16 @@ static int parse_opt_reverb_freeverb(struct timiditycontext_t *c, const char *ar
 static inline int parse_opt_voice_lpf(struct timiditycontext_t *c ,const char *);
 static inline int parse_opt_noise_shaping(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_resample(struct timiditycontext_t *c, const char *);
-static inline int parse_opt_e(const char *);
+static inline int parse_opt_e(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_F(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_f(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_G(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_G1(struct timiditycontext_t *c, const char *);
-static int parse_segment(TimeSegment *, const char *);
-static int parse_segment2(TimeSegment *, const char *);
-static int parse_time(FLOAT_T *, const char *);
-static int parse_time2(Measure *, const char *);
-static inline int parse_opt_g(const char *);
+static int parse_segment(struct timiditycontext_t *c, TimeSegment *, const char *);
+static int parse_segment2(struct timiditycontext_t *c, TimeSegment *, const char *);
+static int parse_time(struct timiditycontext_t *c, FLOAT_T *, const char *);
+static int parse_time2(struct timiditycontext_t *c, Measure *, const char *);
+static inline int parse_opt_g(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_H(struct timiditycontext_t *c, const char *);
 __attribute__((noreturn))
 static inline int parse_opt_h(struct timiditycontext_t *c, const char *);
@@ -439,7 +439,7 @@ static inline int parse_opt_h(struct timiditycontext_t *c, const char *);
 static inline void list_dyna_interface(FILE *, char *, char *);
 ControlMode *dynamic_interface_module(int);
 #endif
-static inline int parse_opt_i(const char *);
+static inline int parse_opt_i(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_verbose(const char *);
 static inline int parse_opt_quiet(const char *);
 static inline int parse_opt_trace(const char *);
@@ -448,8 +448,8 @@ static inline int parse_opt_random(const char *);
 static inline int parse_opt_sort(const char *);
 #ifdef IA_ALSASEQ
 static inline int parse_opt_background(const char *);
-static inline int parse_opt_rt_prio(const char *);
-static inline int parse_opt_seq_ports(const char *);
+static inline int parse_opt_rt_prio(struct timiditycontext_t *c, const char *);
+static inline int parse_opt_seq_ports(struct timiditycontext_t *c, const char *);
 #endif
 #if defined(IA_WINSYN) || defined(IA_PORTMIDISYN) || defined(IA_NPSYN) || defined(IA_W32G_SYN) || defined(IA_W32GUI)
 static inline int parse_opt_rtsyn_latency(const char *);
@@ -506,7 +506,7 @@ __attribute__((noreturn))
 static inline int parse_opt_v(const char *);
 static inline int parse_opt_W(struct timiditycontext_t *c, char *);
 #ifdef __W32__
-static inline int parse_opt_w(const char *);
+static inline int parse_opt_w(struct timiditycontext_t *c, const char *);
 #endif
 static inline int parse_opt_x(struct timiditycontext_t *c, char *);
 static inline void expand_escape_string(char *);
@@ -514,14 +514,14 @@ static inline int parse_opt_Z(struct timiditycontext_t *c, char *);
 static inline int parse_opt_Z1(struct timiditycontext_t *c, const char *);
 static inline int parse_opt_default_module(struct timiditycontext_t *c, const char *);
 __attribute__((noreturn))
-static inline int parse_opt_fail(const char *);
-static inline int set_value(int *, int, int, int, char *);
-static inline int set_val_i32(int32 *, int32, int32, int32, char *);
-static int parse_val_float_t(FLOAT_T *, const char *, FLOAT_T, FLOAT_T,
+static inline int parse_opt_fail(struct timiditycontext_t *c, const char *);
+static inline int set_value(struct timiditycontext_t *c, int *, int, int, int, char *);
+static inline int set_val_i32(struct timiditycontext_t *c, int32 *, int32, int32, int32, char *);
+static int parse_val_float_t(struct timiditycontext_t *c, FLOAT_T *, const char *, FLOAT_T, FLOAT_T,
 		const char *, int);
-static inline int set_val_float_t(FLOAT_T *, FLOAT_T, FLOAT_T, FLOAT_T,
+static inline int set_val_float_t(struct timiditycontext_t *c, FLOAT_T *, FLOAT_T, FLOAT_T, FLOAT_T,
 		const char *, int);
-static inline int set_channel_flag(ChannelBitMask *, int32, char *);
+static inline int set_channel_flag(struct timiditycontext_t *c, ChannelBitMask *, int32, char *);
 static inline int y_or_n_p(const char *);
 static inline int set_flag(int32 *, int32, const char *);
 static inline FILE *open_pager(void);
@@ -628,7 +628,7 @@ static void copybank(struct timiditycontext_t *c, ToneBank *to, ToneBank *from, 
 		fromelm = &from->tone[i];
 		if (fromelm->name == NULL)
 		    continue;
-		copy_tone_bank_element(toelm, fromelm);
+		copy_tone_bank_element(c, toelm, fromelm);
 		toelm->instrument = NULL;
 		if (mapid != INST_NO_MAP)
 		    set_instrument_map(c, mapid, bankmapfrom, i, bankno, i);
@@ -654,7 +654,7 @@ static int copymap(struct timiditycontext_t *c, int mapto, int mapfrom, int isdr
 	return 0;
 }
 
-static float *config_parse_tune(const char *cp, int *num)
+static float *config_parse_tune(struct timiditycontext_t *c, const char *cp, int *num)
 {
 	const char *p;
 	float *tune_list;
@@ -665,7 +665,7 @@ static float *config_parse_tune(const char *cp, int *num)
 	while ((p = strchr(p, ',')) != NULL)
 		(*num)++, p++;
 	/* alloc */
-	tune_list = (float *) safe_malloc((*num) * sizeof(float));
+	tune_list = (float *) safe_malloc(c, (*num) * sizeof(float));
 	/* regist */
 	for (i = 0, p = cp; i < *num; i++, p++) {
 		tune_list[i] = atof(p);
@@ -675,7 +675,7 @@ static float *config_parse_tune(const char *cp, int *num)
 	return tune_list;
 }
 
-static int16 *config_parse_int16(const char *cp, int *num)
+static int16 *config_parse_int16(struct timiditycontext_t *c, const char *cp, int *num)
 {
 	const char *p;
 	int16 *list;
@@ -686,7 +686,7 @@ static int16 *config_parse_int16(const char *cp, int *num)
 	while ((p = strchr(p, ',')) != NULL)
 		(*num)++, p++;
 	/* alloc */
-	list = (int16 *) safe_malloc((*num) * sizeof(int16));
+	list = (int16 *) safe_malloc(c, (*num) * sizeof(int16));
 	/* regist */
 	for (i = 0, p = cp; i < *num; i++, p++) {
 		list[i] = atoi(p);
@@ -696,7 +696,7 @@ static int16 *config_parse_int16(const char *cp, int *num)
 	return list;
 }
 
-static int **config_parse_envelope(const char *cp, int *num)
+static int **config_parse_envelope(struct timiditycontext_t *c, const char *cp, int *num)
 {
 	const char *p, *px;
 	int **env_list;
@@ -707,9 +707,9 @@ static int **config_parse_envelope(const char *cp, int *num)
 	while ((p = strchr(p, ',')) != NULL)
 		(*num)++, p++;
 	/* alloc */
-	env_list = (int **) safe_malloc((*num) * sizeof(int *));
+	env_list = (int **) safe_malloc(c, (*num) * sizeof(int *));
 	for (i = 0; i < *num; i++)
-		env_list[i] = (int *) safe_malloc(6 * sizeof(int));
+		env_list[i] = (int *) safe_malloc(c, 6 * sizeof(int));
 	/* init */
 	for (i = 0; i < *num; i++)
 		for (j = 0; j < 6; j++)
@@ -749,9 +749,9 @@ static Quantity **config_parse_modulation(struct timiditycontext_t *c, const cha
 	while ((p = strchr(p, ',')) != NULL)
 		(*num)++, p++;
 	/* alloc */
-	mod_list = (Quantity **) safe_malloc((*num) * sizeof(Quantity *));
+	mod_list = (Quantity **) safe_malloc(c, (*num) * sizeof(Quantity *));
 	for (i = 0; i < *num; i++)
-		mod_list[i] = (Quantity *) safe_malloc(3 * sizeof(Quantity));
+		mod_list[i] = (Quantity *) safe_malloc(c, 3 * sizeof(Quantity));
 	/* init */
 	for (i = 0; i < *num; i++)
 		for (j = 0; j < 3; j++)
@@ -766,7 +766,7 @@ static Quantity **config_parse_modulation(struct timiditycontext_t *c, const cha
 			if ((delim = strpbrk(strncpy(buf, p, sizeof buf - 1), ":,")) != NULL)
 				*delim = '\0';
 			if (*buf != '\0' && (err = string_to_quantity(c, buf, &mod_list[i][j], qtypes[mod_type * 3 + j])) != NULL) {
-				ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: %s: parameter %d of item %d: %s (%s)",
+				ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: line %d: %s: parameter %d of item %d: %s (%s)",
 						name, line, qtypestr[mod_type], j+1, i+1, err, buf);
 				free_ptr_list(mod_list, *num);
 				mod_list = NULL;
@@ -791,7 +791,7 @@ static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 	int k;
 
 	if (! (cp = strchr(opts, '='))) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: bad patch option %s", name, line, opts);
 		return 1;
 	}
@@ -799,7 +799,7 @@ static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 	if (! strcmp(opts, "amp")) {
 		k = atoi(cp);
 		if ((k < 0 || k > MAX_AMPLIFICATION) || (*cp < '0' || *cp > '9')) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: amplification must be between 0 and %d",
 					name, line, MAX_AMPLIFICATION);
 			return 1;
@@ -808,13 +808,13 @@ static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 	} else if (! strcmp(opts, "note")) {
 		k = atoi(cp);
 		if ((k < 0 || k > 127) || (*cp < '0' || *cp > '9')) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: note must be between 0 and 127",
 					name, line);
 			return 1;
 		}
 		tone->note = k;
-		tone->scltune = config_parse_int16("100", &tone->scltunenum);
+		tone->scltune = config_parse_int16(c, "100", &tone->scltunenum);
 	} else if (! strcmp(opts, "pan")) {
 		if (! strcmp(cp, "center"))
 			k = 64;
@@ -826,7 +826,7 @@ static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 			k = ((atoi(cp) + 100) * 100) / 157;
 			if ((k < 0 || k > 127)
 					|| (k == 0 && *cp != '-' && (*cp < '0' || *cp > '9'))) {
-				ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+				ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: panning must be left, right, "
 						"center, or between -100 and 100",
 						name, line);
@@ -835,18 +835,18 @@ static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 		}
 		tone->pan = k;
 	} else if (! strcmp(opts, "tune"))
-		tone->tune = config_parse_tune(cp, &tone->tunenum);
+		tone->tune = config_parse_tune(c, cp, &tone->tunenum);
 	else if (! strcmp(opts, "rate"))
-		tone->envrate = config_parse_envelope(cp, &tone->envratenum);
+		tone->envrate = config_parse_envelope(c, cp, &tone->envratenum);
 	else if (! strcmp(opts, "offset"))
-		tone->envofs = config_parse_envelope(cp, &tone->envofsnum);
+		tone->envofs = config_parse_envelope(c, cp, &tone->envofsnum);
 	else if (! strcmp(opts, "keep")) {
 		if (! strcmp(cp, "env"))
 			tone->strip_envelope = 0;
 		else if (! strcmp(cp, "loop"))
 			tone->strip_loop = 0;
 		else {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: keep must be env or loop", name, line);
 			return 1;
 		}
@@ -858,7 +858,7 @@ static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 		else if (! strcmp(cp, "tail"))
 			tone->strip_tail = 1;
 		else {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: strip must be env, loop, or tail",
 					name, line);
 			return 1;
@@ -872,44 +872,44 @@ static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 				line, cp, &tone->vibnum, 1)) == NULL)
 			return 1;
 	} else if (! strcmp(opts, "sclnote"))
-		tone->sclnote = config_parse_int16(cp, &tone->sclnotenum);
+		tone->sclnote = config_parse_int16(c, cp, &tone->sclnotenum);
 	else if (! strcmp(opts, "scltune"))
-		tone->scltune = config_parse_int16(cp, &tone->scltunenum);
+		tone->scltune = config_parse_int16(c, cp, &tone->scltunenum);
 	else if (! strcmp(opts, "comm")) {
 		char *p;
 
 		if (tone->comment)
 			free(tone->comment);
-		p = tone->comment = safe_strdup(cp);
+		p = tone->comment = safe_strdup(c, cp);
 		while (*p) {
 			if (*p == ',')
 				*p = ' ';
 			p++;
 		}
 	} else if (! strcmp(opts, "modrate"))
-		tone->modenvrate = config_parse_envelope(cp, &tone->modenvratenum);
+		tone->modenvrate = config_parse_envelope(c, cp, &tone->modenvratenum);
 	else if (! strcmp(opts, "modoffset"))
-		tone->modenvofs = config_parse_envelope(cp, &tone->modenvofsnum);
+		tone->modenvofs = config_parse_envelope(c, cp, &tone->modenvofsnum);
 	else if (! strcmp(opts, "envkeyf"))
-		tone->envkeyf = config_parse_envelope(cp, &tone->envkeyfnum);
+		tone->envkeyf = config_parse_envelope(c, cp, &tone->envkeyfnum);
 	else if (! strcmp(opts, "envvelf"))
-		tone->envvelf = config_parse_envelope(cp, &tone->envvelfnum);
+		tone->envvelf = config_parse_envelope(c, cp, &tone->envvelfnum);
 	else if (! strcmp(opts, "modkeyf"))
-		tone->modenvkeyf = config_parse_envelope(cp, &tone->modenvkeyfnum);
+		tone->modenvkeyf = config_parse_envelope(c, cp, &tone->modenvkeyfnum);
 	else if (! strcmp(opts, "modvelf"))
-		tone->modenvvelf = config_parse_envelope(cp, &tone->modenvvelfnum);
+		tone->modenvvelf = config_parse_envelope(c, cp, &tone->modenvvelfnum);
 	else if (! strcmp(opts, "trempitch"))
-		tone->trempitch = config_parse_int16(cp, &tone->trempitchnum);
+		tone->trempitch = config_parse_int16(c, cp, &tone->trempitchnum);
 	else if (! strcmp(opts, "tremfc"))
-		tone->tremfc = config_parse_int16(cp, &tone->tremfcnum);
+		tone->tremfc = config_parse_int16(c, cp, &tone->tremfcnum);
 	else if (! strcmp(opts, "modpitch"))
-		tone->modpitch = config_parse_int16(cp, &tone->modpitchnum);
+		tone->modpitch = config_parse_int16(c, cp, &tone->modpitchnum);
 	else if (! strcmp(opts, "modfc"))
-		tone->modfc = config_parse_int16(cp, &tone->modfcnum);
+		tone->modfc = config_parse_int16(c, cp, &tone->modfcnum);
 	else if (! strcmp(opts, "fc"))
-		tone->fc = config_parse_int16(cp, &tone->fcnum);
+		tone->fc = config_parse_int16(c, cp, &tone->fcnum);
 	else if (! strcmp(opts, "q"))
-		tone->reso = config_parse_int16(cp, &tone->resonum);
+		tone->reso = config_parse_int16(c, cp, &tone->resonum);
 	else if (! strcmp(opts, "fckeyf"))		/* filter key-follow */
 		tone->key_to_fc = atoi(cp);
 	else if (! strcmp(opts, "fcvelf"))		/* filter velocity-follow */
@@ -917,7 +917,7 @@ static int set_gus_patchconf_opts(struct timiditycontext_t *c, char *name,
 	else if (! strcmp(opts, "qvelf"))		/* resonance velocity-follow */
 		tone->vel_to_resonance = atoi(cp);
 	else {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: bad patch option %s",
 				name, line, opts);
 		return 1;
@@ -948,7 +948,7 @@ static int set_gus_patchconf(struct timiditycontext_t *c, char *name, int line,
 		char *old_name = NULL;
 
 		if(tone != NULL && tone->name != NULL)
-			old_name = safe_strdup(tone->name);
+			old_name = safe_strdup(c, tone->name);
 #endif
     reinit_tone_bank_element(tone);
 
@@ -961,7 +961,7 @@ static int set_gus_patchconf(struct timiditycontext_t *c, char *name, int line,
 	if(opts[0] == NULL || opts[1] == NULL || opts[2] == NULL ||
 	   (atoi(opts[1]) == 128 && opts[3] == NULL))
 	{
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		      "%s: line %d: Syntax error", name, line);
 #ifdef SET_GUS_PATCHCONF_COMMENT
         if(old_name != NULL)
@@ -969,7 +969,7 @@ static int set_gus_patchconf(struct timiditycontext_t *c, char *name, int line,
 #endif
 	    return 1;
 	}
-	tone->name = safe_strdup(opts[0]);
+	tone->name = safe_strdup(c, opts[0]);
 	tone->instype = 1;
 	if(atoi(opts[1]) == 128) /* drum */
 	{
@@ -1001,18 +1001,18 @@ static int set_gus_patchconf(struct timiditycontext_t *c, char *name, int line,
 
 	if(opts[0] == NULL)
 	{
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		      "%s: line %d: Syntax error", name, line);
 	    return 1;
 	}
-	tone->name = safe_strdup(opts[0]);
+	tone->name = safe_strdup(c, opts[0]);
 	tone->instype = 2;
 	opts++;
     }
     else
     {
 	tone->instype = 0;
-	tone->name = safe_strdup(pat);
+	tone->name = safe_strdup(c, pat);
 	if ((c->pathlist == &c->defaultpathlist) && (!tone->comment))
 	{ /* fill in comment with just the filename if the "dir" syntax has not been used, the full path can be overwhelming long and already present in tone->name */
 	    const char *forward = strrchr (pat, '/');
@@ -1029,7 +1029,7 @@ static int set_gus_patchconf(struct timiditycontext_t *c, char *name, int line,
 		    afterslash = backward + 1;
 		}
 	    }
-	    tone->comment = safe_strdup(afterslash ? afterslash : pat);
+	    tone->comment = safe_strdup(c, afterslash ? afterslash : pat);
 	}
     }
 
@@ -1052,13 +1052,13 @@ static int set_gus_patchconf(struct timiditycontext_t *c, char *name, int line,
 		{
 			if(tone->comment != NULL )
 				free(tone->comment);
-			tone->comment = safe_strdup(tone->name);
+			tone->comment = safe_strdup(c, tone->name);
 		}
 		if(old_name != NULL)
 			free(old_name);
 #else
     if(tone->comment == NULL)
-	tone->comment = safe_strdup(tone->name);
+	tone->comment = safe_strdup(c, tone->name);
 #endif
     return 0;
 }
@@ -1073,12 +1073,12 @@ static int set_patchconf(struct timiditycontext_t *c, char *name, int line, Tone
     if(i < 0 || i > 127)
     {
 	if(dr)
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		      "%s: line %d: Drum number must be between "
 		      "0 and 127",
 		      name, line);
 	else
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		      "%s: line %d: Program must be between "
 		      "%d and %d",
 		      name, line, c->progbase, 127 + c->progbase);
@@ -1086,7 +1086,7 @@ static int set_patchconf(struct timiditycontext_t *c, char *name, int line, Tone
     }
     if(!bank)
     {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "%s: line %d: Must specify tone bank or drum set "
 		  "before assignment", name, line);
 	return 1;
@@ -1224,7 +1224,7 @@ static char *expand_variables(struct timiditycontext_t *c, char *string, MBlockL
 #define MAXWORDS 130
 #define CHECKERRLIMIT \
   if(++errcnt >= 10) { \
-    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, \
+    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, \
       "Too many errors... Give up read %s", name); \
     reuse_mblock(c, &varbuf); \
     close_file(c, tf); return 1; }
@@ -1247,7 +1247,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
     if(rcf_count > 50)
     {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "Probable source loop in configuration files");
 	return READ_CONFIG_RECURSION;
     }
@@ -1330,7 +1330,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    {
 		if (!isspace(terminator[1]) && terminator[1] != '\0')
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			"%s: line %d: there must be at least one whitespace between "
 			"string terminator (%c) and the next parameter", name, line, tmp[i]);
 		    CHECKERRLIMIT;
@@ -1367,14 +1367,14 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum "
 			  "set before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1383,7 +1383,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension comm must be "
 			  "between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1391,7 +1391,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    }
 	    if(bank->tone[i].comment)
 		free(bank->tone[i].comment);
-	    p = bank->tone[i].comment = safe_strdup(w[2]);
+	    p = bank->tone[i].comment = safe_strdup(c, w[2]);
 	    while(*p)
 	    {
 		if(*p == ',') *p = ' ';
@@ -1403,14 +1403,14 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1419,7 +1419,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension timeout "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1432,7 +1432,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No copydrumset number given",
 			  name, line);
 		CHECKERRLIMIT;
@@ -1441,7 +1441,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension copydrumset "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1449,7 +1449,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or "
 			  "drum set before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1462,7 +1462,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No copybank number given",
 			  name, line);
 		CHECKERRLIMIT;
@@ -1471,7 +1471,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension copybank "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1479,7 +1479,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or "
 			  "drum set before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1495,35 +1495,35 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if ((mapto = mapname2id(w[1], &toisdrum)) == -1)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Invalid map name: %s", name, line, w[1]);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if ((mapfrom = mapname2id(w[2], &fromisdrum)) == -1)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Invalid map name: %s", name, line, w[2]);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if (toisdrum != fromisdrum)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Map type should be matched", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if (copymap(c, mapto, mapfrom, toisdrum))
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No free %s available to map",
 			  name, line, toisdrum ? "drum set" : "tone bank");
 		CHECKERRLIMIT;
@@ -1539,7 +1539,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No proxy name given",
 			  name, line);
 		CHECKERRLIMIT;
@@ -1547,10 +1547,10 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    }
 	    /* If network is not supported, this extension is ignored. */
 #ifdef SUPPORT_SOCKET
-	    url_http_proxy_host = safe_strdup(w[1]);
+	    url_http_proxy_host = safe_strdup(c, w[1]);
 	    if((cp = strrchr(url_http_proxy_host, ':')) == NULL)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -1558,7 +1558,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    *cp++ = '\0';
 	    if((url_http_proxy_port = atoi(cp)) <= 0)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Port number must be "
 			  "positive number", name, line);
 		CHECKERRLIMIT;
@@ -1572,7 +1572,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
             {
                 if (l_bracket != '[' || r_bracket != ']')
                 {
-                    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+                    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
                               "%s: line %d: Malformed IPv6 address",
                               name, line);
                     CHECKERRLIMIT;
@@ -1592,7 +1592,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No proxy name given",
 			  name, line);
 		CHECKERRLIMIT;
@@ -1600,10 +1600,10 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    }
 	    /* If network is not supported, this extension is ignored. */
 #ifdef SUPPORT_SOCKET
-	    url_ftp_proxy_host = safe_strdup(w[1]);
+	    url_ftp_proxy_host = safe_strdup(c, w[1]);
 	    if((cp = strrchr(url_ftp_proxy_host, ':')) == NULL)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -1611,7 +1611,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    *cp++ = '\0';
 	    if((url_ftp_proxy_port = atoi(cp)) <= 0)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Port number "
 			  "must be positive number", name, line);
 		CHECKERRLIMIT;
@@ -1625,7 +1625,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
             {
                 if (l_bracket != '[' || r_bracket != ']')
                 {
-                    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+                    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
                               "%s: line %d: Malformed IPv6 address",
                               name, line);
                     CHECKERRLIMIT;
@@ -1641,21 +1641,21 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No mail address given",
 			  name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(strchr(w[1], '@') == NULL) {
-		ctl->cmsg(CMSG_WARNING, VERB_NOISY,
+		ctl->cmsg(c, CMSG_WARNING, VERB_NOISY,
 			  "%s: line %d: Warning: Mail address %s is not valid",
 			  name, line);
 	    }
 
 	    /* If network is not supported, this extension is ignored. */
 #ifdef SUPPORT_SOCKET
-	    user_mailaddr = safe_strdup(w[1]);
+	    user_mailaddr = safe_strdup(c, w[1]);
 #endif /* SUPPORT_SOCKET */
 	}
 	/* #extension opt [-]{option}[optarg] */
@@ -1664,7 +1664,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		char *p, *cmd, *arg;
 
 		if (words != 2 && words != 3) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Syntax error", name, line);
 			CHECKERRLIMIT;
 			continue;
@@ -1692,7 +1692,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		}
 		if (err) {
 			/* error */
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Invalid command line option",
 					name, line);
 			errcnt += err - 1;
@@ -1705,7 +1705,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No undef number given",
 			  name, line);
 		CHECKERRLIMIT;
@@ -1714,7 +1714,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension undef "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1722,7 +1722,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or "
 			  "drum set before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1737,7 +1737,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before altassign", name, line);
 		CHECKERRLIMIT;
@@ -1745,14 +1745,14 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    }
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No alternate assignment", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 
 	    if(!dr) {
-		ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 			  "%s: line %d: Warning: Not a drumset altassign"
 			  " (ignored)",
 			  name, line);
@@ -1760,20 +1760,20 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    }
 
 	    bk = c->drumset[bankno];
-	    bk->alt = add_altassign_string(bk->alt, w + 1, words - 1);
+	    bk->alt = add_altassign_string(c, bk->alt, w + 1, words - 1);
 	}	/* #extension legato [program] [0 or 1] */
 	else if(strcmp(w[0], "legato") == 0)
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1782,7 +1782,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension legato "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1794,14 +1794,14 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1810,7 +1810,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension damper "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1822,14 +1822,14 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1838,7 +1838,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension rnddelay "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1850,13 +1850,13 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1865,7 +1865,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		i = atoi(w[2]);
 		if(i < 0 || i > 127)
 		{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension level "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1885,13 +1885,13 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1900,7 +1900,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		i = atoi(w[2]);
 		if(i < 0 || i > 127)
 		{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension reverbsend "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1920,13 +1920,13 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1935,7 +1935,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		i = atoi(w[2]);
 		if(i < 0 || i > 127)
 		{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension chorussend "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1955,13 +1955,13 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -1970,7 +1970,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		i = atoi(w[2]);
 		if(i < 0 || i > 127)
 		{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension delaysend "
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -1990,13 +1990,13 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 3)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if(!bank)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify tone bank or drum set "
 			  "before assignment", name, line);
 		CHECKERRLIMIT;
@@ -2005,7 +2005,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		i = atoi(w[2]);
 		if(i < 0 || i > 127)
 		{
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: extension playnote"
 			  "must be between 0 and 127", name, line);
 		CHECKERRLIMIT;
@@ -2028,7 +2028,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No soundfont file given",
 			  name, line);
 		CHECKERRLIMIT;
@@ -2047,7 +2047,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		}
 		if(!(cp = strchr(w[j], '=')))
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: bad patch option %s",
 			      name, line, w[j]);
 		    CHECKERRLIMIT;
@@ -2059,7 +2059,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		{
 		    if(k < 0 || (*cp < '0' || *cp > '9'))
 		    {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				  "%s: line %d: order must be a digit",
 				  name, line);
 			CHECKERRLIMIT;
@@ -2071,7 +2071,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		{
 		    if(k < 0 || (*cp < '0' || *cp > '9'))
 		    {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				  "%s: line %d: cutoff must be a digit",
 				  name, line);
 			CHECKERRLIMIT;
@@ -2083,7 +2083,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		{
 		    if(k < 0 || (*cp < '0' || *cp > '9'))
 		    {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				  "%s: line %d: reso must be a digit",
 				  name, line);
 			CHECKERRLIMIT;
@@ -2106,7 +2106,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    int bank, preset, keynote;
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: no font command", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -2115,7 +2115,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    {
 		if(words < 3)
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: No bank/preset/key is given",
 			      name, line);
 		    CHECKERRLIMIT;
@@ -2132,7 +2132,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		    keynote = -1;
 		if(exclude_soundfont(c, bank, preset, keynote))
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: No soundfont is given",
 			      name, line);
 		    CHECKERRLIMIT;
@@ -2143,7 +2143,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		int order;
 		if(words < 4)
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: No order/bank is given",
 			      name, line);
 		    CHECKERRLIMIT;
@@ -2161,7 +2161,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		    keynote = -1;
 		if(order_soundfont(c, bank, preset, keynote, order))
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: No soundfont is given",
 			      name, line);
 		    CHECKERRLIMIT;
@@ -2172,7 +2172,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words < 2 || *w[1] < '0' || *w[1] > '9')
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -2185,14 +2185,14 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(words != 6)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
 	    }
 	    if((arg[0] = mapname2id(w[1], &isdrum)) == -1)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Invalid map name: %s", name, line, w[1]);
 		CHECKERRLIMIT;
 		continue;
@@ -2215,7 +2215,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 		    break;
 	    if(i != 5)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Invalid parameter", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -2230,7 +2230,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No directory given", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -2242,7 +2242,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No file name given", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -2272,7 +2272,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	{
 	    if(words != 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Must specify exactly one patch name",
 			  name, line);
 		CHECKERRLIMIT;
@@ -2289,7 +2289,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No drum set number given", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -2298,7 +2298,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    {
 		if ((newmapid = mapname2id(w[1], &isdrum)) == -1 || !isdrum)
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Invalid drum set map name: %s", name, line, w[1]);
 		    CHECKERRLIMIT;
 		    continue;
@@ -2311,7 +2311,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]) - c->progbase;
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Drum set must be between %d and %d",
 			  name, line,
 			  c->progbase, c->progbase + 127);
@@ -2323,7 +2323,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = alloc_instrument_map_bank(c, 1, newmapid, i);
 	    if (i == -1)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No free drum set available to map",
 			  name, line);
 		CHECKERRLIMIT;
@@ -2342,7 +2342,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    {
 		if(words < 4 || *w[2] < '0' || *w[2] > '9')
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: syntax error", name, line);
 		    CHECKERRLIMIT;
 		    continue;
@@ -2361,7 +2361,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 
 	    if(words < 2)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No bank number given", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -2370,7 +2370,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    {
 		if ((newmapid = mapname2id(w[1], &isdrum)) == -1 || isdrum)
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Invalid bank map name: %s", name, line, w[1]);
 		    CHECKERRLIMIT;
 		    continue;
@@ -2383,7 +2383,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = atoi(w[1]);
 	    if(i < 0 || i > 127)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: Tone bank must be between 0 and 127",
 			  name, line);
 		CHECKERRLIMIT;
@@ -2394,7 +2394,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    i = alloc_instrument_map_bank(c, 0, newmapid, i);
 	    if (i == -1)
 	    {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: No free tone bank available to map",
 			  name, line);
 		CHECKERRLIMIT;
@@ -2413,7 +2413,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    {
 		if(words < 4 || *w[2] < '0' || *w[2] > '9')
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "%s: line %d: syntax error", name, line);
 		    CHECKERRLIMIT;
 		    continue;
@@ -2431,7 +2431,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
 	    {
 		if(extension_flag)
 		    continue;
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "%s: line %d: syntax error", name, line);
 		CHECKERRLIMIT;
 		continue;
@@ -2445,7 +2445,7 @@ MAIN_INTERFACE int read_config_file(struct timiditycontext_t *c, char *name, int
     }
     if(errno)
     {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "Can't read %s: %s", name, strerror(errno));
 	errcnt++;
     }
@@ -2490,12 +2490,12 @@ static char *get_username(void)
 }
 #endif /* MAIL_NAME */
 
-static void init_mail_addr(void)
+static void init_mail_addr(struct timiditycontext_t *c)
 {
     char addr[BUFSIZ];
 
     sprintf(addr, "%s%s", get_username(), MAIL_DOMAIN);
-    user_mailaddr = safe_strdup(addr);
+    user_mailaddr = safe_strdup(c, addr);
 }
 #endif /* SUPPORT_SOCKET */
 
@@ -2513,7 +2513,7 @@ static int read_user_config_file(struct timiditycontext_t *c)
 #endif
     if(home == NULL)
     {
-	ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 		  "Warning: HOME environment is not defined.");
 	return 0;
     }
@@ -2553,7 +2553,7 @@ int set_extension_modes(struct timiditycontext_t *c, char *flag)
 
 int set_ctl(struct timiditycontext_t *c, char *cp)
 {
-	return parse_opt_i(cp);
+	return parse_opt_i(c, cp);
 }
 
 int set_play_mode(struct timiditycontext_t *c, char *cp)
@@ -2582,7 +2582,7 @@ MAIN_INTERFACE int set_tim_opt_short(struct timiditycontext_t *c, int ch, char *
 
 	switch (ch) {
 	case '4':
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"-4 option is obsoleted.  Please use -N");
 		return 1;
 	case 'A':
@@ -2605,11 +2605,11 @@ MAIN_INTERFACE int set_tim_opt_short(struct timiditycontext_t *c, int ch, char *
 	case 'D':
 		return parse_opt_D(c, optarg);
 	case 'd':
-		return parse_opt_d(optarg);
+		return parse_opt_d(c, optarg);
 	case 'E':
 		return parse_opt_E(c, optarg);
 	case 'e':
-		return parse_opt_e(optarg);
+		return parse_opt_e(c, optarg);
 	case 'F':
 		c->adjust_panning_immediately = (c->adjust_panning_immediately) ? 0 : 1;
 		break;
@@ -2619,17 +2619,17 @@ MAIN_INTERFACE int set_tim_opt_short(struct timiditycontext_t *c, int ch, char *
 	case 'G':
 		return parse_opt_G(c, optarg);
 	case 'g':
-		return parse_opt_g(optarg);
+		return parse_opt_g(c, optarg);
 	case 'H':
 		return parse_opt_H(c, optarg);
 	case 'h':
 		return parse_opt_h(c, optarg);
 	case 'I':
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"-I option is obsoleted.  Please use -Ei");
 		return 1;
 	case 'i':
-		return parse_opt_i(optarg);
+		return parse_opt_i(c, optarg);
 	case 'j':
 		c->opt_realtime_playing = (c->opt_realtime_playing) ? 0 : 1;
 		break;
@@ -2682,7 +2682,7 @@ MAIN_INTERFACE int set_tim_opt_short(struct timiditycontext_t *c, int ch, char *
 		return parse_opt_W(c, optarg);
 #ifdef __W32__
 	case 'w':
-		return parse_opt_w(optarg);
+		return parse_opt_w(c, optarg);
 #endif
 	case 'x':
 		return parse_opt_x(c, optarg);
@@ -2715,7 +2715,7 @@ MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int ch, char *o
 	char *arg;
 
 	if (ch == '?')	/* getopt_long failed parsing */
-		parse_opt_fail(optarg);
+		parse_opt_fail(c, optarg);
 	else if (ch < TIM_OPT_FIRST)
 		return set_tim_opt_short(c, ch, optarg);
 	if (! strncmp(the_option->name, "no-", 3))
@@ -2740,7 +2740,7 @@ MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int ch, char *o
 	case TIM_OPT_DRUM_CHANNEL:
 		return parse_opt_D(c, arg);
 	case TIM_OPT_IFACE_PATH:
-		return parse_opt_d(arg);
+		return parse_opt_d(c, arg);
 	case TIM_OPT_EXT:
 		return parse_opt_E(c, arg);
 	case TIM_OPT_MOD_WHEEL:
@@ -2786,7 +2786,7 @@ MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int ch, char *o
 		return parse_opt_resample(c, arg);
 #endif
 	case TIM_OPT_EVIL:
-		return parse_opt_e(arg);
+		return parse_opt_e(c, arg);
 	case TIM_OPT_FAST_PAN:
 		return parse_opt_F(c, arg);
 	case TIM_OPT_FAST_DECAY:
@@ -2794,13 +2794,13 @@ MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int ch, char *o
 	case TIM_OPT_SEGMENT:
 		return parse_opt_G(c, arg);
 	case TIM_OPT_SPECTROGRAM:
-		return parse_opt_g(arg);
+		return parse_opt_g(c, arg);
 	case TIM_OPT_KEYSIG:
 		return parse_opt_H(c, arg);
 	case TIM_OPT_HELP:
 		return parse_opt_h(c, arg);
 	case TIM_OPT_INTERFACE:
-		return parse_opt_i(arg);
+		return parse_opt_i(c, arg);
 	case TIM_OPT_VERBOSE:
 		return parse_opt_verbose(arg);
 	case TIM_OPT_QUIET:
@@ -2817,9 +2817,9 @@ MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int ch, char *o
 	case TIM_OPT_BACKGROUND:
 		return parse_opt_background(arg);
 	case TIM_OPT_RT_PRIO:
-		return parse_opt_rt_prio(arg);
+		return parse_opt_rt_prio(c, arg);
 	case TIM_OPT_SEQ_PORTS:
-		return parse_opt_seq_ports(arg);
+		return parse_opt_seq_ports(c, arg);
 #endif
 #if defined(IA_WINSYN) || defined(IA_PORTMIDISYN) || defined(IA_NPSYN) || defined(IA_W32G_SYN) || defined(IA_W32GUI)
 	case TIM_OPT_RTSYN_LATENCY:
@@ -2931,7 +2931,7 @@ MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int ch, char *o
 		return parse_opt_W(c, arg);
 #ifdef __W32__
 	case TIM_OPT_RCPCV_DLL:
-		return parse_opt_w(arg);
+		return parse_opt_w(c, arg);
 #endif
 	case TIM_OPT_CONFIG_STR:
 		return parse_opt_x(c, arg);
@@ -2942,7 +2942,7 @@ MAIN_INTERFACE int set_tim_opt_long(struct timiditycontext_t *c, int ch, char *o
 	case TIM_OPT_MODULE:
 		return parse_opt_default_module(c, arg);
 	default:
-		ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 				"[BUG] Inconceivable case branch %d", ch);
 		abort();
 	}
@@ -2955,7 +2955,7 @@ MAIN_INTERFACE int set_tim_opt_long_cfg(struct timiditycontext_t *c, int ch, cha
 	char *arg;
 
 	if (ch == '?')	/* getopt_long failed parsing */
-		parse_opt_fail(optarg);
+		parse_opt_fail(c, optarg);
 	else if (ch < TIM_OPT_FIRST)
 		return set_tim_opt_short_cfg(c, ch, optarg);
 	if (! strncmp(the_option->name, "no-", 3))
@@ -2973,14 +2973,14 @@ MAIN_INTERFACE int set_tim_opt_long_cfg(struct timiditycontext_t *c, int ch, cha
 static inline int parse_opt_A(struct timiditycontext_t *c, const char *arg)
 {
 	/* amplify volume by n percent */
-	return set_val_i32(&c->amplification, atoi(arg), 0, MAX_AMPLIFICATION,
+	return set_val_i32(c, &c->amplification, atoi(arg), 0, MAX_AMPLIFICATION,
 			"Amplification");
 }
 
 static inline int parse_opt_drum_power(struct timiditycontext_t *c, const char *arg)
 {
 	/* --drum-power */
-	return set_val_i32(&c->opt_drum_power, atoi(arg), 0, MAX_AMPLIFICATION,
+	return set_val_i32(c, &c->opt_drum_power, atoi(arg), 0, MAX_AMPLIFICATION,
 			"Drum power");
 }
 
@@ -3004,13 +3004,13 @@ static inline int parse_opt_B(struct timiditycontext_t *c, const char *arg)
 
 	/* num */
 	if (*arg != ',') {
-		if (set_value(&c->opt_buffer_fragments, atoi(arg), 0, 1000,
+		if (set_value(c, &c->opt_buffer_fragments, atoi(arg), 0, 1000,
 				"Buffer Fragments (num)"))
 			return 1;
 	}
 	/* bits */
 	if ((p = strchr(arg, ',')) != NULL) {
-		if (set_value(&c->audio_buffer_bits, atoi(++p), 1, AUDIO_BUFFER_BITS,
+		if (set_value(c, &c->audio_buffer_bits, atoi(++p), 1, AUDIO_BUFFER_BITS,
 				"Buffer Fragments (bit)"))
 			return 1;
 	}
@@ -3019,7 +3019,7 @@ static inline int parse_opt_B(struct timiditycontext_t *c, const char *arg)
 
 static inline int parse_opt_C(struct timiditycontext_t *c, const char *arg)
 {
-	if (set_val_i32(&c->control_ratio, atoi(arg), 0, MAX_CONTROL_RATIO,
+	if (set_val_i32(c, &c->control_ratio, atoi(arg), 0, MAX_CONTROL_RATIO,
 			"Control ratio"))
 		return 1;
 	c->opt_control_ratio = c->control_ratio;
@@ -3040,19 +3040,19 @@ static inline int parse_opt_c(struct timiditycontext_t *c, char *arg)
 
 static inline int parse_opt_D(struct timiditycontext_t *c, const char *arg)
 {
-	return set_channel_flag(&c->default_drumchannels, atoi(arg), "Drum channel");
+	return set_channel_flag(c, &c->default_drumchannels, atoi(arg), "Drum channel");
 }
 
-static inline int parse_opt_d(const char *arg)
+static inline int parse_opt_d(struct timiditycontext_t *c, const char *arg)
 {
 	/* dynamic lib root */
 #ifdef IA_DYNAMIC
 	if (dynamic_lib_root)
 		free(dynamic_lib_root);
-	dynamic_lib_root = safe_strdup(arg);
+	dynamic_lib_root = safe_strdup(c, arg);
 	return 0;
 #else
-	ctl->cmsg(CMSG_WARNING, VERB_NOISY, "-d option is not supported");
+	ctl->cmsg(c, CMSG_WARNING, VERB_NOISY, "-d option is not supported");
 	return 1;
 #endif	/* IA_DYNAMIC */
 }
@@ -3166,13 +3166,13 @@ static inline int parse_opt_E(struct timiditycontext_t *c, char *arg)
 #endif
 			}
 			if (err) {
-				ctl->cmsg(CMSG_ERROR,
+				ctl->cmsg(c, CMSG_ERROR,
 						VERB_NORMAL, "-E%s: unsupported effect", arg);
 				return err;
 			}
 			return err;
 		default:
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"-E: Illegal mode `%c'", *arg);
 			err++;
 			break;
@@ -3244,7 +3244,7 @@ static inline int parse_opt_default_mid(struct timiditycontext_t *c, char *arg)
 	int val = str2mID(arg);
 
 	if (! val) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Manufacture ID: Illegal value");
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Manufacture ID: Illegal value");
 		return 1;
 	}
 	c->opt_default_mid = val;
@@ -3257,7 +3257,7 @@ static inline int parse_opt_system_mid(struct timiditycontext_t *c, char *arg)
 	int val = str2mID(arg);
 
 	if (! val) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Manufacture ID: Illegal value");
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Manufacture ID: Illegal value");
 		return 1;
 	}
 	c->opt_system_mid = val;
@@ -3267,7 +3267,7 @@ static inline int parse_opt_system_mid(struct timiditycontext_t *c, char *arg)
 static inline int parse_opt_default_bank(struct timiditycontext_t *c, const char *arg)
 {
 	/* --default-bank */
-	if (set_value(&c->default_tonebank, atoi(arg), 0, 0x7f, "Bank number"))
+	if (set_value(c, &c->default_tonebank, atoi(arg), 0, 0x7f, "Bank number"))
 		return 1;
 	c->special_tonebank = -1;
 	return 0;
@@ -3276,7 +3276,7 @@ static inline int parse_opt_default_bank(struct timiditycontext_t *c, const char
 static inline int parse_opt_force_bank(struct timiditycontext_t *c, const char *arg)
 {
 	/* --force-bank */
-	if (set_value(&c->special_tonebank, atoi(arg), 0, 0x7f, "Bank number"))
+	if (set_value(c, &c->special_tonebank, atoi(arg), 0, 0x7f, "Bank number"))
 		return 1;
 	return 0;
 }
@@ -3287,10 +3287,10 @@ static inline int parse_opt_default_program(struct timiditycontext_t *c, const c
 	int prog, i;
 	const char *p;
 
-	if (set_value(&prog, atoi(arg), 0, 0x7f, "Program number"))
+	if (set_value(c, &prog, atoi(arg), 0, 0x7f, "Program number"))
 		return 1;
 	if ((p = strchr(arg, '/')) != NULL) {
-		if (set_value(&i, atoi(++p), 1, MAX_CHANNELS, "Program channel"))
+		if (set_value(c, &i, atoi(++p), 1, MAX_CHANNELS, "Program channel"))
 			return 1;
 		c->default_program[i - 1] = prog;
 	} else
@@ -3305,12 +3305,12 @@ static inline int parse_opt_force_program(struct timiditycontext_t *c, const cha
 	const char *p;
 	int i;
 
-	if (set_value(&c->def_prog, atoi(arg), 0, 0x7f, "Program number"))
+	if (set_value(c, &c->def_prog, atoi(arg), 0, 0x7f, "Program number"))
 		return 1;
 	if (ctl->opened)
 		set_default_program(c, c->def_prog);
 	if ((p = strchr(arg, '/')) != NULL) {
-		if (set_value(&i, atoi(++p), 1, MAX_CHANNELS, "Program channel"))
+		if (set_value(c, &i, atoi(++p), 1, MAX_CHANNELS, "Program channel"))
 			return 1;
 		c->default_program[i - 1] = SPECIAL_PROGRAM;
 	} else
@@ -3355,7 +3355,7 @@ static inline int parse_opt_delay(struct timiditycontext_t *c, const char *arg)
 		if ((c->effect_lr_delay_msec = atoi(++p)) < 0) {
 			c->effect_lr_delay_msec = 0;
 			c->effect_lr_mode = -1;
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid delay parameter.");
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid delay parameter.");
 			return 1;
 		}
 	return 0;
@@ -3378,7 +3378,7 @@ static inline int parse_opt_chorus(struct timiditycontext_t *c, const char *arg)
 	case 's':	/* surround */
 		c->opt_surround_chorus = (*arg == '2' || *arg == 's') ? 1 : 0;
 		if ((p = strchr(arg, ',')) != NULL) {
-			if (set_value(&c->opt_chorus_control, atoi(++p), 0, 0x7f,
+			if (set_value(c, &c->opt_chorus_control, atoi(++p), 0, 0x7f,
 					"Chorus level"))
 				return 1;
 			c->opt_chorus_control = -c->opt_chorus_control;
@@ -3386,7 +3386,7 @@ static inline int parse_opt_chorus(struct timiditycontext_t *c, const char *arg)
 			c->opt_chorus_control = 1;
 		break;
 	default:
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid chorus parameter.");
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid chorus parameter.");
 		return 1;
 	}
 	return 0;
@@ -3429,7 +3429,7 @@ static inline int parse_opt_reverb(struct timiditycontext_t *c, const char *arg)
 	case '1':
 	case 'n':	/* normal */
 		if ((p = strchr(arg, ',')) != NULL) {
-			if (set_value(&c->opt_reverb_control, atoi(++p), 1, 0x7f,
+			if (set_value(c, &c->opt_reverb_control, atoi(++p), 1, 0x7f,
 					"Reverb level"))
 				return 1;
 			c->opt_reverb_control = - c->opt_reverb_control;
@@ -3439,7 +3439,7 @@ static inline int parse_opt_reverb(struct timiditycontext_t *c, const char *arg)
 	case '2':
 	case 'g':	/* global */
 		if ((p = strchr(arg, ',')) != NULL) {
-			if (set_value(&c->opt_reverb_control, atoi(++p), 1, 0x7f,
+			if (set_value(c, &c->opt_reverb_control, atoi(++p), 1, 0x7f,
 					"Reverb level"))
 				return 1;
 			c->opt_reverb_control = - c->opt_reverb_control - 128;
@@ -3453,7 +3453,7 @@ static inline int parse_opt_reverb(struct timiditycontext_t *c, const char *arg)
 	case 'G':	/* global freeverb */
 		return parse_opt_reverb_freeverb(c, arg, 'G');
 	default:
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid reverb parameter.");
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid reverb parameter.");
 		return 1;
 	}
 	return 0;
@@ -3469,7 +3469,7 @@ static int parse_opt_reverb_freeverb(struct timiditycontext_t *c, const char *ar
 		p = "";
 	/* reverb level */
 	if (*p && *p != ',') {
-		if (set_value(&c->opt_reverb_control, atoi(p), 1, 0x7f,
+		if (set_value(c, &c->opt_reverb_control, atoi(p), 1, 0x7f,
 				"Reverb level"))
 			return 1;
 		if (type == 'f')
@@ -3484,7 +3484,7 @@ static int parse_opt_reverb_freeverb(struct timiditycontext_t *c, const char *ar
 	/* ranges 0..10 below determined just to reject an extreme value */
 	/* scaleroom */
 	if (*p && *p != ',') {
-		if (parse_val_float_t(&c->freeverb_scaleroom, p, 0, 10,
+		if (parse_val_float_t(c, &c->freeverb_scaleroom, p, 0, 10,
 				"Freeverb scaleroom", 1))
 			return 1;
 	}
@@ -3493,7 +3493,7 @@ static int parse_opt_reverb_freeverb(struct timiditycontext_t *c, const char *ar
 	p++;
 	/* offsetroom */
 	if (*p && *p != ',') {
-		if (parse_val_float_t(&c->freeverb_offsetroom, p, 0, 10,
+		if (parse_val_float_t(c, &c->freeverb_offsetroom, p, 0, 10,
 				"Freeverb offsetroom", 1))
 			return 1;
 	}
@@ -3504,7 +3504,7 @@ static int parse_opt_reverb_freeverb(struct timiditycontext_t *c, const char *ar
 	if (*p && *p != ',') {
 		int value;
 
-		if (set_val_i32(&value, atoi(p), 0, 1000,
+		if (set_val_i32(c, &value, atoi(p), 0, 1000,
 				"Freeverb predelay factor"))
 			return 1;
 		c->reverb_predelay_factor = value / 100.0;
@@ -3529,7 +3529,7 @@ static inline int parse_opt_voice_lpf(struct timiditycontext_t *c, const char *a
 		c->opt_lpf_def = 2;
 		break;
 	default:
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid voice LPF type %s", arg);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid voice LPF type %s", arg);
 		return 1;
 	}
 	return 0;
@@ -3541,7 +3541,7 @@ static inline int parse_opt_voice_lpf(struct timiditycontext_t *c, const char *a
 static inline int parse_opt_noise_shaping(struct timiditycontext_t *c, const char *arg)
 {
 	/* --noise-shaping */
-	if (set_value(&c->noise_sharp_type, atoi(arg), 0, 4, "Noise shaping type"))
+	if (set_value(c, &c->noise_sharp_type, atoi(arg), 0, 4, "Noise shaping type"))
 		return 1;
 	return 0;
 }
@@ -3575,20 +3575,20 @@ static inline int parse_opt_resample(struct timiditycontext_t *c, const char *ar
 		set_current_resampler(c, RESAMPLE_GAUSS);
 		break;
 	default:
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid resample type %s", arg);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid resample type %s", arg);
 		return 1;
 	}
 	return 0;
 }
 
-static inline int parse_opt_e(const char *arg)
+static inline int parse_opt_e(struct timiditycontext_t *c, const char *arg)
 {
 	/* evil */
 #ifdef __W32__
 	opt_evil_mode = 1;
 	return 0;
 #else
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "-e option is not supported");
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "-e option is not supported");
 	return 1;
 #endif /* __W32__ */
 }
@@ -3615,9 +3615,9 @@ static inline int parse_opt_G(struct timiditycontext_t *c, const char *arg)
 	if (strchr(arg, 'm'))
 		return parse_opt_G1(c, arg);
 	if (c->time_segments == NULL) {
-		c->time_segments = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
+		c->time_segments = (TimeSegment *) safe_malloc(c, sizeof(TimeSegment));
 		c->time_segments->type = 0;
-		if (parse_segment(c->time_segments, p)) {
+		if (parse_segment(c, c->time_segments, p)) {
 			free_time_segments(c);
 			return 1;
 		}
@@ -3625,18 +3625,18 @@ static inline int parse_opt_G(struct timiditycontext_t *c, const char *arg)
 	} else {
 		for (sp = c->time_segments; sp->next != NULL; sp = sp->next)
 			;
-		sp->next = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
+		sp->next = (TimeSegment *) safe_malloc(c, sizeof(TimeSegment));
 		sp->next->type = 0;
-		if (parse_segment(sp->next, p)) {
+		if (parse_segment(c, sp->next, p)) {
 			free_time_segments(c);
 			return 1;
 		}
 		sp->next->prev = sp, sp->next->next = NULL, sp = sp->next;
 	}
 	while ((p = strchr(p, ',')) != NULL) {
-		sp->next = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
+		sp->next = (TimeSegment *) safe_malloc(c, sizeof(TimeSegment));
 		sp->next->type = 0;
-		if (parse_segment(sp->next, ++p)) {
+		if (parse_segment(c, sp->next, ++p)) {
 			free_time_segments(c);
 			return 1;
 		}
@@ -3647,11 +3647,11 @@ static inline int parse_opt_G(struct timiditycontext_t *c, const char *arg)
 		if (sp->type != 0)
 			continue;
 		if (sp->begin.s <= prev_end) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Segments must be ordered");
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Segments must be ordered");
 			free_time_segments(c);
 			return 1;
 		} else if (sp->end.s != -1 && sp->begin.s >= sp->end.s) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Segment time must be ordered");
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Segment time must be ordered");
 			free_time_segments(c);
 			return 1;
 		}
@@ -3668,9 +3668,9 @@ static inline int parse_opt_G1(struct timiditycontext_t *c, const char *arg)
 	int prev_end_meas, prev_end_beat;
 
 	if (c->time_segments == NULL) {
-		c->time_segments = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
+		c->time_segments = (TimeSegment *) safe_malloc(c, sizeof(TimeSegment));
 		c->time_segments->type = 1;
-		if (parse_segment2(c->time_segments, p)) {
+		if (parse_segment2(c, c->time_segments, p)) {
 			free_time_segments(c);
 			return 1;
 		}
@@ -3678,18 +3678,18 @@ static inline int parse_opt_G1(struct timiditycontext_t *c, const char *arg)
 	} else {
 		for (sp = c->time_segments; sp->next != NULL; sp = sp->next)
 			;
-		sp->next = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
+		sp->next = (TimeSegment *) safe_malloc(c, sizeof(TimeSegment));
 		sp->next->type = 1;
-		if (parse_segment2(sp->next, p)) {
+		if (parse_segment2(c, sp->next, p)) {
 			free_time_segments(c);
 			return 1;
 		}
 		sp->next->prev = sp, sp->next->next = NULL, sp = sp->next;
 	}
 	while ((p = strchr(p, ',')) != NULL) {
-		sp->next = (TimeSegment *) safe_malloc(sizeof(TimeSegment));
+		sp->next = (TimeSegment *) safe_malloc(c, sizeof(TimeSegment));
 		sp->next->type = 1;
-		if (parse_segment2(sp->next, ++p)) {
+		if (parse_segment2(c, sp->next, ++p)) {
 			free_time_segments(c);
 			return 1;
 		}
@@ -3701,13 +3701,13 @@ static inline int parse_opt_G1(struct timiditycontext_t *c, const char *arg)
 			continue;
 		if (sp->begin.m.meas * 16 + sp->begin.m.beat
 				<= prev_end_meas * 16 + prev_end_beat) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Segments must be ordered");
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Segments must be ordered");
 			free_time_segments(c);
 			return 1;
 		} else if (sp->end.m.meas != -1 && sp->end.m.beat != -1
 				&& sp->begin.m.meas * 16 + sp->begin.m.beat
 				>= sp->end.m.meas * 16 + sp->end.m.beat) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Segment time must be ordered");
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Segment time must be ordered");
 			free_time_segments(c);
 			return 1;
 		}
@@ -3716,39 +3716,39 @@ static inline int parse_opt_G1(struct timiditycontext_t *c, const char *arg)
 	return 0;
 }
 
-static int parse_segment(TimeSegment *seg, const char *p)
+static int parse_segment(struct timiditycontext_t *c, TimeSegment *seg, const char *p)
 {
 	const char *q;
 
 	if (*p == '-')
 		seg->begin.s = 0;
-	else if (parse_time(&seg->begin.s, p))
+	else if (parse_time(c, &seg->begin.s, p))
 		return 1;
 	p = ((q = strchr(p, '-')) == NULL) ? p + strlen(p) : q + 1;
 	if (*p == ',' || *p == '\0')
 		seg->end.s = -1;
-	else if (parse_time(&seg->end.s, p))
+	else if (parse_time(c, &seg->end.s, p))
 		return 1;
 	return 0;
 }
 
-static int parse_segment2(TimeSegment *seg, const char *p)
+static int parse_segment2(struct timiditycontext_t *c, TimeSegment *seg, const char *p)
 {
 	const char *q;
 
 	if (*p == '-')
 		seg->begin.m.meas = seg->begin.m.beat = 1;
-	else if (parse_time2(&seg->begin.m, p))
+	else if (parse_time2(c, &seg->begin.m, p))
 		return 1;
 	p = ((q = strchr(p, '-')) == NULL) ? p + strlen(p) : q + 1;
 	if (*p == ',' || *p == 'm')
 		seg->end.m.meas = seg->end.m.beat = -1;
-	else if (parse_time2(&seg->end.m, p))
+	else if (parse_time2(c, &seg->end.m, p))
 		return 1;
 	return 0;
 }
 
-static int parse_time(FLOAT_T *param, const char *p)
+static int parse_time(struct timiditycontext_t *c, FLOAT_T *param, const char *p)
 {
 	const char *p1, *p2, *p3;
 	int min;
@@ -3758,28 +3758,28 @@ static int parse_time(FLOAT_T *param, const char *p)
 	p2 = ((p2 = strchr(p, '-')) == NULL) ? p + strlen(p) : p2;
 	p3 = ((p3 = strchr(p, ',')) == NULL) ? p + strlen(p) : p3;
 	if ((p1 < p2 && p2 <= p3) || (p1 < p3 && p3 <= p2)) {
-		if (set_value(&min, atoi(p), 0, 59, "Segment time (min part)"))
+		if (set_value(c, &min, atoi(p), 0, 59, "Segment time (min part)"))
 			return 1;
-		if (parse_val_float_t(&sec, p1 + 1, 0, 59.999,
+		if (parse_val_float_t(c, &sec, p1 + 1, 0, 59.999,
 				"Segment time (sec+frac part)", 3))
 			return 1;
 		*param = min * 60 + sec;
-	} else if (parse_val_float_t(param, p, 0, 3599.999, "Segment time", 3))
+	} else if (parse_val_float_t(c, param, p, 0, 3599.999, "Segment time", 3))
 		return 1;
 	return 0;
 }
 
-static int parse_time2(Measure *param, const char *p)
+static int parse_time2(struct timiditycontext_t *c, Measure *param, const char *p)
 {
 	const char *p1, *p2, *p3;
 
-	if (set_value(&param->meas, atoi(p), 0, 999, "Segment time (measure)"))
+	if (set_value(c, &param->meas, atoi(p), 0, 999, "Segment time (measure)"))
 		return 1;
 	p1 = ((p1 = strchr(p, '.')) == NULL) ? p + strlen(p) : p1;
 	p2 = ((p2 = strchr(p, '-')) == NULL) ? p + strlen(p) : p2;
 	p3 = ((p3 = strchr(p, ',')) == NULL) ? p + strlen(p) : p3;
 	if ((p1 < p2 && p2 <= p3) || (p1 < p3 && p3 <= p2)) {
-		if (set_value(&param->beat, atoi(p1 + 1), 1, 15,
+		if (set_value(c, &param->beat, atoi(p1 + 1), 1, 15,
 				"Segment time (beat)"))
 			return 1;
 	} else
@@ -3787,19 +3787,19 @@ static int parse_time2(Measure *param, const char *p)
 	return 0;
 }
 
-static inline int parse_opt_g(const char *arg)
+static inline int parse_opt_g(struct timiditycontext_t *c, const char *arg)
 {
 #ifdef SUPPORT_SOUNDSPEC
 	spectrogram_update_sec = atof(arg);
 	if (spectrogram_update_sec <= 0) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"Invalid -g argument: `%s'", arg);
 		return 1;
 	}
 	view_soundspec_flag = 1;
 	return 0;
 #else
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "-g option is not supported");
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "-g option is not supported");
 	return 1;
 #endif	/* SUPPORT_SOUNDSPEC */
 }
@@ -3809,7 +3809,7 @@ static inline int parse_opt_H(struct timiditycontext_t *c, const char *arg)
 	/* force keysig (number of sharp/flat) */
 	int keysig;
 
-	if (set_value(&keysig, atoi(arg), -7, 7,
+	if (set_value(c, &keysig, atoi(arg), -7, 7,
 			"Force keysig (number of sHarp(+)/flat(-))"))
 		return 1;
 	c->opt_force_keysig = keysig;
@@ -4354,7 +4354,7 @@ static ControlMode *dynamic_interface_module(int id_char)
 }
 #endif	/* IA_DYNAMIC */
 
-static inline int parse_opt_i(const char *arg)
+static inline int parse_opt_i(struct timiditycontext_t *c, const char *arg)
 {
 	/* interface mode */
 	ControlMode *cmp, **cmpp;
@@ -4382,7 +4382,7 @@ static inline int parse_opt_i(const char *arg)
 	}
 #endif	/* IA_DYNAMIC */
 	if (! found) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"Interface `%c' is not compiled in.", *arg);
 		return 1;
 	}
@@ -4430,7 +4430,7 @@ static inline int parse_opt_i(const char *arg)
 			break;
 #endif
 		default:
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"Unknown interface option `%c'", *arg);
 			return 1;
 		}
@@ -4483,19 +4483,19 @@ static inline int parse_opt_background(const char *arg)
 	return set_flag(&(ctl->flags), CTLF_DAEMONIZE, arg);
 }
 
-static inline int parse_opt_rt_prio(const char *arg)
+static inline int parse_opt_rt_prio(struct timiditycontext_t *c, const char *arg)
 {
 	/* --realtime-priority */
-	if (set_value(&opt_realtime_priority, atoi(arg), 0, 100,
+	if (set_value(c, &opt_realtime_priority, atoi(arg), 0, 100,
 			"Realtime priority"))
 		return 1;
 	return 0;
 }
 
-static inline int parse_opt_seq_ports(const char *arg)
+static inline int parse_opt_seq_ports(struct timiditycontext_t *c, const char *arg)
 {
 	/* --sequencer-ports */
-	if (set_value(&opt_sequencer_ports, atoi(arg), 1, 16,
+	if (set_value(c, &opt_sequencer_ports, atoi(arg), 1, 16,
 			"Number of sequencer ports"))
 		return 1;
 	return 0;
@@ -4529,7 +4529,7 @@ static inline int parse_opt_j(struct timiditycontext_t *c, const char *arg)
 static inline int parse_opt_K(struct timiditycontext_t *c, const char *arg)
 {
 	/* key adjust */
-	if (set_value(&c->key_adjust, atoi(arg), -24, 24, "Key adjust"))
+	if (set_value(c, &c->key_adjust, atoi(arg), -24, 24, "Key adjust"))
 		return 1;
 	return 0;
 }
@@ -4551,7 +4551,7 @@ static inline int parse_opt_M(struct timiditycontext_t *c, const char *arg)
 {
 	if (c->pcm_alternate_file)
 		free(c->pcm_alternate_file);
-	c->pcm_alternate_file = safe_strdup(arg);
+	c->pcm_alternate_file = safe_strdup(c, arg);
 	return 0;
 }
 
@@ -4578,7 +4578,7 @@ static inline int parse_opt_N(struct timiditycontext_t *c, const char *arg)
 			/* set to linear interpolation for compatibility */
 			set_current_resampler(c, RESAMPLE_LINEAR);
 		else if (set_resampler_parm(c, val)) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid -N value");
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid -N value");
 			return 1;
 		}
 		break;
@@ -4599,7 +4599,7 @@ static inline int parse_opt_O(struct timiditycontext_t *c, const char *arg)
 			break;
 		}
 	if (! found) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"Playmode `%c' is not compiled in.", *arg);
 		return 1;
 	}
@@ -4648,7 +4648,7 @@ static inline int parse_opt_O(struct timiditycontext_t *c, const char *arg)
 			pmp->encoding &= ~(PE_ULAW | PE_ALAW);
 			break;
 		default:
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"Unknown format modifier `%c'", *arg);
 			return 1;
 		}
@@ -4695,7 +4695,7 @@ static inline int parse_opt_output_bitwidth(struct timiditycontext_t *c, const c
 		play_mode->encoding &= ~(PE_16BIT | PE_24BIT);
 		return 0;
 	default:
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid output bitwidth %s", arg);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid output bitwidth %s", arg);
 		return 1;
 	}
 }
@@ -4718,7 +4718,7 @@ static inline int parse_opt_output_format(struct timiditycontext_t *c, const cha
 				~(PE_SIGNED | PE_16BIT | PE_24BIT | PE_ULAW | PE_BYTESWAP);
 		return 0;
 	default:
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid output format %s", arg);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid output format %s", arg);
 		return 1;
 	}
 }
@@ -4811,7 +4811,7 @@ static inline int parse_opt_o(struct timiditycontext_t *c, char *arg)
 {
 	if (c->opt_output_name)
 		free(c->opt_output_name);
-	c->opt_output_name = safe_strdup(url_expand_home_dir(c, arg));
+	c->opt_output_name = safe_strdup(c, url_expand_home_dir(c, arg));
 	return 0;
 }
 
@@ -4825,7 +4825,7 @@ static inline int parse_opt_P(struct timiditycontext_t *c, const char *arg)
 
 static inline int parse_opt_p(struct timiditycontext_t *c, const char *arg)
 {
-	if (set_value(&c->voices, atoi(arg), 1,
+	if (set_value(c, &c->voices, atoi(arg), 1,
 			MAX_SAFE_MALLOC_SIZE / sizeof(Voice), "Polyphony"))
 		return 1;
 	c->max_voices = c->voices;
@@ -4846,10 +4846,10 @@ static inline int parse_opt_Q(struct timiditycontext_t *c, const char *arg)
 	if (strchr(arg, 't'))
 		/* backward compatibility */
 		return parse_opt_Q1(c, arg);
-	if (set_channel_flag(&c->quietchannels, atoi(arg), "Quiet channel"))
+	if (set_channel_flag(c, &c->quietchannels, atoi(arg), "Quiet channel"))
 		return 1;
 	while ((p = strchr(p, ',')) != NULL)
-		if (set_channel_flag(&c->quietchannels, atoi(++p), "Quiet channel"))
+		if (set_channel_flag(c, &c->quietchannels, atoi(++p), "Quiet channel"))
 			return 1;
 	return 0;
 }
@@ -4860,11 +4860,11 @@ static inline int parse_opt_Q1(struct timiditycontext_t *c, const char *arg)
 	int prog;
 	const char *p = arg;
 
-	if (set_value(&prog, atoi(arg), 0, 7, "Temperament program number"))
+	if (set_value(c, &prog, atoi(arg), 0, 7, "Temperament program number"))
 		return 1;
 	c->temper_type_mute |= 1 << prog;
 	while ((p = strchr(p, ',')) != NULL) {
-		if (set_value(&prog, atoi(++p), 0, 7, "Temperament program number"))
+		if (set_value(c, &prog, atoi(++p), 0, 7, "Temperament program number"))
 			return 1;
 		c->temper_type_mute |= 1 << prog;
 	}
@@ -4879,7 +4879,7 @@ static inline int parse_opt_preserve_silence(struct timiditycontext_t *c, const 
 
 static inline int parse_opt_q(struct timiditycontext_t *c, const char *arg)
 {
-	char *max_buff = safe_strdup(arg);
+	char *max_buff = safe_strdup(c, arg);
 	char *fill_buff = strchr(max_buff, '/');
 
 	if (fill_buff != max_buff) {
@@ -4905,7 +4905,7 @@ static inline int parse_opt_R(struct timiditycontext_t *c, const char *arg)
 	if (atoi(arg) == -1)	/* reset */
 		c->modify_release = 0;
 	else {
-		if (set_val_i32(&c->modify_release, atoi(arg), 0, MAX_MREL,
+		if (set_val_i32(c, &c->modify_release, atoi(arg), 0, MAX_MREL,
 				"Modify Release"))
 			return 1;
 		if (c->modify_release == 0)
@@ -4943,7 +4943,7 @@ static inline int parse_opt_s(struct timiditycontext_t *c, const char *arg)
 
 	if ((freq = atoi(arg)) < 100)
 		freq = atof(arg) * 1000 + 0.5;
-	return set_val_i32(&c->opt_output_rate, freq,
+	return set_val_i32(c, &c->opt_output_rate, freq,
 			MIN_OUTPUT_RATE, MAX_OUTPUT_RATE, "Resampling frequency");
 }
 
@@ -4952,7 +4952,7 @@ static inline int parse_opt_T(struct timiditycontext_t *c, const char *arg)
 	/* tempo adjust */
 	int adjust;
 
-	if (set_value(&adjust, atoi(arg), 10, 400, "Tempo adjust"))
+	if (set_value(c, &adjust, atoi(arg), 10, 400, "Tempo adjust"))
 		return 1;
 	c->tempo_adjust = 100.0 / adjust;
 	return 0;
@@ -4962,7 +4962,7 @@ static inline int parse_opt_t(struct timiditycontext_t *c, const char *arg)
 {
 	if (c->output_text_code)
 		free(c->output_text_code);
-	c->output_text_code = safe_strdup(arg);
+	c->output_text_code = safe_strdup(c, arg);
 	return 0;
 }
 
@@ -4975,7 +4975,7 @@ static inline int parse_opt_U(struct timiditycontext_t *c, const char *arg)
 static inline int parse_opt_volume_curve(struct timiditycontext_t *c, char *arg)
 {
 	if (atof(arg) < 0) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"Volume curve power must be >= 0", *arg);
 		return 1;
 	}
@@ -5041,16 +5041,16 @@ static inline int parse_opt_W(struct timiditycontext_t *c, char *arg)
 			wrdt = wlp;
 			if (c->wrdt_open_opts)
 				free(c->wrdt_open_opts);
-			c->wrdt_open_opts = safe_strdup(arg + 1);
+			c->wrdt_open_opts = safe_strdup(c, arg + 1);
 			return 0;
 		}
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			"WRD Tracer `%c' is not compiled in.", *arg);
 	return 1;
 }
 
 #ifdef __W32__
-static inline int parse_opt_w(const char *arg)
+static inline int parse_opt_w(struct timiditycontext_t *c, const char *arg)
 {
 	switch (*arg) {
 #ifdef SMFCONV
@@ -5063,12 +5063,12 @@ static inline int parse_opt_w(const char *arg)
 #else
 	case 'r':
 	case 'R':
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"-w%c option is not supported", *arg);
 		return 1;
 #endif	/* SMFCONV */
 	default:
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "-w: Illegal mode `%c'", *arg);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "-w: Illegal mode `%c'", *arg);
 		return 1;
 	}
 }
@@ -5140,7 +5140,7 @@ static inline int parse_opt_Z1(struct timiditycontext_t *c, const char *arg)
 
 	c->opt_pure_intonation = 1;
 	if (*arg) {
-		if (set_value(&keysig, atoi(arg), -7, 7,
+		if (set_value(c, &keysig, atoi(arg), -7, 7,
 				"Initial keysig (number of #(+)/b(-)[m(minor)])"))
 			return 1;
 		c->opt_init_keysig = keysig;
@@ -5159,29 +5159,29 @@ static inline int parse_opt_default_module(struct timiditycontext_t *c, const ch
 }
 
 __attribute__((noreturn))
-static inline int parse_opt_fail(const char *arg)
+static inline int parse_opt_fail(struct timiditycontext_t *c, const char *arg)
 {
 	/* getopt_long failed to recognize any options */
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			"Could not understand option : try --help");
 	exit(EXIT_FAILURE);
 }
 
-static inline int set_value(int *param, int i, int low, int high, char *name)
+static inline int set_value(struct timiditycontext_t *c, int *param, int i, int low, int high, char *name)
 {
 	int32 val;
 
-	if (set_val_i32(&val, i, low, high, name))
+	if (set_val_i32(c, &val, i, low, high, name))
 		return 1;
 	*param = val;
 	return 0;
 }
 
-static inline int set_val_i32(int32 *param,
+static inline int set_val_i32(struct timiditycontext_t *c, int32 *param,
 		int32 i, int32 low, int32 high, char *name)
 {
 	if (i < low || i > high) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"%s must be between %d and %d", name, low, high);
 		return 1;
 	}
@@ -5189,7 +5189,7 @@ static inline int set_val_i32(int32 *param,
 	return 0;
 }
 
-static int parse_val_float_t(FLOAT_T *param,
+static int parse_val_float_t(struct timiditycontext_t *c, FLOAT_T *param,
 		const char *arg, FLOAT_T low, FLOAT_T high, const char *name, int f)
 {
 	FLOAT_T value;
@@ -5198,17 +5198,17 @@ static int parse_val_float_t(FLOAT_T *param,
 	value = strtod(arg, &errp);
 	if (arg == errp) {
 		/* only when nothing was parsed */
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Invalid %s", name);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Invalid %s", name);
 		return 1;
 	}
-	return set_val_float_t(param, value, low, high, name, f);
+	return set_val_float_t(c, param, value, low, high, name, f);
 }
 
-static inline int set_val_float_t(FLOAT_T *param,
+static inline int set_val_float_t(struct timiditycontext_t *c, FLOAT_T *param,
 		FLOAT_T i, FLOAT_T low, FLOAT_T high, const char *name, int f)
 {
 	if (i < low || i > high) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"%s must be between %.*f and %.*f", name, f, low, f, high);
 		return 1;
 	}
@@ -5216,13 +5216,13 @@ static inline int set_val_float_t(FLOAT_T *param,
 	return 0;
 }
 
-static inline int set_channel_flag(ChannelBitMask *flags, int32 i, char *name)
+static inline int set_channel_flag(struct timiditycontext_t *c, ChannelBitMask *flags, int32 i, char *name)
 {
 	if (i == 0) {
 		FILL_CHANNELMASK(*flags);
 		return 0;
 	} else if (abs(i) > MAX_CHANNELS) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"%s must be between (-)1 and (-)%d, or 0",
 						name, MAX_CHANNELS);
 		return 1;
@@ -5344,7 +5344,7 @@ static void sigterm_exit(int sig)
 static void timidity_arc_error_handler(struct timiditycontext_t *c, char *error_message)
 {
     if(c->open_file_noise_mode)
-	ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "%s", error_message);
+	ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "%s", error_message);
 }
 
 static PlayMode null_play_mode = {
@@ -5379,11 +5379,11 @@ MAIN_INTERFACE void timidity_start_initialize(struct timiditycontext_t *c)
 #endif
 
     if(!c->output_text_code)
-	c->output_text_code = safe_strdup(OUTPUT_TEXT_CODE);
+	c->output_text_code = safe_strdup(c, OUTPUT_TEXT_CODE);
     if(!c->opt_aq_max_buff)
-	c->opt_aq_max_buff = safe_strdup("5.0");
+	c->opt_aq_max_buff = safe_strdup(c, "5.0");
     if(!c->opt_aq_fill_buff)
-	c->opt_aq_fill_buff = safe_strdup("100%");
+	c->opt_aq_fill_buff = safe_strdup(c, "100%");
 
     /* Check the byte order */
     i = 1;
@@ -5430,11 +5430,11 @@ MAIN_INTERFACE void timidity_start_initialize(struct timiditycontext_t *c)
 	c->got_a_configuration = 0;
 
 #ifdef SUPPORT_SOCKET
-	init_mail_addr();
+	init_mail_addr(c);
 	if(url_user_agent == NULL)
 	{
 	    url_user_agent =
-		(char *)safe_malloc(10 + strlen(timidity_version));
+		(char *)safe_malloc(c, 10 + strlen(timidity_version));
 	    strcpy(url_user_agent, "TiMidity-");
 	    strcat(url_user_agent, timidity_version);
 	}
@@ -5611,7 +5611,7 @@ MAIN_INTERFACE int timidity_pre_load_configuration(struct timiditycontext_t *c)
      * (or %HOME%/timidity.cfg for DOS)
      */
     if(read_user_config_file(c)) {
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "Error: Syntax error in ~/.timidity.cfg");
 	return 1;
     }
@@ -5733,7 +5733,7 @@ MAIN_INTERFACE void timidity_init_player(struct timiditycontext_t *c)
     initialize_resampler_coeffs(c);
 
     /* Allocate voice[] */
-    c->voice = (Voice *) safe_realloc(c->voice, c->max_voices * sizeof(Voice));
+    c->voice = (Voice *) safe_realloc(c, c->voice, c->max_voices * sizeof(Voice));
 	memset(c->voice, 0, c->max_voices * sizeof(Voice));
 
     /* Set play mode parameters */
@@ -5751,7 +5751,7 @@ MAIN_INTERFACE void timidity_init_player(struct timiditycontext_t *c)
 	if(play_mode->flag & PF_BUFF_FRAGM_OPT)
 	    play_mode->extra_param[0] = c->opt_buffer_fragments;
 	else
-	    ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 		      "%s: -B option is ignored", play_mode->id_name);
     }
 
@@ -5846,13 +5846,13 @@ MAIN_INTERFACE int timidity_play_main(struct timiditycontext_t *c, int nfiles, c
 	SetConsoleCtrlHandler(handler, TRUE);
 #endif
 
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 		  "Initialize for Critical Section");
 	InitializeCriticalSection(&critSect);
 	if(opt_evil_mode)
 	    if(!SetThreadPriority(GetCurrentThread(),
 				  THREAD_PRIORITY_ABOVE_NORMAL))
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "Error raising process priority");
 
 #else
@@ -5868,21 +5868,21 @@ MAIN_INTERFACE int timidity_play_main(struct timiditycontext_t *c, int nfiles, c
 #endif
 
 	/* Open output device */
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 		  "Open output: %c, %s",
 		  play_mode->id_character,
 		  play_mode->id_name);
 
 	if (play_mode->flag & PF_PCM_STREAM) {
 	    play_mode->extra_param[1] = aq_calc_fragsize(c);
-	    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+	    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 		      "requesting fragment size: %d",
 		      play_mode->extra_param[1]);
 	}
 #if !defined ( IA_W32GUI ) && !defined ( IA_W32G_SYN )
 	if(play_mode->open_output() < 0)
 	{
-	    ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 		      "Couldn't open %s (`%c')",
 		      play_mode->id_name, play_mode->id_character);
 	    output_fail = 1;
@@ -5919,7 +5919,7 @@ MAIN_INTERFACE int timidity_play_main(struct timiditycontext_t *c, int nfiles, c
 	    sort_pathname(files, nfiles);
 
 	/* Return only when quitting */
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 		  "pass_playing_list() nfiles=%d", nfiles);
 
 	retval=ctl->pass_playing_list(nfiles, files);
@@ -6055,7 +6055,7 @@ int main(int argc, char **argv)
 #endif
 #ifdef IA_DYNAMIC
 {
-	dynamic_lib_root = safe_strdup(SHARED_LIB_PATH);
+	dynamic_lib_root = safe_strdup(c, SHARED_LIB_PATH);
 	dl_init(argc, argv);
 }
 #endif /* IA_DYNAMIC */
@@ -6096,7 +6096,7 @@ int main(int argc, char **argv)
 		if (is_directory(argv[c])) {
 			char *p;
 
-			p = (char *) safe_malloc(strlen(argv[c]) + 2);
+			p = (char *) safe_malloc(c, strlen(argv[c]) + 2);
 			strcpy(p, argv[c]);
 			directory_form(p);
 			argv[c] = p;
@@ -6153,16 +6153,16 @@ int main(int argc, char **argv)
 							sizeof(config2) - strlen(config2) - 1);
 				}
 			}
-			ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 					"%s: Can't read any configuration file.\n"
 					"Please check %s or %s", program_name, config1, config2);
 #else
-			ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 					"%s: Can't read any configuration file.\n"
 					"Please check " CONFIG_FILE, program_name);
 #endif /* __W32__ */
 		} else
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"Try %s -h for help", program_name);
 /* Try to continue if it is Windows version */
 #if !defined(IA_W32GUI) && !defined(IA_W32G_SYN)

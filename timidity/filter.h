@@ -31,7 +31,9 @@
 #define ORDER 20
 #define ORDER2 ORDER/2
 
-void antialiasing(int16 *data, int32 data_length,
+struct timiditycontext_t;
+
+void antialiasing(struct timiditycontext_t *c, int16 *data, int32 data_length,
 		  int32 sample_rate, int32 output_rate);
 
 #endif /* ___FILTER_H_ */

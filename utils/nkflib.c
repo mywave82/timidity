@@ -454,7 +454,7 @@ ssopen(struct timiditycontext_t *c, SFILE *sf, char *string, signed int maxsize,
       if(maxsize <= sizeof(c->sfile_buffer))
 	  st = c->sfile_buffer;
       else
-	  st = (char *)safe_malloc(maxsize);
+	  st = (char *)safe_malloc(c, maxsize);
   }
   else
     st=string;

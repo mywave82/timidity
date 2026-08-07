@@ -2494,11 +2494,11 @@ pt_UpdateVoices ()
 	}
       else
 	{
-	  Voice_SetPeriod (mp.channel,
+	  Voice_SetPeriod (c, mp.channel,
 		      getAmigaPeriod (pf->flags, playperiod));
 
 	  if (kick_voice)
-	    Voice_Play (mp.channel, s, (aout->start == -1) ? ((s->flags & SF_UST_LOOP) ? s->loopstart : 0) : aout->start);
+	    Voice_Play (c, mp.channel, s, (aout->start == -1) ? ((s->flags & SF_UST_LOOP) ? s->loopstart : 0) : aout->start);
 
 	  /* if keyfade, start substracting fadeoutspeed from fadevol: */
 	  if ((i) && (aout->keyoff & KEY_FADE))

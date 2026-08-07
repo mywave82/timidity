@@ -327,8 +327,8 @@ static ArchiveFileList *add_arc_filelist(struct timiditycontext_t *c, const char
 
     entry = arc_parse_entry(c, url, archive_type);
 
-    afl = (ArchiveFileList *)safe_malloc(sizeof(ArchiveFileList));
-    afl->archive_name = safe_strdup(basename);
+    afl = (ArchiveFileList *)safe_malloc(c, sizeof(ArchiveFileList));
+    afl->archive_name = safe_strdup(c, basename);
     afl->entry_list = entry;
     afl->next = c->arc_filelist;
     c->arc_filelist = afl;
@@ -529,12 +529,12 @@ char **expand_archive_names(struct timiditycontext_t *c, int *nfiles_in_out, cha
 #undef error_flag
 #undef depth
 
-ArchiveEntryNode *new_entry_node(const char *name, int len)
+ArchiveEntryNode *new_entry_node(struct timiditycontext_t *c, const char *name, int len)
 {
     ArchiveEntryNode *entry;
-    entry = (ArchiveEntryNode *)safe_malloc(sizeof(ArchiveEntryNode));
+    entry = (ArchiveEntryNode *)safe_malloc(c, sizeof(ArchiveEntryNode));
     memset(entry, 0, sizeof(ArchiveEntryNode));
-    entry->name = (char *)safe_malloc(len + 1);
+    entry->name = (char *)safe_malloc(c, len + 1);
     memcpy(entry->name, name, len);
     entry->name[len] = '\0';
     return entry;
@@ -570,10 +570,10 @@ void *arc_compress(struct timiditycontext_t *c, void *buff, long bufsiz,
 
     c->compress_buff = (char *)buff;
     c->compress_buff_len = bufsiz;
-    compressor = open_deflate_handler(arc_compress_func, NULL,
+    compressor = open_deflate_handler(c, arc_compress_func, NULL,
 				      compress_level);
     allocated = 1024;
-    compressed = (char *)safe_malloc(allocated);
+    compressed = (char *)safe_malloc(c, allocated);
     offset = 0;
     space = allocated;
     while((nbytes = zip_deflate(c, compressor, compressed + offset, space)) > 0)
@@ -584,7 +584,7 @@ void *arc_compress(struct timiditycontext_t *c, void *buff, long bufsiz,
 	{
 	    space = allocated;
 	    allocated += space;
-	    compressed = (char *)safe_realloc(compressed, allocated);
+	    compressed = (char *)safe_realloc(c, compressed, allocated);
 	}
     }
     close_deflate_handler(compressor);
@@ -607,7 +607,7 @@ void *arc_decompress(struct timiditycontext_t *c, void *buff, long bufsiz, long 
     c->compress_buff_len = bufsiz;
     decompressor = open_inflate_handler(arc_compress_func, NULL);
     allocated = 1024;
-    decompressed = (char *)safe_malloc(allocated);
+    decompressed = (char *)safe_malloc(c, allocated);
     offset = 0;
     space = allocated;
     while((nbytes = zip_inflate(c, decompressor, decompressed + offset, space)) > 0)
@@ -618,7 +618,7 @@ void *arc_decompress(struct timiditycontext_t *c, void *buff, long bufsiz, long 
 	{
 	    space = allocated;
 	    allocated += space;
-	    decompressed = (char *)safe_realloc(decompressed, allocated);
+	    decompressed = (char *)safe_realloc(c, decompressed, allocated);
 	}
     }
     close_inflate_handler(c, decompressor);

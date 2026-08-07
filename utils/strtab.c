@@ -75,14 +75,14 @@ char **make_string_array(struct timiditycontext_t *c, StringTable *stab)
     n = stab->nstring;
     if(n == 0)
 	return NULL;
-    if((table = (char **)safe_malloc((n + 1) * sizeof(char *))) == NULL)
+    if((table = (char **)safe_malloc(c, (n + 1) * sizeof(char *))) == NULL)
 	return NULL;
 
     s = 0;
     for(p = stab->head; p; p = p->next)
 	s += strlen(p->string) + 1;
 
-    if((u = (char *)safe_malloc(s)) == NULL)
+    if((u = (char *)safe_malloc(c, s)) == NULL)
     {
 	free(table);
 	return NULL;

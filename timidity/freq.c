@@ -258,7 +258,7 @@ static int freq_initialize_fft_arrays(struct timiditycontext_t *c, Sample *sp)
     origdata = sp->data;
 
     /* copy the sample to a new float array */
-    c->floatdata = (float *) safe_malloc(length * sizeof(float));
+    c->floatdata = (float *) safe_malloc(c, length * sizeof(float));
     for (i = 0; i < length; i++)
 	c->floatdata[i] = origdata[i];
 
@@ -268,7 +268,7 @@ static int freq_initialize_fft_arrays(struct timiditycontext_t *c, Sample *sp)
     newlength = pow(2, ceil(log(1.4*rate) / log(2)));
     if (length < newlength)
     {
-	c->floatdata = safe_realloc(c->floatdata, newlength * sizeof(float));
+	c->floatdata = safe_realloc(c, c->floatdata, newlength * sizeof(float));
 	memset(c->floatdata + length, 0, (newlength - length) * sizeof(float));
     }
     length = newlength;
@@ -287,12 +287,12 @@ static int freq_initialize_fft_arrays(struct timiditycontext_t *c, Sample *sp)
             free(c->w);
             free(c->fft1_bin_to_pitch);
         }
-        c->magdata = (float *) safe_malloc(length * sizeof(float));
-        c->prunemagdata = (float *) safe_malloc(length * sizeof(float));
-        c->ip = (int *) safe_malloc(2 + sqrt(length) * sizeof(int));
+        c->magdata = (float *) safe_malloc(c, length * sizeof(float));
+        c->prunemagdata = (float *) safe_malloc(c, length * sizeof(float));
+        c->ip = (int *) safe_malloc(c, 2 + sqrt(length) * sizeof(int));
         *c->ip = 0;
-        c->w = (float *) safe_malloc((length >> 1) * sizeof(float));
-        c->fft1_bin_to_pitch = safe_malloc((length >> 1) * sizeof(float));
+        c->w = (float *) safe_malloc(c, (length >> 1) * sizeof(float));
+        c->fft1_bin_to_pitch = safe_malloc(c, (length >> 1) * sizeof(float));
 
         for (i = 1, f0 = (float) rate / length; i < (length >> 1); i++) {
             c->fft1_bin_to_pitch[i] = assign_pitch_to_freq(i * f0);

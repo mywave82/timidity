@@ -359,7 +359,7 @@ URL alloc_url(struct timiditycontext_t *c, int size)
 {
     URL url;
 #ifdef HAVE_SAFE_MALLOC
-    url = (URL)safe_malloc(size);
+    url = (URL)safe_malloc(c, size);
     memset(url, 0, size);
 #else
     url = (URL)malloc(size);
@@ -535,7 +535,7 @@ void *url_dump(struct timiditycontext_t *c, URL url, long nbytes, long *read_siz
 	return NULL;
     if(nbytes >= 0)
     {
-	buff = (void *)safe_malloc(nbytes);
+	buff = (void *)safe_malloc(c, nbytes);
 	if(nbytes == 0)
 	    return buff;
 	read_len = url_nread(c, url, buff, nbytes);
@@ -550,7 +550,7 @@ void *url_dump(struct timiditycontext_t *c, URL url, long nbytes, long *read_siz
     }
 
     allocated = 1024;
-    buff = (char *)safe_malloc(allocated);
+    buff = (char *)safe_malloc(c, allocated);
     offset = 0;
     read_len = allocated;
     while((nbytes = url_read(c, url, buff + offset, read_len)) > 0)
@@ -561,7 +561,7 @@ void *url_dump(struct timiditycontext_t *c, URL url, long nbytes, long *read_siz
 	{
 	    read_len = allocated;
 	    allocated *= 2;
-	    buff = (char *)safe_realloc(buff, allocated);
+	    buff = (char *)safe_realloc(c, buff, allocated);
 	}
     }
     if(offset == 0)

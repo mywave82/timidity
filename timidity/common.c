@@ -196,7 +196,7 @@ url_dumpfile(struct timiditycontext_t *c, URL url, const char *ext)
     size_t dummy = fwrite(buff, 1, n, fp); ++dummy;
   }
   fclose(fp);
-  return safe_strdup(filename);
+  return safe_strdup(c, filename);
 }
 
 
@@ -212,7 +212,7 @@ static struct timidity_file *try_to_open(struct timiditycontext_t *c, char *name
       if((url = url_open(c, name)) == NULL)
 	return NULL;
 
-    tf = (struct timidity_file *)safe_malloc(sizeof(struct timidity_file));
+    tf = (struct timidity_file *)safe_malloc(c, sizeof(struct timidity_file));
     tf->url = url;
     tf->tmpname = NULL;
 
@@ -367,10 +367,10 @@ struct timidity_file *open_with_mem(struct timiditycontext_t *c, char *mem, int3
     if((url = url_mem_open(c, mem, memlen, 0)) == NULL)
     {
 	if(noise_mode >= 2)
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Can't open.");
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Can't open.");
 	return NULL;
     }
-    tf = (struct timidity_file *)safe_malloc(sizeof(struct timidity_file));
+    tf = (struct timidity_file *)safe_malloc(c, sizeof(struct timidity_file));
     tf->url = url;
     tf->tmpname = NULL;
     return tf;
@@ -387,7 +387,7 @@ static struct timidity_file *open_file_common(struct timiditycontext_t *c, const
 	c->open_file_noise_mode = noise_mode;
 	if (!name || !(*name)) {
 		if (noise_mode)
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"Attempted to open nameless file.");
 		return 0;
 	}
@@ -401,7 +401,7 @@ static struct timidity_file *open_file_common(struct timiditycontext_t *c, const
 	if (!temp)
 	{
 		if (noise_mode)
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"url_nexpand_home_dir() failed.");
 		return 0;
 
@@ -410,13 +410,13 @@ static struct timidity_file *open_file_common(struct timiditycontext_t *c, const
 	if (!c->current_filename)
 	{
 		if (noise_mode)
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"strdup() failed.");
 		return 0;
 
 	}
 	if (noise_mode)
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Trying to open %s",
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Trying to open %s",
 				c->current_filename);
 	if (dofilearchives)
 	{
@@ -435,7 +435,7 @@ static struct timidity_file *open_file_common(struct timiditycontext_t *c, const
 	if (errno && errno != ENOENT) {
 #endif
 		if (noise_mode)
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: %s",
 					c->current_filename, strerror(errno));
 		return 0;
 	}
@@ -447,7 +447,7 @@ static struct timidity_file *open_file_common(struct timiditycontext_t *c, const
 			if (!c->current_filename)
 			{
 				if (noise_mode)
-					ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+					ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 							"malloc() failed.");
 				return 0;
 			}
@@ -461,7 +461,7 @@ static struct timidity_file *open_file_common(struct timiditycontext_t *c, const
 			}
 			strcat(c->current_filename, name);
 			if (noise_mode)
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 						"Trying to open %s", c->current_filename);
 			if (dofilearchives)
 			{
@@ -479,7 +479,7 @@ static struct timidity_file *open_file_common(struct timiditycontext_t *c, const
 			if(errno && errno != ENOENT) {
 #endif
 				if (noise_mode)
-					ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s",
+					ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: %s",
 							c->current_filename, strerror(errno));
 				return 0;
 			}
@@ -490,7 +490,7 @@ static struct timidity_file *open_file_common(struct timiditycontext_t *c, const
 	c->current_filename = 0;
 
 	if (noise_mode >= 2)
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: %s", name,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: %s", name,
 				(errno) ? strerror(errno) : "Can't open file");
 	return 0;
 }
@@ -561,7 +561,7 @@ long tf_seek(struct timiditycontext_t *c, struct timidity_file *tf, long offset,
 
     prevpos = url_seek(c, tf->url, offset, whence);
     if(prevpos == -1)
-	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 		  "Warning: Can't seek file position");
     return prevpos;
 }
@@ -573,7 +573,7 @@ long tf_tell(struct timiditycontext_t *c, struct timidity_file *tf)
     pos = url_tell(c, tf->url);
     if(pos == -1)
     {
-	ctl->cmsg(CMSG_WARNING, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL,
 		  "Warning: Can't get current file position");
 	return (long)tf->url->nread;
     }
@@ -595,7 +595,7 @@ void safe_exit(int status)
 }
 
 /* This'll allocate memory or die. */
-void *safe_malloc(size_t count)
+void *safe_malloc(struct timiditycontext_t *c, size_t count)
 {
     void *p;
     static int errflag = 0;
@@ -605,7 +605,7 @@ void *safe_malloc(size_t count)
     if(count > MAX_SAFE_MALLOC_SIZE)
     {
 	errflag = 1;
-	ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 		  "Strange, I feel like allocating %d bytes. "
 		  "This must be a bug.", count);
     }
@@ -619,7 +619,7 @@ void *safe_malloc(size_t count)
       if((p = (void *)malloc(count)) != NULL)
 	return p;
       errflag = 1;
-      ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+      ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 		"Sorry. Couldn't malloc %d bytes.", count);
     }
 #ifdef ABORT_AT_FATAL
@@ -630,7 +630,7 @@ void *safe_malloc(size_t count)
 	return 0;
 }
 
-void *safe_large_malloc(size_t count)
+void *safe_large_malloc(struct timiditycontext_t *c, size_t count)
 {
     void *p;
     static int errflag = 0;
@@ -646,7 +646,7 @@ void *safe_large_malloc(size_t count)
     if((p = (void *)malloc(count)) != NULL)
       return p;
     errflag = 1;
-    ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+    ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 	      "Sorry. Couldn't malloc %d bytes.", count);
 
 #ifdef ABORT_AT_FATAL
@@ -657,7 +657,7 @@ void *safe_large_malloc(size_t count)
 	return 0;
 }
 
-void *safe_realloc(void *ptr, size_t count)
+void *safe_realloc(struct timiditycontext_t *c, void *ptr, size_t count)
 {
     void *p;
     static int errflag = 0;
@@ -667,13 +667,13 @@ void *safe_realloc(void *ptr, size_t count)
     if(count > MAX_SAFE_MALLOC_SIZE)
     {
 	errflag = 1;
-	ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 		  "Strange, I feel like allocating %d bytes. "
 		  "This must be a bug.", count);
     }
     else {
       if (ptr == NULL)
-	return safe_malloc(count);
+	return safe_malloc(c, count);
       if(count == 0)
 	/* Some malloc routine return NULL if count is zero, such as
 	 * malloc routine from libmalloc.a of Solaris.
@@ -683,7 +683,7 @@ void *safe_realloc(void *ptr, size_t count)
       if((p = (void *)realloc(ptr, count)) != NULL)
 	return p;
       errflag = 1;
-      ctl->cmsg(CMSG_FATAL, VERB_NORMAL,
+      ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL,
 		"Sorry. Couldn't malloc %d bytes.", count);
     }
 #ifdef ABORT_AT_FATAL
@@ -695,7 +695,7 @@ void *safe_realloc(void *ptr, size_t count)
 }
 
 /* This'll allocate memory or die. */
-char *safe_strdup(const char *s)
+char *safe_strdup(struct timiditycontext_t *c, const char *s)
 {
     char *p;
     static int errflag = 0;
@@ -710,7 +710,7 @@ char *safe_strdup(const char *s)
     if(p != NULL)
 	return p;
     errflag = 1;
-    ctl->cmsg(CMSG_FATAL, VERB_NORMAL, "Sorry. Couldn't alloc memory.");
+    ctl->cmsg(c, CMSG_FATAL, VERB_NORMAL, "Sorry. Couldn't alloc memory.");
 #ifdef ABORT_AT_FATAL
     abort();
 #endif /* ABORT_AT_FATAL */
@@ -782,8 +782,8 @@ void add_to_pathlist(struct timiditycontext_t *c, char *s)
     else
     {
 	/* Allocate new path */
-	plp = safe_malloc(sizeof(PathList));
-	plp->path = safe_strdup(s);
+	plp = safe_malloc(c, sizeof(PathList));
+	plp->path = safe_strdup(c, s);
     }
 
     plp->next = c->pathlist;
@@ -1084,7 +1084,7 @@ static char **expand_file_lists(struct timiditycontext_t *c, char **files, int *
     {
 	if(!c->expand_file_lists_error_outflag)
 	{
-	    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		      "Probable loop in playlist files");
 	    c->expand_file_lists_error_outflag = 1;
 	}

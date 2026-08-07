@@ -131,7 +131,7 @@ int read_rcp_file(struct timiditycontext_t *c, struct timidity_file *tf, char *m
 	len = SAFE_CONVERT_LENGTH(len + 1);
 	p = (char *)new_segment(c, &c->tmpbuffer, len);
 	code_convert(c, buff, p, len, NULL, NULL);
-	c->current_file_info->seq_name = (char *)safe_strdup(p);
+	c->current_file_info->seq_name = (char *)safe_strdup(c, p);
 	reuse_mblock(c, &c->tmpbuffer);
     }
     c->current_file_info->format = 1;
@@ -153,7 +153,7 @@ int read_rcp_file(struct timiditycontext_t *c, struct timidity_file *tf, char *m
 
 	p = (char *)new_segment(c, &c->tmpbuffer, len);
 	code_convert(c, buff, p, len, NULL, NULL);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
 	reuse_mblock(c, &c->tmpbuffer);
 #else
 	buff[336] = '\0';
@@ -177,7 +177,7 @@ int read_rcp_file(struct timiditycontext_t *c, struct timidity_file *tf, char *m
 
 	p = (char *)new_segment(c, &c->tmpbuffer, len);
 	code_convert(c, tmp, p, len, NULL, NULL);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
 	reuse_mblock(c, &c->tmpbuffer);
 	}
 	}
@@ -187,24 +187,24 @@ int read_rcp_file(struct timiditycontext_t *c, struct timidity_file *tf, char *m
 
 	timebase1 = tf_getc(tf);
 	c->init_tempo = tf_getc(tf); /* tempo */
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Tempo %d", c->init_tempo);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Tempo %d", c->init_tempo);
 	if(c->init_tempo < 8 || c->init_tempo > 250)
 	    c->init_tempo = 120;
 
 	/* Time Signature: numerator, denominator, Key Signature */
 	c->current_file_info->time_sig_n = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
 		  c->current_file_info->time_sig_n);
 	c->current_file_info->time_sig_d = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time signature(d) %d",
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Time signature(d) %d",
 		  c->current_file_info->time_sig_d);
 	c->init_keysig = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Key signature %d", c->init_keysig);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Key signature %d", c->init_keysig);
 	if (c->init_keysig < 0 || c->init_keysig >= 32)
 		c->init_keysig = 0;
 
 	c->play_bias = (int)(signed char)tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Play bias %d", c->play_bias);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Play bias %d", c->play_bias);
 	if(c->play_bias < -36 || c->play_bias > 36)
 	    c->play_bias = 0;
 
@@ -215,7 +215,7 @@ int read_rcp_file(struct timiditycontext_t *c, struct timidity_file *tf, char *m
 
 	if((ntrack = tf_getc(tf)) == EOF)
 	    return 1;
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Number of tracks %d", ntrack);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Number of tracks %d", ntrack);
 	if(ntrack != 18 && ntrack != 36)
 	    ntrack = 18;
 	timebase2 = tf_getc(tf);
@@ -242,37 +242,37 @@ int read_rcp_file(struct timiditycontext_t *c, struct timidity_file *tf, char *m
 	len = SAFE_CONVERT_LENGTH(len + 1);
 	p = (char *)new_segment(c, &c->tmpbuffer, len);
 	code_convert(c, buff, p, len, NULL, NULL);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "Memo: %s", p);
 	reuse_mblock(c, &c->tmpbuffer);
 
 	/* Number of tracks */
 	ntrack = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Number of tracks %d", ntrack);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Number of tracks %d", ntrack);
 	if(ntrack != 18 && ntrack != 36)
 	    ntrack = 18;
 	skip(c, tf, 1);
 	timebase1 = tf_getc(tf);
 	timebase2 = tf_getc(tf);
 	c->init_tempo = tf_getc(tf); /* tempo */
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Tempo %d", c->init_tempo);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Tempo %d", c->init_tempo);
 	if(c->init_tempo < 8 || c->init_tempo > 250)
 	    c->init_tempo = 120;
 	skip(c, tf, 1); /* ?? */
 
 	/* Time Signature: numerator, denominator, Key Signature */
 	c->current_file_info->time_sig_n = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
 		  c->current_file_info->time_sig_n);
 	c->current_file_info->time_sig_d = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Time signature(n) %d",
 		  c->current_file_info->time_sig_d);
 	c->init_keysig = tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Key signature %d", c->init_keysig);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Key signature %d", c->init_keysig);
 	if (c->init_keysig < 0 || c->init_keysig >= 32)
 		c->init_keysig = 0;
 
 	c->play_bias = (int)(signed char)tf_getc(tf);
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Play bias %d", c->play_bias);
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Play bias %d", c->play_bias);
 	if(c->play_bias < -36 || c->play_bias > 36)
 	    c->play_bias = 0;
 	skip(c, tf, 6 + 16 + 112);	/* reserved */
@@ -301,7 +301,7 @@ int read_rcp_file(struct timiditycontext_t *c, struct timidity_file *tf, char *m
     }
 
     c->current_file_info->divisions = (timebase1 | (timebase2 << 8));
-    ctl->cmsg(CMSG_INFO, VERB_DEBUG, "divisions %d",
+    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "divisions %d",
 	      c->current_file_info->divisions);
     c->current_file_info->format = 1;
     c->current_file_info->tracks = ntrack;
@@ -506,12 +506,12 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
      */
 
     track_top = tf_tell(c, tf);
-    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY, "Track top: %d", track_top);
+    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY, "Track top: %d", track_top);
 
     size = tf_getc(tf);
     size |= (tf_getc(tf) << 8);
 
-    ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Track size %d", size);
+    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Track size %d", size);
     last_point = size + tf_tell(c, tf) - 2;
 
     if(gfmt)
@@ -523,7 +523,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	cmdlen = 4;
 
     i = tf_getc(tf);		/* Track Number */
-    ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Track number %d", i);
+    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Track number %d", i);
     skip(c, tf, 1);		/* Rhythm */
 
     if((ch = tf_getc(tf)) == 0xff) /* No playing */
@@ -532,25 +532,25 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	return 0;
     }
 
-    ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Track channel %d", ch);
+    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Track channel %d", ch);
 
     if(ch >= RCP_MAXCHANNELS)
-	ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 		  "RCP: Invalid channel: %d", ch);
 
     /* Key offset */
     key_offset = tf_getc(tf);
-    ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Key offset %d", key_offset);
+    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Key offset %d", key_offset);
     if(key_offset > 64)
 	key_offset -= 128;
     key_offset += c->play_bias;
 
     /* Time offset */
     time_offset = (int)(signed char)tf_getc(tf);
-    ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Time offset %d", time_offset);
+    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Time offset %d", time_offset);
     if(time_offset < -99 || 99 < time_offset)
     {
-	ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 		  "RCP: Invalid time offset: %d", time_offset);
 	if(time_offset < -99)
 	    time_offset = -99;
@@ -580,7 +580,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
     p = (char *)new_segment(c, &c->tmpbuffer, len);
     code_convert(c, buff, p, len, NULL, NULL);
     if(*p)
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "RCP Track name: %s", p);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "RCP Track name: %s", p);
     reuse_mblock(c, &c->tmpbuffer);
 
     /*
@@ -624,7 +624,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 
 	    if(ctl->verbosity >= VERB_DEBUG_SILLY)
 	    {
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 			  "[%d] %d %s: ch=%d step=%d a=%d b=%d sp=%d",
 			  tf_tell(c, tf) - 4 - track_top,
 			  ntr_at(ntr), rcp_cmd_name(c, cmd), ch, step, a, b, sp);
@@ -648,7 +648,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 
 	    if(ctl->verbosity >= VERB_DEBUG_SILLY)
 	    {
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 			  "[%d] %d %s: ch=%d step=%d gate=%d a=%d b=%d sp=%d",
 			  tf_tell(c, tf) - 6 - track_top,
 			  ntr_at(ntr), rcp_cmd_name(c, cmd), ch,
@@ -730,10 +730,10 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	    a &= 0x7f;
 	    b &= 0x7f;
 	    if(!yamaha_base_init)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "YamPara used before initializing YamBase");
 	    if(!yamaha_dev_init)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "YamPara used before initializing YamDev#");
 	    yamaha_base_init = yamaha_dev_init = 1;
 	    sysex[0] = 0x43;
@@ -792,10 +792,10 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	    a &= 0x7f;
 	    b &= 0x7f;
 	    if(!roland_base_init)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "RolPara used before initializing RolBase");
 	    if(!roland_dev_init)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "RolPara used before initializing RolDev#");
 	    roland_base_init = roland_dev_init = 1;
 	    sysex[0] = 0x41;
@@ -823,7 +823,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	    break;
 
 	  case 0xe1:	/* BnkLPrg */
-	    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+	    ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 		      "BnkLPrg is not supported: 0x%02x 0x%02x", a, b);
 	    ntr_incr(c, &ntr, step);
 	    break;
@@ -864,7 +864,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		break;
 	    }
 #endif
-	    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+	    ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 		      "Key scan 0x%02x 0x%02x is not supported", a, b);
 	    ntr_incr(c, &ntr, step);
 	    break;
@@ -872,9 +872,9 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	  case 0xe6:	/* MIDI channel change */
 	    ch = a - 1;
 	    if(ch == 0) /* ##?? */
-		ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "MIDI channel off");
+		ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "MIDI channel off");
 	    else if(ch >= RCP_MAXCHANNELS)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "RCP: Invalid channel: %d", ch);
 	    ntr_incr(c, &ntr, step);
 	    break;
@@ -882,7 +882,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	  case 0xe7:	/* tempo change */
 	    if(a == 0)
 	    {
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "Invalid tempo change\n");
 		a = 64;
 	    }
@@ -923,7 +923,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 
 	case 0xf5:	/* key change */
 		if (step < 0 || step >= 32) {
-			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Invalid key change\n");
+			ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Invalid key change\n");
 			step = 0;
 		}
 		rcp_keysig_change(c, ntr_at(ntr), step);
@@ -995,24 +995,24 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		    len = SAFE_CONVERT_LENGTH(len+1);
 		    p = (char *)new_segment(c, &c->tmpbuffer, len);
 		    code_convert(c, buff, p, len, NULL, NULL);
-		    ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Comment: %s", p);
+		    ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "Comment: %s", p);
 		    reuse_mblock(c, &c->tmpbuffer);
 		}
 	    }
 	    break;
 
 	  case 0xf7:	/* 2nd Event */
-	    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+	    ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 		      "Something's wrong: 2nd Event is appeared");
 	    break;
 
 	  case 0xf8:	/* loop end */
 	    if(ctl->verbosity >= VERB_DEBUG_SILLY)
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 			  "Loop end at %d",
 			  tf_tell(c, tf) - track_top - cmdlen);
 	    if(sp == 0)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "Misplaced loop end (ch=%d)", ch);
 	    else if(sp > MAX_STACK_DEPTH)
 		sp--;		/* through deeply loop */
@@ -1041,7 +1041,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 #ifdef RCP_LOOP_CONT_LIMIT
 		else if(stack[top].count >= RCP_LOOP_CONT_LIMIT)
 		{
-		    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		    ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			      "Loop limit exceeded (ch=%d)", ch);
 		    sp = top;
 		}
@@ -1052,7 +1052,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 			/ c->current_file_info->divisions
 			> RCP_LOOP_TIME_LIMIT)
 		{
-		    ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		    ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			      "Loop time exceeded (ch=%d)", ch);
 		    sp = top;
 		}
@@ -1060,7 +1060,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		else
 		{
 		    stack[top].count++;
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 			      "Jump to %d (cnt=%d)",
 			      stack[top].loop_start - track_top,
 			      stack[top].count);
@@ -1076,12 +1076,12 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		continue;
 #endif
 	    if(ctl->verbosity >= VERB_DEBUG_SILLY)
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 			  "Loop start at %d",
 			  tf_tell(c, tf) - track_top - cmdlen);
 
 	    if(sp >= MAX_STACK_DEPTH)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "Too deeply nested %d (ch=%d, Ignored this loop)",
 			  ch, sp);
 	    else
@@ -1095,11 +1095,11 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 
 	  case 0xfc:	/* same measure */
 	    if(ctl->verbosity >= VERB_DEBUG_SILLY)
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 			  "Same measure at %d",
 			  tf_tell(c, tf) - track_top - cmdlen);
 	    if(sp >= MAX_STACK_DEPTH)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "Too deeply nested %d (ch=%d)", sp, ch);
 	    else
 	    {
@@ -1124,7 +1124,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		    {
 			/* What do these two bits mean? */
 			/* Clear them here. */
-			ctl->cmsg(CMSG_WARNING, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_WARNING, VERB_DEBUG,
 				  "Jump %d is changed to %d",
 				  jmp, jmp & ~3);
 			jmp &= ~3;		/* jmp=(jmp/4)*4 */
@@ -1148,7 +1148,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		if(jmp < data_top - track_top ||
 		   jmp >= last_point - track_top)
 		{
-		    ctl->cmsg(CMSG_WARNING, VERB_NOISY,
+		    ctl->cmsg(c, CMSG_WARNING, VERB_NOISY,
 			      "RCP Invalid same measure: %d (ch=%d)", jmp, ch);
 		    break;
 		}
@@ -1161,7 +1161,7 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 		    sp++;
 		}
 
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY, "Jump to %d", jmp);
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY, "Jump to %d", jmp);
 		tf_seek(c, tf, track_top + jmp, SEEK_SET);
 
 		if(tf_getc(tf) == 0xfc)
@@ -1217,12 +1217,12 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	  case 0xcf:	/* TX802 P PCED */
 	  case 0xdc:	/* MKS-7 */
 	    if(!gfmt)
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "RCP %s is not unsupported: "
 			  "0x%02x 0x%02x 0x%02x 0x%02x (ch=%d)",
 			  rcp_cmd_name(c, cmd), cmd, step, a, b, ch);
 	    else
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "RCP %s is not unsupported: "
 			  "0x%02x 0x%02x 0x%02x 0x%02x 0x%02x (ch=%d)",
 			  rcp_cmd_name(c, cmd), cmd, b, st1, st2, gt1, gt2, ch);
@@ -1231,20 +1231,20 @@ static int read_rcp_track(struct timiditycontext_t *c, struct timidity_file *tf,
 	  default:
 	    if(!gfmt)
 	    {
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "RCP Unknown Command: 0x%02x 0x%02x 0x%02x 0x%02x "
 			  "(ch=%d)",
 			  cmd, step, a, b, ch);
 		/* ##?? */
 		if(cmd == 0xe9 && step == 0xf0 && a == 0xe0 && b == 0x80)
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_VERBOSE,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_VERBOSE,
 			      "RCP e9 f0 e0 80 is end of track ??");
 		    goto end_of_track;
 		}
 	    }
 	    else
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 			  "RCP Unknown Command: "
 			  "0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x (ch=%d)",
 			  cmd, b, st1, st2, gt1, gt2, ch);
@@ -1377,7 +1377,7 @@ static void ntr_incr(struct timiditycontext_t *c, struct RCPNoteTracer *ntr, int
 	    if(p->gate == 0)
 	    {
 		if(ctl->verbosity >= VERB_DEBUG_SILLY)
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 			      "NoteOff %d at %d", p->note, ntr->at);
 		MIDIEVENT(ntr->at, ME_NOTEOFF, p->ch, p->note, 0);
 		p->next = ntr->freelist;
@@ -1423,7 +1423,7 @@ static void ntr_wait_all_off(struct timiditycontext_t *c, struct RCPNoteTracer *
 	    if(p->gate == 0)
 	    {
 		if(ctl->verbosity >= VERB_DEBUG_SILLY)
-		    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+		    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 			      "NoteOff %d", p->note);
 		MIDIEVENT(ntr->at, ME_NOTEOFF, p->ch, p->note, 0);
 		p->next = ntr->freelist;

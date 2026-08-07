@@ -161,7 +161,7 @@ static SFInsts *new_soundfont(struct timiditycontext_t *c, const char *sf_file)
 		}
 	}
 	if(sf == NULL)
-		sf = (SFInsts *)safe_malloc(sizeof(SFInsts));
+		sf = (SFInsts *)safe_malloc(c, sizeof(SFInsts));
 	memset(sf, 0, sizeof(SFInsts));
 	init_mblock(&sf->pool);
 	sf->fname = SFStrdup(sf, FILENAME_NORMALIZE(tmp));
@@ -251,11 +251,11 @@ static void init_sf(struct timiditycontext_t *c, SFInsts *rec)
 	SFInfo sfinfo;
 	int i;
 
-	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Init soundfonts `%s'",
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Init soundfonts `%s'",
 		  FILENAME_REDUCED(rec->fname));
 
 	if ((rec->tf = open_file(c, rec->fname, 1, OF_VERBOSE)) == NULL) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			  "Can't open soundfont file %s",
 			  FILENAME_REDUCED(rec->fname));
 		end_soundfont(c, rec);
@@ -360,7 +360,7 @@ static Instrument *try_load_soundfont(struct timiditycontext_t *c, SFInsts *rec,
 		if (rec->fname == NULL)
 			return NULL;
 		if ((rec->tf = open_file(c, rec->fname, 1, OF_VERBOSE)) == NULL) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				  "Can't open soundfont file %s",
 				  FILENAME_REDUCED(rec->fname));
 			end_soundfont(c, rec);
@@ -514,20 +514,20 @@ static Instrument *load_from_file(struct timiditycontext_t *c, SFInsts *rec, Ins
 	int32 len;
 
 	if(ip->pat.bank == 128)
-	    ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	    ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 		      "Loading SF Drumset %d %d: %s",
 		      ip->pat.preset + c->progbase, ip->pat.keynote,
 		      rec->inst_namebuf[ip->pr_idx]);
 	else
-	    ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	    ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 		      "Loading SF Tonebank %d %d: %s",
 		      ip->pat.bank, ip->pat.preset + c->progbase,
 		      rec->inst_namebuf[ip->pr_idx]);
-	inst = (Instrument *)safe_malloc(sizeof(Instrument));
+	inst = (Instrument *)safe_malloc(c, sizeof(Instrument));
 	inst->instname = rec->inst_namebuf[ip->pr_idx];
 	inst->type = INST_SF2;
 	inst->samples = ip->samples;
-	inst->sample = (Sample *)safe_malloc(sizeof(Sample) * ip->samples);
+	inst->sample = (Sample *)safe_malloc(c, sizeof(Sample) * ip->samples);
 	memset(inst->sample, 0, sizeof(Sample) * ip->samples);
 	for (i = 0, sp = ip->slist; i < ip->samples && sp; i++, sp = sp->next) {
 		Sample *sample = inst->sample + i;
@@ -536,7 +536,7 @@ static Instrument *load_from_file(struct timiditycontext_t *c, SFInsts *rec, Ins
 		int32 k;
 		int16 *tmp, s;
 #endif
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 			  "[%d] Rate=%d LV=%d HV=%d "
 			  "Low=%d Hi=%d Root=%d Pan=%d",
 			  sp->start, sp->v.sample_rate,
@@ -577,12 +577,12 @@ static Instrument *load_from_file(struct timiditycontext_t *c, SFInsts *rec, Ins
 		    {
 			sample->data = found->data;
 			sample->data_alloced = 0;
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * Cached");
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " * Cached");
 			continue;
 		    }
 		}
 
-		sample->data = (sample_t *)safe_large_malloc(sp->len + 2 * 3);
+		sample->data = (sample_t *)safe_large_malloc(c, sp->len + 2 * 3);
 		sample->data_alloced = 1;
 
 		tf_seek(c, rec->tf, sp->start, SEEK_SET);
@@ -601,7 +601,7 @@ static Instrument *load_from_file(struct timiditycontext_t *c, SFInsts *rec, Ins
 		sample->data[len] = sample->data[len + 1] = sample->data[len + 2] = 0;
 
 		if (c->antialiasing_allowed)
-		    antialiasing((int16 *)sample->data,
+		    antialiasing(c, (int16 *)sample->data,
 				 sample->data_length >> FRACTION_BITS,
 				 sample->sample_rate,
 				 play_mode->rate);
@@ -622,7 +622,7 @@ static Instrument *load_from_file(struct timiditycontext_t *c, SFInsts *rec, Ins
 		}
 
 #ifdef LOOKUP_HACK
-		squash_sample_16to8(sample);
+		squash_sample_16to8(c, sample);
 #endif
 	}
 
@@ -983,7 +983,7 @@ static int make_patch(struct timiditycontext_t *c, SFInfo *sf, int pridx, LayerT
 #endif
     if(sample->sampletype & SF_SAMPLETYPE_ROM) /* is ROM sample? */
     {
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "preset %d is ROM sample: 0x%x",
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "preset %d is ROM sample: 0x%x",
 		  pridx, sample->sampletype);
 	return AWE_RET_SKIP;
     }
@@ -999,13 +999,13 @@ static int make_patch(struct timiditycontext_t *c, SFInfo *sf, int pridx, LayerT
     done = 0;
     for(keynote=keynote_from;keynote<=keynote_to;keynote++)
     {
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY,
+	ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY,
 		  "SF make inst pridx=%d bank=%d preset=%d keynote=%d",
 		  pridx, bank, preset, keynote);
 
 	if(is_excluded(c->current_sfrec, bank, preset, keynote))
 	{
-	    ctl->cmsg(CMSG_INFO, VERB_DEBUG_SILLY, " * Excluded");
+	    ctl->cmsg(c, CMSG_INFO, VERB_DEBUG_SILLY, " * Excluded");
 	    continue;
 	} else
 	    done++;
@@ -1278,7 +1278,7 @@ static void set_init_info(struct timiditycontext_t *c, SFInfo *sf, SampleList *v
     if(tbl->set[SF_keynum])
 		vp->v.note_to_use = (int)tbl->val[SF_keynum];
 	if(tbl->set[SF_velocity] && (int)tbl->val[SF_velocity] != 0) {
-		ctl->cmsg(CMSG_INFO,VERB_DEBUG,"error: fixed-velocity is not supported.");
+		ctl->cmsg(c, CMSG_INFO,VERB_DEBUG,"error: fixed-velocity is not supported.");
 	}
 
 	vp->v.sample_type = sample->sampletype;
@@ -1332,7 +1332,7 @@ static void set_init_info(struct timiditycontext_t *c, SFInfo *sf, SampleList *v
 	} else if(sample->sampletype == SF_SAMPLETYPE_LEFT) {	/* leftSample = 4 */
 		vp->v.panning = 0;
 	} else if(sample->sampletype == SF_SAMPLETYPE_LINKED) {	/* linkedSample = 8 */
-		ctl->cmsg(CMSG_ERROR,VERB_NOISY,"error: linkedSample is not supported.");
+		ctl->cmsg(c, CMSG_ERROR,VERB_NOISY,"error: linkedSample is not supported.");
 	}
 
 	memset(vp->v.envelope_keyf, 0, sizeof(vp->v.envelope_keyf));
@@ -1779,7 +1779,7 @@ PlayMode dpm = {
 PlayMode *play_mode = &dpm;
 #if !CFG_FOR_SF_SUPPORT_FFT
 void pre_resample(struct timiditycontext_t *c, Sample *sp) {}
-void antialiasing(int16 *data, int32 data_length,int32 sample_rate, int32 output_rate) {}
+void antialiasing(struct timiditycontext_t *c, int16 *data, int32 data_length,int32 sample_rate, int32 output_rate) {}
 #endif
 
 char *wrdt = NULL; /* :-P */
@@ -1789,7 +1789,7 @@ static int ctl_open(int using_stdin, int using_stdout) { return 0;}
 static void ctl_close(void) {}
 static int ctl_read(int32 *valp) { return 0; }
 #include <stdarg.h>
-static int cmsg(int type, int verbosity_level, char *fmt, ...)
+static int cmsg(struct timiditycontext_t *c, int type, int verbosity_level, char *fmt, ...)
 {
   va_list ap;
   if ((type==CMSG_TEXT || type==CMSG_INFO || type==CMSG_WARNING) &&
@@ -2002,7 +2002,7 @@ int main(int argc, char **argv)
 #ifdef SUPPORT_SOCKET
 	/*init_mail_addr();*/
 	if(c->url_user_agent == NULL){
-	    c->url_user_agent = (char *)safe_malloc(10 + strlen(timidity_version));
+	    c->url_user_agent = (char *)safe_malloc(c, 10 + strlen(timidity_version));
 	    strcpy(c->url_user_agent, "TiMidity-");
 	    strcat(c->url_user_agent, timidity_version);
 	}

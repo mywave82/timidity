@@ -67,10 +67,10 @@ extern long tf_tell(struct timiditycontext_t *c, struct timidity_file *tf);
 extern int int_rand(int n);	/* random [0..n-1] */
 extern int check_file_extension(const char *filename, const char *ext, int decompress);
 
-extern void *safe_malloc(size_t count);
-extern void *safe_realloc(void *old_ptr, size_t new_size);
-extern void *safe_large_malloc(size_t count);
-extern char *safe_strdup(const char *s);
+extern void *safe_malloc(struct timiditycontext_t *c, size_t count);
+extern void *safe_realloc(struct timiditycontext_t *c, void *old_ptr, size_t new_size);
+extern void *safe_large_malloc(struct timiditycontext_t *c, size_t count);
+extern char *safe_strdup(struct timiditycontext_t *c, const char *s);
 extern void free_ptr_list(void *ptr_list, int count);
 extern int string_to_7bit_range(const char *s, int *start, int *end);
 extern char **expand_file_archives(struct timiditycontext_t *c, char **files, int *nfiles_in_out);

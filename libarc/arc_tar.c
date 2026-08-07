@@ -92,7 +92,7 @@ ArchiveEntryNode *next_tar_entry(struct timiditycontext_t *c)
 	goto retry_read;
     }
 
-    entry = new_entry_node(hdr, flen);
+    entry = new_entry_node(c, hdr, flen);
     if(entry == NULL)
 	return NULL;
     sizeb = (((size) + (TARBLKSIZ-1)) & ~(TARBLKSIZ-1));

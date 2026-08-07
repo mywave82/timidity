@@ -521,7 +521,7 @@ ArchiveEntryNode *next_lzh_entry(struct timiditycontext_t *c)
 	    break;
     if(!lzh_methods[i])
 	return NULL;
-    entry = new_entry_node(filename, name_length);
+    entry = new_entry_node(c, filename, name_length);
     if(entry == NULL)
 	return NULL;
     entry->comptype = i + ARCHIVEC_LZHED + 1;

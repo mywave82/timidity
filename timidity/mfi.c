@@ -69,7 +69,7 @@
 #endif
 #if MFI_DEBUG_NOTE_EVENT
 	#define NOTE_EVENT_DEBUGSTR(channel, note, octave, velocity, duration)	\
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "%d.%02d [%02d] %s%d@%d %d(%d.%02d)", POS_DS(pos), (channel)+1, note, octave, velocity, duration, POS_DS(pos + duration))
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "%d.%02d [%02d] %s%d@%d %d(%d.%02d)", POS_DS(pos), (channel)+1, note, octave, velocity, duration, POS_DS(pos + duration))
 	#define NOTE_EVENT_POSSIBLE_SLUR_DEBUGSTR()								/* empty */
 #else
 	#define NOTE_EVENT_DEBUGSTR(channel, note, octave, velocity, duration)	/* empty */
@@ -77,17 +77,17 @@
 #endif
 #if MFI_DEBUG_NOTE_EVENT_S
 	#define NOTE_BUF_EV_DEBUGSTR(channel, time, note, octave, velocity, offtime)	\
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "<< %d [%02d] %s%d@%d %d", time, (channel)+1, note, octave, velocity, offtime)
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "<< %d [%02d] %s%d@%d %d", time, (channel)+1, note, octave, velocity, offtime)
 #else
 	#define NOTE_BUF_EV_DEBUGSTR(channel, time, note, octave, velocity, offtime)	/* empty */
 #endif
 #if MFI_DEBUG_CTL_DATA
 	#define EX_DATA_DEBUGSTR1(exname, channel, paramstr, p1)	\
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "%d.%02d [%02d] %02X(%s) : " paramstr, POS_DS(pos), (channel)+1, data[2], exname, p1)
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "%d.%02d [%02d] %02X(%s) : " paramstr, POS_DS(pos), (channel)+1, data[2], exname, p1)
 	#define EX_NCDATA_DEBUGSTR1(exname, paramstr, p1)	\
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "%d.%02d [--] %02X(%s) : " paramstr, POS_DS(pos), data[2], exname, p1)
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "%d.%02d [--] %02X(%s) : " paramstr, POS_DS(pos), data[2], exname, p1)
 	#define EX_DATA_DEBUGSTR2(exname, channel, paramstr, p1, p2)	\
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "%d.%02d [%02d] %02X(%s) : " paramstr, POS_DS(pos), (channel)+1, data[2], exname, p1, p2)
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, MFI_DEBUG_PREFIX "%d.%02d [%02d] %02X(%s) : " paramstr, POS_DS(pos), (channel)+1, data[2], exname, p1, p2)
 #else
 	#define EX_DATA_DEBUGSTR1(exname, channel, paramstr, p1)		/* empty */
 	#define EX_NCDATA_DEBUGSTR1(exname, channel, p1)				/* empty */
@@ -95,9 +95,9 @@
 #endif
 #if MFI_DEBUG_UNKNOWN_CTL_DATA
 	#define EX_UNKNOWN_DATA_DEBUGSTR()	\
-			ctl->cmsg(CMSG_WARNING, VERB_NOISY, MFI_DEBUG_PREFIX "%d.%02d %02X (not implemented) : %02X", POS_DS(pos), data[2], data[3])
+			ctl->cmsg(c, CMSG_WARNING, VERB_NOISY, MFI_DEBUG_PREFIX "%d.%02d %02X (not implemented) : %02X", POS_DS(pos), data[2], data[3])
 	#define EX_UNKNOWN_EXT_DATA_DEBUGSTR(len)	\
-			ctl->cmsg(CMSG_WARNING, VERB_NOISY, MFI_DEBUG_PREFIX "%d.%02d %02X (not implemented) : %04X", POS_DS(pos), data[2], len)
+			ctl->cmsg(c, CMSG_WARNING, VERB_NOISY, MFI_DEBUG_PREFIX "%d.%02d %02X (not implemented) : %04X", POS_DS(pos), data[2], len)
 #else
 	#define EX_UNKNOWN_DATA_DEBUGSTR()								/* empty */
 	#define EX_UNKNOWN_EXT_DATA_DEBUGSTR(len)						/* empty */
@@ -125,18 +125,18 @@ int read_mfi_file(struct timiditycontext_t *c, timidity_file *tf)
 	infoLength -= 2 + 1;
 	if (dataType == 0x0202)
 	{
-		ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "MFi Type 2.2 may not be playable.");	/* I'm not sure :-) */
+		ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "MFi Type 2.2 may not be playable.");	/* I'm not sure :-) */
 		return 1;
 	}
 	if (numTracks == 0)
 	{
-		ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "MFi contains no track.");
+		ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "MFi contains no track.");
 		return 1;
 	}
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "MFi Tracks: %d", numTracks);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "MFi Tracks: %d", numTracks);
 	if (numTracks > MAX_CHANNELS / 4)
 	{
-		ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Too many tracks, last %d track(s) are ignored.", numTracks - (MAX_CHANNELS / 4));
+		ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Too many tracks, last %d track(s) are ignored.", numTracks - (MAX_CHANNELS / 4));
 		numTracks = MAX_CHANNELS / 4;
 	}
 	c->current_file_info->divisions = 48;
@@ -153,7 +153,7 @@ int read_mfi_file(struct timiditycontext_t *c, timidity_file *tf)
 			return 1;
 		if (type != BE_FCC(0x74726163 /*trac*/))
 		{
-			ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Unknown track signature.");
+			ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Unknown track signature.");
 			return 1;
 		}
 		if (read_mfi_track(c, i, length, mfiVersion, noteType, extStDLength, tf) != 0)
@@ -174,7 +174,7 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 	{
 		if (infoLength < 4 + 2)
 		{
-			ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Odd information length.");
+			ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Odd information length.");
 			return 1;
 		}
 		infoLength -= 6;
@@ -185,7 +185,7 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 			continue;
 		if (length > infoLength)
 		{
-			ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Total information length was too small.");
+			ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Total information length was too small.");
 			return 1;
 		}
 		infoLength -= length;
@@ -196,7 +196,7 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 
 				if (c->current_file_info->seq_name == NULL)
 					goto skip_info_data;
-				title = safe_malloc(length + 1);
+				title = safe_malloc(c, length + 1);
 				if (tf_read(c, title, length, 1, tf) != 1)
 				{
 					free(title);
@@ -204,7 +204,7 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 				}
 				title[length] = '\0';
 				c->current_file_info->seq_name = title;
-				ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "Title: %s", title);
+				ctl->cmsg(c, CMSG_TEXT, VERB_VERBOSE, "Title: %s", title);
 			}	break;
 			case BE_FCC(0x736F7263 /*sorc*/): {	/* source */
 				const char		*srcInfo;
@@ -220,7 +220,7 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 					case 0x02:	srcInfo = "external";	break;
 					default: srcInfo = "unknown";
 				}
-				ctl->cmsg(CMSG_INFO, VERB_NOISY, "Source: %s%s", srcInfo, (byteData & 1) ? ", copyrighted" : "");
+				ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Source: %s%s", srcInfo, (byteData & 1) ? ", copyrighted" : "");
 			}	break;
 			case BE_FCC(0x76657273 /*vers*/):	/* version (unused) */
 				if (tf_read(c, &type, 4, 1, tf) != 1)
@@ -231,10 +231,10 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 					case BE_FCC(0x30323030 /*0200*/):	*mfiVersion = 2;	break;
 					case BE_FCC(0x30333030 /*0300*/):	*mfiVersion = 3;	break;
 					default:
-						ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Unknown MFi version.");
+						ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Unknown MFi version.");
 						return 1;
 				}
-				ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "MFi Version: %d", *mfiVersion);
+				ctl->cmsg(c, CMSG_TEXT, VERB_VERBOSE, "MFi Version: %d", *mfiVersion);
 				/*
 					info/controls which are marked as '(MFi*)' are only executable when
 					mfiVersion == * or mfiVersion >= *.
@@ -248,7 +248,7 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 				if (tf_read(c, created, 8, 1, tf) != 1)
 					return 1;
 				created[8] = '\0';
-				ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "Date: %.4s-%.2s-%.2s", created, &created[4], &created[6]);
+				ctl->cmsg(c, CMSG_TEXT, VERB_VERBOSE, "Date: %.4s-%.2s-%.2s", created, &created[4], &created[6]);
 			}	break;
 			case BE_FCC(0x636F7079 /*copy*/): {	/* copyright */
 				int				lengthToRead;
@@ -257,7 +257,7 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 				if (lengthToRead > 0 && tf_read(c, buf, lengthToRead, 1, tf) != 1)
 					return 1;
 				buf[lengthToRead] = '\0';
-				ctl->cmsg(CMSG_TEXT, VERB_VERBOSE, "Copyright: %s", buf);
+				ctl->cmsg(c, CMSG_TEXT, VERB_VERBOSE, "Copyright: %s", buf);
 				if (lengthToRead < length && tf_seek(c, tf, length - lengthToRead, SEEK_CUR) == -1)
 					return 1;
 			}	break;
@@ -268,17 +268,17 @@ static int read_mfi_information(struct timiditycontext_t *c, int infoLength, int
 					return 1;
 				if (*noteType > 1)
 				{
-					ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Unknown note information.");
+					ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Unknown note information.");
 					return 1;
 				}
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Note Type: %d", *noteType);
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Note Type: %d", *noteType);
 				break;
 			case BE_FCC(0x65787374 /*exst*/):	/* extended status (MFi2) */
 				if (length != 2 || tf_read_beint16(c, extStDLength, tf) != 1)
 					return 1;
 				if (*extStDLength != 0)
 				{
-					ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Unknown extended status information. (%d)");
+					ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Unknown extended status information. (%d)");
 					return 1;
 				}
 				break;
@@ -361,7 +361,7 @@ static inline void SendLastNoteInfo(struct timiditycontext_t *c, const LastNoteI
 
 #define CHECK_AND_READ_FROM_FILE(ptr, readLen)		do {	\
 						if ((length) < (readLen) || tf_read(c, ptr, readLen, 1, tf) != 1) {	\
-							ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Odd track length.");	\
+							ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Odd track length.");	\
 							return 1;	\
 						}	\
 						length -= readLen;	\
@@ -441,7 +441,7 @@ static int read_mfi_track(struct timiditycontext_t *c, int trackNo, int length, 
 
 				timebase = data[2] & 0xF;
 				if ((timebase & 0x7) == 0x7)
-					ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Undefined tempo timebase.");
+					ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Undefined tempo timebase.");
 				else
 				{
 					if (timebase & 0x8)
@@ -512,7 +512,7 @@ static int read_mfi_track(struct timiditycontext_t *c, int trackNo, int length, 
 					case 0xDF:	/* end-of-track */
 						if (length != 0)
 						{
-							ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Premature end-of-track (%d)", length);
+							ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Premature end-of-track (%d)", length);
 							length = 0;
 						}
 						break;

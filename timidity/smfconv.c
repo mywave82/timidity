@@ -244,14 +244,14 @@ rcpcv_dll_stage:
 			url_rewind(c, tf->url);
 			if(ret == IS_RCP_FILE || ret == IS_R36_FILE || ret == IS_G18_FILE || ret == IS_G36_FILE)
 			{
-				ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Try to Convert RCP,R36,G18,G36 to SMF by RCPCV.DLL (c)1997 Fumy.");
+				ctl->cmsg(c, CMSG_INFO,VERB_NORMAL,"Try to Convert RCP,R36,G18,G36 to SMF by RCPCV.DLL (c)1997 Fumy.");
 				url = rcpcv_convert(c, tf->url,ret);
 				if(url == NULL){
 					/* url_arc or url_cash is buggy ? */
 					/*
 					url_rewind(c, tf->url);
 					url_cache_disable(tf->url);
-					ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed.");
+					ctl->cmsg(c, CMSG_INFO,VERB_NORMAL,"Convert Failed.");
 					goto end_of_rcpcv_dll_stage;
 					*/
 
@@ -261,22 +261,22 @@ rcpcv_dll_stage:
 
 					url_rewind(c, tf->url);
 					if((buffer = (char *)url2mem(tf->url,&len))==NULL){
-						ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed.");
+						ctl->cmsg(c, CMSG_INFO,VERB_NORMAL,"Convert Failed.");
 						goto end_of_rcpcv_dll_stage;
 					}
 					if((new_url=url_mem_open(c, buffer,len,1))==NULL){
-						ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed and Memory Allocate Error.");
+						ctl->cmsg(c, CMSG_INFO,VERB_NORMAL,"Convert Failed and Memory Allocate Error.");
 						url_cache_disable(tf->url);
 						return -1;
 					}
 					url_close(c, tf->url);
 					tf->url = new_url;
-					ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Failed.");
+					ctl->cmsg(c, CMSG_INFO,VERB_NORMAL,"Convert Failed.");
 					goto end_of_rcpcv_dll_stage;
 				}
 				url_cache_disable(tf->url);
 				tf->url = url;
-				ctl->cmsg(CMSG_INFO,VERB_NORMAL,"Convert Completed.");
+				ctl->cmsg(c, CMSG_INFO,VERB_NORMAL,"Convert Completed.");
 
 				/* Store the midi file type information */
 				infop = get_midi_file_info(fn, 1);

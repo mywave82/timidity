@@ -81,7 +81,7 @@ typedef struct _ArchiveHandler {
 } ArchiveHandler;
 
 extern ArchiveEntryNode *arc_parse_entry(struct timiditycontext_t *c, URL url, int archive_type);
-extern ArchiveEntryNode *new_entry_node(const char *name, int len);
+extern ArchiveEntryNode *new_entry_node(struct timiditycontext_t *c, const char *name, int len);
 extern ArchiveEntryNode *next_tar_entry(struct timiditycontext_t *c);
 extern ArchiveEntryNode *next_zip_entry(struct timiditycontext_t *c);
 extern ArchiveEntryNode *next_lzh_entry(struct timiditycontext_t *c);

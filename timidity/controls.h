@@ -126,7 +126,7 @@ typedef struct _CtlEvent {
     ptr_size_t v1, v2, v3, v4;/* Event value */
 } CtlEvent;
 
-
+struct timiditycontext_t;
 typedef struct {
   char *id_name, id_character;
   char *id_short_name;
@@ -152,7 +152,7 @@ typedef struct {
   int (*pass_playing_list)(int number_of_files, char *list_of_files[]);
   int  (*read)(int32 *valp);
   int  (*write)(char *buf, int32 size);
-  int  (*cmsg)(int type, int verbosity_level, char *fmt, ...);
+  int  (*cmsg)(struct timiditycontext_t *c, int type, int verbosity_level, char *fmt, ...);
   void (*event)(CtlEvent *ev);	/* Control events */
 } ControlMode;
 

@@ -83,7 +83,7 @@ void resamp_cache_reset(struct timiditycontext_t *c)
 {
 	if (c->cache_data == NULL) {
 		c->cache_data = (sample_t *)
-				safe_large_malloc((CACHE_DATA_LEN + 1) * sizeof(sample_t));
+				safe_large_malloc(c, (CACHE_DATA_LEN + 1) * sizeof(sample_t));
 		memset(c->cache_data, 0, (CACHE_DATA_LEN + 1) * sizeof(sample_t));
 		init_mblock(&c->hash_entry_pool);
 	}
@@ -226,7 +226,7 @@ void resamp_cache_create(struct timiditycontext_t *c)
 		c->cache_hash_table[i] = q;
 	}
 	if (n == 0) {
-		ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "No pre-resampling cache hit");
+		ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "No pre-resampling cache hit");
 		return;
 	}
 	array = (struct cache_hash **) new_segment(c, &c->hash_entry_pool,
@@ -248,7 +248,7 @@ void resamp_cache_create(struct timiditycontext_t *c)
 		else
 			skip++;
 	}
-	ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 			"Resample cache: Key %d/%d(%.1f%%) Sample %.1f%c/%.1f%c(%.1f%%)",
 			n - skip, n, 100.0 * (n - skip) / n,
 			t2 / ((t2 >= 1048576) ? 1048576.0 : 1024.0),

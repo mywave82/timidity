@@ -307,7 +307,7 @@ void print_ecmd(struct timiditycontext_t *c, char *cmd, int *args, int narg)
 	narg--;
     }
     strncat(p, ")", s - strlen(p) - 1);
-    ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", p);
+    ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "%s", p);
     reuse_mblock(c, &c->tmpbuffer);
 }
 #endif

@@ -86,7 +86,7 @@ Instrument *extract_sample_file(struct timiditycontext_t *c, char *sample_file)
 
 	if ((count = get_importers(sample_file, sizeof importers / sizeof importers[0], importers)) == 0)
 		return NULL;
-	inst = (Instrument *)safe_malloc(sizeof(Instrument));
+	inst = (Instrument *)safe_malloc(c, sizeof(Instrument));
 	inst->type = INST_PCM;
 	inst->instname = NULL;
 	inst->samples = 0;
@@ -133,14 +133,14 @@ Instrument *extract_sample_file(struct timiditycontext_t *c, char *sample_file)
 		sample = &inst->sample[i];
 		/* If necessary do some anti-aliasing filtering  */
 		if (c->antialiasing_allowed)
-			antialiasing((int16 *)sample->data,
+			antialiasing(c, (int16 *)sample->data,
 				sample->data_length >> FRACTION_BITS,
 				sample->sample_rate, play_mode->rate);
 		/* resample it if possible */
 		if (sample->note_to_use && !(sample->modes & MODES_LOOPING))
 			pre_resample(c, sample);
 #ifdef LOOKUP_HACK
-		squash_sample_16to8(sample);
+		squash_sample_16to8(c, sample);
 #endif
 	}
 	return inst;
@@ -337,7 +337,7 @@ static int import_wave_load(struct timiditycontext_t *c, char *sample_file, Inst
 		close_file(c, tf);
 		return 1;
 	}
-	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading WAV: %s", sample_file);
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Loading WAV: %s", sample_file);
 	state = chunk_flags = 0;
 	type_index = 4, type_size = 8;
 	for(;;) {
@@ -368,14 +368,14 @@ static int import_wave_load(struct timiditycontext_t *c, char *sample_file, Inst
 				break;
 			frames = chunk_size / format.wBlockAlign;
 			inst->samples = samples = format.wChannels;
-			inst->sample = (Sample *)safe_malloc(sizeof(Sample) * samples);
-			ctl->cmsg(CMSG_INFO, VERB_NOISY, "Format: %d-bits %dHz %dch, %d frames",
+			inst->sample = (Sample *)safe_malloc(c, sizeof(Sample) * samples);
+			ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Format: %d-bits %dHz %dch, %d frames",
 					format.wBitsPerSample, format.dwSamplesPerSec, samples, frames);
 			initialize_sample(c, inst, frames, format.wBitsPerSample, format.dwSamplesPerSec);
 			/* load waveform data */
 			for(i = 0; i < samples; i++)
 			{
-				inst->sample[i].data = sdata[i] = (sample_t *)safe_malloc(sizeof(sample_t) * frames);
+				inst->sample[i].data = sdata[i] = (sample_t *)safe_malloc(c, sizeof(sample_t) * frames);
 				inst->sample[i].data_alloced = 1;
 			}
 			if (!read_sample_data(c, SAMPLE_8BIT_UNSIGNED, tf, format.wBitsPerSample, samples, frames, sdata))
@@ -460,7 +460,7 @@ static int read_WAVFormatChunk(struct timiditycontext_t *c, struct timidity_file
 		goto fail;
 	return 1;
 	fail:
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read format chunk");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read format chunk");
 		return 0;
 }
 
@@ -506,14 +506,14 @@ static int read_WAVSamplerChunk(struct timiditycontext_t *c, struct timidity_fil
 		}
 	}
 	if (psize != cbSamplerData)
-		ctl->cmsg(CMSG_WARNING, VERB_NOISY, "Bad sampler chunk length");
+		ctl->cmsg(c, CMSG_WARNING, VERB_NOISY, "Bad sampler chunk length");
 	if (tf_seek(c, tf, psize, SEEK_CUR) == -1)
 		goto fail;
-	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Sampler: %dns/frame, note=%d, loops=%d",
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Sampler: %dns/frame, note=%d, loops=%d",
 				smpl->dwSamplePeriod, smpl->dwMIDIUnityNote, loopCount);
 	return 1;
 	fail:
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read sampler chunk");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read sampler chunk");
 		return 0;
 }
 
@@ -530,12 +530,12 @@ static int read_WAVInstrumentChunk(struct timiditycontext_t *c, struct timidity_
 	READ_CHAR(inst->highNote);
 	READ_CHAR(inst->lowVelocity);
 	READ_CHAR(inst->highVelocity);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Instrument: note=%d (%d-%d), gain=%ddb, velocity=%d-%d",
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "Instrument: note=%d (%d-%d), gain=%ddb, velocity=%d-%d",
 				inst->baseNote, inst->lowNote, inst->highNote, inst->gain,
 				inst->lowVelocity, inst->highVelocity);
 	return 1;
 	fail:
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read instrument chunk");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read instrument chunk");
 		return 0;
 }
 
@@ -626,7 +626,7 @@ static int import_aiff_load(struct timiditycontext_t *c, char *sample_file, Inst
 		return 1;
 	}
 	compressed = buf[8 + 3] == 'C';
-	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading AIFF: %s", sample_file);
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Loading AIFF: %s", sample_file);
 	type_index = 4, type_size = 8;
 	chunk_flags = 0;
 	sound.inst = inst;
@@ -773,7 +773,7 @@ static int read_AIFFCommonChunk(struct timiditycontext_t *c, struct timidity_fil
 		goto fail;
 	comm->sampleRate = ConvertFromIeeeExtended(sampleRate);
 	csize -= 8 + 10;
-	ctl->cmsg(CMSG_INFO, VERB_NOISY, "Format: %d-bits %dHz %dch, %d frames",
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Format: %d-bits %dHz %dch, %d frames",
 			comm->sampleSize, (int)comm->sampleRate, comm->numChannels, comm->numSampleFrames);
 	if (compressed)
 	{
@@ -787,7 +787,7 @@ static int read_AIFFCommonChunk(struct timiditycontext_t *c, struct timidity_fil
 			if (tf_read(c, compressionName, compressionNameLength, 1, tf) != 1)
 				goto fail;
 			compressionName[compressionNameLength] = '\0';
-			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "AIFF-C unknown compression type: %s", compressionName);
+			ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "AIFF-C unknown compression type: %s", compressionName);
 			goto fail;
 		}
 		csize -= 4;
@@ -797,7 +797,7 @@ static int read_AIFFCommonChunk(struct timiditycontext_t *c, struct timidity_fil
 		goto fail;
 	return 1;
 	fail:
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read common chunk");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read common chunk");
 		return 0;
 }
 
@@ -830,7 +830,7 @@ static int read_AIFFSoundDataChunk(struct timiditycontext_t *c, struct timidity_
 		return read_AIFFSoundData(c, tf, sound->inst, sound->common);
 	}
 	fail:
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read sound data chunk");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read sound data chunk");
 		return 0;
 }
 
@@ -843,19 +843,19 @@ static int read_AIFFSoundData(struct timiditycontext_t *c, struct timidity_file 
 	if ((samples = common->numChannels) > MAX_SAMPLE_CHANNELS)
 		goto fail;
 	inst->samples = samples;
-	inst->sample = sample = (Sample *)safe_malloc(sizeof(Sample) * samples);
+	inst->sample = sample = (Sample *)safe_malloc(c, sizeof(Sample) * samples);
 	initialize_sample(c, inst, common->numSampleFrames, common->sampleSize, (int)common->sampleRate);
 	/* load samples */
 	for(i = 0; i < samples; i++)
 	{
-		sample[i].data = sdata[i] = (sample_t *)safe_malloc(sizeof(sample_t) * common->numSampleFrames);
+		sample[i].data = sdata[i] = (sample_t *)safe_malloc(c, sizeof(sample_t) * common->numSampleFrames);
 		sample[i].data_alloced = 1;
 	}
 	if (!read_sample_data(c, SAMPLE_BIG_ENDIAN, tf, common->sampleSize, samples, common->numSampleFrames, sdata))
 		goto fail;
 	return 1;
 	fail:
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read sound data");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read sound data");
 		return 0;
 }
 
@@ -866,7 +866,7 @@ static int read_AIFFInstrumentChunk(struct timiditycontext_t *c, struct timidity
 
 	if (csize != 20)
 	{
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Bad instrument chunk length");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Bad instrument chunk length");
 		if (tf_seek(c, tf, csize, SEEK_CUR) == -1)
 			goto fail;
 		return 1;
@@ -883,12 +883,12 @@ static int read_AIFFInstrumentChunk(struct timiditycontext_t *c, struct timidity
 	READ_SHORT_BE(loop->endID);
 	if (tf_seek(c, tf, 2 + 2 + 2, SEEK_CUR) == -1)	/* release loop */
 		goto fail;
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "Instrument: note=%d (%d-%d), gain=%ddb, velocity=%d-%d",
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "Instrument: note=%d (%d-%d), gain=%ddb, velocity=%d-%d",
 				inst->baseNote, inst->lowNote, inst->highNote, inst->gain,
 				inst->lowVelocity, inst->highVelocity);
 	return 1;
 	fail:
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read instrument chunk");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read instrument chunk");
 		return 0;
 }
 
@@ -904,7 +904,7 @@ static int read_AIFFMarkerChunk(struct timiditycontext_t *c, struct timidity_fil
 	READ_SHORT_BE(markerCount)
 	if (csize != 2 + markerCount * (2 + 4))
 	{
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Bad marker chunk length");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Bad marker chunk length");
 		if (tf_seek(c, tf, csize, SEEK_CUR) == -1)
 			goto fail;
 		return 1;
@@ -924,7 +924,7 @@ static int read_AIFFMarkerChunk(struct timiditycontext_t *c, struct timidity_fil
 	fail:
 		if (m != NULL)
 			free(m);
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read marker chunk");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read marker chunk");
 		return 0;
 }
 
@@ -1045,7 +1045,7 @@ static int read_sample_data(struct timiditycontext_t *c, int32 flags, struct tim
 	}
 	return 1;
 	fail:
-		ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read sample data");
+		ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE, "Unable to read sample data");
 		return 0;
 }
 

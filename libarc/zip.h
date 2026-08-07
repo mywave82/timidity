@@ -93,6 +93,7 @@ typedef struct _DeflateHandler *DeflateHandler;
 
 /* in deflate.c */
 extern DeflateHandler open_deflate_handler(
+	struct timiditycontext_t *c,
 	long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val),
 	void *user_val,
 	int compression_level);

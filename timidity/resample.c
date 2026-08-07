@@ -459,7 +459,7 @@ static void initialize_gauss_table(struct timiditycontext_t *c, int n)
 	zsin[i] = sin(i / (4*M_PI));
 
     x_inc = 1.0 / (1<<FRACTION_BITS);
-    gptr = safe_realloc(c->gauss_table[0], (n+1)*sizeof(float)*(1<<FRACTION_BITS));
+    gptr = safe_realloc(c, c->gauss_table[0], (n+1)*sizeof(float)*(1<<FRACTION_BITS));
     for (m = 0, x = 0.0; m < (1<<FRACTION_BITS); m++, x += x_inc)
     {
 	xz = (x + n_half) / (4*M_PI);
@@ -1407,7 +1407,7 @@ void pre_resample(struct timiditycontext_t *c, Sample * sp)
   int32 i, count, incr, f, x;
   resample_rec_t resrc;
 
-  ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * pre-resampling for note %d (%s%d)",
+  ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " * pre-resampling for note %d (%s%d)",
 	    sp->note_to_use,
 	    note_name[sp->note_to_use % 12], (sp->note_to_use & 0x7F) / 12);
 
@@ -1417,7 +1417,7 @@ void pre_resample(struct timiditycontext_t *c, Sample * sp)
   if((int64)sp->data_length * a >= 0x7fffffffL)
   {
       /* Too large to compute */
-      ctl->cmsg(CMSG_INFO, VERB_DEBUG, " *** Can't pre-resampling for note %d",
+      ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " *** Can't pre-resampling for note %d",
 		sp->note_to_use);
       return;
   }
@@ -1428,12 +1428,12 @@ void pre_resample(struct timiditycontext_t *c, Sample * sp)
   if((double)newlen + incr >= 0x7fffffffL)
   {
       /* Too large to compute */
-      ctl->cmsg(CMSG_INFO, VERB_DEBUG, " *** Can't pre-resampling for note %d",
+      ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " *** Can't pre-resampling for note %d",
 		sp->note_to_use);
       return;
   }
 
-  dest = newdata = (sample_t *)safe_malloc((int32)(newlen >> (FRACTION_BITS - 1)) + 2);
+  dest = newdata = (sample_t *)safe_malloc(c, (int32)(newlen >> (FRACTION_BITS - 1)) + 2);
   dest[newlen >> FRACTION_BITS] = 0;
 
   *dest++ = src[0];

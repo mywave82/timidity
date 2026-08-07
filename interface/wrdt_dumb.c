@@ -113,79 +113,79 @@ static void wrdt_apply(struct timiditycontext_t *c, int cmd, int wrd_argc, int w
 	len = strlen(p);
 	text = (char *)new_segment(c, &c->tmpbuffer, SAFE_CONVERT_LENGTH(len));
 	code_convert(c, p, text, SAFE_CONVERT_LENGTH(len), NULL, NULL);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", text);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "%s", text);
 	reuse_mblock(c, &c->tmpbuffer);
 	break;
       case WRD_NL: /* Newline (Ignored) */
 	break;
       case WRD_COLOR:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "@COLOR(%d)", wrd_args[0]);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "@COLOR(%d)", wrd_args[0]);
 	break;
       case WRD_END: /* Never call */
 	break;
       case WRD_ESC:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@ESC(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_EXEC:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@EXEC(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_FADE:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@FADE(%d,%d,%d)", wrd_args[0], wrd_args[1], wrd_args[2]);
 	break;
       case WRD_FADESTEP:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@FADESTEP(%d/%d)", wrd_args[0], WRD_MAXFADESTEP);
 	break;
       case WRD_GCIRCLE:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@GCIRCLE(%d,%d,%d,%d,%d,%d)",
 		  wrd_args[0], wrd_args[1], wrd_args[2], wrd_args[3],
 		  wrd_args[4], wrd_args[5]);
 	break;
       case WRD_GCLS:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@GCLS(%d)", wrd_args[0]);
 	break;
       case WRD_GINIT:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "@GINIT()");
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "@GINIT()");
 	break;
       case WRD_GLINE:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@GLINE(%d,%d,%d,%d,%d,%d,%d)",
 	       wrd_args[0], wrd_args[1], wrd_args[2], wrd_args[3], wrd_args[4],
 	       wrd_args[5], wrd_args[6]);
 	break;
       case WRD_GMODE:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@GMODE(%d)", wrd_args[0]);
 	break;
       case WRD_GMOVE:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@GMOVE(%d,%d,%d,%d,%d,%d,%d)",
 	       wrd_args[0], wrd_args[1], wrd_args[2], wrd_args[3], wrd_args[4],
 	       wrd_args[5], wrd_args[6], wrd_args[7], wrd_args[8]);
 	break;
       case WRD_GON:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@GON(%d)", wrd_args[0]);
 	break;
       case WRD_GSCREEN:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@GSCREEN(%d,%d)", wrd_args[0], wrd_args[1]);
 	break;
       case WRD_INKEY:
 	inkey_flag = 1;
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "@INKEY - begin");
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "@INKEY - begin");
 	break;
       case WRD_OUTKEY:
 	inkey_flag = 0;
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "@INKEY - end");
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "@INKEY - end");
 	break;
       case WRD_LOCATE:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@LOCATE(%d,%d)", wrd_args[0], wrd_args[1]);
 	break;
       case WRD_LOOP: /* Never call */
@@ -205,7 +205,7 @@ static void wrdt_apply(struct timiditycontext_t *c, int cmd, int wrd_argc, int w
             }
 	}
         strncat(p, ")", MIN_MBLOCK_SIZE - strlen(p) - 1);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", p);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "%s", p);
 	reuse_mblock(c, &c->tmpbuffer);
 	break;
       case WRD_MIDI: /* Never call */
@@ -221,23 +221,23 @@ static void wrdt_apply(struct timiditycontext_t *c, int cmd, int wrd_argc, int w
 	    strncat(p, q, MIN_MBLOCK_SIZE - strlen(p) - 1);
 	}
 	strncat(p, ")", MIN_MBLOCK_SIZE - strlen(p) - 1);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "%s", p);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "%s", p);
 	reuse_mblock(c, &c->tmpbuffer);
 	break;
       case WRD_PALCHG:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@PALCHG(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_PALREV:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@PALREV(%d)", wrd_args[0]);
 	break;
       case WRD_PATH:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@PATH(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_PLOAD:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@PLOAD(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_REM:
@@ -245,11 +245,11 @@ static void wrdt_apply(struct timiditycontext_t *c, int cmd, int wrd_argc, int w
 	len = strlen(p);
 	text = (char *)new_segment(c, &c->tmpbuffer, SAFE_CONVERT_LENGTH(len));
 	code_convert(c, p, text, SAFE_CONVERT_LENGTH(len), NULL, NULL);
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE, "@REM %s", text);
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE, "@REM %s", text);
 	reuse_mblock(c, &c->tmpbuffer);
 	break;
       case WRD_REMARK:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@REMARK(%s)", wrd_event2string(c, wrd_args[0]));
 	break;
       case WRD_REST: /* Never call */
@@ -257,26 +257,26 @@ static void wrdt_apply(struct timiditycontext_t *c, int cmd, int wrd_argc, int w
       case WRD_SCREEN: /* Not supported */
 	break;
       case WRD_SCROLL:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@SCROLL(%d,%d,%d,%d,%d,%d,%d)",
 		  wrd_args[0], wrd_args[1], wrd_args[2], wrd_args[3],
 		  wrd_args[4], wrd_args[5], wrd_args[6]);
 	break;
       case WRD_STARTUP:
 	inkey_flag = 0;
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@STARTUP(%d)", wrd_args[0]);
 	break;
       case WRD_STOP: /* Never call */
 	break;
       case WRD_TCLS:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@TCLS(%d,%d,%d,%d,%d,%d,%d)",
 		  wrd_args[0], wrd_args[1], wrd_args[2], wrd_args[3],
 		  wrd_args[4], wrd_args[5]);
 	break;
       case WRD_TON:
-	ctl->cmsg(CMSG_INFO, VERB_VERBOSE,
+	ctl->cmsg(c, CMSG_INFO, VERB_VERBOSE,
 		  "@TON(%d)", wrd_args[0]);
 	break;
       case WRD_WAIT: /* Never call */

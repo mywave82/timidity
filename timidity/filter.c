@@ -110,7 +110,7 @@ static void designfir(FLOAT_T *g , FLOAT_T fc)
  * Note that we simulate leading and trailing 0 at the border of the
  * data buffer
  */
-static void filter(int16 *result,int16 *data, int32 length,FLOAT_T coef[])
+static void filter(struct timiditycontext_t *c, int16 *result,int16 *data, int32 length,FLOAT_T coef[])
 {
     int32 sample,i,sample_window;
     int16 peak = 0;
@@ -164,7 +164,7 @@ static void filter(int16 *result,int16 *data, int32 length,FLOAT_T coef[])
 	}
 
     if (peak)
-	ctl->cmsg(CMSG_INFO, VERB_NOISY,
+	ctl->cmsg(c, CMSG_INFO, VERB_NOISY,
 		  "Saturation %2.3f %%.", 100.0*peak/ (FLOAT_T) length);
 }
 
@@ -174,7 +174,7 @@ static void filter(int16 *result,int16 *data, int32 length,FLOAT_T coef[])
 /* I don't worry about looping point -> they will remain soft if they  */
 /* were already                                                        */
 /***********************************************************************/
-void antialiasing(int16 *data, int32 data_length,
+void antialiasing(struct timiditycontext_t *c, int16 *data, int32 data_length,
 		  int32 sample_rate, int32 output_rate)
 {
     int16 *temp;
@@ -184,7 +184,7 @@ void antialiasing(int16 *data, int32 data_length,
     FLOAT_T freq_cut;  /* cutoff frequency [0..1.0] FREQ_CUT/SAMP_FREQ*/
 
 
-    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Antialiasing: Fsample=%iKHz",
+    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Antialiasing: Fsample=%iKHz",
 	      sample_rate);
 
     /* No oversampling  */
@@ -192,7 +192,7 @@ void antialiasing(int16 *data, int32 data_length,
 	return;
 
     freq_cut= (FLOAT_T)output_rate / (FLOAT_T)sample_rate;
-    ctl->cmsg(CMSG_INFO, VERB_NOISY, "Antialiasing: cutoff=%f%%",
+    ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Antialiasing: cutoff=%f%%",
 	      freq_cut*100.);
 
     designfir(fir_coef,freq_cut);
@@ -202,10 +202,10 @@ void antialiasing(int16 *data, int32 data_length,
 	fir_symetric[ORDER-1 - i] = fir_symetric[i] = fir_coef[ORDER2-1 - i];
 
     /* We apply the filter we have designed on a copy of the patch */
-    temp = (int16 *)safe_malloc(2 * data_length);
+    temp = (int16 *)safe_malloc(c, 2 * data_length);
     memcpy(temp, data, 2 * data_length);
 
-    filter(data, temp, data_length, fir_symetric);
+    filter(c, data, temp, data_length, fir_symetric);
 
     free(temp);
 }

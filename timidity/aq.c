@@ -126,14 +126,14 @@ void aq_setup(struct timiditycontext_t *c)
 	if(play_mode->acntl(PM_REQ_GETQSIZ, &c->device_qsize) == -1)
 	    c->device_qsize = estimate_queue_size(c);
 	if(c->bucket_size * 2 > c->device_qsize) {
-	  ctl->cmsg(CMSG_WARNING, VERB_VERBOSE,
+	  ctl->cmsg(c, CMSG_WARNING, VERB_VERBOSE,
 		    "Warning: Audio buffer is too small. (bucket_size %d * 2 > device_qsize %d)", (int)c->bucket_size, (int)c->device_qsize);
 	  c->device_qsize = 0;
 	} else {
 	  c->device_qsize -= c->device_qsize % c->Bps; /* Round Bps */
-	  ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+	  ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 		    "Audio device queue size: %d bytes", c->device_qsize);
-	  ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+	  ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 		    "Write bucket size: %d bytes (%d msec)",
 		    c->bucket_size, (int)(c->bucket_time * 1000 + 0.5));
 	}
@@ -187,12 +187,13 @@ static int32 estimate_queue_size(struct timiditycontext_t *c)
     int32 qbytes, max_qbytes;
     int ntries;
 
-    nullsound = (char *)safe_malloc(c->bucket_size);
+    nullsound = (char *)safe_malloc(c, c->bucket_size);
     memset(nullsound, 0, c->bucket_size);
     if(play_mode->encoding & (PE_ULAW|PE_ALAW))
 	general_output_convert((int32 *)nullsound, c->bucket_size/c->Bps);
     tb = play_mode->rate * c->Bps * TEST_SPARE_RATE;
     ntries = 1;
+
     max_qbytes = play_mode->rate * MAX_FILLED_TIME * c->Bps;
 
   retry:
@@ -207,7 +208,7 @@ static int32 estimate_queue_size(struct timiditycontext_t *c)
 	start = get_current_calender_time();
 	if(start - init_time > 1.0) /* ?? */
 	{
-	    ctl->cmsg(CMSG_WARNING, VERB_DEBUG,
+	    ctl->cmsg(c, CMSG_WARNING, VERB_DEBUG,
 		      "Warning: Audio test is terminated");
 	    break;
 	}
@@ -230,14 +231,14 @@ static int32 estimate_queue_size(struct timiditycontext_t *c)
     {
 	if(ntries == 4)
 	{
-	    ctl->cmsg(CMSG_ERROR, VERB_NOISY,
+	    ctl->cmsg(c, CMSG_ERROR, VERB_NOISY,
 		      "Can't estimate audio queue length");
 	    set_bucket_size(c, audio_buffer_size * c->Bps);
 	    free(nullsound);
 	    return 2 * audio_buffer_size * c->Bps;
 	}
 
-	ctl->cmsg(CMSG_WARNING, VERB_DEBUG,
+	ctl->cmsg(c, CMSG_WARNING, VERB_DEBUG,
 		  "Retry to estimate audio queue length (%d times)",
 		  ntries);
 	set_bucket_size(c, c->bucket_size / 2);
@@ -350,8 +351,8 @@ static void alloc_soft_queue(struct timiditycontext_t *c)
 
     free_soft_queue(c);
 
-    c->aq_base_buckets = (AudioBucket *)safe_malloc(c->nbuckets * sizeof(AudioBucket));
-    base = (char *)safe_malloc(c->nbuckets * c->bucket_size);
+    c->aq_base_buckets = (AudioBucket *)safe_malloc(c, c->nbuckets * sizeof(AudioBucket));
+    base = (char *)safe_malloc(c, c->nbuckets * c->bucket_size);
     for(i = 0; i < c->nbuckets; i++)
 	c->aq_base_buckets[i].data = base + i * c->bucket_size;
     flush_buckets(c);
@@ -566,7 +567,7 @@ int aq_flush(struct timiditycontext_t *c, int discard)
 	    flush_buckets(c);
 	    return RC_NONE;
 	}
-	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+	ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 		  "ERROR: Can't discard audio buffer");
     }
 

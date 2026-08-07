@@ -234,7 +234,7 @@ static void store_instrument_cache(struct timiditycontext_t *c, Instrument *ip,
     int addr;
 
     addr = name_hash(name);
-    p = (struct InstrumentCache *)safe_malloc(sizeof(struct InstrumentCache));
+    p = (struct InstrumentCache *)safe_malloc(c, sizeof(struct InstrumentCache));
     p->next = c->instrument_cache[addr];
     c->instrument_cache[addr] = p;
     p->name = name;
@@ -576,9 +576,9 @@ static Instrument *load_gus_instrument(struct timiditycontext_t *c, const char *
 	if (! name)
 		return 0;
 	if (infomsg != NULL)
-		ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s: %s", infomsg, name);
+		ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "%s: %s", infomsg, name);
 	else
-		ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading instrument %s", name);
+		ctl->cmsg(c, CMSG_INFO, VERB_NOISY, "Loading instrument %s", name);
 	if (bank) {
 		tone = &bank->tone[prog];
 		amp = tone->amp;
@@ -606,7 +606,7 @@ static Instrument *load_gus_instrument(struct timiditycontext_t *c, const char *
 			&& tone->fcnum == 0 && tone->resonum == 0)
 		if ((ip = search_instrument_cache(c, name, panning, amp, note_to_use,
 				strip_loop, strip_envelope, strip_tail)) != NULL) {
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * Cached");
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " * Cached");
 			return ip;
 		}
 	/* Open patch file */
@@ -637,7 +637,7 @@ static Instrument *load_gus_instrument(struct timiditycontext_t *c, const char *
 #endif
 	}
 	if (noluck) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"Instrument `%s' can't be found.", name);
 		return 0;
 	}
@@ -654,33 +654,33 @@ static Instrument *load_gus_instrument(struct timiditycontext_t *c, const char *
 			|| (memcmp(tmp, "GF1PATCH110\0ID#000002", 22)
 			&& memcmp(tmp, "GF1PATCH100\0ID#000002", 22))) {
 			/* don't know what the differences are */
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
 		close_file(c, tf);
 		return 0;
 	}
 	/* instruments.  To some patch makers, 0 means 1 */
 	if (tmp[82] != 1 && tmp[82] != 0) {
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"Can't handle patches with %d instruments", tmp[82]);
 		close_file(c, tf);
 		return 0;
 	}
 	if (tmp[151] != 1 && tmp[151] != 0) {	/* layers.  What's a layer? */
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"Can't handle instruments with %d layers", tmp[151]);
 		close_file(c, tf);
 		return 0;
 	}
-	ip = (Instrument *) safe_malloc(sizeof(Instrument));
+	ip = (Instrument *) safe_malloc(c, sizeof(Instrument));
 	ip->type = INST_GUS;
 	ip->samples = tmp[198];
-	ip->sample = (Sample *) safe_malloc(sizeof(Sample) * ip->samples);
+	ip->sample = (Sample *) safe_malloc(c, sizeof(Sample) * ip->samples);
 	memset(ip->sample, 0, sizeof(Sample) * ip->samples);
 	for (i = 0; i < ip->samples; i++) {
 		skip(c, tf, 7);	/* Skip the wave name */
 		if (tf_read(c, &fractions, 1, 1, tf) != 1) {
 fail:
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
 			for (j = 0; j < i; j++)
 				free(ip->sample[j].data);
 			free(ip->sample);
@@ -719,7 +719,7 @@ fail:
 		READ_LONG(sp->root_freq);
 		skip(c, tf, 2);	/* Why have a "root frequency" and then "tuning"?? */
 		READ_CHAR(tmp[0]);
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG, "Rate/Low/Hi/Root = %d/%d/%d/%d",
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, "Rate/Low/Hi/Root = %d/%d/%d/%d",
 				sp->sample_rate, sp->low_freq, sp->high_freq, sp->root_freq);
 		if (panning == -1)
 			/* 0x07 and 0x08 are both center panning */
@@ -732,12 +732,12 @@ fail:
 		if (! tmp[13] || ! tmp[14]) {
 			sp->tremolo_sweep_increment = sp->tremolo_phase_increment = 0;
 			sp->tremolo_depth = 0;
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * no tremolo");
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " * no tremolo");
 		} else {
 			sp->tremolo_sweep_increment = convert_tremolo_sweep(c, tmp[12]);
 			sp->tremolo_phase_increment = convert_tremolo_rate(c, tmp[13]);
 			sp->tremolo_depth = tmp[14];
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 					" * tremolo: sweep %d, phase %d, depth %d",
 					sp->tremolo_sweep_increment, sp->tremolo_phase_increment,
 					sp->tremolo_depth);
@@ -745,19 +745,19 @@ fail:
 		if (! tmp[16] || ! tmp[17]) {
 			sp->vibrato_sweep_increment = sp->vibrato_control_ratio = 0;
 			sp->vibrato_depth = 0;
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * no vibrato");
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " * no vibrato");
 		} else {
 			sp->vibrato_control_ratio = convert_vibrato_rate(tmp[16]);
 			sp->vibrato_sweep_increment = convert_vibrato_sweep(tmp[15],
 					sp->vibrato_control_ratio);
 			sp->vibrato_depth = tmp[17];
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 					" * vibrato: sweep %d, ctl %d, depth %d",
 					sp->vibrato_sweep_increment, sp->vibrato_control_ratio,
 					sp->vibrato_depth);
 		}
 		READ_CHAR(sp->modes);
-		ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * mode: 0x%02x", sp->modes);
+		ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " * mode: 0x%02x", sp->modes);
 		READ_SHORT(sp->scale_freq);
 		READ_SHORT(sp->scale_factor);
 		skip(c, tf, 36);	/* skip reserved space */
@@ -775,12 +775,12 @@ fail:
 				| MODES_PINGPONG | MODES_REVERSE))) {
 			sp->modes &= ~(MODES_SUSTAIN | MODES_LOOPING
 					| MODES_PINGPONG | MODES_REVERSE);
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 					" - Removing loop and/or sustain");
 		}
 		if (strip_envelope == 1) {
 			if (sp->modes & MODES_ENVELOPE)
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope");
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " - Removing envelope");
 			sp->modes &= ~MODES_ENVELOPE;
 		} else if (strip_envelope != 0) {
 			/* Have to make a guess. */
@@ -790,7 +790,7 @@ fail:
 				 * No envelope needed either...
 				 */
 				sp->modes &= ~(MODES_SUSTAIN|MODES_ENVELOPE);
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 						" - No loop, removing sustain and envelope");
 			} else if (! memcmp(tmp, "??????", 6) || tmp[11] >= 100) {
 				/* Envelope rates all maxed out?
@@ -798,7 +798,7 @@ fail:
 				 * That's a weird envelope.  Take it out.
 				 */
 				sp->modes &= ~MODES_ENVELOPE;
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 						" - Weirdness, removing envelope");
 			} else if (! (sp->modes & MODES_SUSTAIN)) {
 				/* No sustain? Then no envelope.  I don't know if this is
@@ -807,7 +807,7 @@ fail:
 				 * mostly drums.  I think.
 				 */
 				sp->modes &= ~MODES_ENVELOPE;
-				ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+				ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 						" - No sustain, removing envelope");
 			}
 		}
@@ -827,11 +827,11 @@ fail:
 			sp->envelope_rate[5] = to_offset(200);
 		}
 		/* Then read the sample data */
-		sp->data = (sample_t *) safe_malloc(sp->data_length + 4);
+		sp->data = (sample_t *) safe_malloc(c, sp->data_length + 4);
 		sp->data_alloced = 1;
 		if ((j = tf_read(c, sp->data, 1, sp->data_length, tf))
 				!= sp->data_length) {
-			ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+			ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 					"Too small this patch length: %d < %d",
 					j, sp->data_length);
 			goto fail;
@@ -841,7 +841,7 @@ fail:
 			uint16 *tmp;
 			uint8 *cp = (uint8 *) sp->data;
 
-			tmp = (uint16 *) safe_malloc(sp->data_length * 2 + 4);
+			tmp = (uint16 *) safe_malloc(c, sp->data_length * 2 + 4);
 			for (i = 0; i < sp->data_length; i++)
 				tmp[i] = (uint16) cp[i] << 8;
 			sp->data = (sample_t *) tmp;
@@ -879,11 +879,11 @@ fail:
 			sp->loop_end = sp->data_length - t;
 			sp->modes &= ~MODES_REVERSE;
 			sp->modes |= MODES_LOOPING;	/* just in case */
-			ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s", name);
+			ctl->cmsg(c, CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s", name);
 		}
 		/* If necessary do some anti-aliasing filtering */
 		if (c->antialiasing_allowed)
-			antialiasing((int16 *) sp->data, sp->data_length / 2,
+			antialiasing(c, (int16 *) sp->data, sp->data_length / 2,
 					sp->sample_rate, play_mode->rate);
 #ifdef ADJUST_SAMPLE_VOLUMES
 		if (amp != -1)
@@ -900,7 +900,7 @@ fail:
 				if ((a = abs(tmp[i])) > maxamp)
 					maxamp = a;
 			sp->volume = 32768 / (double) maxamp;
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG,
 					" * volume comp: %f", sp->volume);
 		}
 #else
@@ -949,12 +949,12 @@ fail:
 		}
 
 #ifdef LOOKUP_HACK
-		squash_sample_16to8(sp);
+		squash_sample_16to8(c, sp);
 #endif
 		if (strip_tail == 1) {
 			/* Let's not really, just say we did. */
 			sp->data_length = sp->loop_end;
-			ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Stripping tail");
+			ctl->cmsg(c, CMSG_INFO, VERB_DEBUG, " - Stripping tail");
 		}
 	}
 	close_file(c, tf);
@@ -965,13 +965,13 @@ fail:
 
 #ifdef LOOKUP_HACK
 /*! Squash the 16-bit data into 8 bits. */
-void squash_sample_16to8(Sample *sp)
+void squash_sample_16to8(struct timiditycontext_t *c, Sample *sp)
 {
 	uint8 *gulp, *ulp;
 	int16 *swp;
 	int l = sp->data_length >> FRACTION_BITS;
 
-	gulp = ulp = (uint8 *)safe_malloc(l + 1);
+	gulp = ulp = (uint8 *)safe_malloc(c, l + 1);
 	swp = (int16 *)sp->data;
 	while (l--)
 		*ulp++ = (*swp++ >> 8) & 0xff;
@@ -1056,7 +1056,7 @@ Instrument *load_instrument(struct timiditycontext_t *c, int dr, int b, int prog
 			i = (dr) ? 0 : prog;
 			if (bank->tone[i].comment)
 				free(bank->tone[i].comment);
-			bank->tone[i].comment = safe_strdup(ip->instname);
+			bank->tone[i].comment = safe_strdup(c, ip->instname);
 			apply_bank_parameter(c, ip, &bank->tone[prog]);
 		}
 		return ip;
@@ -1074,10 +1074,10 @@ Instrument *load_instrument(struct timiditycontext_t *c, int dr, int b, int prog
 	ip = load_soundfont_inst(c, 0, font_bank, font_preset, font_keynote);
 	if (ip != NULL) {
 		if (bank->tone[prog].name == NULL) /* this should not be NULL to play the instrument */
-			bank->tone[prog].name = safe_strdup(DYNAMIC_INSTRUMENT_NAME);
+			bank->tone[prog].name = safe_strdup(c, DYNAMIC_INSTRUMENT_NAME);
 		if (bank->tone[prog].comment)
 			free(bank->tone[prog].comment);
-		bank->tone[prog].comment = safe_strdup(ip->instname);
+		bank->tone[prog].comment = safe_strdup(c, ip->instname);
 	}
 	if (ip == NULL) {	/* load GUS/patch file */
 		if (! dr)
@@ -1092,7 +1092,7 @@ Instrument *load_instrument(struct timiditycontext_t *c, int dr, int b, int prog
 			if (ip != NULL) {
 				if (bank->tone[0].comment)
 					free(bank->tone[0].comment);
-				bank->tone[0].comment = safe_strdup(ip->instname);
+				bank->tone[0].comment = safe_strdup(c, ip->instname);
 			}
 		}
 	}
@@ -1118,7 +1118,7 @@ static int fill_bank(struct timiditycontext_t *c, int dr, int b, int *rc)
 		bank->tone[i].instrument = load_instrument(c, dr, b, i);
 		if(bank->tone[i].instrument == NULL)
 		{
-		    ctl->cmsg(CMSG_WARNING,
+		    ctl->cmsg(c, CMSG_WARNING,
 			      (b != 0) ? VERB_VERBOSE : VERB_NORMAL,
 			      "No instrument mapped to %s %d, program %d%s",
 			      dr ? "drum set" : "tone bank",
@@ -1161,7 +1161,7 @@ static int fill_bank(struct timiditycontext_t *c, int dr, int b, int *rc)
 		bank->tone[i].instrument = load_instrument(c, dr, b, i);
 		if(!bank->tone[i].instrument)
 		{
-		    ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		    ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 			      "Couldn't load instrument %s "
 			      "(%s %d, program %d)", bank->tone[i].name,
 			      dr ? "drum set" : "tone bank",
@@ -1194,118 +1194,118 @@ int load_missing_instruments(struct timiditycontext_t *c, int *rc)
   return errors;
 }
 
-static void *safe_memdup(void *s, size_t size)
+static void *safe_memdup(struct timiditycontext_t *c, void *s, size_t size)
 {
-	return memcpy(safe_malloc(size), s, size);
+	return memcpy(safe_malloc(c, size), s, size);
 }
 
 /*! Copy ToneBankElement src to elm. The original elm is released. */
-void copy_tone_bank_element(ToneBankElement *elm, const ToneBankElement *src)
+void copy_tone_bank_element(struct timiditycontext_t *c, ToneBankElement *elm, const ToneBankElement *src)
 {
 	int i;
 
 	free_tone_bank_element(elm);
 	memcpy(elm, src, sizeof(ToneBankElement));
 	if (elm->name)
-		elm->name = safe_strdup(elm->name);
+		elm->name = safe_strdup(c, elm->name);
 	if (elm->tunenum)
-		elm->tune = (float *) safe_memdup(elm->tune,
+		elm->tune = (float *) safe_memdup(c, elm->tune,
 				elm->tunenum * sizeof(float));
 	if (elm->envratenum) {
-		elm->envrate = (int **) safe_memdup(elm->envrate,
+		elm->envrate = (int **) safe_memdup(c, elm->envrate,
 				elm->envratenum * sizeof(int *));
 		for (i = 0; i < elm->envratenum; i++)
-			elm->envrate[i] = (int *) safe_memdup(elm->envrate[i],
+			elm->envrate[i] = (int *) safe_memdup(c, elm->envrate[i],
 					6 * sizeof(int));
 	}
 	if (elm->envofsnum) {
-		elm->envofs = (int **) safe_memdup(elm->envofs,
+		elm->envofs = (int **) safe_memdup(c, elm->envofs,
 				elm->envofsnum * sizeof(int *));
 		for (i = 0; i < elm->envofsnum; i++)
-			elm->envofs[i] = (int *) safe_memdup(elm->envofs[i],
+			elm->envofs[i] = (int *) safe_memdup(c, elm->envofs[i],
 					6 * sizeof(int));
 	}
 	if (elm->tremnum) {
-		elm->trem = (Quantity **) safe_memdup(elm->trem,
+		elm->trem = (Quantity **) safe_memdup(c, elm->trem,
 				elm->tremnum * sizeof(Quantity *));
 		for (i = 0; i < elm->tremnum; i++)
-			elm->trem[i] = (Quantity *) safe_memdup(elm->trem[i],
+			elm->trem[i] = (Quantity *) safe_memdup(c, elm->trem[i],
 					3 * sizeof(Quantity));
 	}
 	if (elm->vibnum) {
-		elm->vib = (Quantity **) safe_memdup(elm->vib,
+		elm->vib = (Quantity **) safe_memdup(c, elm->vib,
 				elm->vibnum * sizeof(Quantity *));
 		for (i = 0; i < elm->vibnum; i++)
-			elm->vib[i] = (Quantity *) safe_memdup(elm->vib[i],
+			elm->vib[i] = (Quantity *) safe_memdup(c, elm->vib[i],
 					3 * sizeof(Quantity));
 	}
 	if (elm->sclnotenum)
-		elm->sclnote = (int16 *) safe_memdup(elm->sclnote,
+		elm->sclnote = (int16 *) safe_memdup(c, elm->sclnote,
 				elm->sclnotenum * sizeof(int16));
 	if (elm->scltunenum)
-		elm->scltune = (int16 *) safe_memdup(elm->scltune,
+		elm->scltune = (int16 *) safe_memdup(c, elm->scltune,
 				elm->scltunenum * sizeof(int16));
 	if (elm->comment)
-		elm->comment = safe_strdup(elm->comment);
+		elm->comment = safe_strdup(c, elm->comment);
 	if (elm->modenvratenum) {
-		elm->modenvrate = (int **) safe_memdup(elm->modenvrate,
+		elm->modenvrate = (int **) safe_memdup(c, elm->modenvrate,
 				elm->modenvratenum * sizeof(int *));
 		for (i = 0; i < elm->modenvratenum; i++)
-			elm->modenvrate[i] = (int *) safe_memdup(elm->modenvrate[i],
+			elm->modenvrate[i] = (int *) safe_memdup(c, elm->modenvrate[i],
 					6 * sizeof(int));
 	}
 	if (elm->modenvofsnum) {
-		elm->modenvofs = (int **) safe_memdup(elm->modenvofs,
+		elm->modenvofs = (int **) safe_memdup(c, elm->modenvofs,
 				elm->modenvofsnum * sizeof(int *));
 		for (i = 0; i < elm->modenvofsnum; i++)
-			elm->modenvofs[i] = (int *) safe_memdup(elm->modenvofs[i],
+			elm->modenvofs[i] = (int *) safe_memdup(c, elm->modenvofs[i],
 					6 * sizeof(int));
 	}
 	if (elm->envkeyfnum) {
-		elm->envkeyf = (int **) safe_memdup(elm->envkeyf,
+		elm->envkeyf = (int **) safe_memdup(c, elm->envkeyf,
 				elm->envkeyfnum * sizeof(int *));
 		for (i = 0; i < elm->envkeyfnum; i++)
-			elm->envkeyf[i] = (int *) safe_memdup(elm->envkeyf[i],
+			elm->envkeyf[i] = (int *) safe_memdup(c, elm->envkeyf[i],
 					6 * sizeof(int));
 	}
 	if (elm->envvelfnum) {
-		elm->envvelf = (int **) safe_memdup(elm->envvelf,
+		elm->envvelf = (int **) safe_memdup(c, elm->envvelf,
 				elm->envvelfnum * sizeof(int *));
 		for (i = 0; i < elm->envvelfnum; i++)
-			elm->envvelf[i] = (int *) safe_memdup(elm->envvelf[i],
+			elm->envvelf[i] = (int *) safe_memdup(c, elm->envvelf[i],
 					6 * sizeof(int));
 	}
 	if (elm->modenvkeyfnum) {
-		elm->modenvkeyf = (int **) safe_memdup(elm->modenvkeyf,
+		elm->modenvkeyf = (int **) safe_memdup(c, elm->modenvkeyf,
 				elm->modenvkeyfnum * sizeof(int *));
 		for (i = 0; i < elm->modenvkeyfnum; i++)
-			elm->modenvkeyf[i] = (int *) safe_memdup(elm->modenvkeyf[i],
+			elm->modenvkeyf[i] = (int *) safe_memdup(c, elm->modenvkeyf[i],
 					6 * sizeof(int));
 	}
 	if (elm->modenvvelfnum) {
-		elm->modenvvelf = (int **) safe_memdup(elm->modenvvelf,
+		elm->modenvvelf = (int **) safe_memdup(c, elm->modenvvelf,
 				elm->modenvvelfnum * sizeof(int *));
 		for (i = 0; i < elm->modenvvelfnum; i++)
-			elm->modenvvelf[i] = (int *) safe_memdup(elm->modenvvelf[i],
+			elm->modenvvelf[i] = (int *) safe_memdup(c, elm->modenvvelf[i],
 					6 * sizeof(int));
 	}
 	if (elm->trempitchnum)
-		elm->trempitch = (int16 *) safe_memdup(elm->trempitch,
+		elm->trempitch = (int16 *) safe_memdup(c, elm->trempitch,
 				elm->trempitchnum * sizeof(int16));
 	if (elm->tremfcnum)
-		elm->tremfc = (int16 *) safe_memdup(elm->tremfc,
+		elm->tremfc = (int16 *) safe_memdup(c, elm->tremfc,
 				elm->tremfcnum * sizeof(int16));
 	if (elm->modpitchnum)
-		elm->modpitch = (int16 *) safe_memdup(elm->modpitch,
+		elm->modpitch = (int16 *) safe_memdup(c, elm->modpitch,
 				elm->modpitchnum * sizeof(int16));
 	if (elm->modfcnum)
-		elm->modfc = (int16 *) safe_memdup(elm->modfc,
+		elm->modfc = (int16 *) safe_memdup(c, elm->modfc,
 				elm->modfcnum * sizeof(int16));
 	if (elm->fcnum)
-		elm->fc = (int16 *) safe_memdup(elm->fc,
+		elm->fc = (int16 *) safe_memdup(c, elm->fc,
 				elm->fcnum * sizeof(int16));
 	if (elm->resonum)
-		elm->reso = (int16 *) safe_memdup(elm->reso,
+		elm->reso = (int16 *) safe_memdup(c, elm->reso,
 				elm->resonum * sizeof(int16));
 
 }
@@ -1621,7 +1621,7 @@ void alloc_instrument_bank(struct timiditycontext_t *c, int dr, int bk)
     {
 	if((b = c->drumset[bk]) == NULL)
 	{
-	    b = c->drumset[bk] = (ToneBank *)safe_malloc(sizeof(ToneBank));
+	    b = c->drumset[bk] = (ToneBank *)safe_malloc(c, sizeof(ToneBank));
 	    memset(b, 0, sizeof(ToneBank));
 	}
     }
@@ -1629,7 +1629,7 @@ void alloc_instrument_bank(struct timiditycontext_t *c, int dr, int bk)
     {
 	if((b = c->tonebank[bk]) == NULL)
 	{
-	    b = c->tonebank[bk] = (ToneBank *)safe_malloc(sizeof(ToneBank));
+	    b = c->tonebank[bk] = (ToneBank *)safe_malloc(c, sizeof(ToneBank));
 	    memset(b, 0, sizeof(ToneBank));
 	}
     }
@@ -1679,7 +1679,7 @@ void set_instrument_map(struct timiditycontext_t *c, int mapID,
     if(p == NULL)
     {
 		p = (struct inst_map_elem *)
-	    safe_malloc(128 * sizeof(struct inst_map_elem));
+	    safe_malloc(c, 128 * sizeof(struct inst_map_elem));
 	    memset(p, 0, 128 * sizeof(struct inst_map_elem));
 		c->inst_map_table[mapID][set_from] = p;
     }
@@ -1709,7 +1709,7 @@ void free_instrument_map(struct timiditycontext_t *c)
 
 /* Alternate assign - Written by Masanao Izumo */
 
-AlternateAssign *add_altassign_string(AlternateAssign *old,
+AlternateAssign *add_altassign_string(struct timiditycontext_t *c, AlternateAssign *old,
 				      char **params, int n)
 {
     int i, j;
@@ -1732,7 +1732,7 @@ AlternateAssign *add_altassign_string(AlternateAssign *old,
 	    return NULL;
     }
 
-    alt = (AlternateAssign *)safe_malloc(sizeof(AlternateAssign));
+    alt = (AlternateAssign *)safe_malloc(c, sizeof(AlternateAssign));
     memset(alt, 0, sizeof(AlternateAssign));
     for(i = 0; i < n; i++) {
 	p = params[i];

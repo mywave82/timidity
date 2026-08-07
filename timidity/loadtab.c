@@ -52,7 +52,7 @@ int load_table(struct timiditycontext_t *c, char *file)
 #else
 	if ((fp = fopen(file, "r")) == NULL) {
 #endif
-		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		ctl->cmsg(c, CMSG_ERROR, VERB_NORMAL,
 				"Can't read %s %s\n", file, strerror(errno));
 		return -1;
 	}

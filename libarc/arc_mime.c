@@ -33,8 +33,6 @@
 #include "zip.h"
 #include "arc.h"
 
-extern char *safe_strdup(const char *);
-
 #ifndef MAX_CHECK_LINES
 #define MAX_CHECK_LINES 1024
 #endif /* MAX_CHECK_LINES */
@@ -316,12 +314,12 @@ ArchiveEntryNode *next_mime_entry(struct timiditycontext_t *c)
 	if(data_start == data_end)
 	  {
 	    ArchiveEntryNode *entry;
-	    entry = new_entry_node(filename, strlen(filename));
+	    entry = new_entry_node(c, filename, strlen(filename));
 	    entry->comptype = ARCHIVEC_STORED;
 	    entry->compsize = 0;
 	    entry->origsize = 0;
 	    entry->start = 0;
-	    entry->cache = safe_strdup("");
+	    entry->cache = safe_strdup(c, "");
 	    if(head == NULL)
 		head = tail = entry;
 	    else
@@ -349,7 +347,7 @@ ArchiveEntryNode *next_mime_entry(struct timiditycontext_t *c)
 	    }
 	  else
 	    gz = 0;
-	  entry = new_entry_node(filename, strlen(filename));
+	  entry = new_entry_node(c, filename, strlen(filename));
 
 	  if(gz)
 	    gzmethod = parse_gzip_header_bytes(c, part_data, part_data_size,

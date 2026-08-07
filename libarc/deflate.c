@@ -278,7 +278,7 @@ local struct deflate_buff_queue *new_queue(struct timiditycontext_t *c)
     }
     else
 	p = (struct deflate_buff_queue *)
-	    safe_malloc(sizeof(struct deflate_buff_queue) + OUTBUFSIZ);
+	    safe_malloc(c, sizeof(struct deflate_buff_queue) + OUTBUFSIZ);
     p->next = NULL;
     p->len = 0;
     p->ptr = (uch *)p + sizeof(struct deflate_buff_queue);
@@ -982,6 +982,7 @@ static long default_read_func(struct timiditycontext_t *c, char *buf, long size,
 }
 
 DeflateHandler open_deflate_handler(
+    struct timiditycontext_t *c,
     long (* read_func)(struct timiditycontext_t *c, char *buf, long size, void *user_val),
     void *user_val,
     int level)
@@ -991,7 +992,7 @@ DeflateHandler open_deflate_handler(
     if(level < 1 || level > 9)
 	return NULL; /* error("bad compression level"); */
 
-    encoder = (DeflateHandler)safe_malloc(sizeof(struct _DeflateHandler));
+    encoder = (DeflateHandler)safe_malloc(c, sizeof(struct _DeflateHandler));
     if(encoder == NULL)
 	return NULL;
     memset(encoder, 0, sizeof(struct _DeflateHandler));

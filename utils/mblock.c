@@ -57,13 +57,13 @@ static MBlockNode *new_mblock_node(struct timiditycontext_t *c, size_t n)
 
     if(n > MIN_MBLOCK_SIZE)
     {
-	if((p = (MBlockNode *)safe_malloc(n + sizeof(MBlockNode))) == NULL)
+	if((p = (MBlockNode *)safe_malloc(c, n + sizeof(MBlockNode))) == NULL)
 	    return NULL;
 	p->block_size = n;
     }
     else if(c->free_mblock_list == NULL)
     {
-	if((p = (MBlockNode *)safe_malloc(sizeof(MBlockNode)
+	if((p = (MBlockNode *)safe_malloc(c, sizeof(MBlockNode)
 				     + MIN_MBLOCK_SIZE)) == NULL)
 	    return NULL;
 	p->block_size = MIN_MBLOCK_SIZE;
